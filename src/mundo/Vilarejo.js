@@ -1,7 +1,7 @@
 // =============================================================================
 //  O VILAREJO
 //  Aqui fica o "mapa": onde está cada casa, rua, torre, tocha, inimigo e lanterna.
-//  Orientação: o NORTE é o lado -Z (onde ficam a igreja e o gigante).
+//  Orientação: o NORTE é o lado -Z (onde ficam a igreja e a lua).
 //  O jogador nasce no portão SUL (+Z) olhando para o norte.
 //
 //  Para criar outra área no futuro, faça outro arquivo parecido com este que

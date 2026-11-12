@@ -1,10 +1,12 @@
 // =============================================================================
 //  CÉU NOTURNO
 //  Uma esfera enorme em volta da câmera, pintada por um pequeno programa (shader):
-//  degradê violeta → azul, estrelas, nuvens que se movem devagar e a lua.
+//  degradê violeta → azul, estrelas, nuvens que se movem devagar e a lua com
+//  rosto (o desenho da lua fica em Lua.js).
 // =============================================================================
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
+import { Lua, SHADER_LUA } from './Lua.js';
 
 const VERT = /* glsl */ `
   varying vec3 vDir;
@@ -18,9 +20,8 @@ const FRAG = /* glsl */ `
   precision highp float;
   varying vec3 vDir;
   uniform float uTempo;
-  uniform float uPulso;       // 0..1, acompanha o "respirar" do gigante
-  uniform vec3 uZenite, uMeio, uHorizonte, uNuvem, uLuaCor, uMagia;
-  uniform vec3 uLuaDir, uGiganteDir;
+  uniform vec3 uZenite, uMeio, uHorizonte, uNuvem;
+  ${SHADER_LUA}
 
   float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
   float ruido(vec2 p) {
@@ -54,19 +55,21 @@ const FRAG = /* glsl */ `
     float n = fbm(cn * vec2(1.3, 2.4) + vec2(uTempo * 0.012, uTempo * 0.004));
     float nuv = smoothstep(0.42, 0.78, n) * smoothstep(-0.02, 0.2, d.y);
 
-    // Lua: disco + halo.
-    float ml = max(dot(d, normalize(uLuaDir)), 0.0);
-    float disco = smoothstep(0.9982, 0.9987, ml);
-    float halo = pow(ml, 140.0) * 0.4 + pow(ml, 12.0) * 0.13;
+    // Halo azul em volta da lua.
+    float ang = acos(clamp(dot(d, normalize(uLuaDir)), -1.0, 1.0));
+    float fora = max(ang - uLuaRaio, 0.0);
+    float halo = exp(-fora * 26.0) * 0.9 + exp(-fora * 4.0) * 0.22;
 
     cor += vec3(0.8, 0.85, 1.0) * est * (1.0 - nuv);
-    vec3 corNuvem = mix(uMeio * 0.5, uNuvem, n) * (0.55 + halo * 1.6);
+    vec3 corNuvem = mix(uMeio * 0.5, uNuvem, n) * (0.55 + halo * 1.2);
     cor = mix(cor, corNuvem, nuv * 0.78);
-    cor += uLuaCor * (disco * (1.0 - nuv * 0.7) + halo);
+    cor += uLuaBorda * halo * (0.75 + 0.25 * uLuaAtencao);
 
-    // A presença do gigante tinge o céu de verde atrás dele.
-    float mg = max(dot(d, normalize(uGiganteDir)), 0.0);
-    cor += uMagia * pow(mg, 5.0) * (0.035 + 0.03 * uPulso);
+    // A lua em si, com fiapos de nuvem passando na frente e a base sumindo na névoa.
+    vec4 lua = pintarLua(d, uTempo);
+    lua.rgb = mix(lua.rgb, corNuvem, nuv * 0.35);
+    lua.rgb = mix(lua.rgb, uHorizonte, (1.0 - smoothstep(0.0, 0.16, d.y)) * 0.85);
+    cor = mix(cor, lua.rgb, lua.a);
 
     gl_FragColor = vec4(cor, 1.0);
   }
@@ -76,16 +79,13 @@ export class Ceu {
   constructor(cena) {
     const p = CONFIG.paleta;
     this.uniformes = {
-      uTempo: { value: 0 }, uPulso: { value: 0 },
+      uTempo: { value: 0 },
       uZenite: { value: new THREE.Color(p.ceuZenite) },
       uMeio: { value: new THREE.Color(p.ceuMeio) },
       uHorizonte: { value: new THREE.Color(p.ceuHorizonte) },
       uNuvem: { value: new THREE.Color(p.nuvem) },
-      uLuaCor: { value: new THREE.Color(p.lua) },
-      uMagia: { value: new THREE.Color(p.magia) },
-      uLuaDir: { value: new THREE.Vector3(0.42, 0.52, -0.74).normalize() },
-      uGiganteDir: { value: new THREE.Vector3(0, 0.3, -1).normalize() },
     };
+    this.lua = new Lua(this.uniformes, p);
     this.malha = new THREE.Mesh(
       new THREE.SphereGeometry(1500, 24, 16),
       new THREE.ShaderMaterial({
@@ -98,7 +98,7 @@ export class Ceu {
     cena.add(this.malha);
   }
 
-  get direcaoLua() { return this.uniformes.uLuaDir.value; }
+  get direcaoLua() { return this.lua.direcao; }
 
   /** Troca as cores do céu (para quando outros seres cósmicos aparecerem). */
   definirPaleta({ zenite, meio, horizonte, nuvem } = {}) {
@@ -108,9 +108,9 @@ export class Ceu {
     if (nuvem !== undefined) this.uniformes.uNuvem.value.set(nuvem);
   }
 
-  atualizar(tempo, camera, pulso) {
+  atualizar(dt, tempo, camera, posJogador) {
     this.uniformes.uTempo.value = tempo;
-    this.uniformes.uPulso.value = pulso;
+    this.lua.atualizar(dt, posJogador, camera);
     this.malha.position.copy(camera.position); // o céu anda junto: nunca se chega nele
   }
 }

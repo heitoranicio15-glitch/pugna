@@ -17,14 +17,17 @@ export const CONFIG = {
   },
 
   // ---- Cores do mundo (em hexadecimal) ----
-  // Os seres cósmicos mudam o céu: no futuro basta trocar esta paleta em tempo real
+  // A lua é o ser cósmico desta área. Outros seres podem mudar o céu no futuro:
+  // basta trocar esta paleta em tempo real
   // (veja Ceu.definirPaleta).
   paleta: {
     ceuZenite: 0x14063f,     // topo do céu: violeta profundo
     ceuMeio: 0x2412a0,       // meio do céu: azul-violeta
     ceuHorizonte: 0x1c5a9a,  // horizonte: azul esverdeado, igual à névoa
     nuvem: 0x6a3cff,         // nuvens: violeta claro
-    lua: 0xbfe9ff,
+    lua: 0x4a3fd8,           // corpo da lua: anil
+    luaBorda: 0x2f58ff,      // aro e halo azul em volta dela
+    luaOlho: 0xff4a1a,       // olhos da lua: brasa (como na ref04)
     nevoa: 0x143f78,
     luzAmbiente: 0x3a3ad0,
     luzLua: 0x7f9cff,
