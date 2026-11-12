@@ -19,6 +19,9 @@ export function materiais() {
     pedra: lambert(t.pedra),
     pedraEscura: lambert(t.pedra, { color: 0x9a94c8 }),
     calcamento: lambert(t.calcamento),
+    // Chão e ruas não gravam profundidade: são desenhados primeiro e tudo o mais fica por
+    // cima. Isso evita o "pisca-pisca" entre a grama e o calçamento (veja Vilarejo.js).
+    calcamentoChao: lambert(t.calcamento, { depthWrite: false }),
     telhado: lambert(t.telhado, { side: THREE.DoubleSide }),
     madeira: lambert(t.madeira),
     terra: lambert(t.terra),
@@ -151,48 +154,133 @@ export function torre(mundo, { x, z, lado = 5, a = 16, tipo = 'ameias', colide =
   return g;
 }
 
-/** Igreja gótica: nave, torre frontal com agulha, pináculos, vitrais e escadaria. Frente = sul (+Z). */
+/**
+ * CATEDRAL GÓTICA. Frente = sul (+Z). (x, z) = centro da nave.
+ * Partes: nave comprida, transepto (o "braço" da cruz), abside (fundo arredondado),
+ * duas torres com agulhas na fachada, portal com rosácea, contrafortes com pináculos,
+ * vitrais e uma agulha central. A porta está selada: no futuro, é a entrada das
+ * próximas fases (a posição dela é devolvida em `porta`).
+ */
 export function igreja(mundo, { x, z }) {
   const m = materiais();
   const g = new THREE.Group();
-  const L = 11, A = 9, P = 20;           // nave
-  const nave = caixa(L, A, P, m.pedra); nave.position.set(0, A / 2, 0); g.add(nave);
-  const teto = telhado(L + 0.8, 6, P + 0.6, m.telhado, m.pedraEscura); teto.position.y = A; g.add(teto);
+  const add = (o, px, py, pz) => { o.position.set(px, py, pz); g.add(o); return o; };
+  const colide = (cx, cz, l, p, topo) => mundo.colisores.adicionar(x + cx, z + cz, l, p, topo);
+  const cruz = (px, py, pz) => {
+    add(caixa(0.16, 2.4, 0.16, m.metal, 1), px, py + 1.2, pz);
+    add(caixa(1.1, 0.16, 0.16, m.metal, 1), px, py + 1.6, pz);
+  };
+  // Janela em ponta (ogiva): um retângulo de vitral + um losango em cima.
+  const ogiva = (px, py, pz, larg, alt, lateral, mat = m.vitral) => {
+    const corpo = caixa(lateral ? 0.14 : larg, alt, lateral ? larg : 0.14, mat, larg);
+    add(corpo, px, py, pz);
+    const ponta = caixa(lateral ? 0.14 : larg * 0.7071, larg * 0.7071, lateral ? larg * 0.7071 : 0.14, mat, larg);
+    ponta.rotation[lateral ? 'x' : 'z'] = Math.PI / 4;
+    add(ponta, px, py + alt / 2, pz);
+  };
 
-  // Torre da frente + agulha.
-  const TL = 6, TA = 21, tz = P / 2 + TL / 2;
-  const tor = caixa(TL, TA, TL, m.pedra); tor.position.set(0, TA / 2, tz); g.add(tor);
-  const agulha = piramide(TL + 0.6, 17, m.telhado); agulha.position.set(0, TA + 8.5, tz); g.add(agulha);
-  for (const [px, pz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-    const pin = piramide(1.2, 4.5, m.telhado); pin.position.set(px * (TL / 2 - 0.3), TA + 2.2, tz + pz * (TL / 2 - 0.3)); g.add(pin);
-  }
-  // Torrinhas finas nos cantos da nave.
-  for (const [cx, cz] of [[-1, 1], [1, 1], [-1, -1], [1, -1]]) {
-    const t = caixa(1.8, 13, 1.8, m.pedraEscura); t.position.set(cx * (L / 2 + 0.3), 6.5, cz * (P / 2 - 0.4)); g.add(t);
-    const pt = piramide(2.2, 7, m.telhado); pt.position.set(cx * (L / 2 + 0.3), 16.5, cz * (P / 2 - 0.4)); g.add(pt);
-  }
-  // Porta, vitral da torre e vitrais laterais.
-  const zf = tz + TL / 2;
-  const porta = caixa(2.6, 3.8, 0.2, m.madeira, 1.3); porta.position.set(0, 0.75 + 1.9, zf + 0.03); g.add(porta);
-  const rosacea = caixa(1.8, 3.4, 0.12, m.vitral, 1.7); rosacea.position.set(0, 9.5, zf + 0.03); g.add(rosacea);
-  const sino = caixa(1.4, 2.4, 0.12, m.janelaApagada, 2); sino.position.set(0, 17, zf + 0.03); g.add(sino);
-  for (let i = 0; i < 4; i++) {
-    for (const lado of [-1, 1]) {
-      const v = caixa(0.12, 4, 1.3, m.vitral, 1.3);
-      v.position.set(lado * (L / 2 + 0.03), 4.6, -P / 2 + 3 + i * 4.6); g.add(v);
+  // ---------- nave ----------
+  const L = 16, A = 14, P = 34;
+  add(caixa(L, A, P, m.pedra), 0, A / 2, 0);
+  add(telhado(L + 1, 8, P + 0.6, m.telhado, m.pedraEscura), 0, A, 0);
+  add(caixa(L + 0.5, 0.5, P + 0.3, m.pedraEscura), 0, A - 0.1, 0);           // cornija
+  add(caixa(L + 0.4, 1.0, P + 0.2, m.pedraEscura), 0, 0.5, 0);               // rodapé
+  colide(0, 0, L, P);
+
+  // ---------- transepto (braço da cruz) ----------
+  const TZ = -5, TL = 30, TP = 9;
+  add(caixa(TL, A, TP, m.pedra), 0, A / 2, TZ);
+  const tetoT = telhado(TP + 1, 7, TL + 0.6, m.telhado, m.pedraEscura); tetoT.rotation.y = Math.PI / 2; add(tetoT, 0, A, TZ);
+  colide(0, TZ, TL, TP);
+  for (const lado of [-1, 1]) {
+    ogiva(lado * (TL / 2 + 0.04), 7, TZ, 2.4, 6, true);                      // vitral grande na ponta do braço
+    const rosa = new THREE.Mesh(new THREE.CircleGeometry(1.5, 8), m.vitral);
+    rosa.rotation.y = lado * Math.PI / 2; add(rosa, lado * (TL / 2 + 0.06), 16.2, TZ);
+    for (const cz of [-1, 1]) {                                              // torrinhas nos cantos
+      add(caixa(1.8, A + 3, 1.8, m.pedraEscura), lado * (TL / 2 - 0.3), (A + 3) / 2, TZ + cz * (TP / 2 - 0.2));
+      add(piramide(2.2, 6, m.telhado), lado * (TL / 2 - 0.3), A + 6, TZ + cz * (TP / 2 - 0.2));
     }
   }
-  // Escadaria.
-  for (let i = 0; i < 3; i++) {
-    const d = caixa(8 - i * 0.8, 0.25, 2.4 - i * 0.8, m.calcamento, 1.5);
-    d.position.set(0, 0.125 + i * 0.25, zf + 1.2 - i * 0.4); g.add(d);
-    mundo.colisores.adicionar(x, z + zf + 1.2 - i * 0.4, 8 - i * 0.8, 2.4 - i * 0.8, 0.25 * (i + 1));
+  // agulha central, sobre o cruzamento
+  add(caixa(2.6, 4, 2.6, m.pedraEscura), 0, A + 8, TZ);
+  add(piramide(3.2, 22, m.telhado), 0, A + 21, TZ);
+  cruz(0, A + 31.5, TZ);
+
+  // ---------- abside (fundo arredondado) ----------
+  const abside = new THREE.Mesh(new THREE.CylinderGeometry(6.5, 6.5, 12, 8), m.pedra);
+  add(abside, 0, 6, -P / 2);
+  add(new THREE.Mesh(new THREE.ConeGeometry(7, 7, 8), m.telhado), 0, 15.5, -P / 2);
+  colide(0, -P / 2 - 3, 13, 7);
+  abside.rotation.y = Math.PI / 8;                                          // deixa uma face virada para o norte
+  ogiva(0, 6, -P / 2 - 6.05, 1.3, 4.5, false);
+
+  // ---------- contrafortes e vitrais das laterais ----------
+  const zsContraforte = [15.5, 10.5, 5.5, 1, -11, -15.5];
+  const zsVitral = [13, 8, 3.2, -13.2];
+  for (const lado of [-1, 1]) {
+    for (const cz of zsContraforte) {
+      const cx = lado * (L / 2 + 1.1);
+      add(caixa(2.2, 10.5, 1.3, m.pedraEscura), cx, 5.25, cz);
+      add(caixa(1.4, 3, 1.1, m.pedraEscura), lado * (L / 2 + 0.7), 12, cz);
+      add(piramide(1.5, 3.2, m.telhado), cx + lado * 0.2, 12.1, cz);
+      colide(cx, cz, 2.2, 1.3);
+    }
+    for (const cz of zsVitral) ogiva(lado * (L / 2 + 0.05), 7.2, cz, 1.7, 6.5, true);
   }
+
+  // ---------- fachada: duas torres + corpo central ----------
+  const FL = 7.5, FA = 31, fz = P / 2 + 3.5, frente = fz + FL / 2;          // frente = z da face da fachada
+  for (const lado of [-1, 1]) {
+    const tx = lado * 6.4;
+    add(caixa(FL, FA, FL, m.pedra), tx, FA / 2, fz);
+    for (const fy of [10.5, 20.5]) add(caixa(FL + 0.5, 0.5, FL + 0.5, m.pedraEscura), tx, fy, fz);   // faixas
+    add(caixa(FL + 0.9, 0.9, FL + 0.9, m.pedraEscura), tx, FA, fz);
+    add(piramide(FL + 0.4, 23, m.telhado), tx, FA + 0.4 + 11.5, fz);          // agulha
+    cruz(tx, FA + 23, fz);
+    for (const [px, pz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {            // pináculos
+      add(caixa(0.9, 2.2, 0.9, m.pedraEscura), tx + px * (FL / 2 - 0.2), FA + 1.5, fz + pz * (FL / 2 - 0.2));
+      add(piramide(1.3, 4.5, m.telhado), tx + px * (FL / 2 - 0.2), FA + 4.8, fz + pz * (FL / 2 - 0.2));
+    }
+    // sineiras (aberturas escuras no alto) e janelas estreitas
+    ogiva(tx, 25.5, frente + 0.03, 1.5, 5, false, m.janelaApagada);
+    ogiva(tx + lado * (FL / 2 + 0.03), 25.5, fz, 1.5, 5, true, m.janelaApagada);
+    ogiva(tx, 15.2, frente + 0.03, 1.0, 4, false);
+    ogiva(tx, 5.5, frente + 0.03, 1.0, 3.6, false, m.janelaApagada);
+    colide(tx, fz, FL, FL);
+  }
+  // corpo central entre as torres, com empena
+  add(caixa(5.4, 19, 6, m.pedra), 0, 9.5, fz - 0.5);
+  add(telhado(5.6, 5, 6.2, m.telhado, m.pedra), 0, 19, fz - 0.5);
+  cruz(0, 24, fz + 2.4);
+  colide(0, fz - 0.5, 5.4, 6);
+  const fc = fz + 2.5;                                                       // face do corpo central
+  const rosacea = new THREE.Mesh(new THREE.CircleGeometry(2.1, 10), m.vitral); add(rosacea, 0, 13.6, fc + 0.06);
+  const aro = new THREE.Mesh(new THREE.RingGeometry(2.1, 2.5, 10), m.pedraEscura); add(aro, 0, 13.6, fc + 0.07);
+
+  // ---------- portal ----------
+  const base = 0.75;                                                         // altura do patamar da escada
+  add(caixa(0.7, 6.4, 0.9, m.pedraEscura), -2.1, base + 3.2, fc + 0.3);      // colunas
+  add(caixa(0.7, 6.4, 0.9, m.pedraEscura), 2.1, base + 3.2, fc + 0.3);
+  add(telhado(5.4, 3.2, 1.0, m.pedraEscura, m.pedraEscura), 0, base + 6.4, fc + 0.3); // frontão em ponta
+  for (const lado of [-1, 1]) add(caixa(1.7, 5.6, 0.2, m.madeira, 1.4), lado * 0.87, base + 2.8, fc + 0.12); // duas folhas
+  add(caixa(0.12, 5.6, 0.24, m.metal, 1), 0, base + 2.8, fc + 0.13);         // fresta entre as folhas
+  // Uma luz verde vaza por baixo da porta selada: algo espera lá dentro.
+  const fresta = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.1, 0.06), retro(new THREE.MeshBasicMaterial({ color: CONFIG.paleta.magia })));
+  add(fresta, 0, base + 0.06, fc + 0.24);
+  const luzPorta = new THREE.PointLight(CONFIG.paleta.magia, 5, 9, 1.8); add(luzPorta, 0, base + 0.5, fc + 1.3);
+
+  // ---------- patamar e escadaria ----------
+  add(caixa(5.3, base, 1.6, m.calcamento, 1.6), 0, base / 2, fc + 0.7);
+  colide(0, fc + 0.7, 5.3, 1.6, base);
+  for (let i = 0; i < 3; i++) {
+    const larg = 15 - i * 1.6, prof = 4.4 - i * 1.1, alt = 0.25 * (i + 1);
+    add(caixa(larg, alt, prof, m.calcamento, 1.6), 0, alt / 2, frente + prof / 2 - 0.2);
+    colide(0, frente + prof / 2 - 0.2, larg, prof, alt);
+  }
+
   g.position.set(x, 0, z);
   mundo.grupo.add(g);
-  mundo.colisores.adicionar(x, z, L + 1.2, P);
-  mundo.colisores.adicionar(x, z + tz, TL, TL);
-  return { grupo: g, portaZ: z + zf };
+  return { grupo: g, porta: { x, z: z + frente + 0.6 }, luzPorta };
 }
 
 /** Tocha num poste: madeira + chama + luz laranja que tremula. */

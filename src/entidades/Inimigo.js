@@ -91,7 +91,7 @@ export class Inimigo {
     this.angulo = 0; this.fase = Math.random() * 6; this.piscar = 0;
     this.golpesRestantes = 0; this.desvio = 0; this.tPreso = 0;
     this.empurrao.set(0, 0, 0);
-    this.grupo.visible = true; this.grupo.rotation.set(0, 0, 0); this.grupo.position.copy(this.pos);
+    this.grupo.visible = true; this.grupo.scale.setScalar(this.cfg.escala); this.grupo.rotation.set(0, 0, 0); this.grupo.position.copy(this.pos);
     this.barra.visible = false;
     for (const m of this.materiais) m.emissive.setRGB(0, 0, 0);
   }
@@ -106,10 +106,10 @@ export class Inimigo {
     for (const m of this.materiais) m.emissive.setRGB(claro, claro, claro * 1.1);
 
     if (this.morto) {
-      // Cai para trás e, depois de um tempo, afunda no chão.
+      // Cai para trás e, depois de um tempo, se desfaz.
       this.grupo.rotation.x = Math.max(-Math.PI / 2, this.grupo.rotation.x - dt * 3.5);
-      if (this.tEstado > 5) this.grupo.position.y -= dt * 0.3;
-      if (this.tEstado > 9) this.grupo.visible = false;
+      if (this.tEstado > 6) this.grupo.scale.multiplyScalar(Math.exp(-dt * 2.5));
+      if (this.tEstado > 8.5) this.grupo.visible = false;
       return;
     }
 

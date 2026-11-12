@@ -28,6 +28,29 @@ Depois abra no Chrome o endereço que aparecer, normalmente **http://localhost:5
 
 Para parar o jogo, feche a janela preta do terminal (ou aperte Ctrl+C nela).
 
+## Publicar para os amigos jogarem (GitHub Pages)
+
+O projeto já vem preparado: o arquivo `.github/workflows/publicar.yml` monta e publica
+o jogo sozinho toda vez que uma versão nova é enviada ao GitHub.
+
+**Só na primeira vez:**
+1. Crie uma conta grátis em https://github.com
+2. Instale o **GitHub Desktop** (https://desktop.github.com) e entre com a sua conta.
+3. No GitHub Desktop: *File → Add local repository* → escolha a pasta `pugna`.
+4. Clique em **Publish repository**. Desmarque "Keep this code private" (o GitHub
+   Pages gratuito só funciona em repositório público) e confirme.
+5. No site do GitHub, abra o repositório → **Settings → Pages** → em "Source" escolha
+   **GitHub Actions**.
+6. Aba **Actions** → "Publicar o jogo" → **Run workflow**. Espere ficar verde (~1 min).
+7. O jogo estará em `https://SEU-USUARIO.github.io/pugna/`. Mande esse link aos amigos.
+
+**A cada versão nova:** abra o GitHub Desktop, escreva um resumo do que mudou no campo
+"Summary", clique em **Commit to main** e depois em **Push origin**. Em cerca de um
+minuto o link já mostra a versão nova.
+
+A pasta `referencias/` fica de fora do GitHub de propósito (está no `.gitignore`):
+são imagens de outros autores.
+
 ## Git (histórico de versões)
 
 O projeto foi construído com um commit por etapa. Para ligar esse histórico na sua
@@ -72,11 +95,16 @@ ou **Alt** para esquivar.
 
 ## O que existe hoje (fase 1)
 
-- Vilarejo gótico pequeno: ruas de pedra, 17 casas, torres, igreja com agulha,
-  cemitério, muralha, tochas e névoa.
+- Vilarejo gótico pequeno: ruas de pedra, 17 casas, torres, cemitério, muralha,
+  tochas e névoa.
+- **Catedral** ao norte: duas torres com agulhas, rosácea, portal, transepto, abside,
+  contrafortes e vitrais. A porta está **selada**, com uma luz verde vazando por
+  baixo: ela é a entrada planejada para as próximas fases (a posição fica em
+  `mundo.igreja.porta`).
 - Céu noturno roxo-azulado com nuvens, estrelas e a **lua com rosto**: ela ocupa boa
-  parte do céu, está sempre visível, vira o rosto e as pupilas na direção do jogador,
-  e quando é encarada por alguns segundos os olhos acendem e o sorriso abre.
+  parte do céu, está sempre visível (a nordeste, ao lado das torres), tem um
+  sorriso aberto com dentes tortos à mostra, vira o rosto e as pupilas na direção do
+  jogador, e quando é encarada por alguns segundos os olhos acendem e a boca abre mais.
 - Filtro PS1: baixa resolução ampliada sem suavização, texturas "nearest", tremida
   de vértices, dithering e redução de cores.
 - Movimento em primeira pessoa com colisão; dá para subir em caixotes e degraus.
@@ -95,6 +123,7 @@ ou **Alt** para esquivar.
 ```
 pugna/
 ├─ index.html              página do jogo (telas e barras em HTML)
+├─ .github/workflows/      publicação automática no GitHub Pages
 ├─ jogar.bat               atalho para rodar no Windows
 ├─ configurar-git.bat      liga o histórico do Git (rodar uma vez)
 ├─ LEIAME.md               este arquivo
@@ -159,7 +188,9 @@ pugna/
 - [ ] Mãos/braços do caçador mais detalhados e a capa aparecendo ao olhar para baixo
 - [ ] Trocar sons sintetizados por gravações CC0; música ambiente
 - [ ] Menu de opções (sensibilidade do mouse, volume, nível de pixelado)
-- [ ] Interior da igreja e de algumas casas
+- [ ] Combate menos genérico: travar a mira no inimigo, aparar (parry), golpe pelas
+      costas, sequências de ataques, armas com ritmos diferentes
+- [ ] Interior da catedral (próxima área) e de algumas casas
 
 **Próximas fases**
 - [ ] Mais seres cósmicos no horizonte que mudam o céu e as cores (`Ceu.definirPaleta`)
@@ -171,6 +202,11 @@ pugna/
 - [ ] Modelos e animações de verdade (Blender ou pacotes CC0)
 
 ## Notas técnicas
+- **Chão e ruas não gravam profundidade** (`depthWrite: false`) e são desenhados
+  primeiro, em ordem fixa. Motivo: com a tremida de vértices, superfícies enormes e
+  quase coladas "piscavam" ao andar. Qualquer piso plano novo deve seguir o mesmo
+  esquema (veja o comentário em `Vilarejo.js`). Consequência: nada pode ficar abaixo
+  do nível do chão esperando ser escondido por ele.
 - Three.js + Vite + JavaScript puro (sem TypeScript, para facilitar a leitura).
 - O jogo é desenhado em 270 linhas de altura e ampliado; é muito leve para qualquer
   placa de vídeo atual.

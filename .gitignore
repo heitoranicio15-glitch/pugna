@@ -3,3 +3,5 @@ dist
 .vite
 *.log
 historico-git.bundle
+# Imagens de referência são de outros autores: não vão para o repositório público.
+referencias/

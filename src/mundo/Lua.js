@@ -4,8 +4,8 @@
 //  céu e está SEMPRE lá. Ela nunca luta. Só olha.
 //
 //  Como funciona: a lua é pintada dentro do próprio céu (shader). O rosto é um
-//  "relevo" feito de calombos e sulcos (bochechas, nariz, órbitas, sorriso) que
-//  recebe luz de lado. Os olhos e o rosto viram devagar na direção do jogador,
+//  "relevo" feito de calombos e sulcos (bochechas, nariz, órbitas, lábios) que
+//  recebe luz de lado. A boca é um sorriso aberto, com dentes à mostra. Os olhos e o rosto viram devagar na direção do jogador,
 //  e quando o jogador a encara, os olhos acendem mais e o sorriso abre.
 // =============================================================================
 import * as THREE from 'three';
@@ -21,20 +21,30 @@ export const SHADER_LUA = /* glsl */ `
 
   float calombo(vec2 p, vec2 c, vec2 s) { vec2 d = (p - c) / s; return exp(-dot(d, d)); }
 
+  // Curvas da boca: devolve (borda de cima, borda de baixo) para uma distância x do centro.
+  // A boca é um sorriso aberto em forma de lua crescente, largo demais para um rosto.
+  vec2 bocaLua(float x) {
+    float cima = -0.32 + 0.52 * x * x;
+    float abertura = (0.17 + 0.07 * uLuaAtencao) * max(0.0, 1.0 - (x * x) / 0.3844); // fecha em x = 0.62
+    return vec2(cima, cima - abertura);
+  }
+
   // Altura do "relevo" do rosto em cada ponto (positivo = saliente, negativo = fundo).
   float relevoLua(vec2 p) {
     vec2 q = vec2(abs(p.x), p.y);            // espelha: o rosto é simétrico
-    float sorriso = 0.5 + 0.12 * uLuaAtencao;
+    vec2 b = bocaLua(q.x);
+    float naBoca = smoothstep(0.66, 0.56, q.x);
     float h = 0.0;
-    h += 0.95 * calombo(q, vec2(0.40, -0.10), vec2(0.19, 0.16));  // bochechas
-    h += 0.85 * calombo(p, vec2(0.0, 0.02), vec2(0.075, 0.21));   // nariz
-    h += 0.55 * calombo(p, vec2(0.0, -0.15), vec2(0.14, 0.07));   // ponta do nariz
+    h += 1.05 * calombo(q, vec2(0.43, -0.04), vec2(0.18, 0.15));  // bochechas (empurradas pelo sorriso)
+    h += 0.85 * calombo(p, vec2(0.0, 0.04), vec2(0.075, 0.2));    // nariz
+    h += 0.55 * calombo(p, vec2(0.0, -0.13), vec2(0.14, 0.065));  // ponta do nariz
     h += 0.80 * calombo(q, vec2(0.27, 0.37), vec2(0.25, 0.065));  // sobrancelhas
     h -= 1.00 * calombo(q, vec2(0.28, 0.22), vec2(0.17, 0.08));   // órbitas dos olhos
-    float boca = p.y - (-0.42 + sorriso * q.x * q.x);
-    h -= 1.25 * exp(-boca * boca / 0.0022) * smoothstep(0.66, 0.5, q.x); // sulco do sorriso
-    h += 0.45 * calombo(p, vec2(0.0, -0.64), vec2(0.24, 0.11));   // queixo
-    h += 0.35 * calombo(q, vec2(0.60, -0.26), vec2(0.07, 0.12));  // covinhas
+    float lc = p.y - (b.x + 0.035), lb = p.y - (b.y - 0.04);
+    h += 0.55 * exp(-lc * lc / 0.0011) * naBoca;                  // lábio de cima
+    h += 0.50 * exp(-lb * lb / 0.0016) * naBoca;                  // lábio de baixo
+    h -= 0.70 * calombo(q, vec2(0.66, -0.1), vec2(0.045, 0.12));  // vincos nos cantos da boca
+    h += 0.40 * calombo(p, vec2(0.0, -0.72), vec2(0.22, 0.09));   // queixo
     return h;
   }
 
@@ -68,12 +78,25 @@ export const SHADER_LUA = /* glsl */ `
     cor *= 0.35 + 0.65 * n.z;                                   // escurece para as bordas...
     cor += uLuaBorda * pow(1.0 - n.z, 3.0) * 1.3;               // ...e ganha um aro azul
 
-    // Boca: uma linha escura no fundo do sorriso.
+    // Boca: um sorriso aberto, com dentes demais, tortos e manchados.
     vec2 q = vec2(abs(r.x), r.y);
-    float sorriso = 0.5 + 0.12 * uLuaAtencao;
-    float boca = r.y - (-0.42 + sorriso * q.x * q.x);
-    float linha = (1.0 - smoothstep(0.012, 0.03, abs(boca))) * smoothstep(0.64, 0.52, q.x) * frente;
-    cor = mix(cor, vec3(0.01, 0.0, 0.03), linha);
+    vec2 bc = bocaLua(q.x);
+    float alturaBoca = max(bc.x - bc.y, 0.0001);
+    float dentro = smoothstep(0.0, 0.012, r.y - bc.y) * smoothstep(0.0, 0.012, bc.x - r.y) * step(q.x, 0.62) * frente;
+    float tv = (r.y - bc.y) / alturaBoca;                 // 0 = lábio de baixo, 1 = lábio de cima
+    float meio = abs(tv - 0.5) * 2.0;                     // 0 = linha entre as arcadas
+    float fileira = tv > 0.5 ? 0.0 : 0.5;                 // dentes de baixo desencontrados
+    float ud = r.x * 13.0 + fileira;
+    float idDente = floor(ud) + fileira * 37.0;
+    float sorte = fract(sin(idDente * 91.7) * 4375.5);
+    float fenda = abs(fract(ud) - 0.5);                   // 0 = meio do dente, 0.5 = entre dois dentes
+    float dente = smoothstep(0.5, 0.5 - mix(0.16, 0.05, meio), fenda);  // mais finos na ponta
+    dente *= smoothstep(0.05 + 0.1 * sorte, 0.16 + 0.1 * sorte, meio);  // pontas desiguais
+    float gengiva = smoothstep(0.78, 0.95, meio);
+    vec3 corDente = vec3(0.62, 0.66, 0.46) * (0.5 + 0.5 * sorte) * (1.0 - 0.45 * q.x) * (0.9 + 0.4 * uLuaAtencao);
+    vec3 corBoca = mix(vec3(0.012, 0.0, 0.03), corDente, dente);
+    corBoca = mix(corBoca, vec3(0.16, 0.02, 0.12), gengiva);
+    cor = mix(cor, corBoca, dentro);
 
     // Olhos: amêndoas inclinadas, meio fechadas, com íris em brasa.
     float lado = r.x < 0.0 ? -1.0 : 1.0;
@@ -100,7 +123,7 @@ export class Lua {
   /** uniformes = os uniformes do shader do céu (a lua acrescenta os dela). */
   constructor(uniformes, cores) {
     this.u = uniformes;
-    this.direcao = new THREE.Vector3(0.1, 0.5, -0.86).normalize(); // norte, acima da igreja
+    this.direcao = new THREE.Vector3(0.4, 0.5, -0.77).normalize(); // nordeste, ao lado das torres da catedral
     Object.assign(uniformes, {
       uLuaDir: { value: this.direcao },
       uLuaRaio: { value: 0.31 },                 // ~18 graus: quase metade da altura da tela

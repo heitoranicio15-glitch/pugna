@@ -185,7 +185,9 @@ export class Jogo {
     let perto = null;
     for (const l of this.lanternas) { l.atualizar(this.tempo); if (l.distancia(this.jogador.pos) < 2.4) perto = l; }
     if (this.estado === 'jogando') {
-      this.hud.fixar(perto ? 'E — descansar na lanterna' : '');
+      const porta = this.mundo.igreja?.porta;
+      const naPorta = porta && Math.hypot(this.jogador.pos.x - porta.x, this.jogador.pos.z - porta.z) < 2.6;
+      this.hud.fixar(perto ? 'E — descansar na lanterna' : naPorta ? 'a porta está selada. algo respira do outro lado.' : '');
       if (perto && this.entrada.apertou('KeyE') && this.jogador.acao === 'livre') this.descansar(perto);
     }
 

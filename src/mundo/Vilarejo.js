@@ -34,23 +34,36 @@ export class Vilarejo {
     cena.add(lua);
 
     // ---------- chão e ruas ----------
+    // IMPORTANTE: o chão e as ruas são superfícies enormes e quase coladas. Com a
+    // tremida de vértices do filtro PS1, elas "brigavam" e piscavam ao andar. Solução:
+    // elas são desenhadas primeiro, em ordem fixa (renderOrder), sem gravar profundidade.
+    // Como nada fica abaixo do chão, tudo o mais é desenhado por cima sem conflito.
     const chao = new THREE.Mesh(new THREE.PlaneGeometry(700, 700), m.terra.clone());
     chao.material.map = texturas().terra.clone();
     chao.material.map.repeat.set(230, 230);
     chao.material.onBeforeCompile = m.terra.onBeforeCompile;
+    chao.material.depthWrite = false;
     chao.rotation.x = -Math.PI / 2;
+    chao.renderOrder = -6;
     this.grupo.add(chao);
+    let ordemRua = -5;
     const rua = (x, z, l, pf) => {
-      const r = caixa(l, 0.06, pf, m.calcamento, 1.6);
-      r.position.set(x, 0.0, z); this.grupo.add(r);
+      const geo = new THREE.PlaneGeometry(l, pf);
+      const uv = geo.attributes.uv;
+      for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * l / 1.6, uv.getY(i) * pf / 1.6);
+      const r = new THREE.Mesh(geo, m.calcamentoChao);
+      r.rotation.x = -Math.PI / 2;
+      r.position.set(x, 0.02, z);
+      r.renderOrder = ordemRua; ordemRua += 0.1;
+      this.grupo.add(r);
     };
     rua(0, 5, 6.5, 104);       // rua principal: do portão sul até a igreja
     rua(0, 0, 90, 6.5);        // rua transversal (leste-oeste)
     rua(0, 0, 22, 22);         // praça central
-    rua(0, -40, 16, 10);       // adro da igreja
+    rua(0, -43, 22, 12);       // adro da igreja
 
     // ---------- igreja ao fundo (norte) ----------
-    igreja(this, { x: 0, z: -61 });
+    this.igreja = igreja(this, { x: 0, z: -72 });
 
     // ---------- casas ----------
     const casas = [
@@ -84,7 +97,7 @@ export class Vilarejo {
     torre(this, { x: 39, z: 21, lado: 4.5, a: 12, tipo: 'ponta' });
 
     // ---------- muralha em volta (impede sair do mapa) ----------
-    const LX = 48, ZN = -76, ZS = 57;
+    const LX = 48, ZN = -100, ZS = 57;
     muralha(this, -LX, ZN, LX, ZN, 6);
     muralha(this, -LX, ZN, -LX, ZS, 6);
     muralha(this, LX, ZN, LX, ZS, 6);
@@ -114,7 +127,7 @@ export class Vilarejo {
       [3.7, 48], [3.7, 38], [-3.7, 27], [3.7, 15],
       [-10.5, -10.5], [10.5, 10.5], [10.5, -10.5], [-10.5, 10.5],
       [-24, 3.7], [33, -3.7], [-3.7, -20],
-      [-4.4, -43], [4.4, -43],
+      [-8.2, -42.5], [8.2, -42.5],
     ];
     for (const [x, z] of tochas) tocha(this, { x, z });
 
@@ -141,22 +154,22 @@ export class Vilarejo {
     }
 
     // ---------- árvores secas ----------
-    for (const [x, z] of [[-14, 51], [15, 53], [-30, 22], [-40, -22], [-33, -34], [-22, -46], [-14, -56], [36, 38], [28, 46], [-36, 44], [40, -40], [16, -70], [-30, -66], [24, 16], [-20, 6.5]]) {
+    for (const [x, z] of [[-14, 51], [15, 53], [-30, 22], [-40, -22], [-33, -34], [-22, -46], [-14, -56], [36, 38], [28, 46], [-36, 44], [40, -40], [22, -90], [-30, -66], [-24, -88], [38, -84], [24, 16], [-20, 6.5]]) {
       arvoreSeca(this, { x, z, altura: 5 + sorteio() * 4, sorteio });
     }
 
     // ---------- morros e árvores fora da muralha (só paisagem) ----------
     for (let i = 0; i < 26; i++) {
-      const ang = (i / 26) * Math.PI * 2 + sorteio() * 0.2, dist = 105 + sorteio() * 70;
-      const alt = 14 + sorteio() * 30, raio = 30 + sorteio() * 35;
+      const ang = (i / 26) * Math.PI * 2 + sorteio() * 0.2, dist = 150 + sorteio() * 70;
+      const alt = 16 + sorteio() * 34, raio = 30 + sorteio() * 30;
       const morro = new THREE.Mesh(new THREE.ConeGeometry(raio, alt, 6, 1), m.morro);
-      morro.position.set(Math.cos(ang) * dist, alt / 2 - 2, Math.sin(ang) * dist - 10);
+      morro.position.set(Math.cos(ang) * dist, alt / 2 - 2, Math.sin(ang) * dist - 22);
       morro.rotation.y = sorteio() * 3;
       this.grupo.add(morro);
     }
     for (let i = 0; i < 24; i++) {
-      const ang = sorteio() * Math.PI * 2, dist = 62 + sorteio() * 30;
-      const x = Math.cos(ang) * dist * 0.9, z = Math.sin(ang) * dist * 1.15 - 10;
+      const ang = sorteio() * Math.PI * 2, dist = 66 + sorteio() * 30;
+      const x = Math.cos(ang) * dist * 0.9, z = Math.sin(ang) * dist * 1.3 - 22;
       if (Math.abs(x) < LX + 3 && z > ZN - 3 && z < ZS + 3) continue;
       arvoreSeca(this, { x, z, altura: 6 + sorteio() * 6, sorteio, colide: false });
     }
@@ -180,7 +193,7 @@ export class Vilarejo {
       const s = new THREE.Sprite(matNevoa);
       const esc = 9 + sorteio() * 12;
       s.scale.set(esc * 1.8, esc * 0.5, 1);
-      s.position.set((sorteio() - 0.5) * 110, 0.7 + sorteio() * 1.6, -80 + sorteio() * 140);
+      s.position.set((sorteio() - 0.5) * 110, 0.7 + sorteio() * 1.6, -100 + sorteio() * 160);
       this.grupo.add(s);
       this.nevoas.push({ sprite: s, vel: 0.25 + sorteio() * 0.5 });
     }
@@ -188,7 +201,7 @@ export class Vilarejo {
     // ---------- pontos de descanso (lanternas) ----------
     this.pontosDeDescanso = [
       { id: 'portao-sul', x: -2.7, z: 49, olhar: Math.PI }, // olhar: direção ao renascer
-      { id: 'adro-da-igreja', x: 6.2, z: -37, olhar: Math.PI },
+      { id: 'adro-da-igreja', x: 8.5, z: -36, olhar: Math.PI },
     ];
     this.nascimento = { x: 0, z: 53.5 };
 
@@ -198,7 +211,7 @@ export class Vilarejo {
       { tipo: 'cacador', rota: [[14, 0.5], [40, -0.5]] },
       { tipo: 'cacador', rota: [[-14, -0.5], [-42, 0.5]] },
       { tipo: 'cavaleiro', rota: [[-4, -38], [4, -38]] },
-      { tipo: 'cacador', rota: [[12, -38], [30, -40], [22, -66]] },
+      { tipo: 'cacador', rota: [[14, -40], [31, -42], [22, -66]] },
     ];
   }
 
