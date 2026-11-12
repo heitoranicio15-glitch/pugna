@@ -28,6 +28,14 @@ Depois abra no Chrome o endereço que aparecer, normalmente **http://localhost:5
 
 Para parar o jogo, feche a janela preta do terminal (ou aperte Ctrl+C nela).
 
+## Git (histórico de versões)
+
+O projeto foi construído com um commit por etapa. Para ligar esse histórico na sua
+pasta, instale o **Git** (https://git-scm.com) e dê dois cliques em
+`configurar-git.bat` **uma única vez**. Ele cria o repositório e importa o histórico
+que está em `historico-git.bundle`. Depois disso, `git log` mostra as etapas e você
+(ou a IA do próximo chat) pode continuar fazendo commits normalmente.
+
 ## Controles
 
 | Ação | Tecla |
@@ -88,6 +96,7 @@ ou **Alt** para esquivar.
 pugna/
 ├─ index.html              página do jogo (telas e barras em HTML)
 ├─ jogar.bat               atalho para rodar no Windows
+├─ configurar-git.bat      liga o histórico do Git (rodar uma vez)
 ├─ LEIAME.md               este arquivo
 ├─ CREDITOS.md             origem de bibliotecas e assets
 ├─ referencias/            imagens-guia de estilo (não fazem parte do jogo)
