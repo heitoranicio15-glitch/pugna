@@ -1,0 +1,18 @@
+{
+  "name": "pugna",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Base de um jogo 3D de navegador: ação e exploração gótica em primeira pessoa, estilo PS1.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

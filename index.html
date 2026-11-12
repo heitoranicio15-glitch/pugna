@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pugna</title>
+  <link rel="stylesheet" href="/src/interface/estilo.css" />
+</head>
+<body>
+  <!-- O jogo 3D é desenhado dentro deste elemento. -->
+  <div id="jogo"></div>
+
+  <!-- Barras de vida e estamina + avisos (ficam por cima do 3D). -->
+  <div id="hud" class="oculto">
+    <div class="barra vida"><div id="barra-vida"></div></div>
+    <div class="barra estamina"><div id="barra-estamina"></div></div>
+    <div id="mira"></div>
+    <div id="aviso"></div>
+    <div id="dano"></div>
+  </div>
+
+  <!-- Tela inicial. -->
+  <div id="tela-titulo" class="tela">
+    <h1 id="titulo-jogo">PUGNA</h1>
+    <p class="subtitulo">a noite não termina</p>
+    <button id="botao-comecar">começar</button>
+    <p class="dica">
+      WASD andar · mouse olhar · Shift correr · Espaço pular<br />
+      clique esquerdo atacar (segure: ataque forte) · clique direito bloquear<br />
+      Ctrl, Alt ou Q esquivar · E descansar na lanterna · F tela cheia
+    </p>
+  </div>
+
+  <!-- Pausa (aparece quando o mouse é solto com Esc). -->
+  <div id="tela-pausa" class="tela oculto">
+    <h2>pausado</h2>
+    <p class="dica">clique para continuar</p>
+  </div>
+
+  <!-- Tela de morte. -->
+  <div id="tela-morte" class="tela oculto">
+    <h2>VOCÊ MORREU</h2>
+  </div>
+
+  <!-- Escurecimento usado nas transições (morrer, descansar). -->
+  <div id="veu"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
