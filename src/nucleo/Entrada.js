@@ -34,6 +34,8 @@ export class Entrada {
     });
     addEventListener('mousemove', (e) => {
       if (!this.travado) return;
+      // Alguns navegadores mandam "saltos" absurdos de vez em quando: ignoramos.
+      if (Math.abs(e.movementX) > 400 || Math.abs(e.movementY) > 400) return;
       this.mouseDX += e.movementX; this.mouseDY += e.movementY;
     });
     addEventListener('contextmenu', (e) => e.preventDefault()); // clique direito = bloquear

@@ -1,0 +1,114 @@
+// =============================================================================
+//  SONS
+//  Todos os sons são FABRICADOS no código (ruído + filtros), sem arquivos.
+//  Para usar gravações de verdade no futuro: carregue arquivos de
+//  public/assets/sons e toque-os nos mesmos pontos (os métodos abaixo).
+// =============================================================================
+export class Som {
+  constructor(eventos, jogo) {
+    this.ctx = null;
+    this.jogo = jogo;
+    // Liga cada aviso do jogo ao seu som.
+    eventos.em('jogador:passo', (d) => this.passo(d?.correndo ? 0.5 : 0.32));
+    eventos.em('jogador:pouso', () => this.passo(0.7, 0.7));
+    eventos.em('jogador:pulo', () => this.passo(0.25, 1.3));
+    eventos.em('jogador:golpe', (d) => this.zunido(d.forte ? 0.5 : 0.35, d.forte ? 0.32 : 0.2, d.forte ? 500 : 900));
+    eventos.em('jogador:esquiva', () => this.zunido(0.25, 0.25, 350));
+    eventos.em('golpe:acertou', (d) => this.impacto(d.forte ? 0.9 : 0.6));
+    eventos.em('jogador:bloqueou', (d) => this.metal(d.quebrou ? 0.8 : 0.55));
+    eventos.em('jogador:ferido', () => { this.impacto(0.8); this.gemido(); });
+    eventos.em('jogador:morreu', () => this.sino(55, 4, 0.5));
+    eventos.em('inimigo:golpe', (i) => this.zunido(0.4 * this.perto(i), 0.25, i.tipo === 'cavaleiro' ? 320 : 800));
+    eventos.em('inimigo:preparo', (i) => this.metal(0.12 * this.perto(i), 0.5));
+    eventos.em('inimigo:alerta', (i) => this.rosnado(0.3 * this.perto(i), i.tipo === 'cavaleiro' ? 70 : 120));
+    eventos.em('inimigo:morreu', (i) => { this.rosnado(0.35 * this.perto(i), 50); this.passo(0.6 * this.perto(i), 0.5, 0.45); });
+    eventos.em('descanso', () => this.sino(392, 2.5, 0.25));
+  }
+
+  /** Volume conforme a distância do inimigo até o jogador. */
+  perto(inimigo) {
+    const d = inimigo.pos.distanceTo(this.jogo.jogador.pos);
+    return Math.max(0, 1 - d / 28);
+  }
+
+  /** Precisa ser chamado depois de um clique (regra dos navegadores). */
+  ligar() {
+    if (this.ctx) { this.ctx.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    this.ctx = new AC();
+    this.saida = this.ctx.createGain(); this.saida.gain.value = 0.8; this.saida.connect(this.ctx.destination);
+    // Um segundo de chiado, reaproveitado por quase todos os sons.
+    const n = this.ctx.sampleRate * 2;
+    this.chiado = this.ctx.createBuffer(1, n, this.ctx.sampleRate);
+    const dados = this.chiado.getChannelData(0);
+    for (let i = 0; i < n; i++) dados[i] = Math.random() * 2 - 1;
+    this.vento();
+    this.zumbido();
+  }
+
+  silenciar(sim) { if (this.ctx) this.saida.gain.setTargetAtTime(sim ? 0.15 : 0.8, this.ctx.currentTime, 0.2); }
+
+  /** Estouro de chiado filtrado: a base de passos, zunidos e impactos. */
+  ruido({ volume = 0.5, duracao = 0.2, tipo = 'bandpass', de = 800, ate = de, q = 1, ataque = 0.005 }) {
+    if (!this.ctx || volume <= 0.001) return;
+    const t = this.ctx.currentTime;
+    const fonte = this.ctx.createBufferSource(); fonte.buffer = this.chiado; fonte.loop = true;
+    const filtro = this.ctx.createBiquadFilter(); filtro.type = tipo; filtro.Q.value = q;
+    filtro.frequency.setValueAtTime(de, t); filtro.frequency.exponentialRampToValueAtTime(Math.max(20, ate), t + duracao);
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(volume, t + ataque);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + duracao);
+    fonte.connect(filtro).connect(g).connect(this.saida);
+    fonte.start(t, Math.random()); fonte.stop(t + duracao + 0.05);
+  }
+
+  tom({ volume = 0.3, duracao = 0.3, de = 200, ate = de, forma = 'sine' }) {
+    if (!this.ctx || volume <= 0.001) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(); o.type = forma;
+    o.frequency.setValueAtTime(de, t); o.frequency.exponentialRampToValueAtTime(Math.max(20, ate), t + duracao);
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(volume, t); g.gain.exponentialRampToValueAtTime(0.0001, t + duracao);
+    o.connect(g).connect(this.saida); o.start(t); o.stop(t + duracao + 0.05);
+  }
+
+  passo(volume = 0.3, tomRel = 1, duracao = 0.11) {
+    const f = (500 + Math.random() * 250) * tomRel;
+    this.ruido({ volume, duracao, tipo: 'lowpass', de: f * 2.2, ate: f * 0.5 });
+    this.tom({ volume: volume * 0.5, duracao: 0.07, de: 90 * tomRel, ate: 45 });
+  }
+  zunido(volume, duracao, freq) { this.ruido({ volume, duracao, de: freq * 0.5, ate: freq * 2.4, q: 2.2, ataque: duracao * 0.4 }); }
+  impacto(volume = 0.6) {
+    this.tom({ volume, duracao: 0.2, de: 150, ate: 38 });
+    this.ruido({ volume: volume * 0.8, duracao: 0.14, tipo: 'lowpass', de: 2600, ate: 300 });
+  }
+  metal(volume = 0.5, duracao = 0.45) {
+    for (const f of [523, 1187, 1723, 2917]) this.tom({ volume: volume * 0.22, duracao: duracao * (0.6 + Math.random() * 0.6), de: f * (0.97 + Math.random() * 0.06), forma: 'square' });
+    this.ruido({ volume: volume * 0.5, duracao: 0.07, tipo: 'highpass', de: 3000 });
+  }
+  gemido() { this.tom({ volume: 0.22, duracao: 0.28, de: 190, ate: 95, forma: 'sawtooth' }); }
+  rosnado(volume, freq) { this.tom({ volume, duracao: 0.6, de: freq, ate: freq * 0.6, forma: 'sawtooth' }); this.ruido({ volume: volume * 0.5, duracao: 0.5, tipo: 'lowpass', de: 500, ate: 150 }); }
+  sino(freq, duracao, volume) { for (const [m, v] of [[1, 1], [2.01, 0.5], [2.76, 0.3], [5.4, 0.15]]) this.tom({ volume: volume * v, duracao: duracao / Math.sqrt(m), de: freq * m }); }
+
+  /** Vento: chiado grave contínuo que sobe e desce sozinho. */
+  vento() {
+    const c = this.ctx;
+    const fonte = c.createBufferSource(); fonte.buffer = this.chiado; fonte.loop = true;
+    const filtro = c.createBiquadFilter(); filtro.type = 'bandpass'; filtro.frequency.value = 380; filtro.Q.value = 0.7;
+    const g = c.createGain(); g.gain.value = 0.11;
+    const lfo = c.createOscillator(); lfo.frequency.value = 0.09;
+    const lfoG = c.createGain(); lfoG.gain.value = 190; lfo.connect(lfoG).connect(filtro.frequency);
+    const lfo2 = c.createOscillator(); lfo2.frequency.value = 0.15;
+    const lfo2G = c.createGain(); lfo2G.gain.value = 0.055; lfo2.connect(lfo2G).connect(g.gain);
+    fonte.connect(filtro).connect(g).connect(this.saida);
+    fonte.start(); lfo.start(); lfo2.start();
+  }
+
+  /** Um zumbido grave e distante: a presença da lua. */
+  zumbido() {
+    const c = this.ctx;
+    const g = c.createGain(); g.gain.value = 0.035; g.connect(this.saida);
+    for (const f of [55, 55.7, 82.4]) { const o = c.createOscillator(); o.frequency.value = f; o.connect(g); o.start(); }
+  }
+}

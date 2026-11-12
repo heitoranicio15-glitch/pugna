@@ -41,7 +41,7 @@ export class Vilarejo {
     chao.rotation.x = -Math.PI / 2;
     this.grupo.add(chao);
     const rua = (x, z, l, pf) => {
-      const r = caixa(l, 0.06, pf, m.calcamento, 2.5);
+      const r = caixa(l, 0.06, pf, m.calcamento, 1.6);
       r.position.set(x, 0.0, z); this.grupo.add(r);
     };
     rua(0, 5, 6.5, 104);       // rua principal: do portão sul até a igreja
@@ -111,7 +111,7 @@ export class Vilarejo {
 
     // ---------- tochas (as luzes laranja) ----------
     const tochas = [
-      [-3.7, 49], [3.7, 38], [-3.7, 27], [3.7, 15],
+      [3.7, 48], [3.7, 38], [-3.7, 27], [3.7, 15],
       [-10.5, -10.5], [10.5, 10.5], [10.5, -10.5], [-10.5, 10.5],
       [-24, 3.7], [33, -3.7], [-3.7, -20],
       [-4.4, -43], [4.4, -43],
@@ -187,7 +187,7 @@ export class Vilarejo {
 
     // ---------- pontos de descanso (lanternas) ----------
     this.pontosDeDescanso = [
-      { id: 'portao-sul', x: -2.3, z: 51.5, olhar: Math.PI }, // olhar: direção ao renascer
+      { id: 'portao-sul', x: -2.7, z: 49, olhar: Math.PI }, // olhar: direção ao renascer
       { id: 'adro-da-igreja', x: 6.2, z: -37, olhar: Math.PI },
     ];
     this.nascimento = { x: 0, z: 53.5 };
