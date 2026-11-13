@@ -36,6 +36,13 @@ export class Toque {
     for (const botao of this.painel.querySelectorAll('[data-tecla], [data-botao]')) this.ligarPonteiro(botao, 'acao');
     document.getElementById('toque-bolsa').addEventListener('click', () => jogo.abrirBolsa());
     document.getElementById('toque-pausa').addEventListener('click', () => jogo.pausar());
+    // O Safari pode emitir eventos de pinça próprios além dos eventos de ponteiro.
+    const impedirZoom = (evento) => {
+      if (this.emPartida()) evento.preventDefault();
+    };
+    for (const tipo of ['gesturestart', 'gesturechange']) {
+      document.addEventListener(tipo, impedirZoom, { passive: false });
+    }
     addEventListener('blur', () => this.limpar());
     addEventListener('orientationchange', () => this.limpar());
   }
@@ -51,8 +58,12 @@ export class Toque {
   }
 
   exibir() {
-    this.painel.classList.toggle('oculto', !this.entrada.toque || this.jogo.estado !== 'jogando');
+    const ativo = this.emPartida();
+    document.body.classList.toggle('partida-toque', ativo);
+    this.painel.classList.toggle('oculto', !ativo);
   }
+
+  emPartida() { return this.entrada.toque && this.jogo.estado === 'jogando'; }
 
   atualizarAcoes(interacao, cura) {
     this.interagir.classList.toggle('oculto', !interacao);
