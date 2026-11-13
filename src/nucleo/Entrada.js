@@ -30,6 +30,7 @@ export class Entrada {
     addEventListener('blur', () => this.soltarTudo());
     addEventListener('mousedown', (e) => {
       if (!this.ativo() || this.toque || e.button > 2) return;
+      if (e.button === 1) e.preventDefault();   // botão do meio trava a mira (sem rolagem automática)
       this.pressionarBotao(e.button);
     });
     addEventListener('mouseup', (e) => {

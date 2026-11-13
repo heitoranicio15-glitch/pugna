@@ -6,7 +6,7 @@ import { Eventos } from '../src/nucleo/Eventos.js';
 import { normalizarProgresso, SalvamentoLocal } from '../src/nucleo/Salvamento.js';
 import { Colisores } from '../src/mundo/Colisores.js';
 import { Navegacao } from '../src/mundo/Navegacao.js';
-import { alvoDaMira } from '../src/mundo/Interacoes.js';
+import { alvoDaMira, alvoProximo } from '../src/mundo/Interacoes.js';
 import { contarFrascos } from '../src/nucleo/Inventario.js';
 import * as THREE from 'three';
 
@@ -168,4 +168,111 @@ test('saves antigos migram, eventos novos sobrevivem e o reset remove apenas o p
   } finally {
     delete globalThis.localStorage;
   }
+});
+
+test('aparar na janela anula o dano e desequilibra o atacante; fora dela o golpe entra', () => {
+  const { jogador, entrada, eventos, alvo } = arena();
+  let aparados = 0;
+  alvo.serAparado = () => aparados++;
+  let sinais = 0;
+  eventos.em('jogador:aparou', () => sinais++);
+  entrada.apertou = (codigo) => codigo === 'KeyC';
+  jogador.atualizar(0.01);
+  entrada.apertou = () => false;
+  assert.equal(jogador.acao, 'aparar');
+  assert.equal(jogador.estamina, 100 - CONFIG.combate.aparar.custo);
+  jogador.atualizar(0.1);
+  assert.equal(jogador.receberDano(34, alvo.pos, alvo), 'aparou');
+  assert.deepEqual([jogador.vida, aparados, sinais, jogador.acao], [100, 1, 1, 'livre']);
+
+  // Cedo demais: o gesto termina antes do golpe e o dano entra inteiro.
+  jogador.invencivel = 0;
+  entrada.apertou = (codigo) => codigo === 'KeyC';
+  jogador.atualizar(0.01);
+  entrada.apertou = () => false;
+  for (let i = 0; i < 6; i++) jogador.atualizar(0.05);
+  assert.equal(jogador.acao, 'aparar');
+  assert.equal(jogador.receberDano(34, alvo.pos, alvo), 'ferido');
+  assert.deepEqual([jogador.vida, aparados], [66, 1]);
+});
+
+test('aparar só vale de frente e o golpe em inimigo desequilibrado é crítico', () => {
+  const { jogador, entrada, eventos, alvo } = arena();
+  entrada.apertou = (codigo) => codigo === 'KeyC';
+  jogador.atualizar(0.01);
+  entrada.apertou = () => false;
+  jogador.atualizar(0.1);
+  assert.equal(jogador.receberDano(10, { x: 0, z: 3 }), 'ferido');
+
+  const golpes = [];
+  eventos.em('golpe:acertou', (g) => golpes.push(g.critico));
+  alvo.receberDano = () => 'critico';
+  jogador.acao = 'livre';
+  jogador.iniciarAtaque('leve');
+  for (let i = 0; i < 10; i++) jogador.atualizar(0.02);
+  assert.deepEqual(golpes, [true]);
+});
+
+test('a mira trava no inimigo à frente, ignora quem está atrás de parede e passa adiante quando o alvo cai', () => {
+  const { colisores, jogador, entrada, alvo } = arena();
+  const outro = { pos: new THREE.Vector3(3, 0, -6), raio: 0.44 };
+  const atras = { pos: new THREE.Vector3(0, 0, 5), raio: 0.44 };
+  jogador.jogo.inimigos.push(outro, atras);
+  alvo.receberDano = () => {};
+  assert.equal(jogador.escolherAlvo(), alvo);
+
+  entrada.apertou = (codigo) => codigo === 'Tab';
+  jogador.atualizar(0.01);
+  entrada.apertou = () => false;
+  assert.equal(jogador.alvo, alvo);
+  // Um movimento rápido do mouse para a direita troca para o alvo da direita.
+  entrada.mouseDX = CONFIG.mira.trocaMouse + 40;
+  jogador.atualizar(0.01);
+  entrada.mouseDX = 0;
+  assert.equal(jogador.alvo, outro);
+  // Com a trava, o corpo e o golpe se voltam para o alvo.
+  for (let i = 0; i < 30; i++) jogador.atualizar(0.02);
+  const esperado = Math.atan2(jogador.pos.x - outro.pos.x, jogador.pos.z - outro.pos.z);
+  assert.ok(Math.abs(jogador.rumo - esperado) < 0.01);
+
+  outro.morto = true;
+  jogador.atualizar(0.01);
+  assert.equal(jogador.alvo, alvo);
+  const parede = colisores.adicionar(0, -1, 6, 0.25);
+  for (let i = 0; i < 40; i++) jogador.atualizar(0.05);
+  assert.equal(jogador.alvo, null);
+  assert.equal(jogador.escolherAlvo(), null);
+  parede.ativa = false;
+  assert.equal(jogador.escolherAlvo(), alvo);
+});
+
+test('a câmera fica atrás do caçador, encurta na parede e ignora postes finos', () => {
+  const { colisores, jogador } = arena();
+  const camera = jogador.jogo.camera;
+  jogador.atualizarCamera(0);
+  const livre = Math.hypot(camera.position.x, camera.position.z);
+  assert.ok(camera.position.z > 3 && camera.position.y > CONFIG.camera.alturaPivo);
+  assert.ok(Math.abs(jogador.distCamera - CONFIG.camera.distancia) < 1e-9);
+
+  const poste = colisores.adicionar(0, 1.5, 0.3, 0.3);
+  jogador.atualizarCamera(0);
+  assert.equal(Math.hypot(camera.position.x, camera.position.z), livre);
+  poste.ativa = false;
+  colisores.adicionar(0, 2.5, 8, 1);
+  jogador.atualizarCamera(0);
+  assert.ok(camera.position.z < 2 - CONFIG.camera.folga + 1e-6 && camera.position.z > 0.3);
+});
+
+test('em terceira pessoa a interação vale para o objeto próximo e à frente do corpo ou da câmera', () => {
+  const col = new Colisores();
+  const objeto = { x: 0, y: 0.5, z: -1.8 };
+  const jogador = { pos: new THREE.Vector3(), alturaOlhos: 1.7, rumo: 0, yaw: 0 };
+  assert.equal(alvoProximo([objeto], jogador, col), objeto);
+  jogador.rumo = Math.PI;
+  assert.equal(alvoProximo([objeto], jogador, col), objeto);   // a câmera ainda aponta para ele
+  jogador.yaw = Math.PI;
+  assert.equal(alvoProximo([objeto], jogador, col), null);
+  jogador.rumo = 0;
+  col.adicionar(0, -1, 4, 0.3);
+  assert.equal(alvoProximo([objeto], jogador, col), null);
 });

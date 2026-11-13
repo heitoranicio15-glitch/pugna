@@ -16,12 +16,18 @@ export class Som {
     eventos.em('jogador:esquiva', () => this.zunido(0.25, 0.25, 350));
     eventos.em('jogador:carregando', () => this.sino(294, 0.33, 0.11));
     eventos.em('jogador:sem-estamina', () => this.tom({ volume: 0.13, duracao: 0.12, de: 95, ate: 57 }));
-    eventos.em('golpe:acertou', (d) => this.impacto(d.forte ? 0.9 : 0.6));
+    eventos.em('golpe:acertou', (d) => {
+      this.impacto(d.critico ? 1.1 : d.forte ? 0.9 : 0.6);
+      if (d.critico) this.sino(196, 0.7, 0.2);
+    });
     eventos.em('golpe:parede', () => {
       this.metal(0.42, 0.22);
       this.ruido({ volume: 0.27, duracao: 0.13, tipo: 'bandpass', de: 1250, ate: 370 });
     });
     eventos.em('jogador:bloqueou', (d) => this.metal(d.quebrou ? 0.8 : 0.55));
+    eventos.em('jogador:aparar', () => this.zunido(0.22, 0.14, 1300));
+    eventos.em('jogador:aparou', () => { this.metal(0.75, 0.6); this.sino(880, 0.5, 0.16); });
+    eventos.em('mira:travou', () => this.tom({ volume: 0.08, duracao: 0.07, de: 620, ate: 880 }));
     eventos.em('jogador:ferido', () => { this.impacto(0.8); this.gemido(); });
     eventos.em('jogador:morreu', () => this.sino(55, 4, 0.5));
     eventos.em('inimigo:golpe', (i) => this.zunido(0.4 * this.perto(i), 0.25, i.tipo === 'cavaleiro' ? 320 : 800));

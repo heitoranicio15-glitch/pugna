@@ -79,12 +79,24 @@ html, body {
 }
 #guardiao .barra { position: static; height: 10px; margin-top: 6px; }
 #barra-guardiao { background: linear-gradient(#c15574, #64182d); }
+/* Em terceira pessoa a mira só aparece travada num inimigo; os contatos piscam nela. */
 #mira {
   position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px;
-  background: rgba(225, 225, 255, 0.6);
+  background: rgba(225, 225, 255, 0.6); opacity: 0;
 }
-#mira.carregada { background: #ffd694; outline: 1px solid #ffb46580; }
-#mira.interagivel { background: #ffdb9b; outline: 2px solid #ffdb9b80; }
+#mira.travada {
+  opacity: 1; width: 8px; height: 8px; margin: -4px; border-radius: 50%;
+  background: #fff3d6; outline: 2px solid #ffdb9bcc; outline-offset: 5px;
+}
+#mira.travada.aberto { background: #ff6a5a; outline-color: #ff6a5a; outline-offset: 8px; }
+#destaque {
+  position: absolute; left: 0; right: 0; top: 24%; text-align: center; opacity: 0;
+  font-size: clamp(15px, 2vw, 26px); letter-spacing: 0.32em; color: #cfe6ff;
+  text-shadow: 0 0 10px #000, 0 0 18px rgba(120, 180, 255, 0.7);
+}
+#destaque[data-tipo="critico"] { color: #ffb48a; text-shadow: 0 0 10px #000, 0 0 18px rgba(255, 90, 40, 0.75); }
+#destaque.visivel { animation: destaque 0.9s ease-out; }
+@keyframes destaque { 0% { opacity: 1; letter-spacing: 0.2em; } 60% { opacity: 1; } 100% { opacity: 0; letter-spacing: 0.4em; } }
 #mira[data-contato] { box-shadow: 0 0 0 2px var(--contato); }
 #mira[data-contato="inimigo"] { --contato: #dd665f; }
 #mira[data-contato="parede"] { --contato: #cdb69c; }
@@ -206,11 +218,12 @@ dialog.painel-menu::backdrop { background: #04030bd9; }
 .toque-menu, .toque-acoes { position: absolute; right: var(--toque-direita); display: grid; gap: 6px; }
 .toque-menu { top: var(--toque-topo); grid-auto-flow: column; }
 .toque-acoes { bottom: var(--toque-base); grid-template-columns: repeat(2, minmax(62px, 1fr)); }
-.toque-acoes [data-tecla="Space"], #toque-interagir { grid-column: 1; }
+.toque-acoes [data-tecla="Space"], .toque-acoes [data-tecla="Tab"], #toque-interagir { grid-column: 1; }
 #toque-cura { grid-column: 2; grid-row: 1; }
 #toque-interagir { grid-row: 1; }
-.toque-acoes [data-tecla="Space"], .toque-acoes [data-tecla="KeyQ"] { grid-row: 2; }
-.toque-acoes [data-botao] { grid-row: 3; }
+.toque-acoes [data-tecla="Tab"], .toque-acoes [data-tecla="KeyC"] { grid-row: 2; }
+.toque-acoes [data-tecla="Space"], .toque-acoes [data-tecla="KeyQ"] { grid-row: 3; }
+.toque-acoes [data-botao] { grid-row: 4; }
 #controles-toque button {
   pointer-events: auto; touch-action: none; min-width: 48px; min-height: 44px;
   padding: 3px 7px; border: 1px solid #a28d9f; border-radius: 8px;

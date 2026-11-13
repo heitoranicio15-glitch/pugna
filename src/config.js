@@ -52,6 +52,28 @@ export const CONFIG = {
     estaminaEspera: 0.7,     // segundos sem gastar antes de voltar a encher
     custoCorrer: 11,         // por segundo
     custoPulo: 8,
+    giro: 13,                // rapidez com que o corpo vira para onde anda (rad/s)
+  },
+
+  // ---- Câmera em terceira pessoa ----
+  camera: {
+    distancia: 4.4,          // afastamento atrás do caçador
+    alturaPivo: 2.3,         // ponto em volta do qual a câmera gira (acima da cabeça)
+    inclinacaoInicial: -0.2, // olhar levemente de cima
+    inclinacaoMin: -1.2, inclinacaoMax: 0.85,
+    folga: 0.3,              // distância mínima das paredes
+  },
+
+  // ---- Travar a mira ----
+  mira: {
+    alcance: 17,             // distância máxima para travar
+    soltar: 22,              // distância em que a trava se desfaz
+    semVisao: 1.6,           // segundos sem ver o alvo até soltar
+    cone: 0.2,               // cosseno mínimo entre a câmera e o alvo ao travar
+    trocaMouse: 240,         // deslocamento rápido do mouse/dedo que troca de alvo
+    giroCamera: 7,           // rapidez com que a câmera acompanha o alvo
+    inclinacao: -0.27,
+    ajudaSemTrava: 3.2,      // sem trava e parado, o golpe se volta ao inimigo até esta distância
   },
 
   // ---- Combate do jogador ----
@@ -64,6 +86,10 @@ export const CONFIG = {
     filaEsquiva: 0.17,
     bloqueio: { reducao: 0.85, custoPorDano: 0.9, velocidade: 0.5 },
     esquiva: { custo: 22, duracao: 0.36, invencivel: 0.26, velocidade: 9.5, espera: 0.25 },
+    // Aparar (parry): um gesto curto e arriscado. Se o golpe inimigo chegar dentro
+    // da janela, o inimigo fica desequilibrado e o próximo golpe é crítico.
+    aparar: { custo: 12, preparo: 0.05, janela: 0.2, recuperacao: 0.4, desequilibrio: 1.9 },
+    critico: { multiplicador: 2.6, pausa: 0.14 },
     pausaImpacto: 0.07,      // "hit stop": o jogo congela um instante ao acertar (dá peso)
   },
 
@@ -97,6 +123,7 @@ export const CONFIG = {
       dano: 32, alcance: 2.9, preparo: 1.05, ativo: 0.2, recuperacao: 1.35,
       visao: 20, firmeza: 60,
       escala: 1.65, raio: 0.78, golpes: 1, recua: false,
+      desequilibrio: 1.15,   // chefes se recompõem mais rápido de um aparo
       faseFinal: { velPerseguir: 2.9, dano: 25, preparo: 0.73, recuperacao: 1.1, golpes: 2 },
     },
   },

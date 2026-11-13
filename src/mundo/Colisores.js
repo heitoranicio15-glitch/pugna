@@ -57,14 +57,18 @@ export class Colisores {
     return this.interceptarTrecho(origem, destino, altura, margem) !== null;
   }
 
-  /** Fração do trecho até o primeiro obstáculo, ou null se o trajeto está livre. */
-  interceptarTrecho(origem, destino, altura, margem = 0, alturaDestino = altura) {
+  /**
+   * Fração do trecho até o primeiro obstáculo, ou null se o trajeto está livre.
+   * tamanhoMinimo ignora obstáculos finos (postes, tochas): a câmera passa por eles.
+   */
+  interceptarTrecho(origem, destino, altura, margem = 0, alturaDestino = altura, tamanhoMinimo = 0) {
     const dx = destino.x - origem.x, dz = destino.z - origem.z;
     const trechoMinX = Math.min(origem.x, destino.x), trechoMaxX = Math.max(origem.x, destino.x);
     const trechoMinZ = Math.min(origem.z, destino.z), trechoMaxZ = Math.max(origem.z, destino.z);
     let primeiro = 1;
     for (const c of this.caixas) {
       if (!c.ativa || c.topo <= Math.min(altura, alturaDestino)) continue;
+      if (c.maxX - c.minX < tamanhoMinimo && c.maxZ - c.minZ < tamanhoMinimo) continue;
       const minX = c.minX - margem, maxX = c.maxX + margem;
       const minZ = c.minZ - margem, maxZ = c.maxZ + margem;
       if (trechoMaxX < minX || trechoMinX > maxX || trechoMaxZ < minZ || trechoMinZ > maxZ) continue;

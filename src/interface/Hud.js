@@ -6,6 +6,7 @@ export class Hud {
     this.hud = el('hud'); this.vida = el('barra-vida'); this.estamina = el('barra-estamina');
     this.aviso = el('aviso'); this.dano = el('dano'); this.veu = el('veu');
     this.mira = el('mira');
+    this.destaque = el('destaque');
     this.tContato = 0;
     this.guardiao = el('guardiao'); this.nomeGuardiao = el('nome-guardiao'); this.vidaGuardiao = el('barra-guardiao');
     this.telas = {
@@ -46,6 +47,23 @@ export class Hud {
   }
 
   mostrarAlvo(ativo) { this.mira.classList.toggle('interagivel', ativo); }
+
+  /** Marcador da mira travada. ponto = { x, y } em % da tela, ou null para soltar. */
+  mostrarTrava(ponto) {
+    this.mira.classList.toggle('travada', !!ponto);
+    this.mira.classList.toggle('aberto', !!ponto?.aberto);
+    this.mira.style.left = ponto ? ponto.x + '%' : '';
+    this.mira.style.top = ponto ? ponto.y + '%' : '';
+  }
+
+  /** Palavra curta que pisca no alto da tela (aparo, golpe crítico). */
+  destacar(tipo) {
+    this.destaque.textContent = { aparou: 'APARADO', critico: 'GOLPE CRÍTICO' }[tipo];
+    this.destaque.dataset.tipo = tipo;
+    this.destaque.classList.remove('visivel');
+    void this.destaque.offsetWidth;   // reinicia a animação
+    this.destaque.classList.add('visivel');
+  }
 
   mostrarFrascos(total) {
     el('total-frascos').textContent = total;

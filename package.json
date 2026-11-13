@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Base de um jogo 3D de navegador: ação e exploração gótica em primeira pessoa, estilo PS1.",
+  "description": "Base de um jogo 3D de navegador: ação e exploração gótica em terceira pessoa (souls-like), estilo PS1.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
