@@ -5,14 +5,13 @@ gótico, à noite, com visual retrô estilo PS1. Você é um caçador que enfren
 cavaleiros e caçadores corrompidos, sob uma **lua enorme com rosto** que não tira
 os olhos de você.
 
-> Este arquivo é o ponto de partida para qualquer pessoa (ou IA) que for continuar
-> o projeto. **Mantenha-o atualizado a cada mudança.**
+> Para atualizar o jogo em equipe, consulte o [protocolo de colaboração](AGENTS.md).
 
 ---
 
 ## Como rodar o jogo
 
-Você precisa do **Node.js** (versão LTS, 18 ou mais nova): https://nodejs.org
+Você precisa do **Node.js** (versão 20 ou mais nova): https://nodejs.org
 
 **Jeito fácil (Windows):** dê dois cliques em `jogar.bat`. Na primeira vez ele baixa
 as dependências (precisa de internet) e depois abre o jogo no navegador.
@@ -30,8 +29,8 @@ Para parar o jogo, feche a janela preta do terminal (ou aperte Ctrl+C nela).
 
 ## Publicar para os amigos jogarem (GitHub Pages)
 
-O projeto já vem preparado: o arquivo `.github/workflows/publicar.yml` monta e publica
-o jogo sozinho toda vez que uma versão nova é enviada ao GitHub.
+O arquivo `.github/workflows/publicar.yml` monta e publica o jogo após uma integração
+na `main`.
 
 **Só na primeira vez:**
 1. Crie uma conta grátis em https://github.com
@@ -44,9 +43,10 @@ o jogo sozinho toda vez que uma versão nova é enviada ao GitHub.
 6. Aba **Actions** → "Publicar o jogo" → **Run workflow**. Espere ficar verde (~1 min).
 7. O jogo estará em `https://SEU-USUARIO.github.io/pugna/`. Mande esse link aos amigos.
 
-**A cada versão nova:** abra o GitHub Desktop, escreva um resumo do que mudou no campo
-"Summary", clique em **Commit to main** e depois em **Push origin**. Em cerca de um
-minuto o link já mostra a versão nova.
+**A cada atualização:** no GitHub Desktop, crie uma branch a partir da `main`
+atualizada, registre as alterações nessa branch e abra um pull request. Depois
+da integração, acompanhe **Publicar o jogo** na aba **Actions** e confira a
+versão online. Veja os passos de validação e reversão no [protocolo](AGENTS.md).
 
 A pasta `referencias/` fica de fora do GitHub de propósito (está no `.gitignore`):
 são imagens de outros autores.
@@ -96,7 +96,11 @@ ou **Alt** para esquivar.
   golpes no bloqueio. Sem estamina você não ataca nem corre.
 - Bloquear só funciona **de frente** para o inimigo. Se a estamina acabar no bloqueio,
   a guarda quebra e você fica atordoado.
-- A esquiva te deixa **invencível por um instante**.
+- A esquiva te deixa **invencível por um instante**. Você pode apertar **Q**
+  pouco antes de terminar a recuperação da espada para encaixar a esquiva.
+- Toque e solte para um ataque leve. Ao carregar um ataque forte, a mira
+  acende e um som sinaliza a carga. O golpe acompanha a passagem da lâmina e
+  é interrompido se atingir pedra antes do alvo.
 - O ataque forte **interrompe** o golpe dos inimigos comuns. O ataque leve
   interrompe o caçador. O Guardião mantém o ataque mesmo ao receber um golpe forte.
 - **Cavaleiro:** lento, forte, ergue a espada devagar. Esquive ou saia de lado e puna.
@@ -197,8 +201,12 @@ pugna/
   como mais uma lista em `Jogo.js`, igual a `this.inimigos`.
 - **Salvar no Supabase:** escreva uma classe com os métodos `carregar()` e
   `salvar(dados)` (iguais aos de `SalvamentoLocal`) e troque uma linha em `Jogo.js`.
-- **Mapa maior / outras áreas:** cada área é uma classe como `Vilarejo`, que preenche
-  `colisores`, `tochas`, `pontosDeDescanso` e `inimigos`.
+- **Mapa maior / outras áreas:** declare `id`, `nome`, `limites`, `portais`,
+  `chegadas`, `pontosDeDescanso` e `inimigos` na classe do mapa. Cada portal
+  aponta para o ID da área de destino, que declara a posição de chegada.
+  Os checkpoints usam IDs únicos. Eventos persistentes usam `area:evento`,
+  e a área pode implementar `aplicarProgresso(progresso)` para atualizar
+  obstáculos ou outros elementos do cenário.
 - **Assets de verdade (Kenney, Quaternius):** as "peças" estão isoladas em `pecas.js`
   e `montarCorpo`; dá para trocar uma de cada vez por modelos `.glb`.
 
@@ -206,7 +214,7 @@ pugna/
 
 **Polimento da fase 1**
 - [ ] Testar e ajustar o "peso" do combate jogando de verdade (tempos em `config.js`)
-- [ ] Inimigos contornarem obstáculos melhor (hoje só tentam desviar de lado)
+- [x] Inimigos contornam obstáculos e procuram a última posição visível
 - [x] Paredes bloqueiam a detecção inicial e golpes
 - [ ] Mãos/braços do caçador mais detalhados e a capa aparecendo ao olhar para baixo
 - [ ] Trocar sons sintetizados por gravações CC0; música ambiente
@@ -239,3 +247,13 @@ pugna/
 - No console do navegador (F12), a variável `jogo` dá acesso a tudo
   (ex.: `jogo.jogador.vida = 100`).
 - Histórico de mudanças: `git log`.
+
+## Testes
+
+- `npm test` verifica a janela de acerto, o custo da esquiva, colisões,
+  navegação e migração de saves.
+- `npx playwright-core install chromium` instala o navegador de teste.
+  Em seguida, `npm run test:browser` inicia o jogo e percorre a catedral,
+  incluindo transições, checkpoint, morte, recarga e derrota do Guardião.
+  Para usar um Chrome instalado, aponte `PUGNA_CHROME` para o executável.
+  Para testar outro endereço, use `npm run test:browser -- <URL>`.

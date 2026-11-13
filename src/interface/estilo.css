@@ -83,6 +83,11 @@ html, body {
   position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px;
   background: rgba(225, 225, 255, 0.6);
 }
+#mira.carregada { background: #ffd694; outline: 1px solid #ffb46580; }
+#mira[data-contato] { box-shadow: 0 0 0 2px var(--contato); }
+#mira[data-contato="inimigo"] { --contato: #dd665f; }
+#mira[data-contato="parede"] { --contato: #cdb69c; }
+#mira[data-contato="bloqueio"] { --contato: #b4ddff; }
 #aviso {
   position: absolute; left: 0; right: 0; bottom: 22%; text-align: center;
   font-size: clamp(14px, 1.7vw, 21px); letter-spacing: 0.14em; color: #ffd9a0;

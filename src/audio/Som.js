@@ -14,7 +14,13 @@ export class Som {
     eventos.em('jogador:pulo', () => this.passo(0.25, 1.3));
     eventos.em('jogador:golpe', (d) => this.zunido(d.forte ? 0.5 : 0.35, d.forte ? 0.32 : 0.2, d.forte ? 500 : 900));
     eventos.em('jogador:esquiva', () => this.zunido(0.25, 0.25, 350));
+    eventos.em('jogador:carregando', () => this.sino(294, 0.33, 0.11));
+    eventos.em('jogador:sem-estamina', () => this.tom({ volume: 0.13, duracao: 0.12, de: 95, ate: 57 }));
     eventos.em('golpe:acertou', (d) => this.impacto(d.forte ? 0.9 : 0.6));
+    eventos.em('golpe:parede', () => {
+      this.metal(0.42, 0.22);
+      this.ruido({ volume: 0.27, duracao: 0.13, tipo: 'bandpass', de: 1250, ate: 370 });
+    });
     eventos.em('jogador:bloqueou', (d) => this.metal(d.quebrou ? 0.8 : 0.55));
     eventos.em('jogador:ferido', () => { this.impacto(0.8); this.gemido(); });
     eventos.em('jogador:morreu', () => this.sino(55, 4, 0.5));

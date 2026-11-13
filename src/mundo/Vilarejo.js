@@ -15,6 +15,9 @@ import { materiais, caixa, piramide, casa, torre, igreja, tocha, animarTochas, a
 
 export class Vilarejo {
   constructor(cena, direcaoLua) {
+    this.id = 'vilarejo';
+    this.nome = 'Vilarejo';
+    this.limites = { minX: -47, maxX: 47, minZ: -99, maxZ: 56 };
     this.grupo = new THREE.Group();
     this.colisores = new Colisores();
     this.tochas = [];
@@ -40,7 +43,9 @@ export class Vilarejo {
     const chao = new THREE.Mesh(new THREE.PlaneGeometry(700, 700), m.terra.clone());
     chao.material.map = texturas().terra.clone();
     chao.material.map.repeat.set(100, 100);
+    chao.material.map.needsUpdate = true;
     chao.material.onBeforeCompile = m.terra.onBeforeCompile;
+    chao.material.customProgramCacheKey = m.terra.customProgramCacheKey;
     chao.material.depthWrite = false;
     chao.rotation.x = -Math.PI / 2;
     chao.renderOrder = -6;
@@ -65,6 +70,11 @@ export class Vilarejo {
 
     // ---------- igreja ao fundo (norte) ----------
     this.igreja = igreja(this, { x: 0, z: -72 });
+    const porta = this.igreja.porta;
+    this.portais = [
+      { ...porta, raio: 2.6, destino: 'catedral', texto: 'E — entrar na Catedral do Véu' },
+    ];
+    this.chegadas = { catedral: { x: porta.x, z: porta.z + 4, yaw: Math.PI } };
 
     // ---------- casas ----------
     const casas = [

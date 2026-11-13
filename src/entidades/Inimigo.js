@@ -4,7 +4,7 @@
 //  CONFIG.inimigos e a aparência (função montarCorpo).
 //
 //  "Cérebro" (IA) em estados:
-//    patrulha → perseguir → preparo → ativo → recuperacao → (recuar) → perseguir
+//    patrulha → perseguir → (procurar) → preparo → ativo → recuperacao
 //    a qualquer momento: atordoado (levou golpe forte) ou morto
 // =============================================================================
 import * as THREE from 'three';
@@ -14,7 +14,7 @@ import { texturas } from '../render/texturas.js';
 
 const v2 = new THREE.Vector3();
 
-/** Monta o boneco com caixas. Devolve o grupo e as partes que se mexem. */
+/** Monta o corpo facetado e devolve o grupo e as partes animadas. */
 function montarCorpo(tipo) {
   const t = texturas();
   const guardiao = tipo === 'guardiao';
@@ -43,7 +43,9 @@ function montarCorpo(tipo) {
     corpo.add(elmo);
     corpo.add(cx(0.26, 0.04, 0.06, olho, 0, 1.8, 0.176));
   } else {
-    corpo.add(cx(0.34, 0.36, 0.36, armadura, 0, 1.78, 0));
+    const elmo = facetado(new THREE.CylinderGeometry(0.205, 0.164, 0.39, 6), armadura, 0, 1.78, 0);
+    elmo.rotation.y = Math.PI / 6;
+    corpo.add(elmo);
     corpo.add(cx(0.24, 0.045, 0.02, olho, 0, 1.8, 0.185));
   }
   if (cavaleiro) {
@@ -58,7 +60,11 @@ function montarCorpo(tipo) {
       }
       corpo.add(facetado(new THREE.ConeGeometry(0.09, 0.33, 4), armadura, 0, 2.08, -0.05));
     } else {
-      corpo.add(cx(0.3, 0.2, 0.42, armadura, -0.5, 1.56, 0), cx(0.3, 0.2, 0.42, armadura, 0.5, 1.56, 0));
+      for (const lado of [-1, 1]) {
+        const ombreira = facetado(new THREE.IcosahedronGeometry(0.25), armadura, lado * 0.47, 1.54, 0);
+        ombreira.scale.set(1.1, 0.66, 1.14);
+        corpo.add(ombreira);
+      }
       corpo.add(cx(0.06, 0.3, 0.4, pano, 0, 2.05, -0.02));
     }
     corpo.add(cx(0.5, 0.75, 0.04, pano, 0, 0.55, 0.19));         // tabardo
@@ -66,7 +72,9 @@ function montarCorpo(tipo) {
     const capuz = new THREE.Mesh(new THREE.ConeGeometry(0.29, 0.46, 4), pano);
     capuz.position.set(0, 1.99, -0.06);
     capuz.rotation.y = Math.PI / 4;
-    corpo.add(capuz, cx(0.55, 1.02, 0.27, pano, 0, 0.66, -0.02));
+    const habito = facetado(new THREE.CylinderGeometry(0.19, 0.36, 1.22, 5, 1, true), pano, 0, 0.77, -0.04);
+    habito.scale.z = 0.76;
+    corpo.add(capuz, habito);
   } else {
     const aba = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.04, 6), pano); aba.position.y = 1.97; corpo.add(aba); // chapéu
     const copa = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.34, 5), pano); copa.position.y = 2.14; corpo.add(copa);
@@ -96,16 +104,23 @@ function montarCorpo(tipo) {
     arma.add(cx(0.3, 0.05, 0.05, armadura, 0, 0, 0.1));
   }
   bracoD.add(arma);
-  if (cavaleiro) { const escudo = cx(0.06, 0.62, 0.46, armadura, -0.1, -0.5, 0.05); bracoE.add(escudo); }
+  if (cavaleiro) {
+    const escudo = facetado(new THREE.CylinderGeometry(0.25, 0.25, 0.065, 6), armadura, -0.12, -0.47, 0.06);
+    escudo.rotation.z = Math.PI / 2;
+    escudo.scale.x = 1.32;
+    bracoE.add(escudo);
+  }
 
   return { grupo: g, corpo, pernaE, pernaD, bracoE, bracoD, olho, materiais: [armadura, pano, aco] };
 }
 
 export class Inimigo {
   /** tipo: nome em CONFIG.inimigos. rota: pontos [x, z] da patrulha. */
-  constructor(jogo, mundo, { tipo, rota, limiteZ = Infinity }) {
+  constructor(jogo, mundo, { tipo, rota, limiteZ = Infinity, eventoDeDerrota = null }) {
     this.jogo = jogo;
+    this.mundo = mundo;
     this.tipo = tipo;
+    this.eventoDeDerrota = eventoDeDerrota;
     this.base = CONFIG.inimigos[tipo];
     this.cfg = this.base;
     this.limiteZ = limiteZ;
@@ -137,7 +152,11 @@ export class Inimigo {
     this.pontoAtual = 0; this.espera = 0;
     this.pos.set(this.rota[0][0], 0, this.rota[0][1]);
     this.angulo = 0; this.fase = Math.random() * 6; this.piscar = 0;
-    this.golpesRestantes = 0; this.desvio = 0; this.tPreso = 0;
+    this.golpesRestantes = 0;
+    this.caminho = [];
+    this.alvoDaRota = null;
+    this.recalcularRota = 0;
+    this.ultimaVista = null;
     this.perfilAtaque = null;
     this.bracoD.rotation.set(0, 0, 0);
     this.corpo.rotation.set(0, 0, 0);
@@ -163,11 +182,37 @@ export class Inimigo {
     this.jogo.eventos.emitir('inimigo:preparo', this);
   }
 
+  proximoPasso(alvo, dt) {
+    const nav = this.mundo.navegacao;
+    if (nav.livre(this.pos, alvo, Math.max(0, this.raio - 0.06)) && alvo.z <= this.limiteZ) {
+      this.caminho = [];
+      this.alvoDaRota = null;
+      return alvo;
+    }
+    this.recalcularRota -= dt;
+    if (!this.alvoDaRota || (this.recalcularRota <= 0 &&
+        (!this.caminho.length || Math.hypot(alvo.x - this.alvoDaRota.x, alvo.z - this.alvoDaRota.z) > 0.9))) {
+      this.alvoDaRota = { x: alvo.x, z: alvo.z };
+      this.caminho = nav.encontrar(this.pos, alvo, this.raio, this.limiteZ);
+      this.recalcularRota = 0.45 + this.raio * 0.3;
+    }
+    while (this.caminho.length && Math.hypot(this.pos.x - this.caminho[0].x, this.pos.z - this.caminho[0].z) < 0.25) {
+      this.caminho.shift();
+    }
+    for (let i = this.caminho.length - 1; i > 0; i--) {
+      if (nav.livre(this.pos, this.caminho[i], this.raio)) {
+        this.caminho.splice(0, i);
+        break;
+      }
+    }
+    return this.caminho[0];
+  }
+
   atualizar(dt) {
     const c = this.cfg, jog = this.jogo.jogador;
     const ataque = this.perfilAtaque || c;
     const combo = this.tipo === 'guardiao' && ataque === this.cfg && this.emFaseFinal;
-    const col = this.jogo.mundo.colisores;
+    const col = this.mundo.colisores;
     this.tEstado += dt;
     this.piscar -= dt;
     const claro = this.piscar > 0 ? 0.7 : 0;
@@ -184,7 +229,10 @@ export class Inimigo {
     const dx = jog.pos.x - this.pos.x, dz = jog.pos.z - this.pos.z;
     const dist = Math.hypot(dx, dz);
     const anguloJogador = Math.atan2(dx, dz);
+    const visivel = !jog.morto && jog.pos.z <= this.limiteZ && Math.abs(jog.pos.y - this.pos.y) < 3 &&
+      dist < c.visao * 1.9 && !col.bloqueiaTrecho(this.pos, jog.pos, 1.45);
     let andar = 0, alvoAngulo = this.angulo, giro = 6;   // giro = quão rápido vira (rad/s)
+    let destino = null;
     let bracoAlvo = -0.25, bracoLateral = 0, torcer = 0, inclinar = 0, rapidezBraco = 8;
 
     switch (this.estado) {
@@ -194,11 +242,11 @@ export class Inimigo {
         if (pd < 0.7) {
           this.espera += dt;
           if (this.espera > 2.2) { this.espera = 0; this.pontoAtual = (this.pontoAtual + 1) % this.rota.length; }
-        } else { alvoAngulo = Math.atan2(px, pz); andar = c.velPatrulha; giro = 3; }
+        } else { destino = { x: p[0], z: p[1] }; andar = c.velPatrulha; giro = 3; }
         // Viu o jogador? (de frente enxerga longe; de costas só bem de perto)
         const deFrente = Math.cos(anguloJogador - this.angulo) > -0.15;
-        if (!jog.morto && jog.pos.z <= this.limiteZ && Math.abs(jog.pos.y - this.pos.y) < 3 &&
-            dist < (deFrente ? c.visao : 5) && !col.bloqueiaTrecho(this.pos, jog.pos, 1.45)) {
+        if (visivel && dist < (deFrente ? c.visao : 5)) {
+          this.ultimaVista = { x: jog.pos.x, z: jog.pos.z };
           this.mudar('perseguir'); this.jogo.eventos.emitir('inimigo:alerta', this);
         }
         break;
@@ -206,9 +254,11 @@ export class Inimigo {
       case 'perseguir': {
         const casa = this.rota[0];
         const longeDeCasa = Math.hypot(this.pos.x - casa[0], this.pos.z - casa[1]) > 48;
-        if (jog.morto || jog.pos.z > this.limiteZ || dist > c.visao * 1.9 || longeDeCasa) { this.mudar('patrulha'); break; }
+        if (jog.morto || longeDeCasa) { this.mudar('patrulha'); break; }
+        if (!visivel) { this.mudar(this.ultimaVista ? 'procurar' : 'patrulha'); break; }
+        this.ultimaVista = { x: jog.pos.x, z: jog.pos.z };
         alvoAngulo = anguloJogador;
-        if (dist > c.alcance * 0.82) andar = c.velPerseguir;
+        if (dist > c.alcance * 0.82) { destino = this.ultimaVista; andar = c.velPerseguir; }
         else if (Math.cos(anguloJogador - this.angulo) > 0.8) {
           this.perfilAtaque = c;
           this.golpesRestantes = c.golpes;
@@ -216,8 +266,17 @@ export class Inimigo {
         }
         break;
       }
+      case 'procurar': {
+        if (jog.morto || this.tEstado >= 6) { this.mudar('patrulha'); break; }
+        if (visivel) { this.mudar('perseguir'); break; }
+        if (Math.hypot(this.pos.x - this.ultimaVista.x, this.pos.z - this.ultimaVista.z) > 0.65) {
+          destino = this.ultimaVista;
+          andar = c.velPerseguir * 0.8;
+        } else alvoAngulo += dt * 1.7;
+        break;
+      }
       case 'preparo': {      // ergue a arma: é o aviso para o jogador bloquear ou esquivar
-        alvoAngulo = anguloJogador; giro = c.recua ? 5 : 1.6;
+        alvoAngulo = visivel ? anguloJogador : this.angulo; giro = c.recua ? 5 : 1.6;
         bracoAlvo = -2.95; rapidezBraco = 3.2 / ataque.preparo; inclinar = -0.12;
         if (combo) {
           const lado = this.golpesRestantes > 1 ? 1 : -1;
@@ -226,7 +285,7 @@ export class Inimigo {
           torcer = lado * 0.47;
           inclinar = -0.24;
         }
-        if (c.recua && dist > c.alcance * 0.7) andar = c.velPerseguir * 0.6; // o caçador avança enquanto prepara
+        if (c.recua && visivel && dist > c.alcance * 0.7) andar = c.velPerseguir * 0.6;
         if (this.tEstado >= ataque.preparo) { this.mudar('ativo'); this.golpear(dist, anguloJogador, ataque); }
         break;
       }
@@ -254,7 +313,7 @@ export class Inimigo {
         break;
       }
       case 'recuar': {       // o caçador bate e pula para trás
-        alvoAngulo = anguloJogador; andar = -c.velPerseguir * 0.75;
+        alvoAngulo = visivel ? anguloJogador : this.angulo; andar = -c.velPerseguir * 0.75;
         if (this.tEstado >= 0.55) this.mudar('perseguir');
         break;
       }
@@ -266,20 +325,25 @@ export class Inimigo {
     }
 
     // ---------- virar e andar ----------
+    if (destino) {
+      const passo = this.proximoPasso(destino, dt);
+      if (passo) alvoAngulo = Math.atan2(passo.x - this.pos.x, passo.z - this.pos.z);
+      else andar = 0;
+    }
     let dif = alvoAngulo - this.angulo;
     dif = Math.atan2(Math.sin(dif), Math.cos(dif));
     this.angulo += THREE.MathUtils.clamp(dif, -giro * dt, giro * dt);
 
     const antesX = this.pos.x, antesZ = this.pos.z;
     if (andar !== 0) {
-      // "desvio": se ficar preso numa parede, tenta contornar pelo lado.
-      const a = this.angulo + this.desvio;
-      this.pos.x += Math.sin(a) * andar * dt; this.pos.z += Math.cos(a) * andar * dt;
+      if (destino) andar *= Math.max(0, Math.cos(alvoAngulo - this.angulo));
+      this.pos.x += Math.sin(this.angulo) * andar * dt;
+      this.pos.z += Math.cos(this.angulo) * andar * dt;
     }
     this.pos.x += this.empurrao.x * dt; this.pos.z += this.empurrao.z * dt;
     this.empurrao.multiplyScalar(Math.exp(-dt * 7));
     col.resolver(this.pos, this.raio, 0, 0);
-    for (const o of this.jogo.inimigos) {   // não se amontoam
+    for (const o of this.mundo.entidades) {   // não se amontoam
       if (o === this || o.morto) continue;
       const ox = this.pos.x - o.pos.x, oz = this.pos.z - o.pos.z, od = Math.hypot(ox, oz), min = this.raio + o.raio;
       if (od < min && od > 1e-4) { this.pos.x += ox / od * (min - od) * 0.5; this.pos.z += oz / od * (min - od) * 0.5; }
@@ -290,11 +354,7 @@ export class Inimigo {
     col.resolver(this.pos, this.raio, 0, 0);
 
     const andou = Math.hypot(this.pos.x - antesX, this.pos.z - antesZ);
-    if (andar > 0 && andou < andar * dt * 0.35) {
-      this.tPreso += dt;
-      if (this.tPreso > 0.35) { this.desvio = (this.desvio >= 0 ? 1 : -1) * 1.2; this.tPreso = -1.2; }
-    } else if (this.tPreso < 0) { this.tPreso += dt; if (this.tPreso >= 0) this.desvio = -this.desvio * 0.0001; }
-    else this.tPreso = 0;
+    if (destino && andar > 0 && andou < andar * dt * 0.25 && this.recalcularRota <= 0) this.alvoDaRota = null;
 
     // ---------- animação ----------
     this.fase += andou * 3.4 / this.cfg.escala;
@@ -324,7 +384,7 @@ export class Inimigo {
     if (dist > c.alcance + 0.35) return;
     if (Math.cos(anguloJogador - this.angulo) < 0.35) return;      // jogador saiu da frente
     if (Math.abs(this.jogo.jogador.pos.y - this.pos.y) > 1.6) return;
-    if (this.jogo.mundo.colisores.bloqueiaTrecho(this.pos, this.jogo.jogador.pos, 1.35)) return;
+    if (this.mundo.colisores.bloqueiaTrecho(this.pos, this.jogo.jogador.pos, 1.35)) return;
     const r = this.jogo.jogador.receberDano(c.dano, this.pos);
     if (r === 'bloqueou') { this.empurrao.set(-Math.sin(this.angulo) * 3, 0, -Math.cos(this.angulo) * 3); }
   }

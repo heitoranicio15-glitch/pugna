@@ -53,13 +53,24 @@ export class Colisores {
   }
 
   /** Testa visão ou alcance direto no plano horizontal, na altura indicada. */
-  bloqueiaTrecho(origem, destino, altura) {
+  bloqueiaTrecho(origem, destino, altura, margem = 0) {
+    return this.interceptarTrecho(origem, destino, altura, margem) !== null;
+  }
+
+  /** Fração do trecho até o primeiro obstáculo, ou null se o trajeto está livre. */
+  interceptarTrecho(origem, destino, altura, margem = 0) {
     const dx = destino.x - origem.x, dz = destino.z - origem.z;
+    const trechoMinX = Math.min(origem.x, destino.x), trechoMaxX = Math.max(origem.x, destino.x);
+    const trechoMinZ = Math.min(origem.z, destino.z), trechoMaxZ = Math.max(origem.z, destino.z);
+    let primeiro = 1;
     for (const c of this.caixas) {
       if (!c.ativa || c.topo <= altura) continue;
+      const minX = c.minX - margem, maxX = c.maxX + margem;
+      const minZ = c.minZ - margem, maxZ = c.maxZ + margem;
+      if (trechoMaxX < minX || trechoMinX > maxX || trechoMaxZ < minZ || trechoMinZ > maxZ) continue;
       let entrada = 0, saida = 1;
       for (const [inicio, delta, min, max] of [
-        [origem.x, dx, c.minX, c.maxX], [origem.z, dz, c.minZ, c.maxZ],
+        [origem.x, dx, minX, maxX], [origem.z, dz, minZ, maxZ],
       ]) {
         if (Math.abs(delta) < 1e-8) {
           if (inicio < min || inicio > max) { entrada = 2; break; }
@@ -70,8 +81,8 @@ export class Colisores {
         saida = Math.min(saida, Math.max(a, b));
         if (entrada > saida) break;
       }
-      if (entrada <= saida && entrada < 1 && saida > 0) return true;
+      if (entrada <= saida && entrada < primeiro && saida > 0) primeiro = entrada;
     }
-    return false;
+    return primeiro < 1 ? primeiro : null;
   }
 }

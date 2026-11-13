@@ -56,11 +56,12 @@ export const CONFIG = {
 
   // ---- Combate do jogador ----
   combate: {
-    alcance: 2.5,            // metros
-    arco: 0.45,              // quão de frente o inimigo precisa estar (0 = 90°, 1 = exato)
-    leve: { dano: 22, custo: 14, preparo: 0.16, ativo: 0.12, recuperacao: 0.30, empurrao: 2.5 },
-    forte: { dano: 58, custo: 32, preparo: 0.26, ativo: 0.16, recuperacao: 0.55, empurrao: 6.5 },
+    leve: { dano: 22, custo: 14, preparo: 0.055, ativo: 0.15, recuperacao: 0.27, empurrao: 2.5, alcance: 2.45, arco: 0.94, liberarEsquiva: 0.07 },
+    forte: { dano: 58, custo: 32, preparo: 0.11, ativo: 0.19, recuperacao: 0.52, empurrao: 6.5, alcance: 2.65, arco: 0.36, liberarEsquiva: 0.23 },
     tempoSegurarForte: 0.32, // segurar o clique por mais que isso vira ataque forte
+    tempoMaximoCarga: 1.4,
+    filaAtaque: 0.22,
+    filaEsquiva: 0.17,
     bloqueio: { reducao: 0.85, custoPorDano: 0.9, velocidade: 0.5 },
     esquiva: { custo: 22, duracao: 0.36, invencivel: 0.26, velocidade: 9.5, espera: 0.25 },
     pausaImpacto: 0.07,      // "hit stop": o jogo congela um instante ao acertar (dá peso)

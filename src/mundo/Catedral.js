@@ -5,11 +5,14 @@ import { retro } from '../render/retro.js';
 
 export class Catedral {
   constructor(cena) {
+    this.id = 'catedral';
+    this.nome = 'Catedral do Véu';
+    this.limites = { minX: -22, maxX: 22, minZ: -33, maxZ: 9 };
     this.grupo = new THREE.Group();
     this.colisores = new Colisores();
     this.tochas = [];
     this.nevoa = new THREE.FogExp2(0x19162d, 0.027);
-    this.grupo.add(new THREE.HemisphereLight(0x9995d8, 0x33233b, 0.95));
+    this.grupo.add(new THREE.HemisphereLight(0xb6a6d6, 0x3d2f49, 1.1));
     cena.add(this.grupo);
 
     const m = materiais();
@@ -104,6 +107,7 @@ export class Catedral {
       }
     }
     for (const x of [-5.8, 5.8]) tocha(this, { x, z: 5.4 });
+    luz(0, 3.2, -6.3, 0xbca3df, 15, 12);
 
     // A entrada e a grade têm silhuetas próprias para orientar o retorno.
     bloc(0, 2.1, 8.59, 3.7, 4.2, 0.18, m.madeira);
@@ -196,6 +200,8 @@ export class Catedral {
 
     this.saida = { x: 0, z: 8.45 };
     this.entrada = { x: 0, z: 6, yaw: 0 };
+    this.portais = [{ ...this.saida, raio: 2.35, destino: 'vilarejo', texto: 'E — voltar ao vilarejo' }];
+    this.chegadas = { vilarejo: this.entrada };
     this.portao = { x: 0, z: -12.4 };
     this.altar = { x: 0, z: -28.8 };
     this.pontosDeDescanso = [{ id: 'nave-do-veu', nome: 'Nave do Véu', x: 4.55, z: 6.55, olhar: Math.PI }];
@@ -203,11 +209,11 @@ export class Catedral {
       { tipo: 'penitente', rota: [[-13, -5], [-17, -7], [-16, -2.8]] },
       { tipo: 'penitente', rota: [[15, -5], [18, -3], [18, -7]] },
       { tipo: 'cacador', rota: [[13, -9], [13, -2]] },
-      { tipo: 'guardiao', rota: [[0, -24], [0, -26]], limiteZ: -13.7 },
+      { tipo: 'guardiao', rota: [[0, -24], [0, -26]], limiteZ: -13.7, eventoDeDerrota: 'catedral:guardiao-derrotado' },
     ];
   }
 
-  aplicarProgresso(selos) {
+  aplicarProgresso({ selos }) {
     for (const [indice, selo] of this.selos.entries()) {
       const obtido = selos.includes(selo.id);
       selo.malha.visible = !obtido;
@@ -215,7 +221,9 @@ export class Catedral {
       this.indicadores[indice].material = selo.material;
       this.indicadores[indice].visible = obtido;
     }
-    this.bloqueio.ativa = !this.selos.every((selo) => selos.includes(selo.id));
+    const bloqueada = !this.selos.every((selo) => selos.includes(selo.id));
+    if (this.bloqueio.ativa !== bloqueada) this.navegacao?.invalidar();
+    this.bloqueio.ativa = bloqueada;
     this.grade.visible = this.bloqueio.ativa;
   }
 

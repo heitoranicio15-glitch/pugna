@@ -57,7 +57,7 @@ export class Menu {
   }
 
   atualizarProgresso(progresso, nome) {
-    const temProgresso = !!progresso.descanso || progresso.selos.length > 0 || progresso.guardiaoDerrotado;
+    const temProgresso = !!progresso.descanso || progresso.eventos.length > 0;
     this.botaoComecar.textContent = temProgresso ? 'Continuar' : 'Começar';
     el('reset-titulo').classList.toggle('oculto', !temProgresso);
     const checkpoint = nome ? `Checkpoint: ${nome}` : '';

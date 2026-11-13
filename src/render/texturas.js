@@ -27,6 +27,14 @@ export function prepararTextura(tex) {
   return tex;
 }
 
+function prepararPiso(tex) {
+  // Continua pixelado de perto. Usa níveis menores quando o piso se afasta da câmera.
+  tex.minFilter = THREE.NearestMipmapLinearFilter;
+  tex.generateMipmaps = true;
+  tex.anisotropy = 4;
+  return tex;
+}
+
 /** Cria uma textura chamando pintar(x, y) para cada pixel. pintar devolve [r, g, b] (0-255). */
 function pintarTextura(tam, pintar, alfa = null) {
   const tela = document.createElement('canvas');
@@ -200,8 +208,9 @@ let cache = null;
 export function texturas() {
   if (!cache) {
     cache = {
-      pedra: pedra(), calcamento: calcamento(), lajes: lajes(), mosaico: mosaico(), telhado: telhado(), madeira: madeira(),
-      terra: terra(), metal: metal(), tecido: tecido(),
+      pedra: pedra(), calcamento: prepararPiso(calcamento()), lajes: prepararPiso(lajes()),
+      mosaico: prepararPiso(mosaico()), telhado: telhado(), madeira: madeira(),
+      terra: prepararPiso(terra()), metal: metal(), tecido: tecido(),
       janelaAcesa: janela(true), janelaApagada: janela(false), vitral: vitral(),
       brilho: brilho(), nevoa: nevoa(),
     };
