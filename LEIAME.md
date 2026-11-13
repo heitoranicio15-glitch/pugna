@@ -134,8 +134,8 @@ ou **Alt** para esquivar.
   a guarda quebra e você fica atordoado.
 - A esquiva te deixa **invencível por um instante**. Você pode apertar **Q**
   pouco antes de terminar a recuperação da espada para encaixar a esquiva.
-- Toque e solte para um ataque leve. Ao carregar um ataque forte, a mira
-  acende e um som sinaliza a carga. O golpe acompanha a passagem da lâmina e
+- Toque e solte para um ataque leve. Ao carregar um ataque forte, o caçador
+  ergue a espada e um som sinaliza a carga. O golpe acompanha a passagem da lâmina e
   é interrompido se atingir pedra antes do alvo.
 - O ataque forte **interrompe** o golpe dos inimigos comuns. O ataque leve
   interrompe o caçador. O Guardião mantém o ataque mesmo ao receber um golpe forte.
