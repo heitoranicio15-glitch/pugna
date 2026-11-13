@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Colisores } from './Colisores.js';
-import { caixa, materiais, tocha, animarTochas } from './pecas.js';
+import { abobadaOgival, arcoOgival, caixa, colunaFacetada, materiais, tocha, animarTochas } from './pecas.js';
 import { retro } from '../render/retro.js';
 
 export class Catedral {
@@ -17,6 +17,14 @@ export class Catedral {
     const brasa = retro(new THREE.MeshBasicMaterial({ color: 0xffac65 }));
     const luar = retro(new THREE.MeshBasicMaterial({ color: 0x8dcfff }));
     const pano = retro(new THREE.MeshLambertMaterial({ color: 0x76264b, map: m.madeira.map }));
+    const osso = retro(new THREE.MeshLambertMaterial({ color: 0xd2ad86 }));
+    const escuro = retro(new THREE.MeshBasicMaterial({ color: 0x171022 }));
+    const gotico = (x, y, z, l, flecha, espessura, p, rotacao = 0, mat = m.pedraEscura) => {
+      const arco = arcoOgival(l, flecha, espessura, p, mat);
+      arco.position.set(x, y, z);
+      arco.rotation.y = rotacao;
+      this.grupo.add(arco);
+    };
     const bloc = (x, y, z, l, a, p, mat) => {
       const malha = caixa(l, a, p, mat);
       malha.position.set(x, y, z);
@@ -31,9 +39,16 @@ export class Catedral {
       bloc(x, a / 2, z, l, a, p, mat);
       this.colisores.adicionar(x, z, l, p, a);
     };
-    const piso = (x, z, l, p, altura) => {
-      const base = bloc(x, -0.14, z, l, 0.28, p, m.calcamentoChao);
+    const piso = (x, z, l, p, altura, ladrilho, mat = m.lajesChao) => {
+      const base = new THREE.Mesh(new THREE.PlaneGeometry(l, p), mat);
+      const uv = base.geometry.attributes.uv;
+      for (let i = 0; i < uv.count; i++) {
+        uv.setXY(i, (x + (uv.getX(i) - 0.5) * l) / ladrilho, (-z + (uv.getY(i) - 0.5) * p) / ladrilho);
+      }
+      base.position.set(x, 0, z);
+      base.rotation.x = -Math.PI / 2;
       base.renderOrder = -6;
+      this.grupo.add(base);
       bloc(x, altura + 0.25, z, l, 0.5, p, m.pedraEscura);
     };
     const luz = (x, y, z, cor, intensidade, alcance) => {
@@ -43,31 +58,45 @@ export class Catedral {
     };
 
     // Nave, duas capelas laterais e o santuário atrás da grade.
-    piso(0, -2, 16, 22, 10);
-    piso(-15, -5, 14, 14, 7);
-    piso(15, -5, 14, 14, 7);
-    piso(0, -23, 22, 20, 12);
+    piso(0, -2, 16, 22, 10, 5.2);
+    piso(-15, -5, 14, 14, 7, 4);
+    piso(15, -5, 14, 14, 7, 4);
+    piso(0, -23, 22, 20, 12, 7.5, m.mosaicoChao);
     parede(0, 9, 16, 0.7, 10);
     parede(0, -33, 22, 0.7, 12);
     for (const lado of [-1, 1]) {
       parede(lado * 8, 3.25, 0.65, 11.5, 10);
       parede(lado * 8, -10, 0.65, 6, 10);
-      bloc(lado * 8, 8.5, -4.75, 0.65, 3, 4.5, m.pedraEscura);
+      bloc(lado * 8, 8.55, -4.75, 0.65, 2.9, 4.5, m.pedraEscura);
+      gotico(lado * 7.8, 4.05, -4.75, 3.85, 2.7, 0.34, 0.84, Math.PI / 2);
+      luz(lado * 9.15, 3, -5.2, lado < 0 ? 0xff8646 : 0x638dff, 32, 10);
       parede(lado * 15, 2, 14, 0.65);
       parede(lado * 15, -12, 14, 0.65);
       parede(lado * 22, -5, 0.65, 14);
       parede(lado * 11, -23, 0.7, 20, 12);
       parede(lado * 6.65, -13, 8.7, 0.7, 12);
     }
+    this.passagens = [
+      { x: -7.6, z: -4.75, nome: 'Ossário' },
+      { x: 7.6, z: -4.75, nome: 'Relicário' },
+    ];
     bloc(0, 7.75, -13, 4.6, 8.5, 0.8, m.pedraEscura);
+    gotico(0, 3.55, -12.54, 4.15, 2.75, 0.36, 0.58);
 
     // Nervuras, colunas e bancos da nave deixam o corredor central livre.
     for (const z of [5, 0, -10]) {
       for (const lado of [-1, 1]) {
-        parede(lado * 6.8, z, 0.8, 0.9, 6.2, m.pedraEscura);
-        bloc(lado * 3.45, 7.95, z, 7.6, 0.35, 0.5, m.pedraEscura).rotation.z = -lado * 0.48;
+        const coluna = colunaFacetada(5.42, 0.44, m.pedra, m.pedraEscura);
+        coluna.position.set(lado * 6.8, 0, z);
+        this.grupo.add(coluna);
+        this.colisores.adicionar(lado * 6.8, z, 0.98, 0.98);
       }
+      gotico(0, 5.15, z, 13.35, 4.6, 0.34, 0.48, 0, m.pedra);
     }
+    const abobada = abobadaOgival(14.1, 4.87, 22, m.pedraEscura);
+    abobada.position.set(0, 5.15, -2);
+    this.grupo.add(abobada);
+    bloc(0, 9.89, -2.2, 0.34, 0.24, 20, m.pedra);
     for (const z of [2, -0.4, -7.7, -10.1]) {
       for (const lado of [-1, 1]) {
         movel(lado * 4.25, z, 3.1, 0.48, 0.5, m.madeira);
@@ -78,7 +107,7 @@ export class Catedral {
 
     // A entrada e a grade têm silhuetas próprias para orientar o retorno.
     bloc(0, 2.1, 8.59, 3.7, 4.2, 0.18, m.madeira);
-    bloc(0, 4.25, 8.43, 4.3, 0.36, 0.45, m.pedraEscura);
+    gotico(0, 4.13, 8.42, 3.7, 2.1, 0.31, 0.52);
     bloc(0, 0.12, 8.41, 3.1, 0.12, 0.09, luar);
     luz(0, 1.8, 7.75, 0x719dff, 17, 8);
 
@@ -95,17 +124,31 @@ export class Catedral {
     }
     this.grupo.add(this.grade);
     this.bloqueio = this.colisores.adicionar(0, -13, 4.6, 0.4);
-    this.indicadores = [
-      bloc(-2.7, 1.9, -12.6, 0.34, 0.48, 0.14, m.metal),
-      bloc(2.7, 1.9, -12.6, 0.34, 0.48, 0.14, m.metal),
-    ];
+    this.indicadores = [-2.68, 2.68].map((x) => {
+      const aro = new THREE.Mesh(new THREE.RingGeometry(0.31, 0.43, 4), metalDourado);
+      aro.position.set(x, 1.93, -12.46);
+      this.grupo.add(aro);
+      const cavidade = new THREE.Mesh(new THREE.CircleGeometry(0.31, 4), escuro);
+      cavidade.position.set(x, 1.93, -12.47);
+      this.grupo.add(cavidade);
+      const cristal = new THREE.Mesh(new THREE.OctahedronGeometry(0.26), luar);
+      cristal.position.set(x, 1.93, -12.32);
+      this.grupo.add(cristal);
+      return cristal;
+    });
 
     // Ossário a oeste. As fileiras de nichos conduzem ao pedestal.
     for (const z of [-10, -7.5, -2.5, 0]) {
-      movel(-19.8, z, 2.8, 0.77, 1.3, m.pedraEscura);
-      for (const x of [-20.5, -19.8, -19.1]) {
-        const cranio = bloc(x, 0.93, z, 0.27, 0.29, 0.25, metalDourado);
-        cranio.rotation.y = Math.PI / 5;
+      movel(-20.76, z, 1.5, 0.83, 1.6, m.pedraEscura);
+      bloc(-21.61, 1.65, z, 0.12, 1.75, 1.66, escuro);
+      gotico(-21.46, 2.47, z, 1.61, 0.96, 0.21, 0.45, Math.PI / 2);
+      for (const dz of [-0.45, 0, 0.45]) {
+        const cranio = new THREE.Mesh(new THREE.IcosahedronGeometry(0.19, 0), osso);
+        cranio.position.set(-20.6, 1.05, z + dz);
+        cranio.scale.set(0.86, 1.08, 0.9);
+        this.grupo.add(cranio);
+        bloc(-20.48, 0.94, z + dz, 0.16, 0.13, 0.18, osso);
+        for (const olho of [-0.055, 0.055]) bloc(-20.434, 1.07, z + dz + olho, 0.045, 0.055, 0.055, escuro);
       }
     }
     for (const z of [-9.9, 0.4]) tocha(this, { x: -14.2, z });
@@ -113,7 +156,7 @@ export class Catedral {
     // Relicário a leste. Vitrais frios iluminam os relicários e o selo.
     for (const z of [-10, -5, 0]) {
       bloc(21.61, 4, z, 0.15, 3.7, 1.8, m.vitral);
-      bloc(21.59, 6, z, 0.14, 1.25, 1.25, m.vitral).rotation.x = Math.PI / 4;
+      gotico(21.45, 5.83, z, 1.8, 1.35, 0.2, 0.24, Math.PI / 2);
     }
     for (const z of [-9.4, -0.5]) {
       movel(18.5, z, 2, 0.8, 1.2, m.pedraEscura);
@@ -130,13 +173,18 @@ export class Catedral {
       selo.malha = new THREE.Mesh(new THREE.OctahedronGeometry(0.39), selo.material);
       selo.malha.position.set(selo.x, 1.65, selo.z);
       this.grupo.add(selo.malha);
-      luz(selo.x, 2.05, selo.z, selo.cor, 15, 8);
+      selo.luz = new THREE.PointLight(selo.cor, 15, 8, 1.7);
+      selo.luz.position.set(selo.x, 2.05, selo.z);
+      this.grupo.add(selo.luz);
     }
 
     // Santuário. O corredor central termina no altar, com espaço para esquivar.
     for (const lado of [-1, 1]) {
       for (const z of [-17.6, -23.5, -29.5]) {
-        parede(lado * 8.6, z, 1.2, 1.2, 11, m.pedraEscura);
+        const coluna = colunaFacetada(7.8, 0.56, m.pedra, m.pedraEscura);
+        coluna.position.set(lado * 8.6, 0, z);
+        this.grupo.add(coluna);
+        this.colisores.adicionar(lado * 8.6, z, 1.2, 1.2);
         bloc(lado * 8, 4.2, z, 0.13, 3.1, 1.12, pano);
       }
       tocha(this, { x: lado * 6, z: -29.5 });
@@ -150,7 +198,7 @@ export class Catedral {
     this.entrada = { x: 0, z: 6, yaw: 0 };
     this.portao = { x: 0, z: -12.4 };
     this.altar = { x: 0, z: -28.8 };
-    this.pontosDeDescanso = [{ id: 'nave-do-veu', x: 4.55, z: 6.55, olhar: Math.PI }];
+    this.pontosDeDescanso = [{ id: 'nave-do-veu', nome: 'Nave do Véu', x: 4.55, z: 6.55, olhar: Math.PI }];
     this.inimigos = [
       { tipo: 'penitente', rota: [[-13, -5], [-17, -7], [-16, -2.8]] },
       { tipo: 'penitente', rota: [[15, -5], [18, -3], [18, -7]] },
@@ -163,7 +211,9 @@ export class Catedral {
     for (const [indice, selo] of this.selos.entries()) {
       const obtido = selos.includes(selo.id);
       selo.malha.visible = !obtido;
-      this.indicadores[indice].material = obtido ? selo.material : materiais().metal;
+      selo.luz.intensity = obtido ? 4 : 15;
+      this.indicadores[indice].material = selo.material;
+      this.indicadores[indice].visible = obtido;
     }
     this.bloqueio.ativa = !this.selos.every((selo) => selos.includes(selo.id));
     this.grade.visible = this.bloqueio.ativa;

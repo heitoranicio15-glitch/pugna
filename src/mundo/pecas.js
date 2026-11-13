@@ -22,6 +22,8 @@ export function materiais() {
     // Chão e ruas não gravam profundidade: são desenhados primeiro e tudo o mais fica por
     // cima. Isso evita o "pisca-pisca" entre a grama e o calçamento (veja Vilarejo.js).
     calcamentoChao: lambert(t.calcamento, { depthWrite: false }),
+    lajesChao: lambert(t.lajes, { depthWrite: false }),
+    mosaicoChao: lambert(t.mosaico, { depthWrite: false }),
     telhado: lambert(t.telhado, { side: THREE.DoubleSide }),
     madeira: lambert(t.madeira),
     terra: lambert(t.terra),
@@ -50,6 +52,67 @@ export function caixa(l, a, p, material, ladrilho = 2) {
     }
   }
   return new THREE.Mesh(geo, material);
+}
+
+function perfilOgival(meia, altura) {
+  const centro = meia * 0.5;
+  const raio = meia + centro;
+  const escala = altura / Math.sqrt(raio * raio - centro * centro);
+  return Array.from({ length: 13 }, (_, i) => {
+    const x = meia * (i / 6 - 1);
+    const y = Math.sqrt(Math.max(0, raio * raio - (Math.abs(x) + centro) ** 2));
+    return [x, y * escala];
+  });
+}
+
+/** Moldura ogival construída em pedra contínua, com a abertura livre. */
+export function arcoOgival(largura, flecha, espessura, profundidade, material) {
+  const meia = largura / 2;
+  const interior = perfilOgival(meia, flecha);
+  const exterior = perfilOgival(meia + espessura, flecha + espessura);
+  const forma = new THREE.Shape();
+  const contorno = [...exterior, ...interior.reverse()];
+  forma.moveTo(...contorno[0]);
+  for (const ponto of contorno.slice(1)) forma.lineTo(...ponto);
+  forma.closePath();
+  const geo = new THREE.ExtrudeGeometry(forma, { depth: profundidade, bevelEnabled: false });
+  geo.translate(0, 0, -profundidade / 2);
+  const uv = geo.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) / 1.7, uv.getY(i) / 1.7);
+  return new THREE.Mesh(geo, material);
+}
+
+/** Forro facetado por cima das nervuras, com as faces voltadas para a nave. */
+export function abobadaOgival(largura, flecha, profundidade, material) {
+  const perfil = perfilOgival(largura / 2, flecha);
+  const pos = [], uv = [];
+  const z = profundidade / 2;
+  for (let i = 1; i < perfil.length; i++) {
+    const [ax, ay] = perfil[i - 1], [bx, by] = perfil[i];
+    pos.push(ax, ay, -z, bx, by, -z, bx, by, z, ax, ay, -z, bx, by, z, ax, ay, z);
+    uv.push(ax / 2, 0, bx / 2, 0, bx / 2, z, ax / 2, 0, bx / 2, z, ax / 2, z);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geo.computeVertexNormals();
+  return new THREE.Mesh(geo, material);
+}
+
+export function colunaFacetada(altura, raio, pedra, base) {
+  const grupo = new THREE.Group();
+  const segmento = (topo, pe, a, y, mat) => {
+    const geo = new THREE.CylinderGeometry(topo, pe, a, 8);
+    const uv = geo.attributes.uv;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * 2, uv.getY(i) * a / 1.3);
+    const malha = new THREE.Mesh(geo, mat);
+    malha.position.y = y;
+    grupo.add(malha);
+  };
+  segmento(raio * 0.83, raio, altura, altura / 2, pedra);
+  segmento(raio, raio * 1.32, 0.33, 0.165, base);
+  segmento(raio * 1.24, raio * 0.83, 0.34, altura - 0.17, base);
+  return grupo;
 }
 
 /** Telhado de duas águas (prisma triangular). A cumeeira corre no eixo Z. */
@@ -258,11 +321,13 @@ export function igreja(mundo, { x, z }) {
 
   // ---------- portal ----------
   const base = 0.75;                                                         // altura do patamar da escada
-  add(caixa(0.7, 6.4, 0.9, m.pedraEscura), -2.1, base + 3.2, fc + 0.3);      // colunas
-  add(caixa(0.7, 6.4, 0.9, m.pedraEscura), 2.1, base + 3.2, fc + 0.3);
-  add(telhado(5.4, 3.2, 1.0, m.pedraEscura, m.pedraEscura), 0, base + 6.4, fc + 0.3); // frontão em ponta
-  for (const lado of [-1, 1]) add(caixa(1.7, 5.6, 0.2, m.madeira, 1.4), lado * 0.87, base + 2.8, fc + 0.12); // duas folhas
-  add(caixa(0.12, 5.6, 0.24, m.metal, 1), 0, base + 2.8, fc + 0.13);         // fresta entre as folhas
+  for (const lado of [-1, 1]) {
+    add(colunaFacetada(4.6, 0.36, m.pedra, m.pedraEscura), lado * 2.06, base, fc + 0.39);
+    add(caixa(1.7, 4.3, 0.2, m.madeira, 1.4), lado * 0.87, base + 2.15, fc + 0.12);
+  }
+  add(arcoOgival(3.8, 2.7, 0.46, 0.63, m.pedraEscura), 0, base + 4.6, fc + 0.42);
+  add(arcoOgival(4.7, 3.2, 0.22, 0.55, m.pedra), 0, base + 4.6, fc + 0.33);
+  add(caixa(0.12, 4.3, 0.24, m.metal, 1), 0, base + 2.15, fc + 0.13);
   // Uma luz verde marca a entrada da catedral.
   const fresta = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.1, 0.06), retro(new THREE.MeshBasicMaterial({ color: CONFIG.paleta.magia })));
   add(fresta, 0, base + 0.06, fc + 0.24);

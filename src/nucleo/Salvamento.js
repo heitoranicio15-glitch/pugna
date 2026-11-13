@@ -31,4 +31,9 @@ export class SalvamentoLocal {
     try { localStorage.setItem(CHAVE, JSON.stringify(normalizar(dados))); }
     catch { /* navegador sem armazenamento: segue sem salvar */ }
   }
+
+  apagar() {
+    try { localStorage.removeItem(CHAVE); return true; }
+    catch { return false; }
+  }
 }

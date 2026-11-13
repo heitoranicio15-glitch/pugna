@@ -6,13 +6,20 @@ export class Hud {
     this.hud = el('hud'); this.vida = el('barra-vida'); this.estamina = el('barra-estamina');
     this.aviso = el('aviso'); this.dano = el('dano'); this.veu = el('veu');
     this.guardiao = el('guardiao'); this.nomeGuardiao = el('nome-guardiao'); this.vidaGuardiao = el('barra-guardiao');
-    this.telas = { titulo: el('tela-titulo'), pausa: el('tela-pausa'), morte: el('tela-morte') };
+    this.telas = { titulo: el('tela-titulo'), pausa: el('tela-pausa'), morte: el('tela-morte'), opcoes: el('tela-opcoes') };
     this.tAviso = 0; this.avisoFixo = '';
   }
 
-  mostrarTela(nome) {   // nome: 'titulo', 'pausa', 'morte' ou null (nenhuma)
+  mostrarTela(nome) {
     for (const [n, t] of Object.entries(this.telas)) t.classList.toggle('oculto', n !== nome);
-    this.hud.classList.toggle('oculto', nome === 'titulo');
+    this.hud.classList.toggle('oculto', nome !== null && nome !== 'morte');
+  }
+
+  limparAviso() {
+    this.tAviso = 0;
+    this.avisoFixo = '';
+    this.aviso.classList.remove('visivel');
+    this.aviso.textContent = '';
   }
 
   /** Mensagem temporária no meio da tela. */

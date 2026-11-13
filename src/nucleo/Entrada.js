@@ -11,6 +11,7 @@ export class Entrada {
     this.mouseDY = 0;
     this.travado = false;           // true quando o mouse está "preso" no jogo
     this.ignorarTrava = false;      // usado só nos testes automáticos
+    this.habilitada = false;
 
     addEventListener('keydown', (e) => {
       // Impede atalhos do navegador de atrapalhar (Ctrl+S, Ctrl+D, Alt abre menu...).
@@ -22,7 +23,7 @@ export class Entrada {
       if (this.ativo() && (e.code.startsWith('Alt') || e.code.startsWith('Control'))) e.preventDefault();
       this.teclas.delete(e.code);
     });
-    addEventListener('blur', () => { this.teclas.clear(); this.botoes.fill(false); });
+    addEventListener('blur', () => this.soltarTudo());
     addEventListener('mousedown', (e) => {
       if (!this.ativo() || e.button > 2) return;
       this.botoes[e.button] = true; this.botoesApertados[e.button] = true;
@@ -33,7 +34,7 @@ export class Entrada {
       this.botoes[e.button] = false;
     });
     addEventListener('mousemove', (e) => {
-      if (!this.travado) return;
+      if (!this.habilitada || !this.travado) return;
       // Alguns navegadores mandam "saltos" absurdos de vez em quando: ignoramos.
       if (Math.abs(e.movementX) > 400 || Math.abs(e.movementY) > 400) return;
       this.mouseDX += e.movementX; this.mouseDY += e.movementY;
@@ -41,16 +42,21 @@ export class Entrada {
     addEventListener('contextmenu', (e) => e.preventDefault()); // clique direito = bloquear
     document.addEventListener('pointerlockchange', () => {
       this.travado = document.pointerLockElement === this.elemento;
-      if (!this.travado) { this.teclas.clear(); this.botoes.fill(false); }
+      if (!this.travado) this.soltarTudo();
     });
   }
 
-  ativo() { return this.travado || this.ignorarTrava; }
+  ativo() { return this.habilitada && (this.travado || this.ignorarTrava); }
 
   /** Prende o mouse no jogo (o navegador exige que venha de um clique). */
   travarMouse() {
-    const p = this.elemento.requestPointerLock?.();
-    if (p && p.catch) p.catch(() => {});
+    this.elemento.requestPointerLock?.()?.catch(() => {});
+  }
+
+  soltarTudo() {
+    this.teclas.clear();
+    this.botoes.fill(false);
+    this.limparQuadro();
   }
 
   segurando(codigo) { return this.teclas.has(codigo); }

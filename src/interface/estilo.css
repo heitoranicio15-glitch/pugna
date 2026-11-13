@@ -19,6 +19,7 @@ html, body {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   text-align: center; padding: 16px;
   background: radial-gradient(ellipse at center, rgba(8, 6, 28, 0.15) 0%, rgba(4, 3, 14, 0.82) 100%);
+  overflow: auto;
 }
 #titulo-jogo {
   margin: 0; font-weight: normal;
@@ -27,7 +28,7 @@ html, body {
   text-shadow: 0 0 28px rgba(120, 90, 255, 0.75), 0 0 2px #000, 0 4px 0 #1a1140;
 }
 .subtitulo {
-  margin: 8px 0 44px; font-style: italic; letter-spacing: 0.35em;
+  margin: 8px 0 28px; font-style: italic; letter-spacing: 0.35em;
   font-size: clamp(12px, 1.6vw, 18px); color: #8f8ad0;
 }
 #botao-comecar {
@@ -44,7 +45,7 @@ html, body {
   outline: none;
 }
 .dica {
-  margin-top: 40px; font-size: clamp(11px, 1.25vw, 15px); line-height: 1.9;
+  margin: 22px 0 0; font-size: clamp(11px, 1.25vw, 15px); line-height: 1.9;
   color: #8a88c4; letter-spacing: 0.06em; font-family: 'Courier New', monospace;
 }
 .tela h2 {
@@ -99,3 +100,39 @@ html, body {
   opacity: 0; pointer-events: none; transition: opacity 0.9s;
 }
 #veu.fechado { opacity: 1; }
+
+.acoes-menu { display: grid; gap: 8px; width: min(280px, 100%); margin-inline: auto; }
+.acoes-menu button, .preferencias select {
+  color: #ece3ff; background: #171128; border: 1px solid #635676;
+  font: inherit; padding: 9px 14px;
+}
+.acoes-menu button { cursor: pointer; min-height: 42px; }
+.acoes-menu button:hover { background: #30203d; }
+.acoes-menu button:focus-visible, .preferencias :is(input, select):focus-visible {
+  outline: 2px solid #ffd9a0; outline-offset: 3px;
+}
+.acoes-menu .principal { color: #ffe1b5; border-color: #e39557; }
+.acoes-menu .perigo { color: #ffd4de; border-color: #ba6377; }
+.painel-menu {
+  margin: auto; width: min(480px, 100%); padding: clamp(16px, 4vw, 28px);
+  color: #e5dcff; background: #0f0a1f; border: 1px solid #756585;
+  text-align: center; box-shadow: 0 0 40px #060410;
+}
+.tela .painel-menu h2, dialog.painel-menu h2 {
+  margin: 0 0 16px; letter-spacing: 0.14em; font-size: clamp(22px, 4vw, 36px);
+}
+.painel-menu p { line-height: 1.45; }
+dialog.painel-menu::backdrop { background: #04030bd9; }
+.estado-menu { margin: 10px 0; color: #c6b6dc; }
+.estado-menu:empty { display: none; }
+.preferencias { display: grid; gap: 12px; margin: 0 0 18px; text-align: left; }
+.preferencias label { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 12px; }
+.preferencias output { font-variant-numeric: tabular-nums; color: #ffd9a0; }
+.preferencias input[type="range"] { grid-column: 1 / -1; width: 100%; }
+.preferencias input { accent-color: #df9c6e; }
+.preferencias input[type="checkbox"] { width: 20px; height: 20px; }
+@media (max-height: 540px) {
+  #tela-titulo { justify-content: start; }
+  #titulo-jogo { font-size: clamp(44px, 10vw, 86px); }
+  .subtitulo { margin-bottom: 12px; }
+}
