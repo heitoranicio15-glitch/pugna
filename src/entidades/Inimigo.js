@@ -5,7 +5,8 @@
 //
 //  "Cérebro" (IA) em estados:
 //    patrulha → perseguir → (procurar) → preparo → ativo → recuperacao
-//    a qualquer momento: atordoado (levou golpe forte) ou morto
+//    a qualquer momento: atordoado (levou golpe forte), desequilibrado
+//    (teve o golpe aparado: fica aberto a um golpe crítico) ou morto
 // =============================================================================
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
@@ -322,6 +323,11 @@ export class Inimigo {
         if (this.tEstado >= 0.75) this.mudar('perseguir');
         break;
       }
+      case 'desequilibrado': {   // golpe aparado: braço jogado para trás, guarda aberta
+        inclinar = -0.5; bracoAlvo = -3.5; bracoLateral = -0.5; rapidezBraco = 16;
+        if (this.tEstado >= (c.desequilibrio ?? CONFIG.combate.aparar.desequilibrio)) this.mudar('perseguir');
+        break;
+      }
     }
 
     // ---------- virar e andar ----------
@@ -385,29 +391,42 @@ export class Inimigo {
     if (Math.cos(anguloJogador - this.angulo) < 0.35) return;      // jogador saiu da frente
     if (Math.abs(this.jogo.jogador.pos.y - this.pos.y) > 1.6) return;
     if (this.mundo.colisores.bloqueiaTrecho(this.pos, this.jogo.jogador.pos, 1.35)) return;
-    const r = this.jogo.jogador.receberDano(c.dano, this.pos);
+    const r = this.jogo.jogador.receberDano(c.dano, this.pos, this);
     if (r === 'bloqueou') { this.empurrao.set(-Math.sin(this.angulo) * 3, 0, -Math.cos(this.angulo) * 3); }
   }
 
-  /** Chamado pelo jogador. direcao = para onde empurrar. */
+  /** O jogador aparou o golpe: perde a sequência e fica aberto a um crítico. */
+  serAparado() {
+    if (this.morto) return;
+    this.golpesRestantes = 0;
+    this.perfilAtaque = null;
+    this.empurrao.set(-Math.sin(this.angulo) * 2.2, 0, -Math.cos(this.angulo) * 2.2);
+    this.mudar('desequilibrado');
+    this.jogo.eventos.emitir('inimigo:aparado', this);
+  }
+
+  /** Chamado pelo jogador. direcao = para onde empurrar. Devolve 'critico' se pegou o inimigo aberto. */
   receberDano(dano, direcao, forca, forte) {
     if (this.morto) return;
+    const critico = this.estado === 'desequilibrado';
+    if (critico) dano *= CONFIG.combate.critico.multiplicador;
     this.vida -= dano;
-    this.piscar = 0.09;
+    this.piscar = critico ? 0.16 : 0.09;
     this.barra.visible = this.tipo !== 'guardiao';
     this.empurrao.set(direcao.x * forca, 0, direcao.z * forca);
     this.jogo.eventos.emitir('inimigo:ferido', this);
     if (this.vida <= 0) {
       this.vida = 0; this.morto = true; this.mudar('morto'); this.barra.visible = false;
       this.jogo.eventos.emitir('inimigo:morreu', this);
-      return;
+      return critico ? 'critico' : undefined;
     }
     if (this.base.faseFinal && this.cfg === this.base && this.vida <= this.base.vida / 2) {
       this.cfg = { ...this.base, ...this.base.faseFinal };
       this.olho.color.setHex(0xff416c);
       this.jogo.eventos.emitir('guardiao:fase-final');
     }
-    if (dano >= this.cfg.firmeza || (forte && !this.base.faseFinal)) this.mudar('atordoado');
+    if (critico || dano >= this.cfg.firmeza || (forte && !this.base.faseFinal)) this.mudar('atordoado');
     else if (this.estado === 'patrulha') this.mudar('perseguir');
+    return critico ? 'critico' : undefined;
   }
 }

@@ -1,7 +1,7 @@
 # PUGNA
 
-Base de um jogo 3D de navegador: ação e exploração em primeira pessoa num vilarejo
-gótico, à noite, com visual retrô estilo PS1. Você é um caçador que enfrenta
+Base de um jogo 3D de navegador: ação e exploração em terceira pessoa, no estilo
+souls-like, num vilarejo gótico, à noite, com visual retrô estilo PS1. Você é um caçador que enfrenta
 cavaleiros e caçadores corrompidos, sob uma **lua enorme com rosto** que não tira
 os olhos de você.
 
@@ -65,11 +65,13 @@ que está em `historico-git.bundle`. Depois disso, `git log` mostra as etapas e 
 
 Abra o jogo no navegador e toque em **Começar**. Arraste o direcional esquerdo
 para andar e empurre-o até a borda na direção da frente para correr. Deslize o
-dedo na parte direita da tela para olhar. Os dois gestos podem ser usados
+dedo na parte direita da tela para girar a câmera. Os dois gestos podem ser usados
 ao mesmo tempo.
 
 Use **Atacar** com um toque para o golpe leve ou segure e solte para o forte.
-Segure **Bloquear** para manter a guarda. Os botões **Pular**, **Esquiva**,
+Segure **Bloquear** para manter a guarda. **Mira** trava a câmera no inimigo
+(toque de novo para soltar; deslize rápido o dedo para trocar de alvo) e
+**Aparar** tenta aparar o golpe. Os botões **Pular**, **Esquiva**,
 **Bolsa** e **Pausa** ficam na tela. **Interagir** aparece perto de uma ação
 disponível, e **Cura** aparece quando há frascos na bolsa.
 
@@ -81,13 +83,16 @@ ver o cenário. Ao trocar de aba ou aplicativo, o jogo pausa.
 | Ação | Tecla |
 |---|---|
 | Andar | W A S D |
-| Olhar | Mouse |
-| Correr | Shift (segurando, andando para a frente) |
+| Girar a câmera | Mouse |
+| Correr | Shift (segurando, em qualquer direção) |
 | Pular | Espaço |
 | Ataque leve | Clique esquerdo |
 | Ataque forte | Segurar o clique esquerdo e soltar |
 | Bloquear | Segurar o clique direito |
-| Esquivar | Ctrl, Alt ou Q (com uma direção; parado, pula para trás) |
+| Aparar (parry) | C |
+| Travar / soltar a mira | Tab ou botão do meio do mouse |
+| Trocar de alvo (mira travada) | Mover o mouse rápido para o lado |
+| Esquivar | Ctrl, Alt ou Q (com uma direção, rola; parado, salta para trás) |
 | Interagir (portas, selos e lanternas) | E |
 | Abrir a bolsa | I |
 | Usar um frasco de cura | R |
@@ -111,9 +116,21 @@ por um site. O jogo pede confirmação antes de fechar se o Ctrl estiver apertad
 ou **Alt** para esquivar.
 
 ### Como o combate funciona
+- A câmera fica atrás do caçador. Ele anda na direção que você aponta em
+  relação à câmera e os golpes saem para onde o **corpo** está virado. Parado
+  e sem mira travada, o golpe se volta sozinho ao inimigo que estiver colado.
+- **Mira travada:** a câmera acompanha o inimigo marcado, o caçador o encara e
+  passa a andar de lado em volta dele. A trava pula para o próximo inimigo
+  quando o alvo cai e se solta se ele ficar longe ou atrás de uma parede.
+  Sem inimigo por perto, o botão só recentraliza a câmera atrás do caçador.
+- **Aparar:** aperte **C** um instante antes de o golpe inimigo chegar. Se
+  acertar o tempo, você não leva dano e o inimigo fica **desequilibrado** (o
+  marcador da mira fica vermelho). O próximo golpe nele é **crítico** e causa
+  2,6 vezes o dano. Se errar o tempo, o golpe entra inteiro: aparar não bloqueia.
+  Só vale para golpes que chegam de frente. O Guardião se recompõe mais rápido.
 - Tudo gasta **estamina** (barra verde): correr, pular, atacar, esquivar e aguentar
   golpes no bloqueio. Sem estamina você não ataca nem corre.
-- Bloquear só funciona **de frente** para o inimigo. Se a estamina acabar no bloqueio,
+- Bloquear só funciona com o corpo **de frente** para o inimigo. Se a estamina acabar no bloqueio,
   a guarda quebra e você fica atordoado.
 - A esquiva te deixa **invencível por um instante**. Você pode apertar **Q**
   pouco antes de terminar a recuperação da espada para encaixar a esquiva.
@@ -148,7 +165,7 @@ onde você volta ao morrer ou reabrir o jogo.
 - **Catedral:** procure as inscrições no Ossário e no Relicário. A chave da
   oficina abre a porta ao sul do Relicário. Dentro da sacristia há uma inscrição,
   um frasco e uma alavanca que abre a grade de serviço para a lanterna da nave.
-- Aponte a mira para o objeto e pressione **E** quando aparecer a ação. Use
+- Chegue perto do objeto, virado para ele, e pressione **E** quando aparecer a ação. Use
   **I** para abrir a bolsa e reler anotações. Um frasco recupera até 42 pontos
   de vida e pode ser usado pela bolsa ou com **R** durante a partida.
 - O navegador guarda itens, anotações, frascos usados e o estado de portas,
@@ -166,8 +183,11 @@ onde você volta ao morrer ou reabrir o jogo.
   jogador, e quando é encarada por alguns segundos os olhos acendem e a boca abre mais.
 - Filtro PS1: baixa resolução ampliada sem suavização, texturas "nearest", tremida
   de vértices, dithering e redução de cores.
-- Movimento em primeira pessoa com colisão; dá para subir em caixotes e degraus.
-- Combate com ataque leve, forte, bloqueio, esquiva e estamina.
+- Movimento em terceira pessoa com colisão; dá para subir em caixotes e degraus.
+  A câmera gira em volta do caçador e encurta ao encostar em paredes.
+- Boneco simples do caçador (chapéu, capa, espada e broquel), animado no código.
+- Combate com ataque leve, forte, bloqueio, esquiva com rolamento, estamina,
+  mira travada, aparo e golpe crítico.
 - Cavaleiro, caçador, penitente e Guardião do Véu, com patrulha e combate.
 - Vida, tela de morte e três lanternas de descanso (portão sul, adro e nave).
 - Efeitos sintetizados e quatro faixas de música para exploração e combate.
@@ -209,8 +229,8 @@ pugna/
    │  ├─ Ceu.js            céu, nuvens, estrelas
    │  └─ Lua.js            a lua com rosto e o "olhar" dela
    ├─ entidades/
-   │  ├─ Jogador.js        movimento, vida, estamina e regras do combate
-   │  ├─ Arma.js           a espada que aparece na tela (só animação)
+   │  ├─ Jogador.js        movimento, câmera, mira travada, vida, estamina e combate
+   │  ├─ Boneco.js         o boneco do caçador em terceira pessoa (só animação)
    │  ├─ Inimigo.js        aparência, patrulha e combate dos inimigos
    │  └─ Lanterna.js       ponto de descanso
    ├─ audio/Som.js         sons sintetizados
@@ -221,6 +241,9 @@ pugna/
 
 ### Onde mexer para…
 - **mudar dano, velocidade, vida, cores, névoa, nível de pixelado:** `src/config.js`
+- **mudar a distância da câmera, o alcance da mira ou a janela do aparo:**
+  blocos `camera`, `mira` e `combate.aparar` em `src/config.js`
+- **mudar a aparência ou as poses do caçador:** `src/entidades/Boneco.js`
 - **mudar o mapa** (mover casa, pôr tocha, pôr inimigo): `src/mundo/Vilarejo.js`
 - **mudar o título do jogo:** `titulo` em `src/config.js`
 - **mudar o rosto da lua:** função `relevoLua` em `src/mundo/Lua.js`
@@ -249,11 +272,13 @@ pugna/
 - [ ] Testar e ajustar o "peso" do combate jogando de verdade (tempos em `config.js`)
 - [x] Inimigos contornam obstáculos e procuram a última posição visível
 - [x] Paredes bloqueiam a detecção inicial e golpes
-- [ ] Mãos/braços do caçador mais detalhados e a capa aparecendo ao olhar para baixo
+- [x] Câmera em terceira pessoa com boneco simples do caçador
+- [ ] Boneco do caçador mais detalhado (hoje é feito de caixas)
 - [ ] Trocar sons sintetizados por gravações CC0; música ambiente
 - [x] Menu de configurações e opções de checkpoint e progresso
-- [ ] Combate menos genérico: travar a mira no inimigo, aparar (parry), golpe pelas
-      costas, sequências de ataques, armas com ritmos diferentes
+- [x] Travar a mira no inimigo e aparar (parry) com golpe crítico
+- [ ] Combate menos genérico: golpe pelas costas, sequências de ataques, armas
+      com ritmos diferentes
 - [x] Interior da catedral
 - [ ] Interior de algumas casas
 
@@ -261,7 +286,8 @@ pugna/
 - [ ] Mais seres cósmicos no horizonte que mudam o céu e as cores (`Ceu.definirPaleta`)
 - [ ] Salvar progresso no Supabase (login simples)
 - [ ] Multiplayer para ~5 amigos se verem (Supabase Realtime)
-- [ ] Inventário, itens de cura, armas diferentes
+- [x] Bolsa e frascos de cura
+- [ ] Armas diferentes
 - [ ] Mapa maior com áreas ligadas (floresta, castelo, caverna)
 - [x] Primeiro miniboss, o Guardião do Véu
 - [ ] Modelos e animações de verdade (Blender ou pacotes CC0)
@@ -283,8 +309,9 @@ pugna/
 
 ## Testes
 
-- `npm test` verifica a janela de acerto, o custo da esquiva, colisões,
-  navegação, seleção pela mira, inventário e migração de saves.
+- `npm test` verifica a janela de acerto, o custo da esquiva, o aparo e o golpe
+  crítico, a mira travada, a câmera em terceira pessoa, colisões, navegação,
+  interação com objetos, inventário e migração de saves.
 - `npx playwright-core install chromium` instala o navegador de teste.
   Em seguida, `npm run test:browser` inicia o jogo e percorre a catedral,
   incluindo transições, checkpoint, morte, recarga e derrota do Guardião.

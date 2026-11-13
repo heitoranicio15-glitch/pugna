@@ -19,6 +19,7 @@
       <div class="barra"><div id="barra-guardiao"></div></div>
     </div>
     <div id="mira"></div>
+    <div id="destaque" aria-live="polite"></div>
     <div id="frascos-hud" class="oculto"><kbd>R</kbd> Frasco <span id="total-frascos">0</span></div>
     <div id="aviso"></div>
     <div id="dano"></div>
@@ -34,6 +35,8 @@
     <div class="toque-acoes">
       <button type="button" id="toque-interagir" class="oculto" data-tecla="KeyE">Interagir</button>
       <button type="button" id="toque-cura" class="oculto" data-tecla="KeyR">Cura</button>
+      <button type="button" data-tecla="Tab">Mira</button>
+      <button type="button" data-tecla="KeyC">Aparar</button>
       <button type="button" data-tecla="Space">Pular</button>
       <button type="button" data-tecla="KeyQ">Esquiva</button>
       <button type="button" data-botao="2">Bloquear</button>
@@ -52,13 +55,15 @@
     </div>
     <p id="estado-titulo" class="estado-menu" role="status"></p>
     <p class="dica dica-teclado">
-      WASD andar · mouse olhar · Shift correr · Espaço pular<br />
-      clique esquerdo atacar (segure: ataque forte) · clique direito bloquear<br />
-      Ctrl, Alt ou Q esquivar · E interagir · I bolsa · R cura · F tela cheia · Esc pausar
+      WASD andar · mouse girar a câmera · Shift correr · Espaço pular<br />
+      clique esquerdo atacar (segure: ataque forte) · clique direito bloquear · C aparar<br />
+      Tab ou botão do meio travar a mira · Ctrl, Alt ou Q esquivar<br />
+      E interagir · I bolsa · R cura · F tela cheia · Esc pausar
     </p>
     <p class="dica dica-toque">
       Arraste o direcional esquerdo para andar. Empurre até a borda para correr.<br />
-      Deslize à direita para olhar. Segure Atacar para carregar o golpe forte.
+      Deslize à direita para girar a câmera. Segure Atacar para carregar o golpe forte.<br />
+      Mira trava no inimigo. Aparar no instante do golpe abre um golpe crítico.
     </p>
   </div>
 

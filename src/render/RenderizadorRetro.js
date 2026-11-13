@@ -116,7 +116,7 @@ export class RenderizadorRetro {
     this.ajustarTamanho();
   }
 
-  /** Desenha a cena do mundo e, por cima, a cena da arma (mãos/espada). */
+  /** Desenha a cena do mundo e, se houver, uma segunda cena por cima (sobreposição). */
   desenhar(cena, camera, cenaArma, cameraArma) {
     const r = this.renderer;
     r.setRenderTarget(this.alvo);

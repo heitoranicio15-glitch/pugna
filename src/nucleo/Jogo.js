@@ -10,6 +10,7 @@
 //   - salvar no Supabase: troque SalvamentoLocal por outra classe (veja Salvamento.js).
 //   - novas áreas: outra classe como Vilarejo (veja mundo/Vilarejo.js).
 //   - inventário/chefes: novas entidades em src/entidades, criadas aqui.
+//   - modelo do caçador: troque Boneco.js mantendo o método atualizar(dt, jogador).
 // =============================================================================
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
@@ -23,7 +24,7 @@ import { Vilarejo } from '../mundo/Vilarejo.js';
 import { Catedral } from '../mundo/Catedral.js';
 import { Navegacao } from '../mundo/Navegacao.js';
 import { Jogador } from '../entidades/Jogador.js';
-import { Arma } from '../entidades/Arma.js';
+import { Boneco } from '../entidades/Boneco.js';
 import { Inimigo } from '../entidades/Inimigo.js';
 import { Lanterna } from '../entidades/Lanterna.js';
 import { Som } from '../audio/Som.js';
@@ -33,7 +34,7 @@ import { Menu } from '../interface/Menu.js';
 import { Bolsa } from '../interface/Bolsa.js';
 import { Toque } from '../interface/Toque.js';
 import { ANOTACOES, CURA_FRASCO, FRASCOS, contarFrascos } from './Inventario.js';
-import { alvoDaMira, atualizarObjetos } from '../mundo/Interacoes.js';
+import { alvoProximo, atualizarObjetos } from '../mundo/Interacoes.js';
 
 export class Jogo {
   constructor(container) {
@@ -61,7 +62,8 @@ export class Jogo {
 
     // ---------- entidades ----------
     this.jogador = new Jogador(this);
-    this.arma = new Arma();
+    this.boneco = new Boneco(this.cena);
+    this.boneco.grupo.visible = false;
     for (const area of this.areas) {
       area.entidades = area.inimigos.map((i) => new Inimigo(this, area, i));
       area.lanternas = area.pontosDeDescanso.map((p) => new Lanterna(area, p));
@@ -88,7 +90,7 @@ export class Jogo {
     this.menu = new Menu(this);
     this.bolsa = new Bolsa(this);
     this.toque = new Toque(this);
-    this.direcaoMira = new THREE.Vector3();
+    this.pontoMira = new THREE.Vector3();
     this.salvamento.carregar().then((salvo) => this.menu.atualizarProgresso(salvo, this.localizarCheckpoint(salvo)?.lanterna.nome));
     this.ligarInterface();
     this.ligarEventos();
@@ -139,6 +141,8 @@ export class Jogo {
     this.eventos.em('golpe:acertou', () => this.hud.mostrarContato('inimigo'));
     this.eventos.em('golpe:parede', () => this.hud.mostrarContato('parede'));
     this.eventos.em('jogador:bloqueou', ({ quebrou }) => this.hud.mostrarContato(quebrou ? 'inimigo' : 'bloqueio'));
+    this.eventos.em('jogador:aparou', () => this.hud.destacar('aparou'));
+    this.eventos.em('golpe:acertou', ({ critico }) => { if (critico) this.hud.destacar('critico'); });
     this.eventos.em('jogador:morreu', () => {
       this.tMorte = 0;
       this.hud.limparAviso();
@@ -197,6 +201,7 @@ export class Jogo {
       this.jogador.carregando = false;
       this.jogador.avisouCarga = false;
       this.jogador.bloqueando = false;
+      this.jogador.apararNaFila = 0;
       this.jogador.ataqueNaFila = 0;
       this.jogador.esquivaNaFila = 0;
     }
@@ -277,6 +282,9 @@ export class Jogo {
     this.hud.fecharVeu(false);
     this.hud.limparAviso();
     this.hud.mostrarGuardiao(null);
+    this.hud.mostrarTrava(null);
+    this.jogador.soltarMira();
+    this.boneco.grupo.visible = false;
     this.ativarArea(this.vilarejo);
     this.definirEstado('titulo');
     if (this.entrada.travado) document.exitPointerLock();
@@ -355,7 +363,7 @@ export class Jogo {
     this.ativarArea(this.checkpoints.get(l.id).area);
     this.jogador.reiniciar(l.x - Math.sin(l.olhar) * 1.2, l.z - Math.cos(l.olhar) * 1.2 + 0.001, l.olhar === Math.PI ? 0 : l.olhar);
     this.jogador.atualizarCamera(0, 0);
-    this.luzJogador.position.copy(this.camera.position);
+    this.boneco.atualizar(0, this.jogador);
     this.congelado = 0;
     this.tDescanso = 0;
     this.hud.fecharVeu(false);
@@ -378,7 +386,9 @@ export class Jogo {
     j.pos.set(x, 0, z);
     j.vel.set(0, 0, 0);
     j.yaw = yaw;
-    j.pitch = 0;
+    j.rumo = yaw;
+    j.pitch = CONFIG.camera.inclinacaoInicial;
+    j.soltarMira();
     j.noChao = true;
     j.atualizarCamera(0, 0);
     this.hud.fixar('');
@@ -388,8 +398,9 @@ export class Jogo {
   interacao() {
     const pos = this.jogador.pos;
     const perto = (p, raio = 2.35) => Math.hypot(p.x - pos.x, p.z - pos.z) < raio;
-    const objeto = alvoDaMira(this.mundo.objetos, this.camera.position,
-      this.camera.getWorldDirection(this.direcaoMira), this.mundo.colisores);
+    // Em terceira pessoa basta chegar perto e estar virado para o objeto
+    // (vale a direção do corpo ou a da câmera).
+    const objeto = alvoProximo(this.mundo.objetos, this.jogador, this.mundo.colisores);
     this.hud.mostrarAlvo(!!objeto);
     if (objeto) return this.interacaoObjeto(objeto);
     const lanterna = this.lanternas.find((l) => perto(l));
@@ -478,7 +489,7 @@ export class Jogo {
       this.render.desenhar(this.cena, this.camera);
       return;
     }
-    if (this.estado === 'pausado') { this.render.desenhar(this.cena, this.camera, this.arma.cena, this.arma.camera); return; }
+    if (this.estado === 'pausado') { this.render.desenhar(this.cena, this.camera); return; }
 
     if (this.tDescanso > 0) {
       this.tDescanso = Math.max(0, this.tDescanso - dt);
@@ -512,17 +523,13 @@ export class Jogo {
     }
     this.mundo.atualizar(dt, this.tempo);
     if (this.mundo === this.vilarejo) this.ceu.atualizar(dt, this.tempo, this.camera, this.jogador.pos);
-    this.arma.atualizar(dt, this.jogador, this.render.proporcao);
-    this.luzJogador.position.copy(this.camera.position);
-
-    // Luz de fogo na espada quando há tocha por perto.
-    let fogo = 0;
-    for (const t of this.mundo.tochas) {
-      if (!t.luz) continue;
-      t.luz.getWorldPosition(this._v || (this._v = new THREE.Vector3()));
-      fogo = Math.max(fogo, 1 - this._v.distanceTo(this.camera.position) / 9);
-    }
-    this.arma.luzFogo.intensity = fogo * 6;
+    this.boneco.atualizar(dt, this.jogador);
+    // A luz fraca acompanha o caçador (não a câmera), para ele nunca sumir no escuro.
+    // Fica um pouco atrás dele, do lado da câmera, para clarear as costas do boneco.
+    this.luzJogador.position.set(
+      this.jogador.pos.x + Math.sin(this.jogador.yaw) * 1.3, this.jogador.pos.y + 2.1, this.jogador.pos.z + Math.cos(this.jogador.yaw) * 1.3,
+    );
+    this.atualizarTrava();
 
     for (const l of this.lanternas) l.atualizar(this.tempo);
 
@@ -545,6 +552,15 @@ export class Jogo {
     this.atualizarAudio();
     this.hud.mostrarGuardiao(noSantuario && !this.guardiao.morto && this.estado === 'jogando' ? this.guardiao : null);
     this.hud.atualizar(dt, this.jogador, CONFIG.jogador.vidaMax, CONFIG.jogador.estaminaMax);
-    this.render.desenhar(this.cena, this.camera, this.arma.cena, this.arma.camera);
+    this.render.desenhar(this.cena, this.camera);
+  }
+
+  /** Posiciona na tela o marcador do inimigo com a mira travada. */
+  atualizarTrava() {
+    const alvo = this.estado === 'jogando' ? this.jogador.alvo : null;
+    if (!alvo) { this.hud.mostrarTrava(null); return; }
+    this.camera.updateMatrixWorld();
+    const p = this.pontoMira.set(alvo.pos.x, alvo.pos.y + 1.25 * alvo.cfg.escala, alvo.pos.z).project(this.camera);
+    this.hud.mostrarTrava(p.z < 1 ? { x: (p.x + 1) * 50, y: (1 - p.y) * 50, aberto: alvo.estado === 'desequilibrado' } : null);
   }
 }
