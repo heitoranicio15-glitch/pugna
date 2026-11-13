@@ -39,6 +39,9 @@ export class Jogador {
     this.tEsquiva = 0; this.esperaEsquiva = 0; this.invencivel = 0;
     this.dirEsquiva = new THREE.Vector2();
     this.ataqueNaFila = 0;
+    this.tipoNaFila = null;
+    this.esquivaNaFila = 0;
+    this.alvosDoGolpe = new Set();
     // câmera
     this.fasePasso = 0; this.tremor = 0; this.afundar = 0; this.rolar = 0; this.alturaOlhos = C.alturaOlhos;
   }
@@ -61,9 +64,6 @@ export class Jogador {
     this.yaw -= e.mouseDX * sensibilidade;
     this.pitch = THREE.MathUtils.clamp(this.pitch - e.mouseDY * sensibilidade, -1.45, 1.45);
 
-    // ---------- combate (decide o estado antes de mover) ----------
-    this.atualizarCombate(dt, e);
-
     // ---------- direção desejada ----------
     const lado = (e.segurando('KeyD') ? 1 : 0) - (e.segurando('KeyA') ? 1 : 0);
     const adiante = (e.segurando('KeyW') ? 1 : 0) - (e.segurando('KeyS') ? 1 : 0);
@@ -75,16 +75,22 @@ export class Jogador {
     // ---------- esquiva ----------
     const querEsquivar = e.apertou('ControlLeft') || e.apertou('ControlRight') || e.apertou('AltLeft') || e.apertou('AltRight') || e.apertou('KeyQ');
     this.esperaEsquiva -= dt; this.invencivel -= dt;
-    if (querEsquivar && this.tEsquiva <= 0 && this.esperaEsquiva <= 0 && this.noChao && this.estamina > 0 &&
-        (this.acao === 'livre' || this.acao === 'recuperacao')) {
+    this.esquivaNaFila -= dt;
+    if (querEsquivar) this.esquivaNaFila = CB.filaEsquiva;
+    const podeCancelar = this.acao === 'recuperacao' && this.tAcao + dt >= CB[this.ataque].liberarEsquiva;
+    if (this.esquivaNaFila > 0 && this.tEsquiva <= 0 && this.esperaEsquiva <= 0 && this.noChao &&
+        !this.exausto && this.estamina >= CB.esquiva.custo && (this.acao === 'livre' || podeCancelar)) {
       this.gastar(CB.esquiva.custo);
       this.tEsquiva = CB.esquiva.duracao; this.invencivel = CB.esquiva.invencivel;
       this.esperaEsquiva = CB.esquiva.duracao + CB.esquiva.espera;
       if (comp > 0) this.dirEsquiva.set(dx, dz); else this.dirEsquiva.set(sen, cos); // parado = pula para trás
-      this.acao = 'livre'; this.carregando = false; this.bloqueando = false;
+      this.acao = 'livre'; this.ataque = null; this.carregando = false; this.bloqueando = false;
+      this.ataqueNaFila = 0;
+      this.esquivaNaFila = 0;
       this.rolar = (lado !== 0 ? -lado : 0.6) * 0.09;
       this.jogo.eventos.emitir('jogador:esquiva');
     }
+    this.atualizarCombate(dt, e);
 
     // ---------- velocidade ----------
     const correndo = e.segurando('ShiftLeft') && adiante > 0 && !this.exausto && !this.bloqueando && !this.carregando && this.acao === 'livre';
@@ -153,71 +159,105 @@ export class Jogador {
   //  Regras do combate
   // ---------------------------------------------------------------------------
   atualizarCombate(dt, e) {
+    const antes = this.tAcao;
     this.tAcao += dt;
     this.ataqueNaFila -= dt;
-    const livre = this.acao === 'livre' && this.tEsquiva <= 0;
-
-    // Clique esquerdo: começa a "segurar". Soltar rápido = leve; segurar = forte.
-    if (e.botoesApertados[0]) {
-      if (livre && !this.carregando) { this.carregando = true; this.tCarga = 0; this.bloqueando = false; }
-      else this.ataqueNaFila = 0.3;   // clicou cedo demais: guarda o pedido por um instante
-    }
-    if (livre && !this.carregando && this.ataqueNaFila > 0 && !this.exausto) {
-      this.ataqueNaFila = 0; this.iniciarAtaque('leve');
-    }
-    if (this.carregando) {
-      this.tCarga += dt;
-      if (this.tCarga >= CB.tempoSegurarForte && !this.avisouCarga) { this.avisouCarga = true; this.jogo.eventos.emitir('jogador:carregando'); }
-      if (!e.botoes[0] || this.tCarga > 1.4) {
-        this.carregando = false; this.avisouCarga = false;
-        this.iniciarAtaque(this.tCarga >= CB.tempoSegurarForte ? 'forte' : 'leve');
-      }
-    }
-
-    // Clique direito: bloquear (não dá para bloquear no meio de um golpe).
-    this.bloqueando = e.botoes[2] && this.acao === 'livre' && !this.carregando && this.tEsquiva <= 0;
-
-    // Fases do golpe: preparo → ativo (é aqui que acerta) → recuperação.
     if (this.ataque) {
       const a = CB[this.ataque];
       if (this.acao === 'preparo' && this.tAcao >= a.preparo) {
-        this.acao = 'ativo'; this.tAcao = 0;
-        this.acertarInimigos(a);
-      } else if (this.acao === 'ativo' && this.tAcao >= a.ativo) {
-        this.acao = 'recuperacao'; this.tAcao = 0;
+        this.acao = 'ativo';
+        this.tAcao -= a.preparo;
+        this.varrerGolpe(a, 0, this.tAcao / a.ativo);
+      } else if (this.acao === 'ativo') {
+        this.varrerGolpe(a, antes / a.ativo, Math.min(1, this.tAcao / a.ativo));
+        if (this.acao === 'ativo' && this.tAcao >= a.ativo) {
+          this.acao = 'recuperacao';
+          this.tAcao -= a.ativo;
+        }
       } else if (this.acao === 'recuperacao' && this.tAcao >= a.recuperacao) {
         this.acao = 'livre'; this.ataque = null;
       }
     }
     if (this.acao === 'atordoado' && this.tAcao >= 0.7) this.acao = 'livre';
+
+    const livre = this.acao === 'livre' && this.tEsquiva <= 0;
+    if (e.botoesApertados[0] && this.tEsquiva <= 0 && this.acao !== 'atordoado') {
+      this.carregando = true;
+      this.tCarga = 0;
+      this.avisouCarga = false;
+    }
+    if (this.carregando) {
+      if (e.botoes[0]) this.tCarga += dt;
+      if (livre && this.tCarga >= CB.tempoSegurarForte && !this.avisouCarga) {
+        this.avisouCarga = true;
+        this.jogo.eventos.emitir('jogador:carregando');
+      }
+      if (!e.botoes[0] || this.tCarga >= CB.tempoMaximoCarga) {
+        this.tipoNaFila = this.tCarga >= CB.tempoSegurarForte ? 'forte' : 'leve';
+        this.ataqueNaFila = CB.filaAtaque;
+        this.carregando = false;
+      }
+    }
+    if (livre && !this.carregando && this.ataqueNaFila > 0) {
+      this.ataqueNaFila = 0;
+      this.iniciarAtaque(this.tipoNaFila);
+    }
+    this.bloqueando = e.botoes[2] && this.acao === 'livre' && !this.carregando && this.tEsquiva <= 0;
   }
 
   iniciarAtaque(tipo) {
-    if (this.estamina <= 0) { this.acao = 'livre'; return; } // sem fôlego não ataca
+    if (this.exausto || this.estamina < CB[tipo].custo) {
+      this.jogo.eventos.emitir('jogador:sem-estamina');
+      return;
+    }
     this.ataque = tipo; this.acao = 'preparo'; this.tAcao = 0;
     this.golpeAlternado = !this.golpeAlternado;
+    this.yawGolpe = this.yaw;
+    this.contatoParede = null;
+    this.alvosDoGolpe.clear();
     this.gastar(CB[tipo].custo);
     this.jogo.eventos.emitir('jogador:golpe', { forte: tipo === 'forte' });
   }
 
-  /** Confere quais inimigos estão na frente e ao alcance, e aplica o dano. */
-  acertarInimigos(a) {
-    const f = this.frente();
-    let acertou = false;
-    for (const i of this.jogo.inimigos) {
-      if (i.morto) continue;
-      const dx = i.pos.x - this.pos.x, dz = i.pos.z - this.pos.z;
-      const d = Math.hypot(dx, dz);
-      if (d > CB.alcance + i.raio || Math.abs(i.pos.y - this.pos.y) > 2) continue;
-      if (d > 0.5 && (dx * f.x + dz * f.z) / d < CB.arco) continue;
-      if (this.jogo.mundo.colisores.bloqueiaTrecho(this.pos, i.pos, this.pos.y + 1.25)) continue;
-      i.receberDano(a.dano, f, a.empurrao, this.ataque === 'forte');
-      acertou = true;
-    }
-    if (acertou) {
-      this.tremor = Math.max(this.tremor, this.ataque === 'forte' ? 0.05 : 0.025);
-      this.jogo.pausaDeImpacto(this.ataque === 'forte' ? CB.pausaImpacto * 1.6 : CB.pausaImpacto);
-      this.jogo.eventos.emitir('golpe:acertou', { forte: this.ataque === 'forte' });
+  varrerGolpe(a, de, ate) {
+    const col = this.jogo.mundo.colisores;
+    const forte = this.ataque === 'forte';
+    const lado = forte || this.golpeAlternado ? 1 : -1;
+    const passos = Math.max(1, Math.ceil((ate - de) * 18));
+    const altura = this.pos.y + 1.22;
+    for (let passo = 0; passo <= passos; passo++) {
+      const progresso = de + (ate - de) * passo / passos;
+      const angulo = this.yawGolpe + lado * a.arco * (2 * progresso - 1);
+      const x = -Math.sin(angulo), z = -Math.cos(angulo);
+      const ponta = { x: this.pos.x + x * a.alcance, z: this.pos.z + z * a.alcance };
+      const parede = col.interceptarTrecho(this.pos, ponta, altura);
+      const alcance = (parede ?? 1) * a.alcance;
+      for (const i of this.jogo.inimigos) {
+        if (i.morto || this.alvosDoGolpe.has(i) || Math.abs(i.pos.y - this.pos.y) > 1.6) continue;
+        const dx = i.pos.x - this.pos.x, dz = i.pos.z - this.pos.z;
+        const aoLongo = dx * x + dz * z;
+        const lateral = dx * z - dz * x;
+        const raio = i.raio + 0.08;
+        if (Math.abs(lateral) >= raio || aoLongo <= 0 ||
+            aoLongo - Math.sqrt(raio * raio - lateral * lateral) > alcance ||
+            col.bloqueiaTrecho(this.pos, i.pos, altura)) continue;
+        this.alvosDoGolpe.add(i);
+        i.receberDano(a.dano, { x, z }, a.empurrao, forte);
+        this.tremor = Math.max(this.tremor, forte ? 0.05 : 0.025);
+        this.jogo.pausaDeImpacto(forte ? CB.pausaImpacto * 1.4 : CB.pausaImpacto);
+        this.jogo.eventos.emitir('golpe:acertou', { forte });
+      }
+      if (parede !== null) {
+        this.contatoParede = progresso;
+        this.acao = 'recuperacao';
+        this.tAcao = 0;
+        this.tremor = Math.max(this.tremor, 0.034);
+        this.jogo.pausaDeImpacto(0.035);
+        this.jogo.eventos.emitir('golpe:parede', {
+          x: this.pos.x + x * alcance, y: altura, z: this.pos.z + z * alcance,
+        });
+        return;
+      }
     }
   }
 
@@ -242,6 +282,7 @@ export class Jogador {
     this.vel.x -= dx / d * (resultado === 'bloqueou' ? 2.5 : 5); this.vel.z -= dz / d * (resultado === 'bloqueou' ? 2.5 : 5);
     if (resultado !== 'bloqueou') {
       this.carregando = false;
+      this.avisouCarga = false;
       this.jogo.eventos.emitir('jogador:ferido', { dano });
     }
     if (this.vida <= 0) { this.vida = 0; this.morto = true; this.bloqueando = false; this.carregando = false; this.jogo.eventos.emitir('jogador:morreu'); }

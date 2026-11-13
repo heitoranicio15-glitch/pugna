@@ -12,7 +12,7 @@ os olhos de você.
 
 ## Como rodar o jogo
 
-Você precisa do **Node.js** (versão LTS, 18 ou mais nova): https://nodejs.org
+Você precisa do **Node.js** (versão 20 ou mais nova): https://nodejs.org
 
 **Jeito fácil (Windows):** dê dois cliques em `jogar.bat`. Na primeira vez ele baixa
 as dependências (precisa de internet) e depois abre o jogo no navegador.
@@ -96,7 +96,11 @@ ou **Alt** para esquivar.
   golpes no bloqueio. Sem estamina você não ataca nem corre.
 - Bloquear só funciona **de frente** para o inimigo. Se a estamina acabar no bloqueio,
   a guarda quebra e você fica atordoado.
-- A esquiva te deixa **invencível por um instante**.
+- A esquiva te deixa **invencível por um instante**. Você pode apertar **Q**
+  pouco antes de terminar a recuperação da espada para encaixar a esquiva.
+- Toque e solte para um ataque leve. Ao carregar um ataque forte, a mira
+  acende e um som sinaliza a carga. O golpe acompanha a passagem da lâmina e
+  é interrompido se atingir pedra antes do alvo.
 - O ataque forte **interrompe** o golpe dos inimigos comuns. O ataque leve
   interrompe o caçador. O Guardião mantém o ataque mesmo ao receber um golpe forte.
 - **Cavaleiro:** lento, forte, ergue a espada devagar. Esquive ou saia de lado e puna.
@@ -197,8 +201,12 @@ pugna/
   como mais uma lista em `Jogo.js`, igual a `this.inimigos`.
 - **Salvar no Supabase:** escreva uma classe com os métodos `carregar()` e
   `salvar(dados)` (iguais aos de `SalvamentoLocal`) e troque uma linha em `Jogo.js`.
-- **Mapa maior / outras áreas:** cada área é uma classe como `Vilarejo`, que preenche
-  `colisores`, `tochas`, `pontosDeDescanso` e `inimigos`.
+- **Mapa maior / outras áreas:** declare `id`, `nome`, `limites`, `portais`,
+  `chegadas`, `pontosDeDescanso` e `inimigos` na classe do mapa. Cada portal
+  aponta para o ID da área de destino, que declara a posição de chegada.
+  Os checkpoints usam IDs únicos. Eventos persistentes usam `area:evento`,
+  e a área pode implementar `aplicarProgresso(progresso)` para atualizar
+  obstáculos ou outros elementos do cenário.
 - **Assets de verdade (Kenney, Quaternius):** as "peças" estão isoladas em `pecas.js`
   e `montarCorpo`; dá para trocar uma de cada vez por modelos `.glb`.
 
@@ -206,7 +214,7 @@ pugna/
 
 **Polimento da fase 1**
 - [ ] Testar e ajustar o "peso" do combate jogando de verdade (tempos em `config.js`)
-- [ ] Inimigos contornarem obstáculos melhor (hoje só tentam desviar de lado)
+- [x] Inimigos contornam obstáculos e procuram a última posição visível
 - [x] Paredes bloqueiam a detecção inicial e golpes
 - [ ] Mãos/braços do caçador mais detalhados e a capa aparecendo ao olhar para baixo
 - [ ] Trocar sons sintetizados por gravações CC0; música ambiente
@@ -239,3 +247,13 @@ pugna/
 - No console do navegador (F12), a variável `jogo` dá acesso a tudo
   (ex.: `jogo.jogador.vida = 100`).
 - Histórico de mudanças: `git log`.
+
+## Testes
+
+- `npm test` verifica a janela de acerto, o custo da esquiva, colisões,
+  navegação e migração de saves.
+- `npx playwright-core install chromium` instala o navegador de teste.
+  Em seguida, `npm run test:browser` inicia o jogo e percorre a catedral,
+  incluindo transições, checkpoint, morte, recarga e derrota do Guardião.
+  Para usar um Chrome instalado, aponte `PUGNA_CHROME` para o executável.
+  Para testar outro endereço, use `npm run test:browser -- <URL>`.
