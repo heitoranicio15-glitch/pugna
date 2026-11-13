@@ -10,7 +10,6 @@ export class Menu {
 
     this.botaoComecar.addEventListener('click', () => jogo.comecar());
     el('continuar').addEventListener('click', () => jogo.retomar());
-    el('voltar-checkpoint').addEventListener('click', () => jogo.voltarAoCheckpoint());
     el('voltar-titulo').addEventListener('click', () => jogo.voltarAoTitulo());
     for (const id of ['opcoes-titulo', 'opcoes-pausa']) {
       el(id).addEventListener('click', () => {
@@ -60,9 +59,9 @@ export class Menu {
     const temProgresso = !!progresso.descanso || progresso.eventos.length > 0;
     this.botaoComecar.textContent = temProgresso ? 'Continuar' : 'Começar';
     el('reset-titulo').classList.toggle('oculto', !temProgresso);
-    const checkpoint = nome ? `Checkpoint: ${nome}` : '';
-    el('estado-titulo').textContent = checkpoint;
-    el('estado-pausa').textContent = checkpoint || 'Checkpoint: Portão Sul';
+    // Não existe salvar manualmente: o jogo grava sozinho e avisa onde o caçador renasce.
+    el('estado-titulo').textContent = nome ? `Última lanterna: ${nome}` : '';
+    el('estado-pausa').textContent = `Última lanterna: ${nome || 'Portão Sul'} · o jogo salva sozinho`;
   }
 
   avisar(texto, estado) {

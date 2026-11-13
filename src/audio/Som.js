@@ -42,6 +42,7 @@ export class Som {
     eventos.em('inimigo:morreu', (i) => { this.rosnado(0.35 * this.perto(i), 50); this.passo(0.6 * this.perto(i), 0.5, 0.45); });
     eventos.em('descanso', () => this.sino(392, 2.5, 0.25));
     eventos.em('item:cura', () => this.sino(330, 0.58, 0.13));
+    eventos.em('item:retorno', () => this.sino(262, 1.8, 0.2));
     eventos.em('objeto:interagiu', (acao) => {
       if (acao === 'recolher') this.sino(440, 0.32, 0.1);
       else this.ruido({ volume: 0.21, duracao: 0.32, de: 400, ate: 165, ataque: 0.06 });

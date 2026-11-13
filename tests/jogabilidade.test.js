@@ -7,7 +7,7 @@ import { normalizarProgresso, SalvamentoLocal } from '../src/nucleo/Salvamento.j
 import { Colisores } from '../src/mundo/Colisores.js';
 import { Navegacao } from '../src/mundo/Navegacao.js';
 import { alvoDaMira, alvoProximo } from '../src/mundo/Interacoes.js';
-import { contarFrascos } from '../src/nucleo/Inventario.js';
+import { contarFrascos, contarOssos, OSSOS_INICIAIS } from '../src/nucleo/Inventario.js';
 import * as THREE from 'three';
 
 test('a mira escolhe o objeto visível no alcance e respeita a altura dos obstáculos', () => {
@@ -29,6 +29,18 @@ test('frascos são derivados de recompensas únicas e descontados após uso', ()
   assert.equal(contarFrascos(normalizarProgresso({ eventos, frascosUsados: 1 })), 2);
   assert.equal(contarFrascos(normalizarProgresso({ eventos, frascosUsados: 99 })), 0);
   assert.equal(contarFrascos(normalizarProgresso({ descanso: 'nave-do-veu' })), 0);
+});
+
+test('ossos de retorno: saves antigos começam com o osso inicial e o uso é descontado', () => {
+  // Save publicado antes do Osso de Retorno: não tem o campo ossosUsados.
+  const antigo = normalizarProgresso({ descanso: 'nave-do-veu', selos: ['ossario'], frascosUsados: 0, eventos: ['vilarejo:bau-casa'] });
+  assert.equal(antigo.ossosUsados, 0);
+  assert.equal(contarOssos(antigo), OSSOS_INICIAIS);
+  const eventos = ['vilarejo:ossos-cemiterio', 'vilarejo:ossos-cemiterio'];
+  assert.equal(contarOssos(normalizarProgresso({ eventos })), OSSOS_INICIAIS + 2);
+  assert.equal(contarOssos(normalizarProgresso({ eventos, ossosUsados: 2 })), OSSOS_INICIAIS);
+  assert.equal(contarOssos(normalizarProgresso({ eventos, ossosUsados: 99 })), 0);
+  assert.equal(contarOssos(normalizarProgresso({ eventos, ossosUsados: -3 })), OSSOS_INICIAIS + 2);
 });
 
 function arena() {
