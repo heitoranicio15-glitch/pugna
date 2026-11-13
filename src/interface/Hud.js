@@ -8,7 +8,10 @@ export class Hud {
     this.mira = el('mira');
     this.tContato = 0;
     this.guardiao = el('guardiao'); this.nomeGuardiao = el('nome-guardiao'); this.vidaGuardiao = el('barra-guardiao');
-    this.telas = { titulo: el('tela-titulo'), pausa: el('tela-pausa'), morte: el('tela-morte'), opcoes: el('tela-opcoes') };
+    this.telas = {
+      titulo: el('tela-titulo'), pausa: el('tela-pausa'), morte: el('tela-morte'),
+      opcoes: el('tela-opcoes'), bolsa: el('tela-bolsa'), leitura: el('tela-leitura'),
+    };
     this.tAviso = 0; this.avisoFixo = '';
   }
 
@@ -40,6 +43,13 @@ export class Hud {
   mostrarContato(tipo) {
     this.mira.dataset.contato = tipo;
     this.tContato = 0.22;
+  }
+
+  mostrarAlvo(ativo) { this.mira.classList.toggle('interagivel', ativo); }
+
+  mostrarFrascos(total) {
+    el('total-frascos').textContent = total;
+    el('frascos-hud').classList.toggle('oculto', total === 0);
   }
 
   mostrarGuardiao(inimigo) {

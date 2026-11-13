@@ -10,6 +10,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { Colisores } from './Colisores.js';
+import { montarExploracaoVilarejo } from './ExploracaoVilarejo.js';
 import { texturas, criarSorteio } from '../render/texturas.js';
 import { materiais, caixa, piramide, casa, torre, igreja, tocha, animarTochas, arvoreSeca, muralha } from './pecas.js';
 
@@ -21,6 +22,7 @@ export class Vilarejo {
     this.grupo = new THREE.Group();
     this.colisores = new Colisores();
     this.tochas = [];
+    this.objetos = [];
     this.nevoas = [];
     cena.add(this.grupo);
 
@@ -157,6 +159,7 @@ export class Vilarejo {
     };
     cerca(19.5, -44, 17, 0.14);
     cerca(28, -54, 0.14, 20);
+    montarExploracaoVilarejo(this);
 
     // ---------- caixotes e barris (dá para pular em cima) ----------
     for (const [x, z, t] of [[4.6, 30, 1], [5.2, 31.2, 0.8], [-12.6, 8, 1], [11.5, -3.5, 0.9], [-21, -3.8, 1], [20, 4.2, 1.1], [-5, -36, 1]]) {

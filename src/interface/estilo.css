@@ -84,6 +84,7 @@ html, body {
   background: rgba(225, 225, 255, 0.6);
 }
 #mira.carregada { background: #ffd694; outline: 1px solid #ffb46580; }
+#mira.interagivel { background: #ffdb9b; outline: 2px solid #ffdb9b80; }
 #mira[data-contato] { box-shadow: 0 0 0 2px var(--contato); }
 #mira[data-contato="inimigo"] { --contato: #dd665f; }
 #mira[data-contato="parede"] { --contato: #cdb69c; }
@@ -136,6 +137,30 @@ dialog.painel-menu::backdrop { background: #04030bd9; }
 .preferencias input[type="range"] { grid-column: 1 / -1; width: 100%; }
 .preferencias input { accent-color: #df9c6e; }
 .preferencias input[type="checkbox"] { width: 20px; height: 20px; }
+
+#frascos-hud {
+  position: absolute; left: 28px; bottom: 75px; padding: 4px 9px;
+  color: #ffdbb5; background: #100a19dc; border: 1px solid #99766b;
+}
+#frascos-hud kbd { font-size: 0.85em; }
+#total-frascos { margin-left: 5px; font-variant-numeric: tabular-nums; }
+.painel-bolsa { width: min(650px, 100%); }
+.bolsa-conteudo {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 18px; margin: 0 0 22px; text-align: left;
+}
+.bolsa-conteudo h3 { margin: 14px 0 8px; color: #ffe0b4; font-size: 1.05rem; }
+.bolsa-conteudo ul { list-style: none; margin: 0; padding: 0; }
+.bolsa-conteudo li { margin: 5px 0; }
+.bolsa-conteudo button {
+  width: 100%; min-height: 40px; padding: 6px 10px; text-align: left;
+  border: 1px solid #786087; background: #21162f; color: #f2e5ff; font: inherit;
+}
+.bolsa-conteudo button:hover:not(:disabled) { cursor: pointer; background: #392543; }
+.bolsa-conteudo button:focus-visible { outline: 2px solid #ffe1b5; }
+.bolsa-conteudo button:disabled { opacity: 0.55; }
+.painel-leitura { text-align: left; }
+.painel-leitura p { margin: 0 0 22px; line-height: 1.65; }
 @media (max-height: 540px) {
   #tela-titulo { justify-content: start; }
   #titulo-jogo { font-size: clamp(44px, 10vw, 86px); }

@@ -6,7 +6,30 @@ import { Eventos } from '../src/nucleo/Eventos.js';
 import { normalizarProgresso, SalvamentoLocal } from '../src/nucleo/Salvamento.js';
 import { Colisores } from '../src/mundo/Colisores.js';
 import { Navegacao } from '../src/mundo/Navegacao.js';
+import { alvoDaMira } from '../src/mundo/Interacoes.js';
+import { contarFrascos } from '../src/nucleo/Inventario.js';
 import * as THREE from 'three';
+
+test('a mira escolhe o objeto visível no alcance e respeita a altura dos obstáculos', () => {
+  const col = new Colisores();
+  const origem = { x: 0, y: 1.7, z: 0 };
+  const alvo = { x: 0, y: 0.3, z: -1.9 };
+  const direcao = new THREE.Vector3(0, -1.4, -1.9).normalize();
+  assert.equal(alvoDaMira([alvo], origem, direcao, col), alvo);
+  assert.equal(alvoDaMira([alvo], origem, { x: 1, y: 0, z: 0 }, col), null);
+  const caixa = col.adicionar(0, -1.4, 1, 0.4, 0.85);
+  assert.equal(alvoDaMira([alvo], origem, direcao, col), null);
+  caixa.ativa = false;
+  assert.equal(alvoDaMira([alvo], origem, direcao, col), alvo);
+});
+
+test('frascos são derivados de recompensas únicas e descontados após uso', () => {
+  const eventos = ['vilarejo:bau-casa', 'vilarejo:bau-casa', 'catedral:frasco-sacristia'];
+  assert.equal(contarFrascos(normalizarProgresso({ eventos })), 3);
+  assert.equal(contarFrascos(normalizarProgresso({ eventos, frascosUsados: 1 })), 2);
+  assert.equal(contarFrascos(normalizarProgresso({ eventos, frascosUsados: 99 })), 0);
+  assert.equal(contarFrascos(normalizarProgresso({ descanso: 'nave-do-veu' })), 0);
+});
 
 function arena() {
   const colisores = new Colisores();

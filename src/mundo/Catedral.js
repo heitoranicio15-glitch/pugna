@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { Colisores } from './Colisores.js';
 import { abobadaOgival, arcoOgival, caixa, colunaFacetada, materiais, tocha, animarTochas } from './pecas.js';
 import { retro } from '../render/retro.js';
+import { placa } from './Aderecos.js';
+import { montarSacristia } from './Sacristia.js';
 
 export class Catedral {
   constructor(cena) {
@@ -11,6 +13,7 @@ export class Catedral {
     this.grupo = new THREE.Group();
     this.colisores = new Colisores();
     this.tochas = [];
+    this.objetos = [];
     this.nevoa = new THREE.FogExp2(0x19162d, 0.027);
     this.grupo.add(new THREE.HemisphereLight(0xb6a6d6, 0x3d2f49, 1.1));
     cena.add(this.grupo);
@@ -68,12 +71,17 @@ export class Catedral {
     parede(0, 9, 16, 0.7, 10);
     parede(0, -33, 22, 0.7, 12);
     for (const lado of [-1, 1]) {
-      parede(lado * 8, 3.25, 0.65, 11.5, 10);
+      if (lado < 0) parede(-8, 3.25, 0.65, 11.5, 10);
+      else {
+        parede(8, 0.8625, 0.65, 6.725, 10);
+        parede(8, 8.0375, 0.65, 1.925, 10);
+      }
       parede(lado * 8, -10, 0.65, 6, 10);
       bloc(lado * 8, 8.55, -4.75, 0.65, 2.9, 4.5, m.pedraEscura);
       gotico(lado * 7.8, 4.05, -4.75, 3.85, 2.7, 0.34, 0.84, Math.PI / 2);
       luz(lado * 9.15, 3, -5.2, lado < 0 ? 0xff8646 : 0x638dff, 32, 10);
-      parede(lado * 15, 2, 14, 0.65);
+      if (lado < 0) parede(-15, 2, 14, 0.65);
+      else for (const x of [10.8, 19.2]) parede(x, 2, 5.6, 0.65);
       parede(lado * 15, -12, 14, 0.65);
       parede(lado * 22, -5, 0.65, 14);
       parede(lado * 11, -23, 0.7, 20, 12);
@@ -142,10 +150,11 @@ export class Catedral {
     });
 
     // Ossário a oeste. As fileiras de nichos conduzem ao pedestal.
-    for (const z of [-10, -7.5, -2.5, 0]) {
+    for (const [indice, z] of [-10, -7.5, -2.5, 0].entries()) {
       movel(-20.76, z, 1.5, 0.83, 1.6, m.pedraEscura);
       bloc(-21.61, 1.65, z, 0.12, 1.75, 1.66, escuro);
       gotico(-21.46, 2.47, z, 1.61, 0.96, 0.21, 0.45, Math.PI / 2);
+      placa(this.grupo, `Vigília ${indice + 1}`, -21.35, 1.63, z, 0.96, Math.PI / 2);
       for (const dz of [-0.45, 0, 0.45]) {
         const cranio = new THREE.Mesh(new THREE.IcosahedronGeometry(0.19, 0), osso);
         cranio.position.set(-20.6, 1.05, z + dz);
@@ -156,6 +165,9 @@ export class Catedral {
       }
     }
     for (const z of [-9.9, 0.4]) tocha(this, { x: -14.2, z });
+    this.objetos.push({
+      x: -21.29, y: 1.63, z: -7.5, acao: 'ler', evento: 'catedral:registro-ossario',
+    });
 
     // Relicário a leste. Vitrais frios iluminam os relicários e o selo.
     for (const z of [-10, -5, 0]) {
@@ -166,7 +178,15 @@ export class Catedral {
       movel(18.5, z, 2, 0.8, 1.2, m.pedraEscura);
       bloc(18.5, 1.01, z, 1.35, 0.42, 0.72, metalDourado);
     }
+    placa(this.grupo, 'Registro do Relicário', 18.5, 1.08, -0.1, 1.18);
+    this.objetos.push({
+      x: 18.5, y: 1.11, z: -0.08, acao: 'ler', evento: 'catedral:registro-relicario',
+    });
+    for (const x of [10, 12, 14, 16, 18, 20]) {
+      bloc(x, 0.012, -4.98, 0.22, 0.024, 0.22, metalDourado).rotation.y = Math.PI / 4;
+    }
     luz(16.5, 3.6, -5, 0x668eff, 46, 16);
+    montarSacristia(this);
 
     this.selos = [
       { id: 'ossario', x: -20, z: -5, nome: 'Selo do Ossário', material: brasa, cor: 0xff824a },

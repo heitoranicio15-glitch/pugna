@@ -19,6 +19,7 @@
       <div class="barra"><div id="barra-guardiao"></div></div>
     </div>
     <div id="mira"></div>
+    <div id="frascos-hud" class="oculto"><kbd>R</kbd> Frasco <span id="total-frascos">0</span></div>
     <div id="aviso"></div>
     <div id="dano"></div>
   </div>
@@ -36,7 +37,7 @@
     <p class="dica">
       WASD andar · mouse olhar · Shift correr · Espaço pular<br />
       clique esquerdo atacar (segure: ataque forte) · clique direito bloquear<br />
-      Ctrl, Alt ou Q esquivar · E interagir · F tela cheia · Esc pausar
+      Ctrl, Alt ou Q esquivar · E interagir · I bolsa · R cura · F tela cheia · Esc pausar
     </p>
   </div>
 
@@ -47,6 +48,7 @@
       <p id="estado-pausa" class="estado-menu" role="status"></p>
       <div class="acoes-menu">
         <button id="continuar" class="principal">Continuar</button>
+        <button id="abrir-bolsa">Bolsa</button>
         <button id="voltar-checkpoint">Voltar ao checkpoint</button>
         <button id="opcoes-pausa">Configurações</button>
         <button id="voltar-titulo">Voltar ao título</button>
@@ -74,10 +76,39 @@
     </section>
   </div>
 
+  <div id="tela-bolsa" class="tela oculto">
+    <section class="painel-menu painel-bolsa" aria-labelledby="titulo-bolsa">
+      <h2 id="titulo-bolsa">Bolsa</h2>
+      <div class="bolsa-conteudo">
+        <section>
+          <h3>Consumíveis</h3>
+          <p id="bolsa-frascos"></p>
+          <button type="button" id="usar-frasco">Usar frasco de cura</button>
+          <p id="bolsa-estado" class="estado-menu" role="status"></p>
+          <h3>Itens-chave</h3>
+          <ul id="bolsa-chaves"></ul>
+        </section>
+        <section>
+          <h3>Anotações</h3>
+          <ul id="bolsa-anotacoes"></ul>
+        </section>
+      </div>
+      <div class="acoes-menu"><button id="fechar-bolsa" class="principal">Voltar</button></div>
+    </section>
+  </div>
+
+  <div id="tela-leitura" class="tela oculto">
+    <article class="painel-menu painel-leitura" aria-labelledby="titulo-leitura">
+      <h2 id="titulo-leitura"></h2>
+      <p id="texto-leitura"></p>
+      <div class="acoes-menu"><button id="fechar-leitura" class="principal">Voltar</button></div>
+    </article>
+  </div>
+
   <dialog id="confirmar-reset" class="painel-menu" aria-labelledby="titulo-reset" aria-describedby="texto-reset">
     <form method="dialog">
       <h2 id="titulo-reset">Apagar progresso?</h2>
-      <p id="texto-reset">Isso apaga a lanterna salva, os selos e a vitória sobre o Guardião neste navegador. Suas configurações serão mantidas.</p>
+      <p id="texto-reset">Isso apaga a lanterna salva, os itens, as anotações e o progresso do mundo neste navegador. Suas configurações serão mantidas.</p>
       <div class="acoes-menu">
         <button value="cancelar" autofocus>Cancelar</button>
         <button value="apagar" class="perigo">Apagar progresso</button>
