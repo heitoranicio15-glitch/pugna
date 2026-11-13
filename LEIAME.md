@@ -61,6 +61,23 @@ que está em `historico-git.bundle`. Depois disso, `git log` mostra as etapas e 
 
 ## Controles
 
+### Celular e tablet
+
+Abra o jogo no navegador e toque em **Começar**. Arraste o direcional esquerdo
+para andar e empurre-o até a borda na direção da frente para correr. Deslize o
+dedo na parte direita da tela para olhar. Os dois gestos podem ser usados
+ao mesmo tempo.
+
+Use **Atacar** com um toque para o golpe leve ou segure e solte para o forte.
+Segure **Bloquear** para manter a guarda. Os botões **Pular**, **Esquiva**,
+**Bolsa** e **Pausa** ficam na tela. **Interagir** aparece perto de uma ação
+disponível, e **Cura** aparece quando há frascos na bolsa.
+
+O jogo funciona na vertical e na horizontal. Na horizontal há mais espaço para
+ver o cenário. Ao trocar de aba ou aplicativo, o jogo pausa.
+
+### Teclado e mouse
+
 | Ação | Tecla |
 |---|---|
 | Andar | W A S D |
@@ -272,5 +289,6 @@ pugna/
   Em seguida, `npm run test:browser` inicia o jogo e percorre a catedral,
   incluindo transições, checkpoint, morte, recarga e derrota do Guardião.
   Também testa o percurso da vila até a sacristia e o atalho após recarregar.
+  A suíte inclui um cenário de celular emulado com gestos multitoque.
   Para usar um Chrome instalado, aponte `PUGNA_CHROME` para o executável.
   Para testar outro endereço, use `npm run test:browser -- <URL>`.

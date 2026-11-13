@@ -3,6 +3,7 @@ import { chromium } from 'playwright-core';
 import { NearestFilter } from 'three';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { validarMobile } from './mobile.mjs';
 
 const url = process.argv[2] || 'http://127.0.0.1:5186/';
 const servidor = process.argv[2] ? null : spawn(process.execPath, [
@@ -401,6 +402,7 @@ try {
   await validarExploracao();
   assert.deepEqual(erros, []);
   console.log('Passou: Catedral, navegação, combate, saves antigos, mira, baú, cura, bolsa, chave, sacristia e atalho após recarregar.');
+  await validarMobile(browser, url);
 } finally {
   await browser?.close();
   servidor?.kill();

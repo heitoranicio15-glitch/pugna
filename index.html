@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Pugna</title>
   <link rel="stylesheet" href="./src/interface/estilo.css" />
 </head>
@@ -24,6 +24,23 @@
     <div id="dano"></div>
   </div>
 
+  <div id="controles-toque" class="oculto" aria-label="Controles por toque">
+    <div id="olhar-toque"></div>
+    <div class="toque-menu">
+      <button type="button" id="toque-bolsa">Bolsa</button>
+      <button type="button" id="toque-pausa">Pausa</button>
+    </div>
+    <div id="direcional-toque" role="group" aria-label="Direcional de movimento"><span></span></div>
+    <div class="toque-acoes">
+      <button type="button" id="toque-interagir" class="oculto" data-tecla="KeyE">Interagir</button>
+      <button type="button" id="toque-cura" class="oculto" data-tecla="KeyR">Cura</button>
+      <button type="button" data-tecla="Space">Pular</button>
+      <button type="button" data-tecla="KeyQ">Esquiva</button>
+      <button type="button" data-botao="2">Bloquear</button>
+      <button type="button" class="toque-ataque" data-botao="0">Atacar</button>
+    </div>
+  </div>
+
   <!-- Tela inicial. -->
   <div id="tela-titulo" class="tela">
     <h1 id="titulo-jogo">PUGNA</h1>
@@ -34,10 +51,14 @@
       <button id="reset-titulo" class="oculto">Apagar progresso</button>
     </div>
     <p id="estado-titulo" class="estado-menu" role="status"></p>
-    <p class="dica">
+    <p class="dica dica-teclado">
       WASD andar · mouse olhar · Shift correr · Espaço pular<br />
       clique esquerdo atacar (segure: ataque forte) · clique direito bloquear<br />
       Ctrl, Alt ou Q esquivar · E interagir · I bolsa · R cura · F tela cheia · Esc pausar
+    </p>
+    <p class="dica dica-toque">
+      Arraste o direcional esquerdo para andar. Empurre até a borda para correr.<br />
+      Deslize à direita para olhar. Segure Atacar para carregar o golpe forte.
     </p>
   </div>
 

@@ -166,3 +166,70 @@ dialog.painel-menu::backdrop { background: #04030bd9; }
   #titulo-jogo { font-size: clamp(44px, 10vw, 86px); }
   .subtitulo { margin-bottom: 12px; }
 }
+
+/* Controles de toque ficam atrás dos menus e acima da cena. */
+.dica-toque { display: none; }
+.modo-toque .dica-teclado, .modo-toque #frascos-hud kbd { display: none; }
+.modo-toque .dica-toque { display: block; max-width: 40ch; }
+.modo-toque #tela-pausa .acoes-menu { width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.modo-toque .tela {
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+#controles-toque {
+  --toque-esquerda: max(12px, env(safe-area-inset-left));
+  --toque-direita: max(12px, env(safe-area-inset-right));
+  --toque-topo: max(10px, env(safe-area-inset-top));
+  --toque-base: max(14px, env(safe-area-inset-bottom));
+  position: fixed; inset: 0; z-index: 6; pointer-events: none;
+  touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none;
+}
+#olhar-toque {
+  position: absolute; inset: 0 0 0 34%; pointer-events: auto; touch-action: none;
+}
+#direcional-toque {
+  position: absolute; left: var(--toque-esquerda); bottom: var(--toque-base);
+  width: clamp(100px, 24vmin, 148px); aspect-ratio: 1;
+  display: grid; place-items: center; pointer-events: auto; touch-action: none;
+  border-radius: 50%; border: 1px solid #ba9d87b8; background: #1c102d92;
+  box-shadow: inset 0 0 20px #06030b8f;
+}
+#direcional-toque span {
+  width: 42%; aspect-ratio: 1; pointer-events: none; border-radius: 50%;
+  border: 1px solid #dfc2a3; background: #5d425bce;
+}
+#direcional-toque.correndo span { border-color: #ecbd73; background: #80503fe8; }
+.toque-menu, .toque-acoes { position: absolute; right: var(--toque-direita); display: grid; gap: 6px; }
+.toque-menu { top: var(--toque-topo); grid-auto-flow: column; }
+.toque-acoes { bottom: var(--toque-base); grid-template-columns: repeat(2, minmax(62px, 1fr)); }
+.toque-acoes [data-tecla="Space"], #toque-interagir { grid-column: 1; }
+#toque-cura { grid-column: 2; grid-row: 1; }
+#toque-interagir { grid-row: 1; }
+.toque-acoes [data-tecla="Space"], .toque-acoes [data-tecla="KeyQ"] { grid-row: 2; }
+.toque-acoes [data-botao] { grid-row: 3; }
+#controles-toque button {
+  pointer-events: auto; touch-action: none; min-width: 48px; min-height: 44px;
+  padding: 3px 7px; border: 1px solid #a28d9f; border-radius: 8px;
+  background: #20142cdb; color: #fff0db; font: 600 13px Georgia, serif;
+}
+#controles-toque button.toque-ataque { border-color: #e4b081; background: #563342eb; }
+#controles-toque button.pressionado, #controles-toque button:active { background: #785565; }
+#controles-toque button:focus-visible { outline: 2px solid #ffdb9b; }
+.modo-toque .acoes-menu button, .modo-toque .bolsa-conteudo button { min-height: 44px; }
+.modo-toque .barra.vida, .modo-toque .barra.estamina {
+  left: max(12px, env(safe-area-inset-left)); bottom: auto; max-width: 36vw;
+}
+.modo-toque .barra.vida { top: max(14px, env(safe-area-inset-top)); }
+.modo-toque .barra.estamina { top: calc(max(14px, env(safe-area-inset-top)) + 17px); }
+.modo-toque #frascos-hud {
+  left: max(12px, env(safe-area-inset-left)); top: calc(max(14px, env(safe-area-inset-top)) + 31px); bottom: auto;
+  font-size: 13px;
+}
+.modo-toque #aviso { top: 54%; bottom: auto; padding-inline: 12px; letter-spacing: 0.06em; }
+.modo-toque #guardiao { bottom: max(8px, env(safe-area-inset-bottom)); width: min(42vw, 410px); }
+@media (orientation: portrait) {
+  .modo-toque #guardiao { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 163px); width: min(76vw, 410px); }
+}
+@media (orientation: landscape) {
+  .modo-toque #aviso { padding-inline: max(115px, 20vw); }
+}

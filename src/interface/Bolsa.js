@@ -26,7 +26,7 @@ export class Bolsa {
   atualizar() {
     const { progresso } = this.jogo;
     const total = contarFrascos(progresso);
-    el('bolsa-frascos').textContent = total ? `${total} × Frasco de cura · R durante a partida` : 'Nenhum frasco de cura';
+    el('bolsa-frascos').textContent = total ? `${total} × Frasco de cura` : 'Nenhum frasco de cura';
     this.usar.disabled = total === 0;
     const chaves = el('bolsa-chaves');
     const item = document.createElement('li');
