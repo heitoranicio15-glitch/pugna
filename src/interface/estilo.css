@@ -70,6 +70,14 @@ html, body {
 .barra.vida > div { background: linear-gradient(#d2343f, #7c1022); }
 .barra.estamina { bottom: 30px; width: min(250px, 32vw); height: 9px; }
 .barra.estamina > div { background: linear-gradient(#a8ff4a, #3f9a1a); }
+#guardiao {
+  position: absolute; bottom: 13%; left: 50%; transform: translateX(-50%);
+  width: min(520px, 72vw); text-align: center; color: #ffe4c7;
+  font-size: clamp(14px, 1.5vw, 19px); letter-spacing: 0.14em;
+  text-shadow: 0 1px 7px #000;
+}
+#guardiao .barra { position: static; height: 10px; margin-top: 6px; }
+#barra-guardiao { background: linear-gradient(#c15574, #64182d); }
 #mira {
   position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px;
   background: rgba(225, 225, 255, 0.6);

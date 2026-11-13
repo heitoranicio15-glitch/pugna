@@ -9,10 +9,12 @@ export class Colisores {
 
   /** Adiciona uma caixa pelo centro e tamanho. topo = altura até onde ela bloqueia. */
   adicionar(x, z, largura, profundidade, topo = Infinity) {
-    this.caixas.push({
+    const caixa = {
       minX: x - largura / 2, maxX: x + largura / 2,
-      minZ: z - profundidade / 2, maxZ: z + profundidade / 2, topo,
-    });
+      minZ: z - profundidade / 2, maxZ: z + profundidade / 2, topo, ativa: true,
+    };
+    this.caixas.push(caixa);
+    return caixa;
   }
 
   /**
@@ -21,7 +23,7 @@ export class Colisores {
    */
   resolver(pos, raio, peY = 0, degrau = 0) {
     for (const c of this.caixas) {
-      if (c.topo <= peY + degrau) continue; // está por cima dela (ou é só um degrau)
+      if (!c.ativa || c.topo <= peY + degrau) continue; // está por cima dela (ou é só um degrau)
       const px = Math.max(c.minX, Math.min(pos.x, c.maxX));
       const pz = Math.max(c.minZ, Math.min(pos.z, c.maxZ));
       let dx = pos.x - px, dz = pos.z - pz;
@@ -44,9 +46,32 @@ export class Colisores {
   alturaDoChao(x, z, peY, degrau = 0.4, folga = 0.2) {
     let h = 0;
     for (const c of this.caixas) {
-      if (c.topo > peY + degrau || c.topo <= h) continue;
+      if (!c.ativa || c.topo > peY + degrau || c.topo <= h) continue;
       if (x > c.minX - folga && x < c.maxX + folga && z > c.minZ - folga && z < c.maxZ + folga) h = c.topo;
     }
     return h;
+  }
+
+  /** Testa visão ou alcance direto no plano horizontal, na altura indicada. */
+  bloqueiaTrecho(origem, destino, altura) {
+    const dx = destino.x - origem.x, dz = destino.z - origem.z;
+    for (const c of this.caixas) {
+      if (!c.ativa || c.topo <= altura) continue;
+      let entrada = 0, saida = 1;
+      for (const [inicio, delta, min, max] of [
+        [origem.x, dx, c.minX, c.maxX], [origem.z, dz, c.minZ, c.maxZ],
+      ]) {
+        if (Math.abs(delta) < 1e-8) {
+          if (inicio < min || inicio > max) { entrada = 2; break; }
+          continue;
+        }
+        const a = (min - inicio) / delta, b = (max - inicio) / delta;
+        entrada = Math.max(entrada, Math.min(a, b));
+        saida = Math.min(saida, Math.max(a, b));
+        if (entrada > saida) break;
+      }
+      if (entrada <= saida && entrada < 1 && saida > 0) return true;
+    }
+    return false;
   }
 }

@@ -15,10 +15,11 @@ import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { Eventos } from './Eventos.js';
 import { Entrada } from './Entrada.js';
-import { SalvamentoLocal } from './Salvamento.js';
+import { SalvamentoLocal, SELOS_DO_VEU } from './Salvamento.js';
 import { RenderizadorRetro } from '../render/RenderizadorRetro.js';
 import { Ceu } from '../mundo/Ceu.js';
 import { Vilarejo } from '../mundo/Vilarejo.js';
+import { Catedral } from '../mundo/Catedral.js';
 import { Jogador } from '../entidades/Jogador.js';
 import { Arma } from '../entidades/Arma.js';
 import { Inimigo } from '../entidades/Inimigo.js';
@@ -38,7 +39,9 @@ export class Jogo {
     this.cena = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(CONFIG.render.campoDeVisao, 16 / 9, 0.08, 3000);
     this.ceu = new Ceu(this.cena);
-    this.mundo = new Vilarejo(this.cena, this.ceu.direcaoLua);
+    this.vilarejo = new Vilarejo(this.cena, this.ceu.direcaoLua);
+    this.catedral = new Catedral(this.cena);
+    this.areas = [this.vilarejo, this.catedral];
 
     // Uma luz fraca que acompanha o jogador, para enxergar o que está bem perto
     // (truque comum nos jogos antigos de masmorra).
@@ -48,15 +51,21 @@ export class Jogo {
     // ---------- entidades ----------
     this.jogador = new Jogador(this);
     this.arma = new Arma();
-    this.inimigos = this.mundo.inimigos.map((i) => new Inimigo(this, i.tipo, i.rota));
-    this.lanternas = this.mundo.pontosDeDescanso.map((p) => new Lanterna(this, p));
-    this.descanso = this.lanternas[0];       // onde o jogador renasce
+    for (const area of this.areas) {
+      area.entidades = area.inimigos.map((i) => new Inimigo(this, area, i));
+      area.lanternas = area.pontosDeDescanso.map((p) => new Lanterna(area, p));
+    }
+    this.guardiao = this.catedral.entidades.find((i) => i.tipo === 'guardiao');
+    this.progresso = { descanso: null, selos: [], guardiaoDerrotado: false };
+    this.descanso = this.vilarejo.lanternas[0];
+    this.ativarArea(this.vilarejo);
 
     this.som = new Som(this.eventos, this);
     this.estado = 'titulo';
     this.tempo = 0;
     this.congelado = 0;                      // pausa de impacto ("hit stop")
     this.tMorte = 0;
+    this.tDescanso = 0;
     this.teste = new URLSearchParams(location.search).has('teste'); // usado nos testes automáticos
 
     document.getElementById('titulo-jogo').textContent = CONFIG.titulo;
@@ -86,6 +95,13 @@ export class Jogo {
   ligarEventos() {
     this.eventos.em('jogador:ferido', () => this.hud.piscarDano());
     this.eventos.em('jogador:morreu', () => { this.estado = 'morto'; this.tMorte = 0; this.hud.mostrarTela('morte'); this.hud.fixar(''); });
+    this.eventos.em('guardiao:fase-final', () => this.hud.avisar('O Guardião investe com mais fúria.'));
+    this.eventos.em('inimigo:morreu', (inimigo) => {
+      if (inimigo !== this.guardiao) return;
+      this.progresso.guardiaoDerrotado = true;
+      this.salvamento.salvar(this.progresso);
+      this.hud.avisar('Guardião do Véu derrotado', 4);
+    });
   }
 
   alternarTelaCheia() {
@@ -99,36 +115,108 @@ export class Jogo {
 
   // ---------------------------------------------------------------------------
   async comecar() {
+    if (this.estado !== 'titulo' || this.iniciando) return;
+    this.iniciando = true;
     this.som.ligar();
-    const salvo = await this.salvamento.carregar();
-    this.descanso = this.lanternas.find((l) => l.id === salvo.descanso) || this.lanternas[0];
-    if (salvo.descanso) this.renascer();
-    else this.jogador.reiniciar(this.mundo.nascimento.x, this.mundo.nascimento.z, 0);
+    this.progresso = await this.salvamento.carregar();
+    const area = this.areas.find((mundo) => mundo.lanternas.some((l) => l.id === this.progresso.descanso));
+    this.catedral.aplicarProgresso(this.progresso.selos);
+    if (area) {
+      this.descanso = area.lanternas.find((l) => l.id === this.progresso.descanso);
+      this.renascer();
+    } else {
+      this.jogador.reiniciar(this.vilarejo.nascimento.x, this.vilarejo.nascimento.z, 0);
+      this.reporInimigos();
+    }
     this.estado = 'jogando';
     this.hud.mostrarTela(null);
     this.entrada.ignorarTrava = this.teste;
     this.entrada.travarMouse();
+    this.iniciando = false;
   }
 
-  /** Coloca o jogador na lanterna de descanso e traz todos os inimigos de volta. */
+  ativarArea(area) {
+    this.mundo = area;
+    this.inimigos = area.entidades;
+    this.lanternas = area.lanternas;
+    for (const mundo of this.areas) mundo.grupo.visible = mundo === area;
+    this.ceu.malha.visible = area === this.vilarejo;
+    this.cena.fog = area.nevoa;
+    this.cena.background = area.nevoa.color;
+    this.luzJogador.intensity = area === this.catedral ? 8 : 5;
+  }
+
+  reporInimigos() {
+    for (const area of this.areas) {
+      for (const i of area.entidades) {
+        if (i === this.guardiao && this.progresso.guardiaoDerrotado) i.ocultarDerrotado();
+        else i.reiniciar();
+      }
+    }
+  }
+
+  /** Coloca o jogador na última lanterna e repõe os inimigos comuns. */
   renascer() {
     const l = this.descanso;
+    this.ativarArea(this.areas.find((area) => area.lanternas.includes(l)));
     this.jogador.reiniciar(l.x - Math.sin(l.olhar) * 1.2, l.z - Math.cos(l.olhar) * 1.2 + 0.001, l.olhar === Math.PI ? 0 : l.olhar);
-    for (const i of this.inimigos) i.reiniciar();
+    this.reporInimigos();
   }
 
   descansar(lanterna) {
     this.descanso = lanterna;
-    this.salvamento.salvar({ descanso: lanterna.id });
+    this.progresso.descanso = lanterna.id;
+    this.salvamento.salvar(this.progresso);
+    this.tDescanso = 0.9;
     this.hud.fecharVeu(true);
     this.eventos.emitir('descanso', lanterna);
-    setTimeout(() => {
-      const j = this.jogador;
-      j.vida = CONFIG.jogador.vidaMax; j.estamina = CONFIG.jogador.estaminaMax;
-      for (const i of this.inimigos) i.reiniciar();
-      this.hud.fecharVeu(false);
-      this.hud.avisar('você descansou');
-    }, 900);
+  }
+
+  atravessar(area, { x, z, yaw }, nome) {
+    const j = this.jogador;
+    this.ativarArea(area);
+    j.pos.set(x, 0, z);
+    j.vel.set(0, 0, 0);
+    j.yaw = yaw;
+    j.pitch = 0;
+    j.noChao = true;
+    j.atualizarCamera(0, 0);
+    this.hud.fixar('');
+    this.hud.avisar(nome, 2);
+  }
+
+  interacao() {
+    const pos = this.jogador.pos;
+    const perto = (p, raio = 2.35) => Math.hypot(p.x - pos.x, p.z - pos.z) < raio;
+    const lanterna = this.lanternas.find((l) => perto(l));
+    if (lanterna) return ['E — descansar na lanterna', () => this.descansar(lanterna)];
+
+    const c = this.catedral;
+    if (this.mundo === this.vilarejo) {
+      const porta = this.vilarejo.igreja.porta;
+      if (perto(porta, 2.6)) return ['E — entrar na Catedral do Véu', () => this.atravessar(c, c.entrada, 'Catedral do Véu')];
+      return [];
+    }
+    if (perto(c.saida)) {
+      const porta = this.vilarejo.igreja.porta;
+      return ['E — voltar ao vilarejo', () => this.atravessar(this.vilarejo, { x: porta.x, z: porta.z + 4, yaw: Math.PI }, 'Vilarejo')];
+    }
+
+    const selo = c.selos.find((s) => s.malha.visible && perto(s, 1.9) && !c.colisores.bloqueiaTrecho(pos, s, 1.3));
+    if (selo) {
+      return [`E — recolher ${selo.nome}`, () => {
+        this.progresso.selos.push(selo.id);
+        c.aplicarProgresso(this.progresso.selos);
+        this.salvamento.salvar(this.progresso);
+        const faltam = SELOS_DO_VEU.length - this.progresso.selos.length;
+        this.hud.avisar(faltam ? `${selo.nome} recolhido. Falta um selo.` : 'A grade do santuário se abriu.', 3);
+      }];
+    }
+    if (c.bloqueio.ativa && perto(c.portao, 3.5)) {
+      return [`Selos da grade ${this.progresso.selos.length}/${SELOS_DO_VEU.length} · Ossário a oeste, Relicário a leste`];
+    }
+    if (this.progresso.guardiaoDerrotado && perto(c.altar, 3.5)) return ['O santuário está livre do Véu.'];
+    return [];
   }
 
   pausaDeImpacto(segundos) { this.congelado = Math.max(this.congelado, segundos); }
@@ -161,14 +249,36 @@ export class Jogo {
     }
     if (this.estado === 'pausado') { this.render.desenhar(this.cena, this.camera, this.arma.cena, this.arma.camera); return; }
 
+    if (this.tDescanso > 0) {
+      this.tDescanso = Math.max(0, this.tDescanso - dt);
+      if (this.tDescanso === 0) {
+        this.jogador.vida = CONFIG.jogador.vidaMax;
+        this.jogador.estamina = CONFIG.jogador.estaminaMax;
+        this.jogador.exausto = false;
+        this.reporInimigos();
+        this.hud.fecharVeu(false);
+        this.hud.avisar('você descansou');
+      }
+      return;
+    }
+
     // Pausa de impacto: o mundo congela por um instante quando um golpe acerta.
     if (this.congelado > 0) { this.congelado -= dt; dt = 0.0001; }
     this.tempo += dt;
 
     this.jogador.atualizar(dt);
     for (const i of this.inimigos) i.atualizar(dt);
+    if (this.estado === 'jogando') {
+      const [mensagem, acao] = this.interacao();
+      this.hud.fixar(mensagem || '');
+      if (acao && this.entrada.apertou('KeyE') && this.jogador.noChao && this.jogador.acao === 'livre' &&
+          !this.jogador.bloqueando && !this.jogador.carregando && this.jogador.tEsquiva <= 0) {
+        acao();
+        if (this.tDescanso > 0) return;
+      }
+    }
     this.mundo.atualizar(dt, this.tempo);
-    this.ceu.atualizar(dt, this.tempo, this.camera, this.jogador.pos);
+    if (this.mundo === this.vilarejo) this.ceu.atualizar(dt, this.tempo, this.camera, this.jogador.pos);
     this.arma.atualizar(dt, this.jogador, this.render.proporcao);
     this.luzJogador.position.copy(this.camera.position);
 
@@ -181,15 +291,7 @@ export class Jogo {
     }
     this.arma.luzFogo.intensity = fogo * 6;
 
-    // Lanternas: aviso e descanso.
-    let perto = null;
-    for (const l of this.lanternas) { l.atualizar(this.tempo); if (l.distancia(this.jogador.pos) < 2.4) perto = l; }
-    if (this.estado === 'jogando') {
-      const porta = this.mundo.igreja?.porta;
-      const naPorta = porta && Math.hypot(this.jogador.pos.x - porta.x, this.jogador.pos.z - porta.z) < 2.6;
-      this.hud.fixar(perto ? 'E — descansar na lanterna' : naPorta ? 'a porta está selada. algo respira do outro lado.' : '');
-      if (perto && this.entrada.apertou('KeyE') && this.jogador.acao === 'livre') this.descansar(perto);
-    }
+    for (const l of this.lanternas) l.atualizar(this.tempo);
 
     // Morte: espera, escurece, renasce na lanterna.
     if (this.estado === 'morto') {
@@ -198,12 +300,17 @@ export class Jogo {
         this.renascendo = true;
         this.hud.fecharVeu(true);
         setTimeout(() => {
-          this.renascer(); this.estado = 'jogando'; this.renascendo = false;
-          this.hud.mostrarTela(null); this.hud.fecharVeu(false);
+          this.renascer();
+          this.estado = this.entrada.travado || this.teste ? 'jogando' : 'pausado';
+          this.renascendo = false;
+          this.hud.mostrarTela(this.estado === 'pausado' ? 'pausa' : null);
+          this.hud.fecharVeu(false);
         }, 1000);
       }
     }
 
+    const noSantuario = this.mundo === this.catedral && this.jogador.pos.z <= this.guardiao.limiteZ;
+    this.hud.mostrarGuardiao(noSantuario && !this.guardiao.morto && this.estado === 'jogando' ? this.guardiao : null);
     this.hud.atualizar(dt, this.jogador, CONFIG.jogador.vidaMax, CONFIG.jogador.estaminaMax);
     this.render.desenhar(this.cena, this.camera, this.arma.cena, this.arma.camera);
   }

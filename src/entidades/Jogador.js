@@ -121,6 +121,7 @@ export class Jogador {
       const ix = this.pos.x - i.pos.x, iz = this.pos.z - i.pos.z, d = Math.hypot(ix, iz), min = this.raio + i.raio;
       if (d < min && d > 1e-4) { this.pos.x = i.pos.x + ix / d * min; this.pos.z = i.pos.z + iz / d * min; }
     }
+    col.resolver(this.pos, this.raio, this.pos.y, this.noChao ? 0.4 : 0.05);
     this.pos.y += this.vel.y * dt;
     const chao = col.alturaDoChao(this.pos.x, this.pos.z, this.pos.y, this.noChao ? 0.4 : 0.05);
     if (this.pos.y <= chao || (this.noChao && this.pos.y - chao < 0.45 && this.vel.y <= 0)) {
@@ -208,6 +209,7 @@ export class Jogador {
       const d = Math.hypot(dx, dz);
       if (d > CB.alcance + i.raio || Math.abs(i.pos.y - this.pos.y) > 2) continue;
       if (d > 0.5 && (dx * f.x + dz * f.z) / d < CB.arco) continue;
+      if (this.jogo.mundo.colisores.bloqueiaTrecho(this.pos, i.pos, this.pos.y + 1.25)) continue;
       i.receberDano(a.dano, f, a.empurrao, this.ataque === 'forte');
       acertou = true;
     }

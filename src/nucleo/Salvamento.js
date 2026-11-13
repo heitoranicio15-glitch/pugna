@@ -7,15 +7,28 @@
 // =============================================================================
 const CHAVE = 'pugna-progresso-v1';
 
+export const SELOS_DO_VEU = Object.freeze(['ossario', 'relicario']);
+
+function normalizar(dados) {
+  const descanso = typeof dados?.descanso === 'string' ? dados.descanso : null;
+  const obtidos = Array.isArray(dados?.selos) ? dados.selos : [];
+  const selos = SELOS_DO_VEU.filter((id) => obtidos.includes(id));
+  return {
+    descanso,
+    selos,
+    guardiaoDerrotado: selos.length === SELOS_DO_VEU.length && dados?.guardiaoDerrotado === true,
+  };
+}
+
 export class SalvamentoLocal {
   /** Devolve o progresso salvo, ou um progresso novo. */
   async carregar() {
-    try { return { descanso: null, ...JSON.parse(localStorage.getItem(CHAVE) || '{}') }; }
-    catch { return { descanso: null }; }
+    try { return normalizar(JSON.parse(localStorage.getItem(CHAVE))); }
+    catch { return normalizar(null); }
   }
 
-  /** dados: objeto simples, ex.: { descanso: 'portao-sul' } */
   async salvar(dados) {
-    try { localStorage.setItem(CHAVE, JSON.stringify(dados)); } catch { /* navegador sem armazenamento: segue sem salvar */ }
+    try { localStorage.setItem(CHAVE, JSON.stringify(normalizar(dados))); }
+    catch { /* navegador sem armazenamento: segue sem salvar */ }
   }
 }

@@ -11,7 +11,7 @@ import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { Colisores } from './Colisores.js';
 import { texturas, criarSorteio } from '../render/texturas.js';
-import { materiais, caixa, piramide, casa, torre, igreja, tocha, arvoreSeca, muralha } from './pecas.js';
+import { materiais, caixa, piramide, casa, torre, igreja, tocha, animarTochas, arvoreSeca, muralha } from './pecas.js';
 
 export class Vilarejo {
   constructor(cena, direcaoLua) {
@@ -26,12 +26,11 @@ export class Vilarejo {
     const sorteio = criarSorteio(1234); // mesma semente = vilarejo sempre igual
 
     // ---------- névoa e luzes gerais ----------
-    cena.fog = new THREE.FogExp2(p.nevoa, CONFIG.nevoa.densidade);
-    cena.background = new THREE.Color(p.nevoa);
-    cena.add(new THREE.HemisphereLight(p.luzAmbiente, 0x1a0f3a, 1.5));
+    this.nevoa = new THREE.FogExp2(p.nevoa, CONFIG.nevoa.densidade);
+    this.grupo.add(new THREE.HemisphereLight(p.luzAmbiente, 0x1a0f3a, 1.5));
     const lua = new THREE.DirectionalLight(p.luzLua, 1.1);
     lua.position.copy(direcaoLua).multiplyScalar(100);
-    cena.add(lua);
+    this.grupo.add(lua);
 
     // ---------- chão e ruas ----------
     // IMPORTANTE: o chão e as ruas são superfícies enormes e quase coladas. Com a
@@ -216,14 +215,7 @@ export class Vilarejo {
   }
 
   atualizar(dt, tempo) {
-    // Tochas tremulando.
-    for (const t of this.tochas) {
-      const f = 0.82 + 0.12 * Math.sin(tempo * 11 + t.fase) + 0.1 * Math.sin(tempo * 23.7 + t.fase * 1.7);
-      if (t.luz) t.luz.intensity = t.base * f;
-      t.chama.scale.set(1, 0.8 + f * 0.4, 1);
-      t.chama.rotation.y = tempo * 6 + t.fase;
-      t.halo.scale.setScalar(1.5 + f * 0.5);
-    }
+    animarTochas(this.tochas, tempo);
     // Névoa deslizando com o vento.
     for (const n of this.nevoas) {
       n.sprite.position.x += n.vel * dt;
