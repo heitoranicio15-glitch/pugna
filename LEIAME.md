@@ -120,9 +120,8 @@ existe salvar manualmente, e o menu de pausa mostra a última lanterna usada.
 
 Para voltar à última lanterna sem morrer, use um **Osso de Retorno** pela bolsa
 (**I**). Ele recupera vida e estamina e repõe os inimigos comuns, como a morte.
-Os selos e a vitória sobre o Guardião continuam registrados. O caçador começa
-com um osso e encontra mais dois entre as lápides do cemitério. Cada osso só
-pode ser usado uma vez.
+Os selos e a vitória sobre o Guardião continuam registrados. O osso é um item
+único que o caçador sempre carrega e pode ser usado quantas vezes quiser.
 
 **Apagar progresso** pede confirmação e limpa a partida do navegador. As
 preferências de áudio, imagem e controles continuam salvas.
@@ -178,16 +177,16 @@ onde você volta ao morrer ou reabrir o jogo.
 
 - **Vila:** a Casa da Sineira fica a oeste da praça e tem um baú com dois frascos.
   A Oficina do Poço tem uma chave e um registro na bancada. O cemitério tem
-  lápides que podem ser lidas e dois Ossos de Retorno no chão, ao lado delas.
+  lápides que podem ser lidas.
 - **Catedral:** procure as inscrições no Ossário e no Relicário. A chave da
   oficina abre a porta ao sul do Relicário. Dentro da sacristia há uma inscrição,
   um frasco e uma alavanca que abre a grade de serviço para a lanterna da nave.
 - Chegue perto do objeto, virado para ele, e pressione **E** quando aparecer a ação. Use
   **I** para abrir a bolsa e reler anotações. Um frasco recupera até 42 pontos
   de vida e pode ser usado pela bolsa ou com **R** durante a partida.
-- O **Osso de Retorno** fica na bolsa, em Consumíveis. Usar um leva o caçador
+- O **Osso de Retorno** fica na bolsa e não acaba. Usar leva o caçador
   à última lanterna em que descansou (ou ao Portão Sul, se ainda não descansou).
-- O navegador guarda itens, anotações, frascos e ossos usados e o estado de portas,
+- O navegador guarda itens, anotações, frascos usados e o estado de portas,
   baús e da grade. Morrer, descansar ou recarregar preserva esses registros.
 
 ## O que existe hoje
