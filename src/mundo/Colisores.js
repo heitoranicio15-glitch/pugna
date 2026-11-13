@@ -58,13 +58,13 @@ export class Colisores {
   }
 
   /** Fração do trecho até o primeiro obstáculo, ou null se o trajeto está livre. */
-  interceptarTrecho(origem, destino, altura, margem = 0) {
+  interceptarTrecho(origem, destino, altura, margem = 0, alturaDestino = altura) {
     const dx = destino.x - origem.x, dz = destino.z - origem.z;
     const trechoMinX = Math.min(origem.x, destino.x), trechoMaxX = Math.max(origem.x, destino.x);
     const trechoMinZ = Math.min(origem.z, destino.z), trechoMaxZ = Math.max(origem.z, destino.z);
     let primeiro = 1;
     for (const c of this.caixas) {
-      if (!c.ativa || c.topo <= altura) continue;
+      if (!c.ativa || c.topo <= Math.min(altura, alturaDestino)) continue;
       const minX = c.minX - margem, maxX = c.maxX + margem;
       const minZ = c.minZ - margem, maxZ = c.maxZ + margem;
       if (trechoMaxX < minX || trechoMinX > maxX || trechoMaxZ < minZ || trechoMinZ > maxZ) continue;
@@ -80,6 +80,11 @@ export class Colisores {
         entrada = Math.max(entrada, Math.min(a, b));
         saida = Math.min(saida, Math.max(a, b));
         if (entrada > saida) break;
+      }
+      if (c.topo !== Infinity && altura !== alturaDestino) {
+        const cruzamento = (c.topo - altura) / (alturaDestino - altura);
+        if (alturaDestino > altura) saida = Math.min(saida, cruzamento);
+        else entrada = Math.max(entrada, cruzamento);
       }
       if (entrada <= saida && entrada < primeiro && saida > 0) primeiro = entrada;
     }

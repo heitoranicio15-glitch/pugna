@@ -30,6 +30,9 @@ import { Som } from '../audio/Som.js';
 import { Trilha } from '../audio/Trilha.js';
 import { Hud } from '../interface/Hud.js';
 import { Menu } from '../interface/Menu.js';
+import { Bolsa } from '../interface/Bolsa.js';
+import { ANOTACOES, CURA_FRASCO, FRASCOS, contarFrascos } from './Inventario.js';
+import { alvoDaMira, atualizarObjetos } from '../mundo/Interacoes.js';
 
 export class Jogo {
   constructor(container) {
@@ -82,6 +85,8 @@ export class Jogo {
     document.getElementById('titulo-jogo').textContent = CONFIG.titulo;
     document.title = CONFIG.titulo;
     this.menu = new Menu(this);
+    this.bolsa = new Bolsa(this);
+    this.direcaoMira = new THREE.Vector3();
     this.salvamento.carregar().then((salvo) => this.menu.atualizarProgresso(salvo, this.localizarCheckpoint(salvo)?.lanterna.nome));
     this.ligarInterface();
     this.ligarEventos();
@@ -90,20 +95,25 @@ export class Jogo {
   // ---------------------------------------------------------------------------
   ligarInterface() {
     document.addEventListener('pointerlockchange', () => {
-      if (this.entrada.travado && this.estado === 'pausado' && !this.menu.opcoesAbertas && !this.menu.dialogo.open) {
+      if (this.entrada.travado && this.estado === 'pausado' && !this.painel && !this.menu.opcoesAbertas && !this.menu.dialogo.open) {
         this.definirEstado('jogando');
       } else if (!this.entrada.travado && this.estado === 'jogando' && !this.teste) {
         this.definirEstado('pausado');
       }
     });
     document.addEventListener('pointerlockerror', () => {
-      if (this.estado === 'pausado' && !this.menu.opcoesAbertas) {
+      if (this.estado === 'pausado' && !this.painel && !this.menu.opcoesAbertas) {
         this.menu.avisar('Clique em Continuar para capturar o mouse.', this.estado);
       }
     });
     addEventListener('keydown', (e) => {
       if (e.repeat || this.menu.dialogo.open) return;
-      if (e.code === 'Escape' && this.menu.opcoesAbertas) {
+      if ((e.code === 'Escape' || e.code === 'KeyI') && this.painel) {
+        e.preventDefault();
+        this.fecharPainel();
+      } else if (e.code === 'KeyI' && (this.estado === 'jogando' || this.estado === 'pausado') && !this.menu.opcoesAbertas) {
+        this.abrirBolsa();
+      } else if (e.code === 'Escape' && this.menu.opcoesAbertas) {
         e.preventDefault();
         this.menu.fecharOpcoes();
       } else if (e.code === 'Escape' && this.estado === 'jogando') {
@@ -199,6 +209,50 @@ export class Jogo {
     else this.entrada.travarMouse();
   }
 
+  mostrarPainel(painel) {
+    const jogando = this.estado === 'jogando';
+    this.painel = painel;
+    if (jogando) {
+      this.definirEstado('pausado');
+      if (this.entrada.travado) document.exitPointerLock();
+    }
+    this.hud.mostrarTela(painel);
+  }
+
+  abrirBolsa() {
+    if (!['jogando', 'pausado'].includes(this.estado)) return;
+    this.mostrarPainel('bolsa');
+    this.bolsa.exibir();
+  }
+
+  abrirLeitura(id) {
+    this.voltarParaBolsa = this.painel === 'bolsa';
+    this.mostrarPainel('leitura');
+    this.bolsa.ler(ANOTACOES[id]);
+  }
+
+  fecharPainel() {
+    if (this.painel === 'leitura' && this.voltarParaBolsa) {
+      this.abrirBolsa();
+      return;
+    }
+    this.painel = null;
+    this.definirEstado('pausado');
+  }
+
+  usarFrasco() {
+    if (contarFrascos(this.progresso) === 0) return 'Você não tem frascos de cura.';
+    if (this.tDescanso || !this.podeInteragir()) return 'Espere o fim da ação para usar o frasco.';
+    const j = this.jogador;
+    if (j.vida >= CONFIG.jogador.vidaMax) return 'Sua vida já está cheia.';
+    this.progresso.frascosUsados++;
+    j.vida = Math.min(CONFIG.jogador.vidaMax, j.vida + CURA_FRASCO);
+    this.salvamento.salvar(this.progresso);
+    this.hud.mostrarFrascos(contarFrascos(this.progresso));
+    this.eventos.emitir('item:cura');
+    return 'Frasco usado. Vida recuperada.';
+  }
+
   voltarAoCheckpoint() {
     if (this.estado !== 'pausado') return;
     this.renascer();
@@ -237,11 +291,16 @@ export class Jogo {
   }
 
   aplicarProgresso() {
-    for (const area of this.areas) area.aplicarProgresso?.(this.progresso);
+    for (const area of this.areas) {
+      area.aplicarProgresso?.(this.progresso);
+      atualizarObjetos(area, this.progresso.eventos);
+    }
+    this.hud.mostrarFrascos(contarFrascos(this.progresso));
   }
 
   registrarEvento(id) {
-    if (!this.progresso.eventos.includes(id)) this.progresso.eventos.push(id);
+    if (this.progresso.eventos.includes(id)) return;
+    this.progresso.eventos.push(id);
     this.progresso = normalizarProgresso(this.progresso);
     this.aplicarProgresso();
     this.salvamento.salvar(this.progresso);
@@ -317,6 +376,10 @@ export class Jogo {
   interacao() {
     const pos = this.jogador.pos;
     const perto = (p, raio = 2.35) => Math.hypot(p.x - pos.x, p.z - pos.z) < raio;
+    const objeto = alvoDaMira(this.mundo.objetos, this.camera.position,
+      this.camera.getWorldDirection(this.direcaoMira), this.mundo.colisores);
+    this.hud.mostrarAlvo(!!objeto);
+    if (objeto) return this.interacaoObjeto(objeto);
     const lanterna = this.lanternas.find((l) => perto(l));
     if (lanterna) return ['E — descansar na lanterna', () => this.descansar(lanterna)];
 
@@ -344,6 +407,33 @@ export class Jogo {
     if (passagem) return [passagem.nome];
     if (this.progresso.guardiaoDerrotado && perto(c.altar, 3.5)) return ['O santuário está livre do Véu.'];
     return [];
+  }
+
+  interacaoObjeto(objeto) {
+    const { acao, evento, nome, ativo, chave } = objeto;
+    if (acao === 'informar') return [objeto.mensagem];
+    if (acao === 'ler') return [`E — ler: ${ANOTACOES[evento].nome}`, () => {
+      this.registrarEvento(evento);
+      this.abrirLeitura(evento);
+    }];
+    if (ativo) return [acao === 'bau' ? 'O baú está vazio.' : 'A grade de serviço está aberta.'];
+    if (chave && !this.progresso.eventos.includes(chave)) {
+      return ['Trancada · chave na oficina perto do poço'];
+    }
+    const verbo = { abrir: 'abrir', bau: 'abrir', acionar: 'acionar', recolher: 'recolher' }[acao];
+    return [`E — ${verbo} ${nome}`, () => {
+      this.registrarEvento(evento);
+      this.eventos.emitir('objeto:interagiu', acao);
+      if (FRASCOS[evento]) this.hud.avisar(`Frascos de cura +${FRASCOS[evento]} · R para usar`);
+      else if (acao === 'acionar') this.hud.avisar('Atalho aberto para a nave.');
+      else if (acao === 'recolher') this.hud.avisar('Chave da sacristia recolhida · I para abrir a bolsa');
+      else this.hud.avisar('Passagem aberta.');
+    }];
+  }
+
+  podeInteragir() {
+    const j = this.jogador;
+    return !j.morto && j.noChao && j.acao === 'livre' && !j.bloqueando && !j.carregando && j.tEsquiva <= 0;
   }
 
   pausaDeImpacto(segundos) { this.congelado = Math.max(this.congelado, segundos); }
@@ -398,10 +488,11 @@ export class Jogo {
     if (this.estado === 'jogando') {
       const [mensagem, acao] = this.interacao();
       this.hud.fixar(mensagem || '');
-      if (acao && this.entrada.apertou('KeyE') && this.jogador.noChao && this.jogador.acao === 'livre' &&
-          !this.jogador.bloqueando && !this.jogador.carregando && this.jogador.tEsquiva <= 0) {
+      if (acao && this.entrada.apertou('KeyE') && this.podeInteragir()) {
         acao();
-        if (this.tDescanso > 0) return;
+        if (this.tDescanso > 0 || this.estado !== 'jogando') return;
+      } else if (this.entrada.apertou('KeyR')) {
+        this.hud.avisar(this.usarFrasco(), 1.8);
       }
     }
     this.mundo.atualizar(dt, this.tempo);

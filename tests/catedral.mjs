@@ -89,6 +89,128 @@ async function prepararCombate() {
   });
 }
 
+async function mirar(x, y, z) {
+  await page.evaluate(({ x, y, z }) => {
+    const j = jogo.jogador;
+    const dx = x - j.pos.x, dz = z - j.pos.z;
+    j.yaw = Math.atan2(-dx, -dz);
+    j.pitch = Math.atan2(y - j.pos.y - j.alturaOlhos, Math.hypot(dx, dz));
+    j.atualizarCamera(0, 0);
+    jogo.hud.limparAviso();
+  }, { x, y, z });
+  await passos();
+}
+
+async function validarExploracao() {
+  await prepararCombate();
+  await posicionar(-15.9, 11.8);
+  await mirar(-15.9, 1.4, 10.39);
+  assert.match((await estado()).aviso, /abrir casa da sineira/);
+  await tecla('e');
+  await andar('w', 25);
+  assert.ok((await estado()).pos[2] < 9);
+  await mirar(-17.7, 0.82, 5.97);
+  assert.match((await estado()).aviso, /abrir baú da sineira/);
+  await tecla('e');
+  assert.equal(await page.locator('#total-frascos').textContent(), '2');
+  await tecla('e');
+  assert.equal(await page.locator('#total-frascos').textContent(), '2');
+  await page.evaluate(() => { jogo.jogador.vida = 41; });
+  await tecla('r');
+  assert.equal(await page.evaluate(() => jogo.jogador.vida), 83);
+  assert.equal(await page.locator('#total-frascos').textContent(), '1');
+
+  // Pelo lado de fora, a parede esconde a anotação mesmo dentro do alcance.
+  await posicionar(-10.99, -13.65, Math.PI);
+  await mirar(-10.99, 1.56, -11.79);
+  assert.doesNotMatch((await estado()).aviso, /Registro da oficina/);
+  await posicionar(-9.45, -5.55);
+  await andar('w', 23);
+  assert.ok((await estado()).pos[2] < -8.6);
+  await mirar(-9.5, 1.13, -11.19);
+  assert.match((await estado()).aviso, /recolher chave da sacristia/);
+  await tecla('e');
+  await andar('w', 5);
+  await mirar(-10.99, 1.56, -11.79);
+  assert.match((await estado()).aviso, /ler: Registro da oficina/);
+  await tecla('e');
+  await page.locator('#tela-leitura').waitFor();
+  await page.locator('#fechar-leitura').click();
+  await page.keyboard.press('i');
+  await page.locator('#tela-bolsa').waitFor();
+  assert.match(await page.locator('#bolsa-chaves').textContent(), /Chave da sacristia/);
+  await page.getByRole('button', { name: 'Registro da oficina' }).click();
+  assert.match(await page.locator('#texto-leitura').textContent(), /grade da nave/);
+  await page.locator('#fechar-leitura').click();
+  await page.locator('#fechar-bolsa').click();
+  await page.locator('#continuar').click();
+
+  await posicionar(0, -40);
+  await andar('w', 36);
+  await tecla('e');
+  assert.equal((await estado()).area, 'catedral');
+  await prepararCombate();
+  // Sem a chave, pressionar E na porta preserva o bloqueio.
+  const progresso = (await estado()).progresso;
+  await page.evaluate(() => {
+    jogo.progresso.eventos = jogo.progresso.eventos.filter((id) => id !== 'vilarejo:chave-sacristia');
+  });
+  await posicionar(15, -0.25, Math.PI);
+  await mirar(15, 1.44, 1.84);
+  assert.match((await estado()).aviso, /Trancada/);
+  await tecla('e');
+  assert.ok(!(await estado()).progresso.eventos.includes('catedral:porta-sacristia'));
+  await page.evaluate((salvo) => { jogo.progresso = salvo; }, progresso);
+  await mirar(15, 1.44, 1.84);
+  assert.match((await estado()).aviso, /abrir porta da sacristia/);
+  await tecla('e');
+  await andar('w', 26);
+  assert.ok((await estado()).pos[2] > 3.6);
+
+  await posicionar(18.64, 6.25, Math.PI);
+  await mirar(18.64, 1.67, 8.21);
+  assert.match((await estado()).aviso, /Vigília do Guardião/);
+  await tecla('e');
+  await page.locator('#fechar-leitura').click();
+  await page.locator('#continuar').click();
+  await posicionar(20.02, 5.88);
+  await mirar(20.88, 0.19, 6.77);
+  assert.match((await estado()).aviso, /recolher frasco/);
+  await tecla('e');
+  assert.equal(await page.locator('#total-frascos').textContent(), '2');
+  await posicionar(10.85, 6.94, Math.PI / 2);
+  await mirar(9.03, 1.53, 7.06);
+  assert.match((await estado()).aviso, /acionar alavanca/);
+  await tecla('e');
+  await posicionar(10.15, 5.98, Math.PI / 2);
+  await andar('w', 29);
+  assert.ok((await estado()).pos[0] < 6.8, (await estado()).pos.join(', '));
+  await posicionar(4, 6.4);
+  await tecla('e');
+  await passos(23);
+  await comecar();
+  assert.equal((await estado()).area, 'catedral');
+  assert.equal(await page.locator('#total-frascos').textContent(), '2');
+  const persistido = await estado();
+  assert.equal(persistido.progresso.frascosUsados, 1);
+  for (const evento of ['vilarejo:bau-casa', 'vilarejo:chave-sacristia', 'catedral:porta-sacristia',
+    'catedral:registro-guardiao', 'catedral:atalho-sacristia', 'catedral:frasco-sacristia']) {
+    assert.ok(persistido.progresso.eventos.includes(evento), evento);
+  }
+  assert.equal(persistido.grade, true);
+  await prepararCombate();
+  await posicionar(10.15, 5.98, Math.PI / 2);
+  await andar('w', 29);
+  assert.ok((await estado()).pos[0] < 6.8);
+  await page.keyboard.press('Escape');
+  await page.locator('#reset-pausa').click();
+  await page.locator('#confirmar-reset button[value="apagar"]').click();
+  await page.locator('#tela-titulo').waitFor();
+  assert.deepEqual((await estado()).progresso.eventos, []);
+  assert.equal(await page.locator('#total-frascos').textContent(), '0');
+  assert.equal(await page.evaluate((key) => localStorage.getItem(key), chave), null);
+}
+
 try {
   page = await iniciarNavegador();
   page.on('pageerror', (erro) => erros.push(erro.message));
@@ -254,6 +376,7 @@ try {
   assert.equal((await estado()).guardiao.morto, true);
   assert.deepEqual(await page.evaluate((chave) => JSON.parse(localStorage.getItem(chave)), chave), {
     descanso: 'nave-do-veu', selos: ['ossario', 'relicario'], guardiaoDerrotado: true,
+    frascosUsados: 0,
     eventos: ['catedral:selo-ossario', 'catedral:selo-relicario', 'catedral:guardiao-derrotado'],
   });
 
@@ -275,8 +398,9 @@ try {
   await page.evaluate((chave) => localStorage.setItem(chave, '{'), chave);
   await comecar();
   assert.ok((await estado()).pos[2] > 50);
+  await validarExploracao();
   assert.deepEqual(erros, []);
-  console.log('Passou: entrada, grade, caminhada nas duas alas, selos, saída, descanso, combate, morte, recarga e saves anteriores.');
+  console.log('Passou: Catedral, navegação, combate, saves antigos, mira, baú, cura, bolsa, chave, sacristia e atalho após recarregar.');
 } finally {
   await browser?.close();
   servidor?.kill();

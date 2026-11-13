@@ -72,6 +72,8 @@ que está em `historico-git.bundle`. Depois disso, `git log` mostra as etapas e 
 | Bloquear | Segurar o clique direito |
 | Esquivar | Ctrl, Alt ou Q (com uma direção; parado, pula para trás) |
 | Interagir (portas, selos e lanternas) | E |
+| Abrir a bolsa | I |
+| Usar um frasco de cura | R |
 | Tela cheia | F |
 | Pausar / soltar o mouse | Esc |
 
@@ -120,6 +122,20 @@ Para voltar ao vilarejo, use **E** na porta ao sul da nave.
 O jogo guarda neste navegador a última lanterna usada, os dois selos e a derrota
 do Guardião. Selos e derrota são salvos assim que acontecem. A lanterna determina
 onde você volta ao morrer ou reabrir o jogo.
+
+### Exploração e bolsa
+
+- **Vila:** a Casa da Sineira fica a oeste da praça e tem um baú com dois frascos.
+  A Oficina do Poço tem uma chave e um registro na bancada. O cemitério tem
+  lápides que podem ser lidas.
+- **Catedral:** procure as inscrições no Ossário e no Relicário. A chave da
+  oficina abre a porta ao sul do Relicário. Dentro da sacristia há uma inscrição,
+  um frasco e uma alavanca que abre a grade de serviço para a lanterna da nave.
+- Aponte a mira para o objeto e pressione **E** quando aparecer a ação. Use
+  **I** para abrir a bolsa e reler anotações. Um frasco recupera até 42 pontos
+  de vida e pode ser usado pela bolsa ou com **R** durante a partida.
+- O navegador guarda itens, anotações, frascos usados e o estado de portas,
+  baús e da grade. Morrer, descansar ou recarregar preserva esses registros.
 
 ## O que existe hoje
 
@@ -251,9 +267,10 @@ pugna/
 ## Testes
 
 - `npm test` verifica a janela de acerto, o custo da esquiva, colisões,
-  navegação e migração de saves.
+  navegação, seleção pela mira, inventário e migração de saves.
 - `npx playwright-core install chromium` instala o navegador de teste.
   Em seguida, `npm run test:browser` inicia o jogo e percorre a catedral,
   incluindo transições, checkpoint, morte, recarga e derrota do Guardião.
+  Também testa o percurso da vila até a sacristia e o atalho após recarregar.
   Para usar um Chrome instalado, aponte `PUGNA_CHROME` para o executável.
   Para testar outro endereço, use `npm run test:browser -- <URL>`.

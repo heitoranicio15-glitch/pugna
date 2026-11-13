@@ -1,0 +1,32 @@
+/** Objetos usam um ponto visível de interação e uma tolerância para a mira. */
+export function alvoDaMira(objetos, origem, direcao, colisores) {
+  let melhor = null;
+  let melhorErro = Infinity;
+  for (const objeto of objetos) {
+    if (objeto.oculto) continue;
+    const { x, y, z, alcance = 2.75, tolerancia = 0.37 } = objeto;
+    const dx = x - origem.x, dy = y - origem.y, dz = z - origem.z;
+    const d2 = dx * dx + dy * dy + dz * dz;
+    if (d2 > alcance * alcance) continue;
+    const frente = dx * direcao.x + dy * direcao.y + dz * direcao.z;
+    if (frente <= 0) continue;
+    const erro = Math.sqrt(Math.max(0, d2 - frente * frente)) / tolerancia;
+    if (erro > 1 || erro >= melhorErro || colisores.interceptarTrecho(origem, objeto, origem.y, 0, y) !== null) continue;
+    melhor = objeto;
+    melhorErro = erro;
+  }
+  return melhor;
+}
+
+export function atualizarObjetos(mundo, eventos) {
+  let mudou = false;
+  for (const objeto of mundo.objetos) {
+    const ativo = eventos.includes(objeto.evento);
+    if (objeto.ativo === ativo) continue;
+    objeto.ativo = ativo;
+    objeto.oculto = ativo && ['recolher', 'abrir', 'informar'].includes(objeto.acao);
+    objeto.atualizar?.(ativo);
+    if (objeto.acao === 'abrir' || objeto.acao === 'acionar') mudou = true;
+  }
+  if (mudou) mundo.navegacao?.invalidar();
+}
