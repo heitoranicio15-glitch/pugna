@@ -1,4 +1,4 @@
-import { ANOTACOES, CHAVE_SACRISTIA, contarFrascos, contarOssos } from '../nucleo/Inventario.js';
+import { ANOTACOES, CHAVE_SACRISTIA, contarFrascos } from '../nucleo/Inventario.js';
 
 const el = (id) => document.getElementById(id);
 
@@ -18,7 +18,6 @@ export class Bolsa {
     });
     this.usarOsso.addEventListener('click', () => {
       el('bolsa-estado').textContent = jogo.usarOsso();
-      this.atualizar();
     });
   }
 
@@ -33,9 +32,6 @@ export class Bolsa {
     const total = contarFrascos(progresso);
     el('bolsa-frascos').textContent = total ? `${total} × Frasco de cura` : 'Nenhum frasco de cura';
     this.usar.disabled = total === 0;
-    const ossos = contarOssos(progresso);
-    el('bolsa-ossos').textContent = ossos ? `${ossos} × Osso de Retorno` : 'Nenhum Osso de Retorno';
-    this.usarOsso.disabled = ossos === 0;
     const chaves = el('bolsa-chaves');
     const item = document.createElement('li');
     item.textContent = progresso.eventos.includes(CHAVE_SACRISTIA) ? 'Chave da sacristia' : 'Nenhum item-chave';

@@ -59,20 +59,3 @@ export function chave(grupo, x, y, z) {
   grupo.add(g);
   return g;
 }
-
-/** Montinho de ossos claros (o Osso de Retorno, antes de ser recolhido). */
-export function ossos(grupo, x, y, z) {
-  const g = new THREE.Group();
-  const marfim = retro(new THREE.MeshLambertMaterial({ color: 0xd9d2bd, emissive: 0x3a3a52 }));
-  for (const [dx, dz, giro, comprimento] of [[0, 0, 0.4, 0.5], [0.05, 0.04, -0.9, 0.42], [-0.04, -0.03, 1.9, 0.36]]) {
-    const osso = bloco(g, marfim, dx, 0.04, dz, comprimento, 0.07, 0.07);
-    osso.rotation.y = giro;
-    for (const ponta of [-1, 1]) {
-      const no = bloco(g, marfim, dx + Math.cos(giro) * ponta * comprimento / 2, 0.045, dz - Math.sin(giro) * ponta * comprimento / 2, 0.12, 0.1, 0.12);
-      no.rotation.y = giro;
-    }
-  }
-  g.position.set(x, y, z);
-  grupo.add(g);
-  return g;
-}

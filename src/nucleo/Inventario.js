@@ -36,21 +36,6 @@ export const ANOTACOES = Object.freeze({
   },
 });
 
-// Osso de Retorno: consumível que leva o caçador de volta à última lanterna.
-// O caçador começa com alguns e encontra outros pelo mundo.
-export const OSSOS_INICIAIS = 1;
-export const OSSOS = Object.freeze({
-  'vilarejo:ossos-cemiterio': 2,
-});
-
-export function totalOssos(eventos) {
-  return Object.entries(OSSOS).reduce((total, [id, quantidade]) => total + (eventos.includes(id) ? quantidade : 0), OSSOS_INICIAIS);
-}
-
-export function contarOssos(progresso) {
-  return totalOssos(progresso.eventos) - progresso.ossosUsados;
-}
-
 export function totalFrascos(eventos) {
   return Object.entries(FRASCOS).reduce((total, [id, quantidade]) => total + (eventos.includes(id) ? quantidade : 0), 0);
 }

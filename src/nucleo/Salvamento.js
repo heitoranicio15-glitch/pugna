@@ -7,7 +7,7 @@
 //  (carregar e salvar) que fale com o Supabase, e troque em Jogo.js. O resto
 //  do jogo não precisa mudar.
 // =============================================================================
-import { totalFrascos, totalOssos } from './Inventario.js';
+import { totalFrascos } from './Inventario.js';
 
 const CHAVE = 'pugna-progresso-v1';
 
@@ -31,10 +31,6 @@ export function normalizarProgresso(dados) {
     guardiaoDerrotado,
     frascosUsados: Number.isInteger(dados?.frascosUsados)
       ? Math.max(0, Math.min(totalFrascos(eventos), dados.frascosUsados))
-      : 0,
-    // Saves anteriores ao Osso de Retorno não têm este campo: começam do zero.
-    ossosUsados: Number.isInteger(dados?.ossosUsados)
-      ? Math.max(0, Math.min(totalOssos(eventos), dados.ossosUsados))
       : 0,
     eventos: [...eventos.filter((id) => !id.startsWith('catedral:selo-') && id !== 'catedral:guardiao-derrotado'), ...eventosDaCatedral],
   };

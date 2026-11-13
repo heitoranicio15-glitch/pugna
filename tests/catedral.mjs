@@ -149,33 +149,21 @@ async function validarExploracao() {
   assert.match(await page.locator('#estado-pausa').textContent(), /salva sozinho/);
   await page.locator('#continuar').click();
 
-  // Osso de Retorno: recolhe no cemitério, usa pela bolsa e volta à última lanterna.
-  await posicionar(10.4, -48.4);
-  await mirar(10.4, 0.12, -50.15);
-  assert.match((await estado()).aviso, /recolher ossos de retorno/);
-  await tecla('e');
-  assert.match((await estado()).aviso, /Ossos de Retorno \+2/);
-  await page.evaluate(() => { jogo.jogador.vida = 37; });
-  await page.keyboard.press('i');
-  await page.locator('#tela-bolsa').waitFor();
-  assert.match(await page.locator('#bolsa-ossos').textContent(), /3 × Osso de Retorno/);
-  await page.locator('#usar-osso').click();
-  await page.waitForFunction(() => jogo.estado === 'jogando', null, { polling: 50 });
-  const retorno = await estado();
-  assert.equal(retorno.area, 'vilarejo');
-  assert.ok(Math.hypot(retorno.pos[0] + 2.7, retorno.pos[2] - 49) < 2);
-  assert.equal(await page.evaluate(() => jogo.jogador.vida), 100);
-  assert.equal(retorno.progresso.ossosUsados, 1);
-  assert.equal(await page.evaluate(() => jogo.inimigos.every((i) => !i.morto)), true);
-  assert.equal(await page.evaluate((chave) => JSON.parse(localStorage.getItem(chave)).ossosUsados, chave), 1);
-  // Sem ossos, o botão fica desligado e nada acontece.
-  await page.evaluate(() => { jogo.progresso.ossosUsados = 3; });
-  await page.keyboard.press('i');
-  await page.locator('#tela-bolsa').waitFor();
-  assert.equal(await page.locator('#usar-osso').isDisabled(), true);
-  await page.evaluate(() => { jogo.progresso.ossosUsados = 1; });
-  await page.locator('#fechar-bolsa').click();
-  await page.locator('#continuar').click();
+  // Osso de Retorno: item único e ilimitado. Usa duas vezes pela bolsa e volta à lanterna.
+  for (let uso = 0; uso < 2; uso++) {
+    await posicionar(10.4, -48.4);
+    await page.evaluate(() => { jogo.jogador.vida = 37; });
+    await page.keyboard.press('i');
+    await page.locator('#tela-bolsa').waitFor();
+    assert.equal(await page.locator('#usar-osso').isDisabled(), false);
+    await page.locator('#usar-osso').click();
+    await page.waitForFunction(() => jogo.estado === 'jogando', null, { polling: 50 });
+    const retorno = await estado();
+    assert.equal(retorno.area, 'vilarejo');
+    assert.ok(Math.hypot(retorno.pos[0] + 2.7, retorno.pos[2] - 49) < 2);
+    assert.equal(await page.evaluate(() => jogo.jogador.vida), 100);
+    assert.equal(await page.evaluate(() => jogo.inimigos.every((i) => !i.morto)), true);
+  }
   await prepararCombate();
 
   await posicionar(0, -40);
@@ -409,7 +397,7 @@ try {
   assert.equal((await estado()).guardiao.morto, true);
   assert.deepEqual(await page.evaluate((chave) => JSON.parse(localStorage.getItem(chave)), chave), {
     descanso: 'nave-do-veu', selos: ['ossario', 'relicario'], guardiaoDerrotado: true,
-    frascosUsados: 0, ossosUsados: 0,
+    frascosUsados: 0,
     eventos: ['catedral:selo-ossario', 'catedral:selo-relicario', 'catedral:guardiao-derrotado'],
   });
 

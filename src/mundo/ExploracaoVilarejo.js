@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { bloco, chave, frasco, ossos, placa } from './Aderecos.js';
+import { bloco, chave, frasco, placa } from './Aderecos.js';
 import { materiais, telhado, tocha } from './pecas.js';
 import { CHAVE_SACRISTIA } from '../nucleo/Inventario.js';
 
@@ -110,11 +110,4 @@ export function montarExploracaoVilarejo(mundo) {
     placa(grupo, nome, x, 0.91, z + 0.18, 0.71);
     mundo.objetos.push({ x, y: 0.91, z: z + 0.2, acao: 'ler', evento });
   }
-
-  // Ossos de Retorno deixados entre as duas lápides do cemitério.
-  const malhaOssos = ossos(grupo, 10.4, 0, -50.15);
-  mundo.objetos.push({
-    x: 10.4, y: 0.12, z: -50.15, tolerancia: 0.6, nome: 'ossos de retorno', acao: 'recolher',
-    evento: 'vilarejo:ossos-cemiterio', atualizar: (recolhidos) => { malhaOssos.visible = !recolhidos; },
-  });
 }

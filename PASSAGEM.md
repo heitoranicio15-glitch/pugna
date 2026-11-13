@@ -21,7 +21,7 @@ Ação e exploração num mundo medieval gótico, vazio e triste, à noite, no e
 
 - **Câmera:** terceira pessoa, com mira travada (Tab ou botão do meio do mouse).
 - **Sem o gigante encapuzado:** ele foi excluído. A lua é a presença no céu.
-- **Salvamento estilo Souls:** o jogo salva sozinho o tempo todo. Ao morrer, o jogador renasce na última lanterna em que descansou, e os inimigos comuns voltam. Não existe salvar manualmente. O "voltar ao checkpoint" vira um item consumível, o Osso de Retorno.
+- **Salvamento estilo Souls:** o jogo salva sozinho o tempo todo. Ao morrer, o jogador renasce na última lanterna em que descansou, e os inimigos comuns voltam. Não existe salvar manualmente. O "voltar ao checkpoint" vira o Osso de Retorno: item único, de uso ilimitado. A penalidade por usar (como perder as almas nos Souls) será decidida mais para a frente.
 - **Escopo:** semi-linear (vilarejo, catedral, depois áreas ligadas por atalhos). Nada de mundo aberto. Os inimigos são humanos de armadura, que reaproveitam o mesmo esqueleto e as mesmas animações.
 - **Pistola:** fica para a fase 2, como escolha de mão secundária. O broquel faz parry colado e permite bloquear. A pistola faz parry à distância, gasta munição e não bloqueia. As duas usam o mesmo gancho de interrupção.
 
@@ -40,9 +40,9 @@ Cada resposta do jogador precisa ser a melhor contra algum tipo de ataque. Se n�
 ## Estado atual
 
 - **Pronto e no ar:** vilarejo, Catedral do Véu (nave, Ossário, Relicário, Santuário, selos), inimigos cavaleiro e Penitente, miniboss Guardião do Véu, bolsa e frascos de cura, lápides, atalhos, menu de configurações, trilha sonora, suporte a celular, terceira pessoa, mira travada, parry com crítico e rolamento.
-- **Salvamento estilo Souls (item 1 do Plano, pronto):** o jogo grava sozinho a cada acontecimento e não há salvar manual. O botão "Voltar ao checkpoint" saiu da pausa e virou o **Osso de Retorno**, um consumível usado pela bolsa. O caçador começa com 1 e acha mais 2 no cemitério (quantidades em `src/nucleo/Inventario.js`). O save ganhou o campo `ossosUsados`; saves antigos continuam valendo.
+- **Salvamento estilo Souls (item 1 do Plano, pronto):** o jogo grava sozinho a cada acontecimento e não há salvar manual. O botão "Voltar ao checkpoint" saiu da pausa e virou o **Osso de Retorno**, usado pela bolsa. É um item único, de uso ilimitado, que o caçador sempre carrega. Hoje não há penalidade ao usar.
 - **Infra:** `jogar.bat` com atualização automática, `atualizar.bat`, e regra de integração automática no `AGENTS.md` com o `CLAUDE.md` apontando para ele.
-- **A conferir:** origem das 4 músicas (o repositório é público) e ajuste fino da câmera e do parry jogando com o mouse. Decidir com o Heitor se a quantidade de Ossos de Retorno (3 no total, sem reposição) está boa ou se eles devem ser repostos de algum jeito.
+- **A conferir:** origem das 4 músicas (o repositório é público) e ajuste fino da câmera e do parry jogando com o mouse. O Heitor ainda vai decidir a penalidade do Osso de Retorno (nos Souls, perde-se as almas); até lá o uso é livre.
 
 ## Plano (fazer um por vez, cada um num chat novo)
 
