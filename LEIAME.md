@@ -27,6 +27,14 @@ Depois abra no Chrome o endereço que aparecer, normalmente **http://localhost:5
 
 Para parar o jogo, feche a janela preta do terminal (ou aperte Ctrl+C nela).
 
+### Manter a pasta atualizada
+
+Dê dois cliques em `atualizar.bat` para baixar a versão mais nova da `main` no
+GitHub, incluindo o que os outros colaboradores integraram. O `jogar.bat` faz
+essa checagem sozinho antes de abrir o jogo. Se você estiver numa branch com
+trabalho ainda não integrado, ou sem internet, nada é alterado e o jogo abre
+na versão que já estava na pasta.
+
 ## Publicar para os amigos jogarem (GitHub Pages)
 
 O arquivo `.github/workflows/publicar.yml` monta e publica o jogo após uma integração
@@ -204,6 +212,7 @@ pugna/
 ├─ index.html              página do jogo (telas e barras em HTML)
 ├─ .github/workflows/      publicação automática no GitHub Pages
 ├─ jogar.bat               atalho para rodar no Windows
+├─ atualizar.bat           baixa a versão mais nova da main (o jogar.bat chama sozinho)
 ├─ configurar-git.bat      liga o histórico do Git (rodar uma vez)
 ├─ LEIAME.md               este arquivo
 ├─ CREDITOS.md             origem de bibliotecas e assets
