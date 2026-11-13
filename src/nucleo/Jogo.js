@@ -143,6 +143,10 @@ export class Jogo {
     this.eventos.em('jogador:bloqueou', ({ quebrou }) => this.hud.mostrarContato(quebrou ? 'inimigo' : 'bloqueio'));
     this.eventos.em('jogador:aparou', () => this.hud.destacar('aparou'));
     this.eventos.em('golpe:acertou', ({ critico }) => { if (critico) this.hud.destacar('critico'); });
+    this.eventos.em('jogador:pulou-golpe', () => this.hud.destacar('pulou'));
+    // Ensina a regra de ouro: a resposta que não serve para aquele tipo de golpe.
+    this.eventos.em('jogador:resposta-errada', ({ resposta }) => this.hud.avisar(
+      resposta === 'aparar' ? 'A rasteira não pode ser aparada. Pule.' : 'A rasteira passa por baixo da guarda. Pule.'));
     this.eventos.em('jogador:morreu', () => {
       this.tMorte = 0;
       this.hud.limparAviso();

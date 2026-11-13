@@ -43,7 +43,7 @@ const estado = () => page.evaluate(() => ({
   progresso: jogo.progresso,
   morte: jogo.jogador.morto,
   grade: jogo.catedral.bloqueio.ativa,
-  guardiao: { vida: jogo.guardiao.vida, morto: jogo.guardiao.morto, golpes: jogo.guardiao.cfg.golpes },
+  guardiao: { vida: jogo.guardiao.vida, morto: jogo.guardiao.morto, faseFinal: jogo.guardiao.emFaseFinal },
   hudGuardiao: !document.getElementById('guardiao').classList.contains('oculto'),
   aviso: document.getElementById('aviso').textContent,
 }));
@@ -352,7 +352,6 @@ try {
     const g = jogo.guardiao;
     jogo.jogador.reiniciar(g.pos.x, g.pos.z + 2.15, 0);
     g.mudar('recuperacao');
-    g.golpesRestantes = 0;
   });
   await page.mouse.down();
   await passos(8);
@@ -364,16 +363,39 @@ try {
   await page.evaluate(() => {
     jogo.guardiao.receberDano(130, jogo.jogador.frente(), 0, true);
   });
-  assert.equal((await estado()).guardiao.golpes, 2);
+  assert.equal((await estado()).guardiao.faseFinal, true);
   await page.evaluate(() => {
     const g = jogo.guardiao;
     jogo.jogador.reiniciar(g.pos.x, g.pos.z + 2.15, 0);
     g.angulo = 0;
-    g.golpesRestantes = g.cfg.golpes;
-    g.mudar('preparo');
+    g.atacar(g.cfg.ataques[0].golpes);
   });
   await passos(25);
   assert.ok(await page.evaluate(() => jogo.jogador.vida < 100));
+
+  // Tipos de ataque: a rasteira acende o aviso, é larga e passa por baixo de quem pula.
+  const rasteira = await page.evaluate(() => {
+    const g = jogo.guardiao, j = jogo.jogador;
+    j.reiniciar(g.pos.x + 2.4, g.pos.z + 0.6, 0);   // de lado: um golpe alto não alcançaria
+    g.angulo = 0;
+    g.mudar('perseguir');
+    g.atacar(['rasteira']);
+    g.atualizar(0.3);
+    const aviso = { tipo: g.golpe.tipo, olho: g.olho.color.getHex(), arma: g.aco.emissive.getHex() > 0 };
+    j.noChao = false; j.pos.y = 0.6;
+    while (g.estado === 'preparo') g.atualizar(0.05);
+    const noAr = j.vida;
+    g.mudar('perseguir');
+    j.noChao = true; j.pos.y = 0;
+    g.atacar(['rasteira']);
+    while (g.estado !== 'recuperacao') g.atualizar(0.05);
+    const noChao = j.vida;
+    g.mudar('perseguir');
+    return { aviso, noAr, noChao };
+  });
+  assert.deepEqual(rasteira.aviso, { tipo: 'rasteira', olho: 0xffb21e, arma: true });
+  assert.equal(rasteira.noAr, 100);
+  assert.ok(rasteira.noChao < 100);
   await page.evaluate(() => {
     jogo.guardiao.receberDano(999, jogo.jogador.frente(), 0, true);
   });

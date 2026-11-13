@@ -30,11 +30,25 @@ export class Som {
     eventos.em('mira:travou', () => this.tom({ volume: 0.08, duracao: 0.07, de: 620, ate: 880 }));
     eventos.em('jogador:ferido', () => { this.impacto(0.8); this.gemido(); });
     eventos.em('jogador:morreu', () => this.sino(55, 4, 0.5));
-    eventos.em('inimigo:golpe', (i) => this.zunido(0.4 * this.perto(i), 0.25, i.tipo === 'cavaleiro' ? 320 : 800));
+    eventos.em('jogador:pulou-golpe', () => this.zunido(0.3, 0.2, 520));
+    eventos.em('inimigo:golpe', (i) => {
+      const perto = this.perto(i), tipo = i.golpe?.tipo;
+      if (tipo === 'rasteira') this.zunido(0.45 * perto, 0.34, 210);          // varrida grave e longa
+      else if (tipo === 'pesado') { this.zunido(0.5 * perto, 0.3, 240); this.tom({ volume: 0.2 * perto, duracao: 0.3, de: 120, ate: 45 }); }
+      else this.zunido(0.4 * perto, 0.25, i.tipo === 'cavaleiro' ? 320 : 800);
+    });
+    // O aviso sonoro muda com o tipo do golpe: dá para reagir de ouvido.
     eventos.em('inimigo:preparo', (i) => {
-      const perto = this.perto(i);
-      if (i.emFaseFinal && i.perfilAtaque === i.cfg) {
-        this.sino(i.golpesRestantes > 1 ? 165 : 220, 0.5, 0.22 * perto);
+      const perto = this.perto(i), g = i.golpe;
+      if (g?.tipo === 'pesado') {            // sino grave e um ronco que cresce
+        this.sino(98, 0.9, 0.24 * perto);
+        this.ruido({ volume: 0.26 * perto, duracao: Math.min(0.9, g.preparo), tipo: 'lowpass', de: 90, ate: 420, ataque: 0.3 });
+      } else if (g?.tipo === 'rasteira') {   // aço raspando no chão e dois estalos agudos
+        this.ruido({ volume: 0.3 * perto, duracao: 0.36, tipo: 'highpass', de: 2200, ate: 5200, ataque: 0.12 });
+        this.tom({ volume: 0.11 * perto, duracao: 0.08, de: 1500, ate: 1900, forma: 'triangle' });
+        setTimeout(() => this.tom({ volume: 0.11 * perto, duracao: 0.08, de: 1500, ate: 1900, forma: 'triangle' }), 110);
+      } else if (g?.lado) {                  // golpes laterais do Guardião: uma nota por lado
+        this.sino(g.lado > 0 ? 165 : 220, 0.5, 0.22 * perto);
         this.ruido({ volume: 0.24 * perto, duracao: 0.38, de: 135, ate: 460, ataque: 0.14 });
       } else this.metal(0.12 * perto, 0.5);
     });

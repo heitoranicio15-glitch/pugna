@@ -155,8 +155,24 @@ ou **Alt** para esquivar.
   é interrompido se atingir pedra antes do alvo.
 - O ataque forte **interrompe** o golpe dos inimigos comuns. O ataque leve
   interrompe o caçador. O Guardião mantém o ataque mesmo ao receber um golpe forte.
-- **Cavaleiro:** lento, forte, ergue a espada devagar. Esquive ou saia de lado e puna.
-- **Caçador:** rápido, dá dois golpes seguidos e pula para trás. Bloqueie e revide.
+- **Cavaleiro:** lento e forte. Usa os três tipos de ataque. Esquive ou saia de lado e puna.
+- **Caçador:** rápido, dá dois golpes seguidos e pula para trás, e às vezes solta uma rasteira.
+- **Penitente:** dois golpes seguidos, rasteira e, de vez em quando, um golpe pesado.
+
+### Os tipos de ataque dos inimigos
+
+Todo golpe inimigo tem três fases: **preparo** (o aviso), **golpe ativo** (a arma
+pode acertar) e **recuperação** (ele fica aberto, é a hora de bater). Cada tipo
+avisa de um jeito e pede uma resposta diferente:
+
+| Tipo | Como reconhecer | Melhor resposta |
+|---|---|---|
+| **Alto** | Ergue a arma acima da cabeça; tinido de metal | Aparar (**C**), bloquear ou esquivar |
+| **Pesado** | Arma atrás da cabeça, corpo arqueado; arma e olhos **vermelhos**; sino grave | Aparar, com a janela mais curta, ou esquivar. Bloquear gasta quase toda a estamina |
+| **Rasteira** | Agacha com a arma de lado; arma e olhos **amarelos**; aço raspando e dois estalos | **Pular** (**Espaço**). É larga e pega quem está de lado. Aparar e bloquear não funcionam |
+
+A esquiva serve contra os três, mas não dá recompensa. Aparar um golpe pesado
+dá, por enquanto, o mesmo golpe crítico de um aparo comum.
 - Ao morrer você volta à última **lanterna** em que descansou. Descansar recupera
   vida e estamina e faz os inimigos comuns reaparecerem.
 
@@ -165,8 +181,9 @@ ou **Alt** para esquivar.
 Aproxime-se do portal ao norte do vilarejo e pressione **E**. A nave tem uma
 lanterna à direita da entrada. Explore o **Ossário**, a oeste, e o **Relicário**,
 a leste. Recolha com **E** o selo de cada ala para abrir a grade do **Santuário**.
-O **Guardião do Véu** passa a atacar com dois golpes laterais quando perde
-metade da vida. A posição da maça e dois sons diferentes sinalizam a sequência.
+O **Guardião do Véu** usa golpes altos, pesados e rasteiras. Quando perde
+metade da vida, passa a atacar com dois golpes laterais. A posição da maça e
+dois sons diferentes sinalizam a sequência.
 Para voltar ao vilarejo, use **E** na porta ao sul da nave.
 
 O jogo guarda neste navegador a última lanterna usada, os dois selos e a derrota
@@ -207,6 +224,8 @@ onde você volta ao morrer ou reabrir o jogo.
 - Combate com ataque leve, forte, bloqueio, esquiva com rolamento, estamina,
   mira travada, aparo e golpe crítico.
 - Cavaleiro, caçador, penitente e Guardião do Véu, com patrulha e combate.
+- Ataques inimigos de três tipos (alto, pesado e rasteira), cada um com aviso
+  visual e sonoro próprio.
 - Vida, tela de morte e três lanternas de descanso (portão sul, adro e nave).
 - Efeitos sintetizados e quatro faixas de música para exploração e combate.
 - Tela inicial.
@@ -251,6 +270,7 @@ pugna/
    │  ├─ Jogador.js        movimento, câmera, mira travada, vida, estamina e combate
    │  ├─ Boneco.js         o boneco do caçador em terceira pessoa (só animação)
    │  ├─ Inimigo.js        aparência, patrulha e combate dos inimigos
+   │  ├─ Ataques.js        fases e tipos de ataque (a máquina única dos inimigos)
    │  └─ Lanterna.js       ponto de descanso
    ├─ audio/Som.js         sons sintetizados
    └─ interface/
@@ -268,6 +288,12 @@ pugna/
 - **mudar o rosto da lua:** função `relevoLua` em `src/mundo/Lua.js`
 - **criar um inimigo novo:** um bloco novo em `CONFIG.inimigos` + aparência em
   `montarCorpo` (`src/entidades/Inimigo.js`)
+- **mudar quais ataques um inimigo usa:** a lista `ataques` do inimigo em
+  `CONFIG.inimigos` (cada item é uma sequência de golpes com um `peso`)
+- **mudar dano, tempo de aviso ou largura de um tipo de ataque:** bloco
+  `combate.ataquesInimigos` em `src/config.js`
+- **mudar a pose de aviso de um tipo de ataque:** os casos `preparo` e `ativo`
+  em `src/entidades/Inimigo.js`; os sons ficam em `src/audio/Som.js`
 
 ### Como o código está preparado para o futuro
 - **Multiplayer (Supabase Realtime):** as partes do jogo conversam por avisos
@@ -297,6 +323,7 @@ pugna/
 - [x] Menu de configurações e opção de apagar o progresso
 - [x] Salvamento estilo Souls e Osso de Retorno
 - [x] Travar a mira no inimigo e aparar (parry) com golpe crítico
+- [x] Base dos ataques: fases e tipos (alto, pesado, rasteira) com avisos próprios
 - [ ] Combate menos genérico: golpe pelas costas, sequências de ataques, armas
       com ritmos diferentes
 - [x] Interior da catedral
@@ -330,7 +357,7 @@ pugna/
 ## Testes
 
 - `npm test` verifica a janela de acerto, o custo da esquiva, o aparo e o golpe
-  crítico, a mira travada, a câmera em terceira pessoa, colisões, navegação,
+  crítico, as fases e os tipos de ataque dos inimigos, a mira travada, a câmera em terceira pessoa, colisões, navegação,
   interação com objetos, inventário, Osso de Retorno e migração de saves.
 - `npx playwright-core install chromium` instala o navegador de teste.
   Em seguida, `npm run test:browser` inicia o jogo e percorre a catedral,
