@@ -1,11 +1,13 @@
 // =============================================================================
 //  SALVAMENTO
+//  Estilo Souls: não existe salvar manualmente. O jogo grava sozinho a cada
+//  coisa que acontece (descansar, recolher, abrir, usar um item, derrotar).
 //  Por enquanto guarda o progresso no próprio navegador (localStorage).
 //  NO FUTURO (Supabase): crie outra classe com os mesmos dois métodos
 //  (carregar e salvar) que fale com o Supabase, e troque em Jogo.js. O resto
 //  do jogo não precisa mudar.
 // =============================================================================
-import { totalFrascos } from './Inventario.js';
+import { totalFrascos, totalOssos } from './Inventario.js';
 
 const CHAVE = 'pugna-progresso-v1';
 
@@ -29,6 +31,10 @@ export function normalizarProgresso(dados) {
     guardiaoDerrotado,
     frascosUsados: Number.isInteger(dados?.frascosUsados)
       ? Math.max(0, Math.min(totalFrascos(eventos), dados.frascosUsados))
+      : 0,
+    // Saves anteriores ao Osso de Retorno não têm este campo: começam do zero.
+    ossosUsados: Number.isInteger(dados?.ossosUsados)
+      ? Math.max(0, Math.min(totalOssos(eventos), dados.ossosUsados))
       : 0,
     eventos: [...eventos.filter((id) => !id.startsWith('catedral:selo-') && id !== 'catedral:guardiao-derrotado'), ...eventosDaCatedral],
   };

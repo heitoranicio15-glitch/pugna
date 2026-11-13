@@ -33,7 +33,7 @@ import { Hud } from '../interface/Hud.js';
 import { Menu } from '../interface/Menu.js';
 import { Bolsa } from '../interface/Bolsa.js';
 import { Toque } from '../interface/Toque.js';
-import { ANOTACOES, CURA_FRASCO, FRASCOS, contarFrascos } from './Inventario.js';
+import { ANOTACOES, CURA_FRASCO, FRASCOS, OSSOS, contarFrascos, contarOssos } from './Inventario.js';
 import { alvoProximo, atualizarObjetos } from '../mundo/Interacoes.js';
 
 export class Jogo {
@@ -270,11 +270,25 @@ export class Jogo {
     return 'Frasco usado. Vida recuperada.';
   }
 
-  voltarAoCheckpoint() {
-    if (this.estado !== 'pausado') return;
+  /**
+   * Osso de Retorno: gasta um osso e leva o caçador à última lanterna, com vida
+   * e estamina cheias. Os inimigos comuns reaparecem, como ao morrer.
+   * Devolve um texto quando não dá para usar.
+   */
+  usarOsso() {
+    if (!['jogando', 'pausado'].includes(this.estado)) return '';
+    if (contarOssos(this.progresso) === 0) return 'Você não tem Ossos de Retorno.';
+    if (this.tDescanso || !this.podeInteragir()) return 'Espere o fim da ação para usar o osso.';
+    this.progresso.ossosUsados++;
+    this.salvamento.salvar(this.progresso);
+    this.painel = null;
     this.renascer();
-    this.hud.avisar(this.descanso.nome);
+    this.eventos.emitir('item:retorno');
+    this.hud.avisar(`Osso de Retorno · ${this.descanso.nome}`, 3);
+    if (this.estado === 'jogando') return '';
+    this.definirEstado('pausado');
     this.retomar();
+    return '';
   }
 
   voltarAoTitulo() {
@@ -449,6 +463,7 @@ export class Jogo {
       this.eventos.emitir('objeto:interagiu', acao);
       if (FRASCOS[evento]) this.hud.avisar(`Frascos de cura +${FRASCOS[evento]}${this.entrada.toque ? '' : ' · R para usar'}`);
       else if (acao === 'acionar') this.hud.avisar('Atalho aberto para a nave.');
+      else if (OSSOS[evento]) this.hud.avisar(`Ossos de Retorno +${OSSOS[evento]}${this.entrada.toque ? '' : ' · I para abrir a bolsa'}`);
       else if (acao === 'recolher') this.hud.avisar(this.entrada.toque ? 'Chave da sacristia recolhida' : 'Chave da sacristia recolhida · I para abrir a bolsa');
       else this.hud.avisar('Passagem aberta.');
     }];

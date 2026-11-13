@@ -81,7 +81,8 @@ Segure **Bloquear** para manter a guarda. **Mira** trava a câmera no inimigo
 (toque de novo para soltar; deslize rápido o dedo para trocar de alvo) e
 **Aparar** tenta aparar o golpe. Os botões **Pular**, **Esquiva**,
 **Bolsa** e **Pausa** ficam na tela. **Interagir** aparece perto de uma ação
-disponível, e **Cura** aparece quando há frascos na bolsa.
+disponível, e **Cura** aparece quando há frascos na bolsa. O Osso de Retorno é
+usado pela **Bolsa**.
 
 O jogo funciona na vertical e na horizontal. Na horizontal há mais espaço para
 ver o cenário. Ao trocar de aba ou aplicativo, o jogo pausa.
@@ -113,10 +114,18 @@ ver o cenário. Ao trocar de aba ou aplicativo, o jogo pausa.
 ajustar o volume da música e dos efeitos separadamente, a sensibilidade do mouse,
 o brilho, a pixelização e o tremor dos vértices.
 
-No menu de pausa, **Voltar ao checkpoint** recupera vida e estamina na última
-lanterna usada e repõe os inimigos comuns. Os selos e a vitória sobre o Guardião
-continuam registrados. **Apagar progresso** pede confirmação e limpa a partida
-do navegador. As preferências de áudio, imagem e controles continuam salvas.
+O salvamento é no estilo Souls: **o jogo salva sozinho** a cada coisa que
+acontece (descansar, recolher, abrir, usar um item, derrotar o Guardião). Não
+existe salvar manualmente, e o menu de pausa mostra a última lanterna usada.
+
+Para voltar à última lanterna sem morrer, use um **Osso de Retorno** pela bolsa
+(**I**). Ele recupera vida e estamina e repõe os inimigos comuns, como a morte.
+Os selos e a vitória sobre o Guardião continuam registrados. O caçador começa
+com um osso e encontra mais dois entre as lápides do cemitério. Cada osso só
+pode ser usado uma vez.
+
+**Apagar progresso** pede confirmação e limpa a partida do navegador. As
+preferências de áudio, imagem e controles continuam salvas.
 
 **Atenção com o Ctrl:** no Chrome, Ctrl+W fecha a aba, e isso não pode ser desligado
 por um site. O jogo pede confirmação antes de fechar se o Ctrl estiver apertado, e em
@@ -169,14 +178,16 @@ onde você volta ao morrer ou reabrir o jogo.
 
 - **Vila:** a Casa da Sineira fica a oeste da praça e tem um baú com dois frascos.
   A Oficina do Poço tem uma chave e um registro na bancada. O cemitério tem
-  lápides que podem ser lidas.
+  lápides que podem ser lidas e dois Ossos de Retorno no chão, ao lado delas.
 - **Catedral:** procure as inscrições no Ossário e no Relicário. A chave da
   oficina abre a porta ao sul do Relicário. Dentro da sacristia há uma inscrição,
   um frasco e uma alavanca que abre a grade de serviço para a lanterna da nave.
 - Chegue perto do objeto, virado para ele, e pressione **E** quando aparecer a ação. Use
   **I** para abrir a bolsa e reler anotações. Um frasco recupera até 42 pontos
   de vida e pode ser usado pela bolsa ou com **R** durante a partida.
-- O navegador guarda itens, anotações, frascos usados e o estado de portas,
+- O **Osso de Retorno** fica na bolsa, em Consumíveis. Usar um leva o caçador
+  à última lanterna em que descansou (ou ao Portão Sul, se ainda não descansou).
+- O navegador guarda itens, anotações, frascos e ossos usados e o estado de portas,
   baús e da grade. Morrer, descansar ou recarregar preserva esses registros.
 
 ## O que existe hoje
@@ -284,7 +295,8 @@ pugna/
 - [x] Câmera em terceira pessoa com boneco simples do caçador
 - [ ] Boneco do caçador mais detalhado (hoje é feito de caixas)
 - [ ] Trocar sons sintetizados por gravações CC0; música ambiente
-- [x] Menu de configurações e opções de checkpoint e progresso
+- [x] Menu de configurações e opção de apagar o progresso
+- [x] Salvamento estilo Souls e Osso de Retorno
 - [x] Travar a mira no inimigo e aparar (parry) com golpe crítico
 - [ ] Combate menos genérico: golpe pelas costas, sequências de ataques, armas
       com ritmos diferentes
@@ -320,11 +332,12 @@ pugna/
 
 - `npm test` verifica a janela de acerto, o custo da esquiva, o aparo e o golpe
   crítico, a mira travada, a câmera em terceira pessoa, colisões, navegação,
-  interação com objetos, inventário e migração de saves.
+  interação com objetos, inventário, Osso de Retorno e migração de saves.
 - `npx playwright-core install chromium` instala o navegador de teste.
   Em seguida, `npm run test:browser` inicia o jogo e percorre a catedral,
   incluindo transições, checkpoint, morte, recarga e derrota do Guardião.
-  Também testa o percurso da vila até a sacristia e o atalho após recarregar.
+  Também testa o percurso da vila até a sacristia, o Osso de Retorno e o
+  atalho após recarregar.
   A suíte inclui um cenário de celular emulado com gestos multitoque.
   Para usar um Chrome instalado, aponte `PUGNA_CHROME` para o executável.
   Para testar outro endereço, use `npm run test:browser -- <URL>`.

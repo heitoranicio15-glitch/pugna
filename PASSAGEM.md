@@ -40,12 +40,13 @@ Cada resposta do jogador precisa ser a melhor contra algum tipo de ataque. Se n�
 ## Estado atual
 
 - **Pronto e no ar:** vilarejo, Catedral do Véu (nave, Ossário, Relicário, Santuário, selos), inimigos cavaleiro e Penitente, miniboss Guardião do Véu, bolsa e frascos de cura, lápides, atalhos, menu de configurações, trilha sonora, suporte a celular, terceira pessoa, mira travada, parry com crítico e rolamento.
+- **Salvamento estilo Souls (item 1 do Plano, pronto):** o jogo grava sozinho a cada acontecimento e não há salvar manual. O botão "Voltar ao checkpoint" saiu da pausa e virou o **Osso de Retorno**, um consumível usado pela bolsa. O caçador começa com 1 e acha mais 2 no cemitério (quantidades em `src/nucleo/Inventario.js`). O save ganhou o campo `ossosUsados`; saves antigos continuam valendo.
 - **Infra:** `jogar.bat` com atualização automática, `atualizar.bat`, e regra de integração automática no `AGENTS.md` com o `CLAUDE.md` apontando para ele.
-- **A conferir:** origem das 4 músicas (o repositório é público) e ajuste fino da câmera e do parry jogando com o mouse.
+- **A conferir:** origem das 4 músicas (o repositório é público) e ajuste fino da câmera e do parry jogando com o mouse. Decidir com o Heitor se a quantidade de Ossos de Retorno (3 no total, sem reposição) está boa ou se eles devem ser repostos de algum jeito.
 
 ## Plano (fazer um por vez, cada um num chat novo)
 
-- [ ] **1. Salvamento estilo Souls + Osso de Retorno** (ver "Decisões")
+- [x] **1. Salvamento estilo Souls + Osso de Retorno** (ver "Decisões")
 - [ ] **2. Base dos ataques:** máquina de estados única para todos os inimigos humanos. Cada ataque tem 3 fases (preparação, golpe ativo, recuperação) e um tipo (alto, rasteira, pesado), com aviso visual e sonoro diferente por tipo. A rasteira é larga. Manter o parry e o crítico. Deixar ganchos para pulo e execução.
 - [ ] **3. Quickstep + execução:** com a mira travada, a esquiva vira um passo curto, com menos invencibilidade e recuperação curta. Sem mira, continua o rolamento. Parry num ataque pesado (janela menor) abre a execução. A rasteira não pode ser aparada.
 - [ ] **4. Golpe pelas costas:** agachar (anda devagar, menos barulho), cone de visão, execução silenciosa por trás, alerta dos vizinhos se o jogador for visto. Botão Agachar no celular.

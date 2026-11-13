@@ -250,3 +250,5 @@ dialog.painel-menu::backdrop { background: #04030bd9; }
 @media (orientation: landscape) {
   .modo-toque #aviso { padding-inline: max(115px, 20vw); }
 }
+.bolsa-conteudo .descricao-item { margin: 6px 0 0; font-size: 0.85rem; opacity: 0.75; }
+#bolsa-ossos { margin-top: 14px; }

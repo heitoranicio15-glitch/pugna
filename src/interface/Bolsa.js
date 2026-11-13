@@ -1,4 +1,4 @@
-import { ANOTACOES, CHAVE_SACRISTIA, contarFrascos } from '../nucleo/Inventario.js';
+import { ANOTACOES, CHAVE_SACRISTIA, contarFrascos, contarOssos } from '../nucleo/Inventario.js';
 
 const el = (id) => document.getElementById(id);
 
@@ -6,6 +6,7 @@ export class Bolsa {
   constructor(jogo) {
     this.jogo = jogo;
     this.usar = el('usar-frasco');
+    this.usarOsso = el('usar-osso');
     this.fechar = el('fechar-bolsa');
     this.fecharLeitura = el('fechar-leitura');
     el('abrir-bolsa').addEventListener('click', () => jogo.abrirBolsa());
@@ -13,6 +14,10 @@ export class Bolsa {
     this.fecharLeitura.addEventListener('click', () => jogo.fecharPainel());
     this.usar.addEventListener('click', () => {
       el('bolsa-estado').textContent = jogo.usarFrasco();
+      this.atualizar();
+    });
+    this.usarOsso.addEventListener('click', () => {
+      el('bolsa-estado').textContent = jogo.usarOsso();
       this.atualizar();
     });
   }
@@ -28,6 +33,9 @@ export class Bolsa {
     const total = contarFrascos(progresso);
     el('bolsa-frascos').textContent = total ? `${total} × Frasco de cura` : 'Nenhum frasco de cura';
     this.usar.disabled = total === 0;
+    const ossos = contarOssos(progresso);
+    el('bolsa-ossos').textContent = ossos ? `${ossos} × Osso de Retorno` : 'Nenhum Osso de Retorno';
+    this.usarOsso.disabled = ossos === 0;
     const chaves = el('bolsa-chaves');
     const item = document.createElement('li');
     item.textContent = progresso.eventos.includes(CHAVE_SACRISTIA) ? 'Chave da sacristia' : 'Nenhum item-chave';
