@@ -3,7 +3,7 @@ const el = (id) => document.getElementById(id);
 
 export class Hud {
   constructor() {
-    this.hud = el('hud'); this.vida = el('barra-vida'); this.estamina = el('barra-estamina');
+    this.hud = el('hud'); this.vida = el('barra-vida'); this.rally = el('barra-rally'); this.estamina = el('barra-estamina');
     this.aviso = el('aviso'); this.dano = el('dano'); this.veu = el('veu');
     this.mira = el('mira');
     this.destaque = el('destaque');
@@ -16,9 +16,13 @@ export class Hud {
     this.tAviso = 0; this.avisoFixo = '';
   }
 
-  mostrarTela(nome) {
-    for (const [n, t] of Object.entries(this.telas)) t.classList.toggle('oculto', n !== nome);
-    this.hud.classList.toggle('oculto', nome !== null && nome !== 'morte');
+  /** aoVivo: o painel abriu sem pausar o jogo, então as barras continuam à vista. */
+  mostrarTela(nome, aoVivo = false) {
+    for (const [n, t] of Object.entries(this.telas)) {
+      t.classList.toggle('oculto', n !== nome);
+      t.classList.toggle('ao-vivo', aoVivo && n === nome);
+    }
+    this.hud.classList.toggle('oculto', nome !== null && nome !== 'morte' && !aoVivo);
   }
 
   limparAviso() {
@@ -84,6 +88,8 @@ export class Hud {
       if (this.tContato <= 0) delete this.mira.dataset.contato;
     }
     this.vida.style.width = (100 * jogador.vida / maxVida) + '%';
+    // Rally: a faixa laranja mostra a vida que ainda dá para recuperar batendo.
+    this.rally.style.width = (100 * Math.min(maxVida, jogador.vida + (jogador.recuperavel || 0)) / maxVida) + '%';
     this.estamina.style.width = (100 * jogador.estamina / maxEstamina) + '%';
     this.estamina.style.opacity = jogador.exausto ? 0.45 : 1;
     if (this.tAviso > 0) {

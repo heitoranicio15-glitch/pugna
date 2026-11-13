@@ -43,8 +43,11 @@ export class Jogador {
     this.exausto = false;
     this.esperaEstamina = 0;
     // combate
-    this.acao = 'livre';        // livre | preparo | ativo | recuperacao | aparar | atordoado
+    this.acao = 'livre';        // livre | preparo | ativo | recuperacao | aparar | curando | atordoado
     this.tAcao = 0;             // tempo dentro da ação atual
+    this.tAtordoado = CB.guardaQuebrada;   // quanto dura o atordoamento atual
+    // Rally: vida que ainda dá para recuperar batendo, e o tempo que resta para isso.
+    this.recuperavel = 0; this.tRally = 0;
     this.ataque = null;         // 'leve' ou 'forte'
     this.golpeAlternado = false;
     this.carregando = false; this.tCarga = 0; this.avisouCarga = false;
@@ -130,7 +133,7 @@ export class Jogador {
     // ---------- para onde o corpo vira ----------
     // Com a mira travada ele encara o alvo (menos correndo ou rolando);
     // sem trava, vira para onde anda.
-    if (this.tEsquiva <= 0 && (this.acao === 'livre' || this.acao === 'aparar')) {
+    if (this.tEsquiva <= 0 && (this.acao === 'livre' || this.acao === 'aparar' || this.acao === 'curando')) {
       const desejado = this.alvo && !correndo ? anguloPara(this.pos, this.alvo.pos) : this.entradaDir;
       if (desejado !== null) this.rumo += THREE.MathUtils.clamp(difAngulo(desejado, this.rumo), -C.giro * dt, C.giro * dt);
     }
@@ -139,6 +142,7 @@ export class Jogador {
     if (this.carregando || this.acao === 'preparo' || this.acao === 'ativo') alvo *= 0.45;
     if (this.acao === 'recuperacao') alvo *= 0.65;
     if (this.acao === 'aparar') alvo *= 0.4;
+    if (this.acao === 'curando') alvo *= CB.frasco.velocidade;   // bebendo o frasco: anda devagar
     if (this.acao === 'atordoado') alvo = 0;
     if (correndo && comp > 0 && this.noChao) this.gastar(C.custoCorrer * dt);
 
@@ -154,7 +158,7 @@ export class Jogador {
     }
 
     // ---------- pulo e gravidade ----------
-    if (e.apertou('Space') && this.noChao && this.estamina >= C.custoPulo && this.acao !== 'atordoado' && this.tEsquiva <= 0) {
+    if (e.apertou('Space') && this.noChao && this.estamina >= C.custoPulo && this.acao !== 'atordoado' && this.acao !== 'curando' && this.tEsquiva <= 0) {
       this.vel.y = C.forcaPulo; this.noChao = false; this.gastar(C.custoPulo);
       this.jogo.eventos.emitir('jogador:pulo');
     }
@@ -307,7 +311,17 @@ export class Jogador {
         this.acao = 'livre'; this.ataque = null;
       }
     }
-    if (this.acao === 'atordoado' && this.tAcao >= 0.7) this.acao = 'livre';
+    if (this.acao === 'atordoado' && this.tAcao >= this.tAtordoado) this.acao = 'livre';
+    // Frasco: a cura só acontece no fim do gole (quem aplica é o Jogo, que cuida da bolsa).
+    if (this.acao === 'curando' && this.tAcao >= CB.frasco.tempo) {
+      this.acao = 'livre';
+      this.jogo.eventos.emitir('jogador:curou');
+    }
+    // Rally: acabou o tempo de revidar, a parte recuperável da vida escoa.
+    if (this.recuperavel > 0) {
+      this.tRally -= dt;
+      if (this.tRally <= 0) this.recuperavel = Math.max(0, this.recuperavel - CB.rally.escoa * dt);
+    }
     const ap = CB.aparar;
     if (this.acao === 'aparar' && this.tAcao >= ap.preparo + ap.janela + ap.recuperacao) this.acao = 'livre';
 
@@ -327,7 +341,7 @@ export class Jogador {
     }
 
     const livre = this.acao === 'livre' && this.tEsquiva <= 0;
-    if (e.botoesApertados[0] && this.tEsquiva <= 0 && this.acao !== 'atordoado' && this.acao !== 'aparar') {
+    if (e.botoesApertados[0] && this.tEsquiva <= 0 && this.acao !== 'atordoado' && this.acao !== 'aparar' && this.acao !== 'curando') {
       this.carregando = true;
       this.tCarga = 0;
       this.avisouCarga = false;
@@ -391,6 +405,7 @@ export class Jogador {
         this.alvosDoGolpe.add(i);
         // Inimigo desequilibrado por um aparo leva um golpe crítico.
         const critico = i.receberDano(a.dano, { x, z }, a.empurrao, forte) === 'critico';
+        this.recuperarComGolpe(a.dano);
         this.tremor = Math.max(this.tremor, critico ? 0.09 : forte ? 0.05 : 0.025);
         this.jogo.pausaDeImpacto(critico ? CB.critico.pausa : forte ? CB.pausaImpacto * 1.4 : CB.pausaImpacto);
         this.jogo.eventos.emitir('golpe:acertou', { forte, critico });
@@ -407,6 +422,50 @@ export class Jogador {
         return;
       }
     }
+  }
+
+  /** Começa a beber um frasco. A cura vem no fim (CONFIG.combate.frasco.tempo), se ele não apanhar antes. */
+  comecarCura() {
+    this.acao = 'curando'; this.tAcao = 0;
+    this.carregando = false; this.avisouCarga = false; this.bloqueando = false;
+    this.ataqueNaFila = 0; this.apararNaFila = 0;
+    this.jogo.eventos.emitir('jogador:bebendo');
+  }
+
+  /**
+   * Rally: um golpe acertado devolve parte da vida perdida há pouco.
+   * Devolve quanta vida voltou.
+   */
+  recuperarComGolpe(dano) {
+    if (this.recuperavel <= 0 || this.morto) return 0;
+    const cura = Math.max(0, Math.min(this.recuperavel, dano * CB.rally.porDano, C.vidaMax - this.vida));
+    this.vida += cura;
+    this.recuperavel -= cura;
+    if (this.recuperavel < 0.01) this.recuperavel = 0;
+    if (cura > 0) this.jogo.eventos.emitir('jogador:rally', { cura });
+    return cura;
+  }
+
+  /**
+   * Apanhar interrompe o que o caçador estava fazendo: o golpe leve inteiro, o
+   * gole do frasco e o golpe forte fora da parte "firme" (a metade final do
+   * preparo e a passagem da lâmina aguentam um golpe fraco).
+   * Devolve true se interrompeu.
+   */
+  interromper(dano) {
+    const I = CB.interrupcao;
+    const curando = this.acao === 'curando';
+    const atacando = !!this.ataque && (this.acao === 'preparo' || this.acao === 'ativo' || this.acao === 'recuperacao');
+    if (!curando && !atacando) return false;
+    if (atacando && this.ataque === 'forte' && dano <= I.armaduraForte.danoMax) {
+      const firme = this.acao === 'ativo' ||
+        (this.acao === 'preparo' && this.tAcao >= CB.forte.preparo * I.armaduraForte.aPartirDe);
+      if (firme) { this.jogo.eventos.emitir('jogador:aguentou'); return false; }
+    }
+    this.acao = 'atordoado'; this.tAcao = 0; this.tAtordoado = I.cambaleio;
+    this.ataque = null; this.ataqueNaFila = 0; this.apararNaFila = 0;
+    this.jogo.eventos.emitir('jogador:interrompido', { cura: curando });
+    return true;
   }
 
   /**
@@ -451,7 +510,7 @@ export class Jogador {
       const aguentou = this.estamina >= custo * 0.6;
       this.gastar(custo);
       if (aguentou) { dano *= 1 - CB.bloqueio.reducao; resultado = 'bloqueou'; }
-      else { dano *= 0.5; resultado = 'guarda-quebrada'; this.acao = 'atordoado'; this.tAcao = 0; this.ataque = null; }
+      else { dano *= 0.5; resultado = 'guarda-quebrada'; this.acao = 'atordoado'; this.tAcao = 0; this.tAtordoado = CB.guardaQuebrada; this.ataque = null; }
       this.jogo.eventos.emitir('jogador:bloqueou', { quebrou: !aguentou });
     }
     this.vida -= dano;
@@ -462,7 +521,13 @@ export class Jogador {
       this.avisouCarga = false;
       this.jogo.eventos.emitir('jogador:ferido', { dano });
     }
-    if (this.vida <= 0) { this.vida = 0; this.morto = true; this.bloqueando = false; this.carregando = false; this.jogo.eventos.emitir('jogador:morreu'); }
+    if (resultado === 'ferido') {
+      // Rally: parte do dano fica recuperável por alguns segundos (nunca mais do que falta de vida).
+      this.recuperavel = Math.min(this.recuperavel + dano * CB.rally.parte, C.vidaMax - Math.max(0, this.vida));
+      this.tRally = CB.rally.duracao;
+      this.interromper(dano);
+    }
+    if (this.vida <= 0) { this.recuperavel = 0; this.vida = 0; this.morto = true; this.bloqueando = false; this.carregando = false; this.jogo.eventos.emitir('jogador:morreu'); }
     return resultado;
   }
 
@@ -501,6 +566,6 @@ export class Jogador {
 
   /** Dados que precisariam ir para um servidor/salvamento no futuro. */
   exportarEstado() {
-    return { x: this.pos.x, y: this.pos.y, z: this.pos.z, yaw: this.yaw, rumo: this.rumo, vida: this.vida, acao: this.acao, bloqueando: this.bloqueando };
+    return { x: this.pos.x, y: this.pos.y, z: this.pos.z, yaw: this.yaw, rumo: this.rumo, vida: this.vida, recuperavel: this.recuperavel, acao: this.acao, bloqueando: this.bloqueando };
   }
 }

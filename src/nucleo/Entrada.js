@@ -82,8 +82,9 @@ export class Entrada {
     this.limparQuadro();
   }
 
-  segurando(codigo) { return this.teclas.has(codigo); }
-  apertou(codigo) { return this.apertadas.has(codigo); }
+  // Com a entrada desabilitada (bolsa aberta, pausa, morte) o caçador não recebe comandos.
+  segurando(codigo) { return this.habilitada && this.teclas.has(codigo); }
+  apertou(codigo) { return this.habilitada && this.apertadas.has(codigo); }
 
   /** Chamar no fim de cada quadro. */
   limparQuadro() {

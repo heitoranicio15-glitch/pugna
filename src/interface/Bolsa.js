@@ -23,8 +23,16 @@ export class Bolsa {
 
   exibir() {
     el('bolsa-estado').textContent = '';
+    // Durante a partida a bolsa não pausa o jogo: avisa para ninguém ser pego de surpresa.
+    el('bolsa-ao-vivo').textContent = this.jogo.painelAoVivo ? 'O jogo não pausa com a bolsa aberta. I volta à luta, Esc pausa.' : '';
     this.atualizar();
     this.fechar.focus();
+  }
+
+  /** Mostra um recado na bolsa e atualiza as quantidades (ex.: o gole do frasco terminou). */
+  informar(texto) {
+    el('bolsa-estado').textContent = texto;
+    this.atualizar();
   }
 
   atualizar() {

@@ -53,6 +53,11 @@ html, body {
   font-size: clamp(28px, 6vw, 72px); color: #d8d6ff;
   text-shadow: 0 0 20px rgba(120, 90, 255, 0.7);
 }
+/* Bolsa aberta sem pausar: fundo mais claro, para ver a luta que continua. */
+.tela.ao-vivo { background: rgba(4, 3, 14, 0.38); }
+/* Celular congelado: o aviso só aparece em aparelhos de toque. */
+.aviso-celular { display: none; max-width: 40ch; margin: 10px auto; padding: 8px 12px; color: #ffd9a0; border: 1px solid #b4601a; background: #2a1408cc; }
+.modo-toque .aviso-celular { display: block; }
 #tela-morte { background: rgba(10, 0, 8, 0.0); animation: surgir-morte 2.2s forwards; }
 #tela-morte h2 { color: #b4162a; text-shadow: 0 0 26px rgba(200, 20, 40, 0.8); }
 @keyframes surgir-morte {
@@ -68,7 +73,9 @@ html, body {
 }
 .barra > div { height: 100%; width: 100%; transition: width 0.12s linear; }
 .barra.vida { bottom: 50px; width: min(320px, 40vw); }
-.barra.vida > div { background: linear-gradient(#d2343f, #7c1022); }
+.barra.vida > div { position: absolute; left: 0; top: 0; background: linear-gradient(#d2343f, #7c1022); }
+/* Rally: a vida que ainda dá para recuperar batendo aparece em laranja, atrás da vermelha. */
+#barra-rally { background: linear-gradient(#ffb04a, #b4601a); transition: width 0.2s linear; }
 .barra.estamina { bottom: 30px; width: min(250px, 32vw); height: 9px; }
 .barra.estamina > div { background: linear-gradient(#a8ff4a, #3f9a1a); }
 #guardiao {

@@ -1,3 +1,6 @@
+// CELULAR CONGELADO (veja PASSAGEM.md): este cenário não faz parte dos testes
+// obrigatórios. Ele só roda com `npm run test:celular` e pode ficar desatualizado
+// enquanto o celular não voltar a ser suportado.
 import assert from 'node:assert/strict';
 import { devices } from 'playwright-core';
 
@@ -105,7 +108,7 @@ export async function validarMobile(browser, url) {
     await page.evaluate(() => { jogo.registrarEvento('vilarejo:bau-casa'); jogo.jogador.vida = 40; });
     await quadros();
     await page.locator('#toque-cura').tap();
-    await quadros();
+    await quadros(18);   // o frasco agora leva um tempo para curar
     assert.equal(await page.evaluate(() => jogo.jogador.vida), 82);
     await page.locator('#toque-bolsa').tap();
     await page.locator('#tela-bolsa').waitFor();

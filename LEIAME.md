@@ -69,23 +69,12 @@ que está em `historico-git.bundle`. Depois disso, `git log` mostra as etapas e 
 
 ## Controles
 
-### Celular e tablet
+### Celular e tablet (congelado)
 
-Abra o jogo no navegador e toque em **Começar**. Arraste o direcional esquerdo
-para andar e empurre-o até a borda na direção da frente para correr. Deslize o
-dedo na parte direita da tela para girar a câmera. Os dois gestos podem ser usados
-ao mesmo tempo.
-
-Use **Atacar** com um toque para o golpe leve ou segure e solte para o forte.
-Segure **Bloquear** para manter a guarda. **Mira** trava a câmera no inimigo
-(toque de novo para soltar; deslize rápido o dedo para trocar de alvo) e
-**Aparar** tenta aparar o golpe. Os botões **Pular**, **Esquiva**,
-**Bolsa** e **Pausa** ficam na tela. **Interagir** aparece perto de uma ação
-disponível, e **Cura** aparece quando há frascos na bolsa. O Osso de Retorno é
-usado pela **Bolsa**.
-
-O jogo funciona na vertical e na horizontal. Na horizontal há mais espaço para
-ver o cenário. Ao trocar de aba ou aplicativo, o jogo pausa.
+**O celular não é suportado por enquanto.** O jogo ainda abre em aparelhos de
+toque e mostra um aviso, mas as mecânicas novas do combate não têm botão de
+toque. Jogue no computador, com teclado e mouse. Os controles de toque
+continuam guardados no código (`src/interface/Toque.js`) para voltar depois.
 
 ### Teclado e mouse
 
@@ -103,10 +92,10 @@ ver o cenário. Ao trocar de aba ou aplicativo, o jogo pausa.
 | Trocar de alvo (mira travada) | Mover o mouse rápido para o lado |
 | Esquivar | Ctrl, Alt ou Q (com uma direção, rola; parado, salta para trás) |
 | Interagir (portas, selos e lanternas) | E |
-| Abrir a bolsa | I |
-| Usar um frasco de cura | R |
+| Abrir e fechar a bolsa (o jogo **não** pausa) | I |
+| Beber um frasco de cura (leva um instante) | R |
 | Tela cheia | F |
-| Pausar / soltar o mouse | Esc |
+| Pausar / soltar o mouse (só o Esc pausa) | Esc |
 
 ### Configurações e progresso
 
@@ -154,7 +143,24 @@ ou **Alt** para esquivar.
   ergue a espada e um som sinaliza a carga. O golpe acompanha a passagem da lâmina e
   é interrompido se atingir pedra antes do alvo.
 - O ataque forte **interrompe** o golpe dos inimigos comuns. O ataque leve
-  interrompe o caçador. O Guardião mantém o ataque mesmo ao receber um golpe forte.
+  interrompe o caçador corrompido. O Guardião mantém o ataque mesmo ao receber um golpe forte.
+- **Apanhar interrompe você.** Se um golpe entrar durante o seu ataque leve, o
+  ataque é cortado e o caçador cambaleia um instante: trocar golpe não compensa.
+  O ataque forte aguenta um golpe **fraco** só na parte final (da metade do
+  preparo até a lâmina passar). Golpes fortes dos inimigos cortam até o forte.
+- **Inimigos têm firmeza.** Depois de cambalear uma vez, o inimigo aguenta os
+  golpes seguintes por um tempo (ouve-se um tinido seco), quase não sai do
+  lugar e revida. Não dá para prender um inimigo só apertando o ataque: bata,
+  veja a resposta dele e puna. O golpe pesado não é interrompido pelo ataque leve.
+- **Rally (revide):** quando você apanha, parte da vida perdida fica **laranja**
+  na barra por uns 4 segundos. Cada golpe que você acerta nesse tempo devolve
+  um pedaço dela (o forte devolve mais). Se o tempo acabar, a parte laranja
+  some. Dano segurado no bloqueio não entra no rally.
+- **Frasco de cura:** beber leva um instante. O caçador anda devagar, não ataca
+  e, se apanhar antes de terminar, a cura é interrompida (o frasco não é gasto).
+  Afaste-se antes de beber.
+- **A bolsa não pausa o jogo.** Com ela aberta, o mundo continua e o caçador
+  fica parado. Só o **Esc** pausa.
 - **Cavaleiro:** lento e forte. Usa os três tipos de ataque. Esquive ou saia de lado e puna.
 - **Caçador:** rápido, dá dois golpes seguidos e pula para trás, e às vezes solta uma rasteira.
 - **Penitente:** dois golpes seguidos, rasteira e, de vez em quando, um golpe pesado.
@@ -199,8 +205,9 @@ onde você volta ao morrer ou reabrir o jogo.
   oficina abre a porta ao sul do Relicário. Dentro da sacristia há uma inscrição,
   um frasco e uma alavanca que abre a grade de serviço para a lanterna da nave.
 - Chegue perto do objeto, virado para ele, e pressione **E** quando aparecer a ação. Use
-  **I** para abrir a bolsa e reler anotações. Um frasco recupera até 42 pontos
-  de vida e pode ser usado pela bolsa ou com **R** durante a partida.
+  **I** para abrir a bolsa e reler anotações (o jogo não pausa). Um frasco recupera até 42 pontos
+  de vida e pode ser usado pela bolsa ou com **R** durante a partida. A cura leva um
+  instante e é interrompida se o caçador apanhar.
 - O **Osso de Retorno** fica na bolsa e não acaba. Usar leva o caçador
   à última lanterna em que descansou (ou ao Portão Sul, se ainda não descansou).
 - O navegador guarda itens, anotações, frascos usados e o estado de portas,
@@ -223,6 +230,8 @@ onde você volta ao morrer ou reabrir o jogo.
 - Boneco simples do caçador (chapéu, capa, espada e broquel), animado no código.
 - Combate com ataque leve, forte, bloqueio, esquiva com rolamento, estamina,
   mira travada, aparo e golpe crítico.
+- Regras contra o spam: apanhar interrompe o ataque, inimigos com firmeza,
+  rally (recuperar vida revidando), frasco com tempo e bolsa que não pausa.
 - Cavaleiro, caçador, penitente e Guardião do Véu, com patrulha e combate.
 - Ataques inimigos de três tipos (alto, pesado e rasteira), cada um com aviso
   visual e sonoro próprio.
@@ -252,7 +261,7 @@ pugna/
    ├─ config.js            ★ TODOS os números ajustáveis: cores, velocidades, dano...
    ├─ nucleo/
    │  ├─ Jogo.js           junta tudo e roda o laço principal; estados do jogo
-   │  ├─ Entrada.js        teclado e mouse
+   │  ├─ Entrada.js        teclado e mouse (e o toque, congelado)
    │  ├─ Eventos.js        "quadro de avisos" entre as partes do jogo
    │  └─ Salvamento.js     salva o progresso (hoje no navegador; depois Supabase)
    ├─ render/
@@ -292,6 +301,9 @@ pugna/
   `CONFIG.inimigos` (cada item é uma sequência de golpes com um `peso`)
 - **mudar dano, tempo de aviso ou largura de um tipo de ataque:** bloco
   `combate.ataquesInimigos` em `src/config.js`
+- **mudar as regras contra o spam:** blocos `combate.interrupcao` (apanhar corta
+  o ataque), `combate.atordoamentoInimigo` (firmeza), `combate.rally` e
+  `combate.frasco` em `src/config.js`
 - **mudar a pose de aviso de um tipo de ataque:** os casos `preparo` e `ativo`
   em `src/entidades/Inimigo.js`; os sons ficam em `src/audio/Som.js`
 
@@ -324,6 +336,9 @@ pugna/
 - [x] Salvamento estilo Souls e Osso de Retorno
 - [x] Travar a mira no inimigo e aparar (parry) com golpe crítico
 - [x] Base dos ataques: fases e tipos (alto, pesado, rasteira) com avisos próprios
+- [x] Contra o spam: interrupção ao apanhar, firmeza dos inimigos, rally, frasco
+      com tempo e bolsa sem pausa
+- [ ] Pistola como parry, golpe visceral e quickstep (o broquel sai do combate)
 - [ ] Combate menos genérico: golpe pelas costas, sequências de ataques, armas
       com ritmos diferentes
 - [x] Interior da catedral
@@ -357,13 +372,15 @@ pugna/
 ## Testes
 
 - `npm test` verifica a janela de acerto, o custo da esquiva, o aparo e o golpe
-  crítico, as fases e os tipos de ataque dos inimigos, a mira travada, a câmera em terceira pessoa, colisões, navegação,
+  crítico, as fases e os tipos de ataque dos inimigos, a interrupção ao apanhar,
+  a firmeza dos inimigos, o rally, o frasco interrompido, a mira travada, a câmera em terceira pessoa, colisões, navegação,
   interação com objetos, inventário, Osso de Retorno e migração de saves.
 - `npx playwright-core install chromium` instala o navegador de teste.
   Em seguida, `npm run test:browser` inicia o jogo e percorre a catedral,
   incluindo transições, checkpoint, morte, recarga e derrota do Guardião.
-  Também testa o percurso da vila até a sacristia, o Osso de Retorno e o
-  atalho após recarregar.
-  A suíte inclui um cenário de celular emulado com gestos multitoque.
+  Também testa o percurso da vila até a sacristia, o frasco com tempo, o rally,
+  a bolsa sem pausa, o Osso de Retorno e o atalho após recarregar.
+  O cenário de celular está congelado e saiu dos testes obrigatórios. Para
+  conferi-lo mesmo assim, rode `npm run test:celular`.
   Para usar um Chrome instalado, aponte `PUGNA_CHROME` para o executável.
   Para testar outro endereço, use `npm run test:browser -- <URL>`.

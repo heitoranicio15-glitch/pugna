@@ -41,6 +41,7 @@ export function montarGolpe(cfg, entrada) {
     evitaPulando: t.evitaPulando,
     alturaPulo: t.alturaPulo,
     abreExecucao: t.abreExecucao,
+    aguentaLeve: t.aguentaLeve,
     aviso: t.aviso,
   };
 }

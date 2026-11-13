@@ -5,8 +5,14 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { validarMobile } from './mobile.mjs';
 
-const url = process.argv[2] || 'http://127.0.0.1:5186/';
-const servidor = process.argv[2] ? null : spawn(process.execPath, [
+// Uso: node tests/catedral.mjs [URL] [--celular]
+// O celular está congelado (veja PASSAGEM.md): o cenário de toque só roda com
+// --celular (npm run test:celular) e não faz parte dos testes obrigatórios.
+const argumentos = process.argv.slice(2);
+const testarCelular = argumentos.includes('--celular');
+const enderecoPedido = argumentos.find((a) => !a.startsWith('--'));
+const url = enderecoPedido || 'http://127.0.0.1:5186/';
+const servidor = enderecoPedido ? null : spawn(process.execPath, [
   fileURLToPath(new URL('../node_modules/vite/bin/vite.js', import.meta.url)),
   '--host', '127.0.0.1', '--port', '5186', '--strictPort',
 ], { stdio: ['ignore', 'pipe', 'inherit'] });
@@ -116,8 +122,29 @@ async function validarExploracao() {
   assert.equal(await page.locator('#total-frascos').textContent(), '2');
   await tecla('e');
   assert.equal(await page.locator('#total-frascos').textContent(), '2');
+  // Frasco com tempo: apanhar no meio do gole interrompe a cura e o frasco não é gasto.
   await page.evaluate(() => { jogo.jogador.vida = 41; });
   await tecla('r');
+  assert.equal(await page.evaluate(() => jogo.jogador.acao), 'curando');
+  await passos(4);
+  await page.evaluate(() => { const j = jogo.jogador; j.receberDano(5, { x: j.pos.x, z: j.pos.z - 1 }); });
+  await passos(14);
+  assert.equal(await page.evaluate(() => jogo.jogador.vida), 36);
+  assert.equal(await page.locator('#total-frascos').textContent(), '2');
+  assert.match((await estado()).aviso, /Cura interrompida/);
+  // Rally: o dano recente aparece como faixa recuperável, maior que a vida.
+  const barras = await page.evaluate(() => ({
+    vida: parseFloat(document.getElementById('barra-vida').style.width),
+    rally: parseFloat(document.getElementById('barra-rally').style.width),
+    recuperavel: jogo.jogador.recuperavel,
+  }));
+  assert.ok(barras.recuperavel > 0 && barras.rally > barras.vida, JSON.stringify(barras));
+  // Sem apanhar, a cura só chega no fim do gole.
+  await page.evaluate(() => { jogo.jogador.vida = 41; jogo.jogador.recuperavel = 0; });
+  await tecla('r');
+  await passos(5);
+  assert.equal(await page.evaluate(() => jogo.jogador.vida), 41);
+  await passos(9);
   assert.equal(await page.evaluate(() => jogo.jogador.vida), 83);
   assert.equal(await page.locator('#total-frascos').textContent(), '1');
 
@@ -137,13 +164,29 @@ async function validarExploracao() {
   await tecla('e');
   await page.locator('#tela-leitura').waitFor();
   await page.locator('#fechar-leitura').click();
+  assert.equal(await page.evaluate(() => jogo.estado), 'jogando');
+  // A bolsa não pausa: o mundo continua correndo e o caçador não recebe comandos.
   await page.keyboard.press('i');
   await page.locator('#tela-bolsa').waitFor();
   assert.match(await page.locator('#bolsa-chaves').textContent(), /Chave da sacristia/);
+  const aoVivo = await page.evaluate(() => ({ estado: jogo.estado, tempo: jogo.tempo, x: jogo.jogador.pos.x, z: jogo.jogador.pos.z }));
+  assert.equal(aoVivo.estado, 'jogando');
+  assert.equal(await page.locator('#hud').isVisible(), true);
+  await andar('w', 6);
+  const depois = await page.evaluate(() => ({ tempo: jogo.tempo, x: jogo.jogador.pos.x, z: jogo.jogador.pos.z }));
+  assert.ok(depois.tempo > aoVivo.tempo + 0.5, 'o tempo do jogo segue com a bolsa aberta');
+  assert.ok(Math.hypot(depois.x - aoVivo.x, depois.z - aoVivo.z) < 0.05, 'com a bolsa aberta o caçador não anda');
   await page.getByRole('button', { name: 'Registro da oficina' }).click();
   assert.match(await page.locator('#texto-leitura').textContent(), /grade da nave/);
   await page.locator('#fechar-leitura').click();
   await page.locator('#fechar-bolsa').click();
+  assert.equal(await page.evaluate(() => jogo.estado), 'jogando');
+  // Só o Esc pausa, inclusive com a bolsa aberta.
+  await page.keyboard.press('i');
+  await page.locator('#tela-bolsa').waitFor();
+  await page.keyboard.press('Escape');
+  await page.locator('#tela-pausa').waitFor();
+  assert.equal(await page.evaluate(() => jogo.estado), 'pausado');
   // Estilo Souls: a pausa não oferece mais "voltar ao checkpoint".
   assert.equal(await page.locator('#voltar-checkpoint').count(), 0);
   assert.match(await page.locator('#estado-pausa').textContent(), /salva sozinho/);
@@ -193,7 +236,7 @@ async function validarExploracao() {
   assert.match((await estado()).aviso, /Vigília do Guardião/);
   await tecla('e');
   await page.locator('#fechar-leitura').click();
-  await page.locator('#continuar').click();
+  assert.equal(await page.evaluate(() => jogo.estado), 'jogando');
   await posicionar(20.02, 5.88);
   await mirar(20.88, 0.19, 6.77);
   assert.match((await estado()).aviso, /recolher frasco/);
@@ -443,8 +486,11 @@ try {
   assert.ok((await estado()).pos[2] > 50);
   await validarExploracao();
   assert.deepEqual(erros, []);
-  console.log('Passou: Catedral, navegação, combate, saves antigos, mira, baú, cura, bolsa, osso de retorno, chave, sacristia e atalho após recarregar.');
-  await validarMobile(browser, url);
+  console.log('Passou: Catedral, navegação, combate, saves antigos, mira, baú, frasco com tempo, rally, bolsa sem pausa, osso de retorno, chave, sacristia e atalho após recarregar.');
+  if (testarCelular) {
+    await validarMobile(browser, url);
+    console.log('Passou: cenário de celular (congelado, fora dos testes obrigatórios).');
+  }
 } finally {
   await browser?.close();
   servidor?.kill();
