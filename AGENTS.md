@@ -4,6 +4,8 @@ Este guia vale para colaboradores e assistentes de IA. Consulte o [LEIAME](LEIAM
 
 ## Antes de editar
 
+Antes de qualquer tarefa, leia [PASSAGEM.md](PASSAGEM.md), [LEIAME.md](LEIAME.md) e AGENTS.md. Ao terminar, atualize o Estado atual e o Plano do PASSAGEM.md.
+
 1. Confira `git status --short --branch`, atualize as referências com `git fetch origin` e verifique os PRs abertos no GitHub. Confira se alguém já está mexendo no mesmo sistema.
 2. Comece da `origin/main` em uma branch com nome descritivo. Use a branch existente ao continuar um PR. Se houver trabalho local de outra pessoa, preserve-o e use uma cópia de trabalho separada.
 3. Registre no PR, assim que ele existir, o objetivo, as áreas afetadas e como testar. Quando dois trabalhos tocarem o mesmo sistema, alinhe a ordem de integração entre os responsáveis.
