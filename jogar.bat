@@ -11,6 +11,8 @@ if errorlevel 1 (
   pause
   exit /b
 )
+rem  Antes de abrir, busca a versao mais nova no GitHub (se der).
+if exist atualizar.bat call atualizar.bat /quieto
 if not exist node_modules (
   echo  Instalando dependencias pela primeira vez, aguarde...
   call npm install

@@ -18,5 +18,15 @@ Este guia vale para colaboradores e assistentes de IA. Consulte o [LEIAME](LEIAM
 
 1. Rode `npm ci`, `npm test`, `npm run build` e `git diff --check`. Para mudanças que afetam a partida, rode `npm run test:browser` e jogue o trecho afetado. O LEIAME explica como instalar ou selecionar o navegador. Mudanças só de documentação pedem conferência dos links e comandos alterados.
 2. Registre no PR o que mudou, como reproduzir o fluxo, os testes que realmente rodaram, os pontos ainda pendentes e qualquer impacto em saves ou assets. Antes de integrar, confira se a `main` avançou. Se houver alterações sobrepostas, resolva na branch do PR e repita os testes afetados.
-3. Envie a branch e integre pelo pull request quando houver autorização para publicar. A integração na `main` dispara o GitHub Pages. Acompanhe a execução **Publicar o jogo** e abra o endereço público para conferir a versão e o fluxo afetado.
+3. Envie a branch e integre pelo pull request quando houver autorização para publicar. A seção [Integração automática](#integração-automática) diz quando a IA já tem essa autorização. A integração na `main` dispara o GitHub Pages. Acompanhe a execução **Publicar o jogo** e abra o endereço público para conferir a versão e o fluxo afetado.
 4. Se uma atualização causar regressão em produção, identifique o commit integrado e prepare um PR de reversão com `git revert`. Valide e acompanhe a nova publicação. Registre o motivo da reversão e o que ficou pendente para a próxima tentativa.
+
+## Integração automática
+
+A IA pode enviar a branch, abrir o pull request e integrá-lo na `main` com **Squash and merge** sem pedir autorização, desde que todas as condições abaixo valham:
+
+- `npm test` e `npm run build` passam no commit que será integrado.
+- Se a mudança mexe na partida, `npm run test:browser` também passa.
+- O pull request não tem conflito com a `main`.
+
+Se houver conflito ou algum teste falhando, a IA para e explica o problema antes de integrar. Depois de integrar, ela confere se a execução **Publicar o jogo** terminou com sucesso no GitHub Pages e informa o link do jogo.
