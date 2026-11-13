@@ -83,5 +83,20 @@ export const CONFIG = {
       visao: 19, firmeza: 0,
       escala: 1.0, raio: 0.45, golpes: 2, recua: true,
     },
+    penitente: {
+      nome: 'Penitente do Véu',
+      vida: 84, velPatrulha: 1.2, velPerseguir: 2.8,
+      dano: 19, alcance: 2.2, preparo: 0.53, ativo: 0.14, recuperacao: 0.8,
+      visao: 12, firmeza: 26,
+      escala: 1.05, raio: 0.44, golpes: 2, recua: false,
+    },
+    guardiao: {
+      nome: 'Guardião do Véu',
+      vida: 330, velPatrulha: 0.8, velPerseguir: 2.2,
+      dano: 32, alcance: 2.9, preparo: 1.05, ativo: 0.2, recuperacao: 1.35,
+      visao: 20, firmeza: 60,
+      escala: 1.65, raio: 0.78, golpes: 1, recua: false,
+      faseFinal: { velPerseguir: 2.9, dano: 25, preparo: 0.73, recuperacao: 1.1, golpes: 2 },
+    },
   },
 };

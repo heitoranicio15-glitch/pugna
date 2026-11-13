@@ -1,6 +1,6 @@
 // =============================================================================
-//  INIMIGOS (cavaleiros e caçadores corrompidos)
-//  Um único arquivo serve para os dois tipos: o que muda são os números em
+//  INIMIGOS
+//  Os tipos compartilham os estados de combate; o que muda são os números em
 //  CONFIG.inimigos e a aparência (função montarCorpo).
 //
 //  "Cérebro" (IA) em estados:
@@ -17,11 +17,14 @@ const v2 = new THREE.Vector3();
 /** Monta o boneco com caixas. Devolve o grupo e as partes que se mexem. */
 function montarCorpo(tipo) {
   const t = texturas();
-  const cavaleiro = tipo === 'cavaleiro';
-  const armadura = retro(new THREE.MeshLambertMaterial({ map: t.metal, color: cavaleiro ? 0x8088c8 : 0x6a6aa0 }));
-  const pano = retro(new THREE.MeshLambertMaterial({ map: t.tecido, color: cavaleiro ? 0x7a3a8a : 0x9090d0, side: THREE.DoubleSide }));
+  const guardiao = tipo === 'guardiao';
+  const penitente = tipo === 'penitente';
+  const cavaleiro = tipo === 'cavaleiro' || guardiao;
+  const armadura = retro(new THREE.MeshLambertMaterial({ map: t.metal, color: guardiao ? 0xb19565 : cavaleiro ? 0x8088c8 : 0x6a6aa0 }));
+  const corPano = { guardiao: 0xa34262, penitente: 0x795270, cavaleiro: 0x7a3a8a, cacador: 0x9090d0 };
+  const pano = retro(new THREE.MeshLambertMaterial({ map: t.tecido, color: corPano[tipo], side: THREE.DoubleSide }));
   const aco = retro(new THREE.MeshLambertMaterial({ map: t.metal, color: 0xd8dcff }));
-  const olho = retro(new THREE.MeshBasicMaterial({ color: CONFIG.paleta.magia }));
+  const olho = retro(new THREE.MeshBasicMaterial({ color: guardiao ? 0xffad67 : CONFIG.paleta.magia }));
   const cx = (l, a, p, m, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(new THREE.BoxGeometry(l, a, p), m); o.position.set(x, y, z); return o; };
 
   const g = new THREE.Group();
@@ -33,8 +36,17 @@ function montarCorpo(tipo) {
   corpo.add(cx(0.24, 0.045, 0.02, olho, 0, 1.8, 0.185));         // fresta do elmo: olhos verdes
   if (cavaleiro) {
     corpo.add(cx(0.3, 0.2, 0.42, armadura, -0.5, 1.56, 0), cx(0.3, 0.2, 0.42, armadura, 0.5, 1.56, 0)); // ombreiras
-    const crista = cx(0.06, 0.3, 0.4, pano, 0, 2.05, -0.02); corpo.add(crista);
+    if (guardiao) {
+      for (const x of [-0.13, 0, 0.13]) corpo.add(cx(0.07, 0.24, 0.33, armadura, x, x === 0 ? 2.08 : 2.03, 0));
+    } else {
+      corpo.add(cx(0.06, 0.3, 0.4, pano, 0, 2.05, -0.02));
+    }
     corpo.add(cx(0.5, 0.75, 0.04, pano, 0, 0.55, 0.19));         // tabardo
+  } else if (penitente) {
+    const capuz = new THREE.Mesh(new THREE.ConeGeometry(0.29, 0.46, 4), pano);
+    capuz.position.set(0, 1.99, -0.06);
+    capuz.rotation.y = Math.PI / 4;
+    corpo.add(capuz, cx(0.55, 1.02, 0.27, pano, 0, 0.66, -0.02));
   } else {
     const aba = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.04, 6), pano); aba.position.y = 1.97; corpo.add(aba); // chapéu
     const copa = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.34, 5), pano); copa.position.y = 2.14; corpo.add(copa);
@@ -49,20 +61,27 @@ function montarCorpo(tipo) {
   // Arma na mão direita. A lâmina aponta para a frente (+Z) quando o braço está abaixado.
   const comp = cavaleiro ? 1.55 : 0.9;
   const arma = new THREE.Group(); arma.position.set(0, -0.66, 0.05);
-  arma.add(cx(cavaleiro ? 0.1 : 0.06, 0.03, comp, aco, 0, 0, comp / 2 + 0.1));
-  arma.add(cx(0.3, 0.05, 0.05, armadura, 0, 0, 0.1));
+  if (guardiao) {
+    arma.add(cx(0.07, 0.07, 1.35, armadura, 0, 0, 0.68));
+    arma.add(cx(0.29, 0.31, 0.37, aco, 0, 0, 1.34));
+  } else {
+    arma.add(cx(cavaleiro ? 0.1 : 0.06, 0.03, comp, aco, 0, 0, comp / 2 + 0.1));
+    arma.add(cx(0.3, 0.05, 0.05, armadura, 0, 0, 0.1));
+  }
   bracoD.add(arma);
   if (cavaleiro) { const escudo = cx(0.06, 0.62, 0.46, armadura, -0.1, -0.5, 0.05); bracoE.add(escudo); }
 
-  return { grupo: g, corpo, pernaE, pernaD, bracoE, bracoD, materiais: [armadura, pano, aco] };
+  return { grupo: g, corpo, pernaE, pernaD, bracoE, bracoD, olho, materiais: [armadura, pano, aco] };
 }
 
 export class Inimigo {
-  /** tipo: nome em CONFIG.inimigos. rota: lista de pontos [x, z] da patrulha. */
-  constructor(jogo, tipo, rota) {
+  /** tipo: nome em CONFIG.inimigos. rota: pontos [x, z] da patrulha. */
+  constructor(jogo, mundo, { tipo, rota, limiteZ = Infinity }) {
     this.jogo = jogo;
     this.tipo = tipo;
-    this.cfg = CONFIG.inimigos[tipo];
+    this.base = CONFIG.inimigos[tipo];
+    this.cfg = this.base;
+    this.limiteZ = limiteZ;
     this.rota = rota;
     this.raio = this.cfg.raio;
     this.pos = new THREE.Vector3();
@@ -70,19 +89,21 @@ export class Inimigo {
     Object.assign(this, montarCorpo(tipo));
     this.grupo.scale.setScalar(this.cfg.escala);
     this.grupo.rotation.order = 'YXZ'; // assim ele cai "para trás" seja qual for o lado em que olha
-    jogo.cena.add(this.grupo);
+    mundo.grupo.add(this.grupo);
 
     // Barrinha de vida (só aparece depois de apanhar).
-    this.barra = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xd2343f, depthTest: false, fog: false }));
+    this.barra = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xd2343f, fog: false }));
     this.barra.center.set(0, 0.5);
     this.barra.visible = false;
-    jogo.cena.add(this.barra);
+    mundo.grupo.add(this.barra);
 
     this.reiniciar();
   }
 
   /** Volta ao começo da patrulha, vivo e com a vida cheia. */
   reiniciar() {
+    this.cfg = this.base;
+    if (this.tipo === 'guardiao') this.olho.color.setHex(0xffad67);
     this.vida = this.cfg.vida;
     this.morto = false;
     this.estado = 'patrulha'; this.tEstado = 0;
@@ -96,10 +117,17 @@ export class Inimigo {
     for (const m of this.materiais) m.emissive.setRGB(0, 0, 0);
   }
 
+  ocultarDerrotado() {
+    this.morto = true;
+    this.grupo.visible = false;
+    this.barra.visible = false;
+  }
+
   mudar(estado) { this.estado = estado; this.tEstado = 0; }
 
   atualizar(dt) {
     const c = this.cfg, jog = this.jogo.jogador;
+    const col = this.jogo.mundo.colisores;
     this.tEstado += dt;
     this.piscar -= dt;
     const claro = this.piscar > 0 ? 0.7 : 0;
@@ -129,7 +157,8 @@ export class Inimigo {
         } else { alvoAngulo = Math.atan2(px, pz); andar = c.velPatrulha; giro = 3; }
         // Viu o jogador? (de frente enxerga longe; de costas só bem de perto)
         const deFrente = Math.cos(anguloJogador - this.angulo) > -0.15;
-        if (!jog.morto && Math.abs(jog.pos.y - this.pos.y) < 3 && (dist < (deFrente ? c.visao : 5))) {
+        if (!jog.morto && jog.pos.z <= this.limiteZ && Math.abs(jog.pos.y - this.pos.y) < 3 &&
+            dist < (deFrente ? c.visao : 5) && !col.bloqueiaTrecho(this.pos, jog.pos, 1.45)) {
           this.mudar('perseguir'); this.jogo.eventos.emitir('inimigo:alerta', this);
         }
         break;
@@ -137,7 +166,7 @@ export class Inimigo {
       case 'perseguir': {
         const casa = this.rota[0];
         const longeDeCasa = Math.hypot(this.pos.x - casa[0], this.pos.z - casa[1]) > 48;
-        if (jog.morto || dist > c.visao * 1.9 || longeDeCasa) { this.mudar('patrulha'); break; }
+        if (jog.morto || jog.pos.z > this.limiteZ || dist > c.visao * 1.9 || longeDeCasa) { this.mudar('patrulha'); break; }
         alvoAngulo = anguloJogador;
         if (dist > c.alcance * 0.82) andar = c.velPerseguir;
         else if (Math.cos(anguloJogador - this.angulo) > 0.8) { this.golpesRestantes = c.golpes; this.mudar('preparo'); this.jogo.eventos.emitir('inimigo:preparo', this); }
@@ -186,7 +215,7 @@ export class Inimigo {
     }
     this.pos.x += this.empurrao.x * dt; this.pos.z += this.empurrao.z * dt;
     this.empurrao.multiplyScalar(Math.exp(-dt * 7));
-    this.jogo.mundo.colisores.resolver(this.pos, this.raio, 0, 0);
+    col.resolver(this.pos, this.raio, 0, 0);
     for (const o of this.jogo.inimigos) {   // não se amontoam
       if (o === this || o.morto) continue;
       const ox = this.pos.x - o.pos.x, oz = this.pos.z - o.pos.z, od = Math.hypot(ox, oz), min = this.raio + o.raio;
@@ -194,6 +223,8 @@ export class Inimigo {
     }
     const minJ = this.raio + jog.raio;
     if (dist < minJ && dist > 1e-4 && !jog.morto) { this.pos.x = jog.pos.x - dx / dist * minJ; this.pos.z = jog.pos.z - dz / dist * minJ; }
+    this.pos.z = Math.min(this.pos.z, this.limiteZ);
+    col.resolver(this.pos, this.raio, 0, 0);
 
     const andou = Math.hypot(this.pos.x - antesX, this.pos.z - antesZ);
     if (andar > 0 && andou < andar * dt * 0.35) {
@@ -229,6 +260,7 @@ export class Inimigo {
     if (dist > c.alcance + 0.35) return;
     if (Math.cos(anguloJogador - this.angulo) < 0.35) return;      // jogador saiu da frente
     if (Math.abs(this.jogo.jogador.pos.y - this.pos.y) > 1.6) return;
+    if (this.jogo.mundo.colisores.bloqueiaTrecho(this.pos, this.jogo.jogador.pos, 1.35)) return;
     const r = this.jogo.jogador.receberDano(c.dano, this.pos);
     if (r === 'bloqueou') { this.empurrao.set(-Math.sin(this.angulo) * 3, 0, -Math.cos(this.angulo) * 3); }
   }
@@ -238,7 +270,7 @@ export class Inimigo {
     if (this.morto) return;
     this.vida -= dano;
     this.piscar = 0.09;
-    this.barra.visible = true;
+    this.barra.visible = this.tipo !== 'guardiao';
     this.empurrao.set(direcao.x * forca, 0, direcao.z * forca);
     this.jogo.eventos.emitir('inimigo:ferido', this);
     if (this.vida <= 0) {
@@ -246,7 +278,12 @@ export class Inimigo {
       this.jogo.eventos.emitir('inimigo:morreu', this);
       return;
     }
-    if (dano >= this.cfg.firmeza || forte) this.mudar('atordoado');   // interrompe o ataque
+    if (this.base.faseFinal && this.cfg === this.base && this.vida <= this.base.vida / 2) {
+      this.cfg = { ...this.base, ...this.base.faseFinal };
+      this.olho.color.setHex(0xff416c);
+      this.jogo.eventos.emitir('guardiao:fase-final');
+    }
+    if (dano >= this.cfg.firmeza || (forte && !this.base.faseFinal)) this.mudar('atordoado');
     else if (this.estado === 'patrulha') this.mudar('perseguir');
   }
 }

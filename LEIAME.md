@@ -71,7 +71,7 @@ que está em `historico-git.bundle`. Depois disso, `git log` mostra as etapas e 
 | Ataque forte | Segurar o clique esquerdo e soltar |
 | Bloquear | Segurar o clique direito |
 | Esquivar | Ctrl, Alt ou Q (com uma direção; parado, pula para trás) |
-| Descansar na lanterna | E |
+| Interagir (portas, selos e lanternas) | E |
 | Tela cheia | F |
 | Pausar / soltar o mouse | Esc |
 
@@ -86,21 +86,31 @@ ou **Alt** para esquivar.
 - Bloquear só funciona **de frente** para o inimigo. Se a estamina acabar no bloqueio,
   a guarda quebra e você fica atordoado.
 - A esquiva te deixa **invencível por um instante**.
-- O ataque forte **interrompe** o golpe de qualquer inimigo. O ataque leve só
-  interrompe o caçador (o cavaleiro é "firme" demais).
+- O ataque forte **interrompe** o golpe dos inimigos comuns. O ataque leve
+  interrompe o caçador. O Guardião mantém o ataque mesmo ao receber um golpe forte.
 - **Cavaleiro:** lento, forte, ergue a espada devagar. Esquive ou saia de lado e puna.
 - **Caçador:** rápido, dá dois golpes seguidos e pula para trás. Bloqueie e revide.
-- Ao morrer você volta à última **lanterna** em que descansou. Descansar recupera a
-  vida, mas traz todos os inimigos de volta.
+- Ao morrer você volta à última **lanterna** em que descansou. Descansar recupera
+  vida e estamina e faz os inimigos comuns reaparecerem.
 
-## O que existe hoje (fase 1)
+## Catedral do Véu
+
+Aproxime-se do portal ao norte do vilarejo e pressione **E**. A nave tem uma
+lanterna à direita da entrada. Explore o **Ossário**, a oeste, e o **Relicário**,
+a leste. Recolha com **E** o selo de cada ala para abrir a grade do **Santuário**.
+O **Guardião do Véu** passa a atacar em sequência quando perde metade da vida.
+Para voltar ao vilarejo, use **E** na porta ao sul da nave.
+
+O jogo guarda neste navegador a última lanterna usada, os dois selos e a derrota
+do Guardião. Selos e derrota são salvos assim que acontecem. A lanterna determina
+onde você volta ao morrer ou reabrir o jogo.
+
+## O que existe hoje
 
 - Vilarejo gótico pequeno: ruas de pedra, 17 casas, torres, cemitério, muralha,
   tochas e névoa.
-- **Catedral** ao norte: duas torres com agulhas, rosácea, portal, transepto, abside,
-  contrafortes e vitrais. A porta está **selada**, com uma luz verde vazando por
-  baixo: ela é a entrada planejada para as próximas fases (a posição fica em
-  `mundo.igreja.porta`).
+- **Catedral** ao norte: fachada com torres, rosácea e vitrais. O portal leva à
+  nave, ao Ossário, ao Relicário e ao Santuário.
 - Céu noturno roxo-azulado com nuvens, estrelas e a **lua com rosto**: ela ocupa boa
   parte do céu, está sempre visível (a nordeste, ao lado das torres), tem um
   sorriso aberto com dentes tortos à mostra, vira o rosto e as pupilas na direção do
@@ -109,8 +119,8 @@ ou **Alt** para esquivar.
   de vértices, dithering e redução de cores.
 - Movimento em primeira pessoa com colisão; dá para subir em caixotes e degraus.
 - Combate com ataque leve, forte, bloqueio, esquiva e estamina.
-- Dois inimigos (cavaleiro e caçador) com IA: patrulhar, perseguir, atacar, morrer.
-- Vida, tela de morte e duas lanternas de descanso (portão sul e adro da igreja).
+- Cavaleiro, caçador, penitente e Guardião do Véu, com patrulha e combate.
+- Vida, tela de morte e três lanternas de descanso (portão sul, adro e nave).
 - Sons sintetizados: passos, espada, impacto, metal, vento.
 - Tela inicial.
 
@@ -144,6 +154,7 @@ pugna/
    │  └─ texturas.js       texturas pixeladas feitas no código
    ├─ mundo/
    │  ├─ Vilarejo.js       ★ o MAPA: onde fica cada casa, tocha, inimigo, lanterna
+   │  ├─ Catedral.js       nave, alas, selos e santuário
    │  ├─ pecas.js          como construir casa, torre, igreja, tocha, árvore...
    │  ├─ Colisores.js      colisões
    │  ├─ Ceu.js            céu, nuvens, estrelas
@@ -151,7 +162,7 @@ pugna/
    ├─ entidades/
    │  ├─ Jogador.js        movimento, vida, estamina e regras do combate
    │  ├─ Arma.js           a espada que aparece na tela (só animação)
-   │  ├─ Inimigo.js        aparência e IA dos dois inimigos
+   │  ├─ Inimigo.js        aparência, patrulha e combate dos inimigos
    │  └─ Lanterna.js       ponto de descanso
    ├─ audio/Som.js         sons sintetizados
    └─ interface/
@@ -184,13 +195,14 @@ pugna/
 **Polimento da fase 1**
 - [ ] Testar e ajustar o "peso" do combate jogando de verdade (tempos em `config.js`)
 - [ ] Inimigos contornarem obstáculos melhor (hoje só tentam desviar de lado)
-- [ ] Inimigos não enxergarem através de paredes
+- [x] Paredes bloqueiam a detecção inicial e golpes
 - [ ] Mãos/braços do caçador mais detalhados e a capa aparecendo ao olhar para baixo
 - [ ] Trocar sons sintetizados por gravações CC0; música ambiente
 - [ ] Menu de opções (sensibilidade do mouse, volume, nível de pixelado)
 - [ ] Combate menos genérico: travar a mira no inimigo, aparar (parry), golpe pelas
       costas, sequências de ataques, armas com ritmos diferentes
-- [ ] Interior da catedral (próxima área) e de algumas casas
+- [x] Interior da catedral
+- [ ] Interior de algumas casas
 
 **Próximas fases**
 - [ ] Mais seres cósmicos no horizonte que mudam o céu e as cores (`Ceu.definirPaleta`)
@@ -198,7 +210,7 @@ pugna/
 - [ ] Multiplayer para ~5 amigos se verem (Supabase Realtime)
 - [ ] Inventário, itens de cura, armas diferentes
 - [ ] Mapa maior com áreas ligadas (floresta, castelo, caverna)
-- [ ] Chefes
+- [x] Primeiro miniboss, o Guardião do Véu
 - [ ] Modelos e animações de verdade (Blender ou pacotes CC0)
 
 ## Notas técnicas

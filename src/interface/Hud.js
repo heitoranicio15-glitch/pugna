@@ -5,6 +5,7 @@ export class Hud {
   constructor() {
     this.hud = el('hud'); this.vida = el('barra-vida'); this.estamina = el('barra-estamina');
     this.aviso = el('aviso'); this.dano = el('dano'); this.veu = el('veu');
+    this.guardiao = el('guardiao'); this.nomeGuardiao = el('nome-guardiao'); this.vidaGuardiao = el('barra-guardiao');
     this.telas = { titulo: el('tela-titulo'), pausa: el('tela-pausa'), morte: el('tela-morte') };
     this.tAviso = 0; this.avisoFixo = '';
   }
@@ -26,6 +27,13 @@ export class Hud {
 
   piscarDano() { this.dano.classList.add('ativo'); setTimeout(() => this.dano.classList.remove('ativo'), 90); }
   fecharVeu(fechado) { this.veu.classList.toggle('fechado', fechado); }
+
+  mostrarGuardiao(inimigo) {
+    this.guardiao.classList.toggle('oculto', !inimigo);
+    if (!inimigo) return;
+    this.nomeGuardiao.textContent = inimigo.cfg.nome;
+    this.vidaGuardiao.style.width = (100 * inimigo.vida / inimigo.cfg.vida) + '%';
+  }
 
   atualizar(dt, jogador, maxVida, maxEstamina) {
     this.vida.style.width = (100 * jogador.vida / maxVida) + '%';

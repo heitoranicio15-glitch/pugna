@@ -158,8 +158,7 @@ export function torre(mundo, { x, z, lado = 5, a = 16, tipo = 'ameias', colide =
  * CATEDRAL GÓTICA. Frente = sul (+Z). (x, z) = centro da nave.
  * Partes: nave comprida, transepto (o "braço" da cruz), abside (fundo arredondado),
  * duas torres com agulhas na fachada, portal com rosácea, contrafortes com pináculos,
- * vitrais e uma agulha central. A porta está selada: no futuro, é a entrada das
- * próximas fases (a posição dela é devolvida em `porta`).
+ * vitrais e uma agulha central. O portal dá acesso ao mapa interno da catedral.
  */
 export function igreja(mundo, { x, z }) {
   const m = materiais();
@@ -264,7 +263,7 @@ export function igreja(mundo, { x, z }) {
   add(telhado(5.4, 3.2, 1.0, m.pedraEscura, m.pedraEscura), 0, base + 6.4, fc + 0.3); // frontão em ponta
   for (const lado of [-1, 1]) add(caixa(1.7, 5.6, 0.2, m.madeira, 1.4), lado * 0.87, base + 2.8, fc + 0.12); // duas folhas
   add(caixa(0.12, 5.6, 0.24, m.metal, 1), 0, base + 2.8, fc + 0.13);         // fresta entre as folhas
-  // Uma luz verde vaza por baixo da porta selada: algo espera lá dentro.
+  // Uma luz verde marca a entrada da catedral.
   const fresta = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.1, 0.06), retro(new THREE.MeshBasicMaterial({ color: CONFIG.paleta.magia })));
   add(fresta, 0, base + 0.06, fc + 0.24);
   const luzPorta = new THREE.PointLight(CONFIG.paleta.magia, 5, 9, 1.8); add(luzPorta, 0, base + 0.5, fc + 1.3);
@@ -306,6 +305,16 @@ export function tocha(mundo, { x, z, altura = 2.3, luz = true }) {
   mundo.colisores.adicionar(x, z, 0.3, 0.3);
   mundo.tochas.push({ chama, halo, luz: ponto, fase: Math.random() * 100, base: ponto ? ponto.intensity : 0 });
   return g;
+}
+
+export function animarTochas(tochas, tempo) {
+  for (const t of tochas) {
+    const f = 0.82 + 0.12 * Math.sin(tempo * 11 + t.fase) + 0.1 * Math.sin(tempo * 23.7 + t.fase * 1.7);
+    if (t.luz) t.luz.intensity = t.base * f;
+    t.chama.scale.set(1, 0.8 + f * 0.4, 1);
+    t.chama.rotation.y = tempo * 6 + t.fase;
+    t.halo.scale.setScalar(1.5 + f * 0.5);
+  }
 }
 
 /** Árvore seca e torta. */
