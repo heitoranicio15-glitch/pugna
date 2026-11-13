@@ -409,28 +409,45 @@ export class Jogador {
     }
   }
 
-  /** Chamado pelos inimigos. origem = posição de quem bateu. Devolve o que aconteceu. */
-  receberDano(dano, origem, atacante = null) {
+  /**
+   * Chamado pelos inimigos. origem = posição de quem bateu. golpe = dados do
+   * ataque (veja Ataques.js); sem ele, vale como um golpe alto comum.
+   * Devolve o que aconteceu: 'esquivou', 'pulou', 'aparou', 'bloqueou',
+   * 'guarda-quebrada' ou 'ferido'.
+   */
+  receberDano(dano, origem, atacante = null, golpe = null) {
     if (this.morto) return 'ignorado';
     if (this.invencivel > 0) return 'esquivou';
+    // Gancho do pulo: golpes rasteiros passam por baixo de quem está no ar.
+    // (O contra-ataque pisando, item 5 do plano, parte do aviso 'jogador:pulou-golpe'.)
+    if (golpe?.evitaPulando && !this.noChao && this.pos.y - (origem.y ?? 0) >= golpe.alturaPulo) {
+      this.jogo.eventos.emitir('jogador:pulou-golpe', atacante);
+      return 'pulou';
+    }
     const dx = origem.x - this.pos.x, dz = origem.z - this.pos.z, d = Math.hypot(dx, dz) || 1;
     const f = this.frente();
     const deFrente = (dx * f.x + dz * f.z) / d > 0.2;
     // Aparo: o golpe chegou de frente, dentro da janela. Nenhum dano, e o
     // atacante fica desequilibrado e aberto a um golpe crítico.
+    // Golpes pesados encurtam a janela; os que não podem ser aparados entram inteiros.
     const ap = CB.aparar;
-    if (this.acao === 'aparar' && deFrente && this.tAcao >= ap.preparo && this.tAcao <= ap.preparo + ap.janela) {
+    const janela = ap.janela * (golpe?.janelaAparar ?? 1);
+    const tentouAparar = this.acao === 'aparar' && deFrente && this.tAcao >= ap.preparo && this.tAcao <= ap.preparo + ap.janela;
+    if (tentouAparar && golpe?.aparavel === false) this.jogo.eventos.emitir('jogador:resposta-errada', { resposta: 'aparar', tipo: golpe.tipo });
+    if (tentouAparar && golpe?.aparavel !== false && this.tAcao <= ap.preparo + janela) {
       this.acao = 'livre'; this.tAcao = 0;
       this.invencivel = Math.max(this.invencivel, 0.25);
       this.tremor = Math.max(this.tremor, 0.045);
       this.jogo.pausaDeImpacto(0.12);
-      atacante?.serAparado?.();
+      atacante?.serAparado?.(golpe);
       this.jogo.eventos.emitir('jogador:aparou', atacante);
       return 'aparou';
     }
     let resultado = 'ferido';
-    if (this.bloqueando && deFrente) {
-      const custo = dano * CB.bloqueio.custoPorDano;
+    if (this.bloqueando && deFrente && golpe?.bloqueavel === false) {
+      this.jogo.eventos.emitir('jogador:resposta-errada', { resposta: 'bloquear', tipo: golpe.tipo });
+    } else if (this.bloqueando && deFrente) {
+      const custo = dano * CB.bloqueio.custoPorDano * (golpe?.custoBloqueio ?? 1);
       const aguentou = this.estamina >= custo * 0.6;
       this.gastar(custo);
       if (aguentou) { dano *= 1 - CB.bloqueio.reducao; resultado = 'bloqueou'; }

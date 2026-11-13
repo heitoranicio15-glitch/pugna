@@ -7,11 +7,16 @@
 //    patrulha → perseguir → (procurar) → preparo → ativo → recuperacao
 //    a qualquer momento: atordoado (levou golpe forte), desequilibrado
 //    (teve o golpe aparado: fica aberto a um golpe crítico) ou morto
+//
+//  As três fases do golpe (preparo, ativo, recuperacao) e os tipos de ataque
+//  (alto, pesado, rasteira) vêm da máquina única em Ataques.js. Aqui ficam a
+//  escolha do ataque, as poses e os avisos de cada tipo.
 // =============================================================================
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { retro } from '../render/retro.js';
 import { texturas } from '../render/texturas.js';
+import { MaquinaDeAtaque, ehFaseDeAtaque, golpeAlcanca, sortearSequencia } from './Ataques.js';
 
 const v2 = new THREE.Vector3();
 
@@ -112,7 +117,7 @@ function montarCorpo(tipo) {
     bracoE.add(escudo);
   }
 
-  return { grupo: g, corpo, pernaE, pernaD, bracoE, bracoD, olho, materiais: [armadura, pano, aco] };
+  return { grupo: g, corpo, pernaE, pernaD, bracoE, bracoD, olho, aco, materiais: [armadura, pano, aco] };
 }
 
 export class Inimigo {
@@ -129,6 +134,8 @@ export class Inimigo {
     this.raio = this.cfg.raio;
     this.pos = new THREE.Vector3();
     this.empurrao = new THREE.Vector3();
+    this.ataque = new MaquinaDeAtaque();
+    this.sorteio = Math.random;   // os testes trocam por um sorteio previsível
     Object.assign(this, montarCorpo(tipo));
     this.grupo.scale.setScalar(this.cfg.escala);
     this.grupo.rotation.order = 'YXZ'; // assim ele cai "para trás" seja qual for o lado em que olha
@@ -146,21 +153,24 @@ export class Inimigo {
   /** Volta ao começo da patrulha, vivo e com a vida cheia. */
   reiniciar() {
     this.cfg = this.base;
-    if (this.tipo === 'guardiao') this.olho.color.setHex(0xffad67);
+    this.corOlho = this.tipo === 'guardiao' ? 0xffad67 : CONFIG.paleta.magia;
+    this.olho.color.setHex(this.corOlho);
+    this.ataque.encerrar();
+    this.ultimaSequencia = null;
+    this.abertoParaExecucao = false;
     this.vida = this.cfg.vida;
     this.morto = false;
     this.estado = 'patrulha'; this.tEstado = 0;
     this.pontoAtual = 0; this.espera = 0;
     this.pos.set(this.rota[0][0], 0, this.rota[0][1]);
     this.angulo = 0; this.fase = Math.random() * 6; this.piscar = 0;
-    this.golpesRestantes = 0;
     this.caminho = [];
     this.alvoDaRota = null;
     this.recalcularRota = 0;
     this.ultimaVista = null;
-    this.perfilAtaque = null;
     this.bracoD.rotation.set(0, 0, 0);
     this.corpo.rotation.set(0, 0, 0);
+    this.corpo.position.y = 0;
     this.empurrao.set(0, 0, 0);
     this.grupo.visible = true; this.grupo.scale.setScalar(this.cfg.escala); this.grupo.rotation.set(0, 0, 0); this.grupo.position.copy(this.pos);
     this.barra.visible = false;
@@ -173,13 +183,33 @@ export class Inimigo {
     this.barra.visible = false;
   }
 
-  mudar(estado) { this.estado = estado; this.tEstado = 0; }
+  /** Troca o estado do cérebro. Sair de uma fase de ataque encerra a sequência. */
+  mudar(estado) {
+    this.estado = estado; this.tEstado = 0;
+    if (!ehFaseDeAtaque(estado)) this.ataque.encerrar();
+    else {
+      if (!this.ataque.ativa) this.ataque.iniciar(this.cfg, ['alto']);
+      this.ataque.irPara(estado);
+    }
+    if (estado !== 'desequilibrado') this.abertoParaExecucao = false;
+  }
 
   get emFaseFinal() { return !!this.base.faseFinal && this.cfg !== this.base; }
 
-  prepararGolpe(tempo = 0) {
-    this.mudar('preparo');
-    this.tEstado = tempo;
+  /** O golpe em andamento (tipo, dano, tempos...) ou null fora de um ataque. */
+  get golpe() { return this.ataque.golpe; }
+
+  /**
+   * Começa um ataque. Sem argumento, sorteia uma das sequências do inimigo.
+   * golpes: lista de tipos, por exemplo ['alto', 'rasteira'].
+   */
+  atacar(golpes = null) {
+    if (!golpes) {
+      this.ultimaSequencia = sortearSequencia(this.cfg.ataques, this.ultimaSequencia, this.sorteio);
+      golpes = this.ultimaSequencia.golpes;
+    }
+    this.ataque.iniciar(this.cfg, golpes);
+    this.estado = 'preparo'; this.tEstado = 0;
     this.jogo.eventos.emitir('inimigo:preparo', this);
   }
 
@@ -211,8 +241,6 @@ export class Inimigo {
 
   atualizar(dt) {
     const c = this.cfg, jog = this.jogo.jogador;
-    const ataque = this.perfilAtaque || c;
-    const combo = this.tipo === 'guardiao' && ataque === this.cfg && this.emFaseFinal;
     const col = this.mundo.colisores;
     this.tEstado += dt;
     this.piscar -= dt;
@@ -235,6 +263,8 @@ export class Inimigo {
     let andar = 0, alvoAngulo = this.angulo, giro = 6;   // giro = quão rápido vira (rad/s)
     let destino = null;
     let bracoAlvo = -0.25, bracoLateral = 0, torcer = 0, inclinar = 0, rapidezBraco = 8;
+    let agachar = 0, aviso = null, forcaAviso = 0;
+    const golpe = this.ataque.golpe;
 
     switch (this.estado) {
       case 'patrulha': {
@@ -261,9 +291,7 @@ export class Inimigo {
         alvoAngulo = anguloJogador;
         if (dist > c.alcance * 0.82) { destino = this.ultimaVista; andar = c.velPerseguir; }
         else if (Math.cos(anguloJogador - this.angulo) > 0.8) {
-          this.perfilAtaque = c;
-          this.golpesRestantes = c.golpes;
-          this.prepararGolpe();
+          this.atacar();
         }
         break;
       }
@@ -276,41 +304,45 @@ export class Inimigo {
         } else alvoAngulo += dt * 1.7;
         break;
       }
-      case 'preparo': {      // ergue a arma: é o aviso para o jogador bloquear ou esquivar
+      // ---- As três fases do golpe (iguais para todos; a pose muda com o tipo) ----
+      case 'preparo': {      // o AVISO: a pose, a cor e o som dizem que tipo de golpe vem
         alvoAngulo = visivel ? anguloJogador : this.angulo; giro = c.recua ? 5 : 1.6;
-        bracoAlvo = -2.95; rapidezBraco = 3.2 / ataque.preparo; inclinar = -0.12;
-        if (combo) {
-          const lado = this.golpesRestantes > 1 ? 1 : -1;
-          bracoAlvo = -1.62;
-          bracoLateral = lado * 1.05;
-          torcer = lado * 0.47;
-          inclinar = -0.24;
+        rapidezBraco = 3.2 / golpe.preparo;
+        aviso = golpe.aviso;
+        // a cor pulsa cada vez mais rápido até o golpe sair
+        const avanco = this.ataque.t / golpe.preparo;
+        forcaAviso = 0.45 + 0.55 * Math.abs(Math.sin(avanco * avanco * 14));
+        if (golpe.tipo === 'rasteira') {        // agacha e leva a arma para o lado, rente ao chão
+          agachar = 0.3; inclinar = 0.34;
+          bracoAlvo = -0.55; bracoLateral = 1.3; torcer = -0.7;
+        } else if (golpe.tipo === 'pesado') {   // arma bem atrás da cabeça, corpo arqueado
+          bracoAlvo = -3.6; inclinar = -0.4; torcer = -0.22;
+        } else if (golpe.lado) {                // golpe lateral
+          bracoAlvo = -1.62; bracoLateral = golpe.lado * 1.05; torcer = golpe.lado * 0.47; inclinar = -0.24;
+        } else {                                // alto: ergue a arma
+          bracoAlvo = -2.95; inclinar = -0.12;
         }
         if (c.recua && visivel && dist > c.alcance * 0.7) andar = c.velPerseguir * 0.6;
-        if (this.tEstado >= ataque.preparo) { this.mudar('ativo'); this.golpear(dist, anguloJogador, ataque); }
         break;
       }
-      case 'ativo': {
-        bracoAlvo = -0.45; rapidezBraco = 30; inclinar = 0.3;
-        if (combo) {
-          const lado = this.golpesRestantes > 1 ? -1 : 1;
-          bracoAlvo = -1.05;
-          bracoLateral = lado * 0.7;
-          torcer = lado * 0.38;
+      case 'ativo': {        // a arma passa: é aqui que o golpe pode acertar
+        rapidezBraco = 30;
+        if (golpe.tipo === 'rasteira') {
+          agachar = 0.3; inclinar = 0.3;
+          bracoAlvo = -0.35; bracoLateral = -0.95; torcer = 0.75;
+        } else if (golpe.tipo === 'pesado') {
+          bracoAlvo = -0.2; inclinar = 0.55;
+        } else if (golpe.lado) {
+          bracoAlvo = -1.05; bracoLateral = -golpe.lado * 0.7; torcer = -golpe.lado * 0.38; inclinar = 0.3;
+        } else {
+          bracoAlvo = -0.45; inclinar = 0.3;
         }
-        if (this.tEstado >= ataque.ativo) { this.golpesRestantes--; this.mudar('recuperacao'); }
         break;
       }
-      case 'recuperacao': {
+      case 'recuperacao': {  // depois do golpe ele fica aberto: é a hora de punir
         bracoAlvo = -0.45; rapidezBraco = 4; inclinar = 0.15;
-        if (this.golpesRestantes > 0 && this.tEstado >= (combo ? 0.25 : 0.16)) {
-          this.prepararGolpe(combo ? 0 : ataque.preparo * 0.35);
-          break;
-        }
-        if (this.tEstado >= ataque.recuperacao) {
-          this.perfilAtaque = null;
-          this.mudar(c.recua ? 'recuar' : 'perseguir');
-        }
+        if (golpe.tipo === 'rasteira') { agachar = 0.14; bracoLateral = -0.5; torcer = 0.35; }
+        else if (golpe.tipo === 'pesado') { inclinar = 0.4; bracoAlvo = -0.25; }
         break;
       }
       case 'recuar': {       // o caçador bate e pula para trás
@@ -327,6 +359,18 @@ export class Inimigo {
         inclinar = -0.5; bracoAlvo = -3.5; bracoLateral = -0.5; rapidezBraco = 16;
         if (this.tEstado >= (c.desequilibrio ?? CONFIG.combate.aparar.desequilibrio)) this.mudar('perseguir');
         break;
+      }
+    }
+
+    // ---------- avança o golpe (a máquina única de Ataques.js) ----------
+    if (this.ataque.ativa) {
+      const mudou = this.ataque.atualizar(dt);
+      if (mudou === 'fim') this.mudar(c.recua ? 'recuar' : 'perseguir');
+      else {
+        this.estado = this.ataque.fase; this.tEstado = this.ataque.t;
+        if (mudou === 'preparo') this.jogo.eventos.emitir('inimigo:preparo', this);
+        if (mudou === 'ativo') this.jogo.eventos.emitir('inimigo:golpe', this);
+        if (this.estado === 'ativo') this.golpear(dist, anguloJogador);
       }
     }
 
@@ -372,6 +416,12 @@ export class Inimigo {
     this.bracoD.rotation.z += (bracoLateral - this.bracoD.rotation.z) * kb;
     this.corpo.rotation.x += (inclinar - this.corpo.rotation.x) * (1 - Math.exp(-dt * 12));
     this.corpo.rotation.y += (torcer - this.corpo.rotation.y) * kb;
+    this.corpo.position.y += (-agachar - this.corpo.position.y) * (1 - Math.exp(-dt * 10));
+    // Aviso do tipo de golpe: a arma e os olhos acendem na cor do tipo.
+    if (aviso !== null) {
+      this.olho.color.setHex(aviso);
+      this.aco.emissive.setHex(aviso).multiplyScalar(forcaAviso);
+    } else this.olho.color.setHex(this.corOlho);
     this.grupo.position.set(this.pos.x, Math.abs(Math.sin(this.fase)) * 0.04, this.pos.z);
     this.grupo.rotation.y = this.angulo;
 
@@ -384,24 +434,30 @@ export class Inimigo {
     }
   }
 
-  /** O momento em que o golpe "pega". */
-  golpear(dist, anguloJogador, c = this.cfg) {
-    this.jogo.eventos.emitir('inimigo:golpe', this);
-    if (dist > c.alcance + 0.35) return;
-    if (Math.cos(anguloJogador - this.angulo) < 0.35) return;      // jogador saiu da frente
-    if (Math.abs(this.jogo.jogador.pos.y - this.pos.y) > 1.6) return;
-    if (this.mundo.colisores.bloqueiaTrecho(this.pos, this.jogo.jogador.pos, 1.35)) return;
-    const r = this.jogo.jogador.receberDano(c.dano, this.pos, this);
+  /**
+   * Durante a fase ativa, confere se a arma alcança o jogador. Cada golpe só
+   * é resolvido uma vez: acertou, foi bloqueado, aparado, esquivado ou pulado.
+   */
+  golpear(dist, anguloJogador) {
+    const g = this.ataque.golpe, jog = this.jogo.jogador;
+    if (!g || this.ataque.resolvido || jog.morto) return;
+    if (!golpeAlcanca(g, dist, Math.cos(anguloJogador - this.angulo), jog.pos.y - this.pos.y)) return;
+    if (this.mundo.colisores.bloqueiaTrecho(this.pos, jog.pos, 1.35)) return;
+    this.ataque.resolvido = true;
+    const r = jog.receberDano(g.dano, this.pos, this, g);
     if (r === 'bloqueou') { this.empurrao.set(-Math.sin(this.angulo) * 3, 0, -Math.cos(this.angulo) * 3); }
   }
 
-  /** O jogador aparou o golpe: perde a sequência e fica aberto a um crítico. */
-  serAparado() {
+  /**
+   * O jogador aparou o golpe: perde a sequência e fica aberto a um crítico.
+   * Gancho da execução: se o golpe aparado era pesado, abertoParaExecucao fica
+   * ligado enquanto durar o desequilíbrio (o item 3 do plano usa essa marca).
+   */
+  serAparado(golpe = this.ataque.golpe) {
     if (this.morto) return;
-    this.golpesRestantes = 0;
-    this.perfilAtaque = null;
     this.empurrao.set(-Math.sin(this.angulo) * 2.2, 0, -Math.cos(this.angulo) * 2.2);
     this.mudar('desequilibrado');
+    this.abertoParaExecucao = !!golpe?.abreExecucao;
     this.jogo.eventos.emitir('inimigo:aparado', this);
   }
 
@@ -422,7 +478,7 @@ export class Inimigo {
     }
     if (this.base.faseFinal && this.cfg === this.base && this.vida <= this.base.vida / 2) {
       this.cfg = { ...this.base, ...this.base.faseFinal };
-      this.olho.color.setHex(0xff416c);
+      this.corOlho = 0xff416c;
       this.jogo.eventos.emitir('guardiao:fase-final');
     }
     if (critico || dano >= this.cfg.firmeza || (forte && !this.base.faseFinal)) this.mudar('atordoado');

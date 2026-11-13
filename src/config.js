@@ -90,41 +90,103 @@ export const CONFIG = {
     // da janela, o inimigo fica desequilibrado e o próximo golpe é crítico.
     aparar: { custo: 12, preparo: 0.05, janela: 0.2, recuperacao: 0.4, desequilibrio: 1.9 },
     critico: { multiplicador: 2.6, pausa: 0.14 },
+
+    // ---- Tipos de ataque dos inimigos (a "regra de ouro" do combate) ----
+    // Cada tipo pede uma resposta diferente do jogador. Os números abaixo
+    // MULTIPLICAM os do inimigo (dano, preparo, ativo, recuperacao, alcance).
+    //   abertura      quão de lado o golpe ainda pega (1 = só bem na frente,
+    //                 0 = até os lados, negativo = pega um pouco atrás)
+    //   preparoMin    tempo mínimo de aviso, em segundos
+    //   janelaAparar  multiplica a janela do aparo (menor = mais difícil)
+    //   custoBloqueio multiplica a estamina gasta ao bloquear
+    //   evitaPulando  estar no ar (acima de alturaPulo) evita o golpe
+    //   abreExecucao  aparar este golpe abre a execução (item 3 do plano)
+    //   aviso         cor que acende na arma e nos olhos durante o preparo
+    ataquesInimigos: {
+      alto: {
+        dano: 1, preparo: 1, preparoMin: 0, ativo: 1, recuperacao: 1, alcance: 1, abertura: 0.35,
+        aparavel: true, janelaAparar: 1, bloqueavel: true, custoBloqueio: 1,
+        evitaPulando: false, alturaPulo: 0, abreExecucao: false, aviso: null,
+      },
+      pesado: {
+        dano: 1.5, preparo: 1.45, preparoMin: 0.7, ativo: 1.1, recuperacao: 1.3, alcance: 1.05, abertura: 0.45,
+        aparavel: true, janelaAparar: 0.55, bloqueavel: true, custoBloqueio: 1.8,
+        evitaPulando: false, alturaPulo: 0, abreExecucao: true, aviso: 0xff2a1e,
+      },
+      rasteira: {
+        dano: 0.75, preparo: 1.25, preparoMin: 0.55, ativo: 1.2, recuperacao: 1.15, alcance: 1.2, abertura: -0.3,
+        aparavel: false, janelaAparar: 0, bloqueavel: false, custoBloqueio: 1,
+        evitaPulando: true, alturaPulo: 0.25, abreExecucao: false, aviso: 0xffb21e,
+      },
+    },
+    // Como um golpe se liga ao seguinte numa sequência: quanto espera na
+    // recuperação e que fração do preparo do próximo golpe já começa cumprida.
+    emendaInimigos: { espera: 0.16, adiantar: 0.35 },
     pausaImpacto: 0.07,      // "hit stop": o jogo congela um instante ao acertar (dá peso)
   },
 
   // ---- Inimigos ----
   // Para criar um inimigo novo, copie um bloco e mude os números.
+  // "ataques" lista as sequências de golpes que ele sabe fazer. Cada golpe é um
+  // tipo de CONFIG.combate.ataquesInimigos; "peso" é a chance de a sequência sair.
   inimigos: {
     cavaleiro: {
       nome: 'Cavaleiro corrompido',
       vida: 130, velPatrulha: 1.0, velPerseguir: 2.1,
       dano: 34, alcance: 2.7, preparo: 0.95, ativo: 0.18, recuperacao: 1.2,
       visao: 15, firmeza: 40,  // dano mínimo de um golpe para ele cambalear
-      escala: 1.22, raio: 0.6, golpes: 1, recua: false,
+      escala: 1.22, raio: 0.6, recua: false,
+      ataques: [
+        { golpes: ['alto'], peso: 3 },
+        { golpes: ['pesado'], peso: 2 },
+        { golpes: ['rasteira'], peso: 2 },
+      ],
     },
     cacador: {
       nome: 'Caçador corrompido',
       vida: 62, velPatrulha: 1.5, velPerseguir: 4.6,
       dano: 13, alcance: 2.1, preparo: 0.34, ativo: 0.12, recuperacao: 0.55,
       visao: 19, firmeza: 0,
-      escala: 1.0, raio: 0.45, golpes: 2, recua: true,
+      escala: 1.0, raio: 0.45, recua: true,
+      ataques: [
+        { golpes: ['alto', 'alto'], peso: 3 },
+        { golpes: ['rasteira'], peso: 1 },
+      ],
     },
     penitente: {
       nome: 'Penitente do Véu',
       vida: 84, velPatrulha: 1.2, velPerseguir: 2.8,
       dano: 19, alcance: 2.2, preparo: 0.53, ativo: 0.14, recuperacao: 0.8,
       visao: 12, firmeza: 26,
-      escala: 1.05, raio: 0.44, golpes: 2, recua: false,
+      escala: 1.05, raio: 0.44, recua: false,
+      ataques: [
+        { golpes: ['alto', 'alto'], peso: 3 },
+        { golpes: ['rasteira'], peso: 1 },
+        { golpes: ['pesado'], peso: 1 },
+      ],
     },
     guardiao: {
       nome: 'Guardião do Véu',
       vida: 330, velPatrulha: 0.8, velPerseguir: 2.2,
       dano: 32, alcance: 2.9, preparo: 1.05, ativo: 0.2, recuperacao: 1.35,
       visao: 20, firmeza: 60,
-      escala: 1.65, raio: 0.78, golpes: 1, recua: false,
+      escala: 1.65, raio: 0.78, recua: false,
       desequilibrio: 1.15,   // chefes se recompõem mais rápido de um aparo
-      faseFinal: { velPerseguir: 2.9, dano: 25, preparo: 0.73, recuperacao: 1.1, golpes: 2 },
+      ataques: [
+        { golpes: ['alto'], peso: 3 },
+        { golpes: ['pesado'], peso: 2 },
+        { golpes: ['rasteira'], peso: 1 },
+      ],
+      faseFinal: {
+        velPerseguir: 2.9, dano: 25, preparo: 0.73, recuperacao: 1.1,
+        emenda: { espera: 0.25, adiantar: 0 },
+        ataques: [
+          // dois golpes laterais: "lado" diz de que lado a maça vem
+          { golpes: [{ tipo: 'alto', lado: 1 }, { tipo: 'alto', lado: -1 }], peso: 3 },
+          { golpes: ['rasteira'], peso: 2 },
+          { golpes: ['pesado'], peso: 1 },
+        ],
+      },
     },
   },
 };

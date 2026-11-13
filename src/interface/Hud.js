@@ -58,7 +58,7 @@ export class Hud {
 
   /** Palavra curta que pisca no alto da tela (aparo, golpe crítico). */
   destacar(tipo) {
-    this.destaque.textContent = { aparou: 'APARADO', critico: 'GOLPE CRÍTICO' }[tipo];
+    this.destaque.textContent = { aparou: 'APARADO', critico: 'GOLPE CRÍTICO', pulou: 'POR CIMA' }[tipo];
     this.destaque.dataset.tipo = tipo;
     this.destaque.classList.remove('visivel');
     void this.destaque.offsetWidth;   // reinicia a animação

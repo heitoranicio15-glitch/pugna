@@ -8,6 +8,8 @@ import { Colisores } from '../src/mundo/Colisores.js';
 import { Navegacao } from '../src/mundo/Navegacao.js';
 import { alvoDaMira, alvoProximo } from '../src/mundo/Interacoes.js';
 import { contarFrascos } from '../src/nucleo/Inventario.js';
+import { MaquinaDeAtaque, golpeAlcanca, montarGolpe, sortearSequencia } from '../src/entidades/Ataques.js';
+import { Inimigo } from '../src/entidades/Inimigo.js';
 import * as THREE from 'three';
 
 test('a mira escolhe o objeto visível no alcance e respeita a altura dos obstáculos', () => {
@@ -282,4 +284,215 @@ test('em terceira pessoa a interação vale para o objeto próximo e à frente d
   jogador.rumo = 0;
   col.adicionar(0, -1, 4, 0.3);
   assert.equal(alvoProximo([objeto], jogador, col), null);
+});
+
+// ---------------------------------------------------------------------------
+//  Base dos ataques: fases, tipos e a regra de ouro
+// ---------------------------------------------------------------------------
+test('todo golpe passa por preparo, ativo e recuperação, e a sequência emenda o próximo', () => {
+  const cfg = CONFIG.inimigos.cacador;
+  const m = new MaquinaDeAtaque();
+  m.iniciar(cfg, ['alto', 'rasteira']);
+  const fases = [];
+  for (let i = 0; i < 400 && m.ativa; i++) {
+    const mudou = m.atualizar(0.01);
+    if (mudou) fases.push(mudou === 'preparo' ? `preparo:${m.golpe.tipo}` : mudou);
+  }
+  assert.deepEqual(fases, ['ativo', 'recuperacao', 'preparo:rasteira', 'ativo', 'recuperacao', 'fim']);
+  assert.equal(m.golpe, null);
+});
+
+test('cada tipo de ataque tem números próprios e todo inimigo só usa tipos conhecidos', () => {
+  const cav = CONFIG.inimigos.cavaleiro;
+  const alto = montarGolpe(cav, 'alto'), pesado = montarGolpe(cav, 'pesado'), rasteira = montarGolpe(cav, 'rasteira');
+  assert.deepEqual([alto.dano, alto.preparo, alto.alcance], [cav.dano, cav.preparo, cav.alcance]);
+  assert.ok(pesado.dano > alto.dano && pesado.preparo > alto.preparo && pesado.janelaAparar < 1 && pesado.abreExecucao);
+  assert.ok(!rasteira.aparavel && !rasteira.bloqueavel && rasteira.evitaPulando);
+  // A rasteira é larga: pega quem está de lado, onde o golpe alto passa direto.
+  assert.equal(golpeAlcanca(alto, 2, 0), false);
+  assert.equal(golpeAlcanca(rasteira, 2, 0), true);
+  assert.equal(golpeAlcanca(rasteira, rasteira.alcance + 1, 1), false);
+  // O aviso mínimo vale até para o inimigo mais rápido.
+  assert.ok(montarGolpe(CONFIG.inimigos.cacador, 'rasteira').preparo >= CONFIG.combate.ataquesInimigos.rasteira.preparoMin);
+  const avisos = Object.values(CONFIG.combate.ataquesInimigos).map((t) => t.aviso);
+  assert.equal(new Set(avisos).size, avisos.length);
+  for (const inimigo of Object.values(CONFIG.inimigos)) {
+    for (const lista of [inimigo.ataques, inimigo.faseFinal?.ataques ?? []]) {
+      for (const sequencia of lista) for (const g of sequencia.golpes) montarGolpe(inimigo, g);
+    }
+    assert.ok(inimigo.ataques.length > 0);
+  }
+});
+
+test('o sorteio respeita os pesos e não repete a sequência especial', () => {
+  const lista = CONFIG.inimigos.cavaleiro.ataques;
+  assert.equal(sortearSequencia(lista, null, () => 0), lista[0]);
+  assert.equal(sortearSequencia(lista, null, () => 0.999), lista.at(-1));
+  assert.notEqual(sortearSequencia(lista, lista.at(-1), () => 0.999), lista.at(-1));
+  assert.equal(sortearSequencia(lista, lista[0], () => 0), lista[0]);
+});
+
+test('regra de ouro: a rasteira pede pulo; aparar e bloquear não servem contra ela', () => {
+  const { jogador, entrada, eventos, alvo } = arena();
+  const rasteira = montarGolpe(CONFIG.inimigos.cavaleiro, 'rasteira');
+  const erros = [];
+  eventos.em('jogador:resposta-errada', (e) => erros.push(e.resposta));
+  let pulos = 0;
+  eventos.em('jogador:pulou-golpe', () => pulos++);
+  alvo.serAparado = () => assert.fail('a rasteira não pode ser aparada');
+
+  // No ar, acima da lâmina: nenhum dano.
+  jogador.noChao = false; jogador.pos.y = 0.5;
+  assert.equal(jogador.receberDano(rasteira.dano, alvo.pos, alvo, rasteira), 'pulou');
+  assert.deepEqual([jogador.vida, pulos], [100, 1]);
+  // Um golpe alto acerta quem está no ar do mesmo jeito.
+  assert.equal(jogador.receberDano(10, alvo.pos, alvo, montarGolpe(CONFIG.inimigos.cavaleiro, 'alto')), 'ferido');
+  jogador.noChao = true; jogador.pos.y = 0; jogador.vel.set(0, 0, 0); jogador.vida = 100;
+
+  // Aparar no tempo certo não adianta.
+  entrada.apertou = (codigo) => codigo === 'KeyC';
+  jogador.atualizar(0.01);
+  entrada.apertou = () => false;
+  jogador.atualizar(0.1);
+  assert.equal(jogador.receberDano(rasteira.dano, alvo.pos, alvo, rasteira), 'ferido');
+  assert.equal(jogador.vida, 100 - rasteira.dano);
+
+  // Bloquear também não: o dano entra inteiro e a estamina não é gasta.
+  jogador.acao = 'livre'; jogador.bloqueando = true; jogador.vida = 100;
+  const estamina = jogador.estamina;
+  assert.equal(jogador.receberDano(rasteira.dano, alvo.pos, alvo, rasteira), 'ferido');
+  assert.deepEqual([jogador.vida, jogador.estamina], [100 - rasteira.dano, estamina]);
+  assert.deepEqual(erros, ['aparar', 'bloquear']);
+});
+
+test('regra de ouro: o golpe pesado tem janela de aparo menor e pesa mais no bloqueio', () => {
+  const { jogador, entrada, alvo } = arena();
+  const pesado = montarGolpe(CONFIG.inimigos.cavaleiro, 'pesado');
+  const alto = montarGolpe(CONFIG.inimigos.cavaleiro, 'alto');
+  const recebidos = [];
+  alvo.serAparado = (g) => recebidos.push(g.tipo);
+  const aparar = (espera) => {
+    jogador.reiniciar(0, 0, 0);
+    entrada.apertou = (codigo) => codigo === 'KeyC';
+    jogador.atualizar(0.01);
+    entrada.apertou = () => false;
+    jogador.atualizar(espera);
+  };
+  const ap = CONFIG.combate.aparar;
+  // No fim da janela comum: o alto é aparado, o pesado entra.
+  const tarde = ap.preparo + ap.janela * 0.9;
+  aparar(tarde);
+  assert.equal(jogador.receberDano(alto.dano, alvo.pos, alvo, alto), 'aparou');
+  aparar(tarde);
+  assert.equal(jogador.receberDano(pesado.dano, alvo.pos, alvo, pesado), 'ferido');
+  // No começo da janela o pesado também é aparado.
+  aparar(ap.preparo + ap.janela * pesado.janelaAparar * 0.5);
+  assert.equal(jogador.receberDano(pesado.dano, alvo.pos, alvo, pesado), 'aparou');
+  assert.deepEqual(recebidos, ['alto', 'pesado']);
+
+  jogador.reiniciar(0, 0, 0);
+  jogador.bloqueando = true;
+  assert.equal(jogador.receberDano(alto.dano, alvo.pos, alvo, alto), 'bloqueou');
+  const gastoAlto = 100 - jogador.estamina;
+  jogador.estamina = 100;
+  assert.equal(jogador.receberDano(pesado.dano, alvo.pos, alvo, pesado), 'bloqueou');
+  assert.ok(100 - jogador.estamina > gastoAlto * 2);
+});
+
+// Tela de mentira: fora do navegador, as texturas do inimigo só precisam existir.
+function semNavegador() {
+  globalThis.document ??= { createElement: () => ({
+    getContext: () => ({ createImageData: (l, a) => ({ data: new Uint8ClampedArray(l * a * 4) }), putImageData() {} }),
+  }) };
+}
+
+function duelo(tipo = 'cavaleiro') {
+  semNavegador();
+  const a = arena();
+  const jogo = a.jogador.jogo;
+  jogo.jogador = a.jogador;
+  jogo.inimigos.length = 0;
+  const mundo = {
+    grupo: new THREE.Group(), colisores: a.colisores, entidades: [],
+    navegacao: new Navegacao(a.colisores, { minX: -10, maxX: 10, minZ: -10, maxZ: 10 }),
+  };
+  const inimigo = new Inimigo(jogo, mundo, { tipo, rota: [[0, -2]] });
+  mundo.entidades.push(inimigo);
+  jogo.inimigos.push(inimigo);
+  inimigo.angulo = 0;   // virado para o jogador, que está em z = 0
+  const rodar = (ate, limite = 400) => { for (let i = 0; i < limite && !ate(); i++) inimigo.atualizar(0.02); };
+  return { ...a, inimigo, rodar };
+}
+
+test('todos os inimigos usam a mesma máquina: avisam o tipo, acertam na fase ativa e voltam a perseguir', () => {
+  for (const tipo of Object.keys(CONFIG.inimigos)) {
+    const { jogador, eventos, inimigo, rodar } = duelo(tipo);
+    const avisos = [];
+    eventos.em('inimigo:preparo', (i) => avisos.push(i.golpe.tipo));
+    inimigo.pos.z = -CONFIG.inimigos[tipo].alcance * 0.7;
+    inimigo.mudar('perseguir');
+    inimigo.sorteio = () => 0;
+    inimigo.atualizar(0.02);
+    assert.equal(inimigo.estado, 'preparo', tipo);
+    const esperados = CONFIG.inimigos[tipo].ataques[0].golpes;
+    rodar(() => inimigo.estado === 'ativo');
+    assert.equal(jogador.vida, 100 - inimigo.golpe.dano, tipo);
+    rodar(() => !['preparo', 'ativo', 'recuperacao'].includes(inimigo.estado));
+    assert.deepEqual(avisos, esperados, tipo);
+    assert.ok(['perseguir', 'recuar'].includes(inimigo.estado), tipo);
+    assert.equal(inimigo.golpe, null);
+  }
+});
+
+test('o aviso visual muda com o tipo e o golpe é resolvido uma única vez', () => {
+  const { jogador, inimigo, rodar } = duelo();
+  const cores = {};
+  for (const tipo of ['alto', 'pesado', 'rasteira']) {
+    inimigo.mudar('perseguir');
+    inimigo.atacar([tipo]);
+    inimigo.atualizar(0.2);
+    cores[tipo] = { olho: inimigo.olho.color.getHex(), arma: inimigo.aco.emissive.getHex() > 0, agachado: inimigo.corpo.position.y < -0.05 };
+  }
+  assert.deepEqual(cores.alto, { olho: CONFIG.paleta.magia, arma: false, agachado: false });
+  assert.deepEqual(cores.pesado, { olho: CONFIG.combate.ataquesInimigos.pesado.aviso, arma: true, agachado: false });
+  assert.deepEqual(cores.rasteira, { olho: CONFIG.combate.ataquesInimigos.rasteira.aviso, arma: true, agachado: true });
+
+  // Esquivar no começo da fase ativa resolve o golpe: ele não acerta depois.
+  inimigo.mudar('perseguir');
+  inimigo.atacar(['pesado']);
+  rodar(() => inimigo.ataque.t + 0.02 >= inimigo.golpe.preparo);
+  jogador.invencivel = 0.03;
+  rodar(() => inimigo.estado === 'ativo');
+  jogador.invencivel = 0;
+  rodar(() => inimigo.estado === 'recuperacao');
+  assert.equal(jogador.vida, 100);
+  rodar(() => inimigo.estado === 'perseguir' || inimigo.estado === 'preparo');
+  assert.equal(inimigo.olho.color.getHex(), CONFIG.paleta.magia);
+});
+
+test('aparar mantém o desequilíbrio e o crítico; o pesado aparado deixa o gancho da execução', () => {
+  const { jogador, entrada, inimigo, rodar } = duelo();
+  const aparar = (tipo) => {
+    jogador.reiniciar(0, 0, 0);
+    inimigo.mudar('perseguir');
+    inimigo.atacar([tipo]);
+    const ap = CONFIG.combate.aparar;
+    rodar(() => inimigo.golpe.preparo - inimigo.ataque.t <= ap.preparo + 0.03);
+    entrada.apertou = (codigo) => codigo === 'KeyC';
+    jogador.atualizar(0.01);
+    entrada.apertou = () => false;
+    for (let i = 0; i < 12 && inimigo.estado !== 'desequilibrado'; i++) { jogador.atualizar(0.01); inimigo.atualizar(0.01); }
+  };
+  aparar('alto');
+  assert.deepEqual([inimigo.estado, inimigo.abertoParaExecucao, jogador.vida], ['desequilibrado', false, 100]);
+  const vida = inimigo.vida;
+  assert.equal(inimigo.receberDano(10, { x: 0, z: -1 }, 0, false), 'critico');
+  assert.equal(inimigo.vida, vida - 10 * CONFIG.combate.critico.multiplicador);
+
+  inimigo.reiniciar();
+  inimigo.angulo = 0;
+  aparar('pesado');
+  assert.deepEqual([inimigo.estado, inimigo.abertoParaExecucao, jogador.vida], ['desequilibrado', true, 100]);
+  rodar(() => inimigo.estado !== 'desequilibrado');
+  assert.equal(inimigo.abertoParaExecucao, false);
 });

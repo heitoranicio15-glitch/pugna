@@ -39,15 +39,19 @@ Cada resposta do jogador precisa ser a melhor contra algum tipo de ataque. Se n�
 
 ## Estado atual
 
-- **Pronto e no ar:** vilarejo, Catedral do Véu (nave, Ossário, Relicário, Santuário, selos), inimigos cavaleiro e Penitente, miniboss Guardião do Véu, bolsa e frascos de cura, lápides, atalhos, menu de configurações, trilha sonora, suporte a celular, terceira pessoa, mira travada, parry com crítico e rolamento.
+- **Pronto e no ar:** vilarejo, Catedral do Véu (nave, Ossário, Relicário, Santuário, selos), inimigos cavaleiro, caçador e Penitente, miniboss Guardião do Véu, bolsa e frascos de cura, lápides, atalhos, menu de configurações, trilha sonora, suporte a celular, terceira pessoa, mira travada, parry com crítico e rolamento.
 - **Salvamento estilo Souls (item 1 do Plano, pronto):** o jogo grava sozinho a cada acontecimento e não há salvar manual. O botão "Voltar ao checkpoint" saiu da pausa e virou o **Osso de Retorno**, usado pela bolsa. É um item único, de uso ilimitado, que o caçador sempre carrega. Hoje não há penalidade ao usar.
+- **Base dos ataques (item 2 do Plano, pronto):** todos os inimigos usam a mesma máquina de golpes (`src/entidades/Ataques.js`), com 3 fases (preparo, golpe ativo, recuperação) e 3 tipos. Cada tipo tem pose, cor na arma e nos olhos e som próprios: **alto** (arma erguida, tinido), **pesado** (vermelho, sino grave) e **rasteira** (agachado, amarelo, aço raspando). Cada inimigo tem uma lista de sequências em `CONFIG.inimigos` (`ataques`), sorteada por peso. Os números de cada tipo ficam em `CONFIG.combate.ataquesInimigos`.
+  - **O que já vale da regra de ouro:** a rasteira é larga, não pode ser aparada nem bloqueada e passa por baixo de quem está no ar. O pesado tem janela de aparo menor (55%) e gasta 1,8 vez a estamina no bloqueio. Parry e crítico continuam iguais.
+  - **Ganchos deixados:** `inimigo.abertoParaExecucao` fica ligado enquanto dura o desequilíbrio de um pesado aparado (para a execução, item 3). O aviso `jogador:pulou-golpe` sai quando o jogador pula uma rasteira (para o contra-ataque pisando, item 5). `Jogador.receberDano` recebe os dados do golpe (`aparavel`, `bloqueavel`, `evitaPulando`...).
+  - **Ainda não existe:** execução, quickstep, contra-ataque pisando e dano extra ao pular contra golpe alto. Aparar um pesado dá o crítico comum.
 - **Infra:** `jogar.bat` com atualização automática, `atualizar.bat`, e regra de integração automática no `AGENTS.md` com o `CLAUDE.md` apontando para ele.
-- **A conferir:** origem das 4 músicas (o repositório é público) e ajuste fino da câmera e do parry jogando com o mouse. O Heitor ainda vai decidir a penalidade do Osso de Retorno (nos Souls, perde-se as almas); até lá o uso é livre.
+- **A conferir:** origem das 4 músicas (o repositório é público) e ajuste fino da câmera e do parry jogando com o mouse. Os números dos tipos de ataque (dano, tempo de aviso, pesos de cada inimigo) são um primeiro chute e precisam ser sentidos jogando. O Heitor ainda vai decidir a penalidade do Osso de Retorno (nos Souls, perde-se as almas); até lá o uso é livre.
 
 ## Plano (fazer um por vez, cada um num chat novo)
 
 - [x] **1. Salvamento estilo Souls + Osso de Retorno** (ver "Decisões")
-- [ ] **2. Base dos ataques:** máquina de estados única para todos os inimigos humanos. Cada ataque tem 3 fases (preparação, golpe ativo, recuperação) e um tipo (alto, rasteira, pesado), com aviso visual e sonoro diferente por tipo. A rasteira é larga. Manter o parry e o crítico. Deixar ganchos para pulo e execução.
+- [x] **2. Base dos ataques:** máquina de estados única para todos os inimigos humanos. Cada ataque tem 3 fases (preparação, golpe ativo, recuperação) e um tipo (alto, rasteira, pesado), com aviso visual e sonoro diferente por tipo. A rasteira é larga. Manter o parry e o crítico. Deixar ganchos para pulo e execução.
 - [ ] **3. Quickstep + execução:** com a mira travada, a esquiva vira um passo curto, com menos invencibilidade e recuperação curta. Sem mira, continua o rolamento. Parry num ataque pesado (janela menor) abre a execução. A rasteira não pode ser aparada.
 - [ ] **4. Golpe pelas costas:** agachar (anda devagar, menos barulho), cone de visão, execução silenciosa por trás, alerta dos vizinhos se o jogador for visto. Botão Agachar no celular.
 - [ ] **5. Pulo contra rasteira:** no ar durante o golpe ativo, não leva dano. Cair perto abre o contra-ataque pisando. Pular contra ataque alto leva dano extra.
