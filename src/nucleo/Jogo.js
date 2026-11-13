@@ -31,6 +31,7 @@ import { Trilha } from '../audio/Trilha.js';
 import { Hud } from '../interface/Hud.js';
 import { Menu } from '../interface/Menu.js';
 import { Bolsa } from '../interface/Bolsa.js';
+import { Toque } from '../interface/Toque.js';
 import { ANOTACOES, CURA_FRASCO, FRASCOS, contarFrascos } from './Inventario.js';
 import { alvoDaMira, atualizarObjetos } from '../mundo/Interacoes.js';
 
@@ -86,6 +87,7 @@ export class Jogo {
     document.title = CONFIG.titulo;
     this.menu = new Menu(this);
     this.bolsa = new Bolsa(this);
+    this.toque = new Toque(this);
     this.direcaoMira = new THREE.Vector3();
     this.salvamento.carregar().then((salvo) => this.menu.atualizarProgresso(salvo, this.localizarCheckpoint(salvo)?.lanterna.nome));
     this.ligarInterface();
@@ -97,12 +99,12 @@ export class Jogo {
     document.addEventListener('pointerlockchange', () => {
       if (this.entrada.travado && this.estado === 'pausado' && !this.painel && !this.menu.opcoesAbertas && !this.menu.dialogo.open) {
         this.definirEstado('jogando');
-      } else if (!this.entrada.travado && this.estado === 'jogando' && !this.teste) {
+      } else if (!this.entrada.podeJogar() && this.estado === 'jogando') {
         this.definirEstado('pausado');
       }
     });
     document.addEventListener('pointerlockerror', () => {
-      if (this.estado === 'pausado' && !this.painel && !this.menu.opcoesAbertas) {
+      if (this.estado === 'pausado' && !this.entrada.toque && !this.painel && !this.menu.opcoesAbertas) {
         this.menu.avisar('Clique em Continuar para capturar o mouse.', this.estado);
       }
     });
@@ -117,11 +119,13 @@ export class Jogo {
         e.preventDefault();
         this.menu.fecharOpcoes();
       } else if (e.code === 'Escape' && this.estado === 'jogando') {
-        this.definirEstado('pausado');
-        if (this.entrada.travado) document.exitPointerLock();
+        this.pausar();
       } else if (e.code === 'KeyF' && this.estado === 'jogando') {
         this.alternarTelaCheia();
       }
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && this.entrada.toque) this.pausar();
     });
     // Ctrl+W fecha a aba no Chrome e o jogo usa Ctrl para esquivar: se a aba for
     // fechar com Ctrl apertado durante o jogo, o navegador pede confirmação.
@@ -154,7 +158,7 @@ export class Jogo {
     document.documentElement.requestFullscreen?.()?.then(() => {
       // Em tela cheia o Chrome deixa o jogo "segurar" atalhos como Ctrl+W.
       navigator.keyboard?.lock?.().catch(() => {});
-      if (!this.entrada.travado && this.estado === 'jogando') this.entrada.travarMouse();
+      if (!this.entrada.podeJogar() && this.estado === 'jogando') this.entrada.travarMouse();
     }).catch(() => {});
   }
 
@@ -164,7 +168,7 @@ export class Jogo {
     this.iniciando = true;
     this.som.ligar();
     // Solicita a captura enquanto o clique do usuário ainda está ativo.
-    if (!this.teste) this.entrada.travarMouse();
+    if (!this.entrada.podeJogar()) this.entrada.travarMouse();
     this.progresso = await this.salvamento.carregar();
     const checkpoint = this.localizarCheckpoint(this.progresso);
     this.aplicarProgresso();
@@ -175,7 +179,7 @@ export class Jogo {
       this.jogador.reiniciar(this.vilarejo.nascimento.x, this.vilarejo.nascimento.z, 0);
       this.reporInimigos();
     }
-    this.definirEstado(this.teste || this.entrada.travado ? 'jogando' : 'pausado');
+    this.definirEstado(this.entrada.podeJogar() ? 'jogando' : 'pausado');
     this.iniciando = false;
   }
 
@@ -186,7 +190,9 @@ export class Jogo {
   definirEstado(estado) {
     this.estado = estado;
     this.entrada.habilitada = estado === 'jogando';
+    this.toque.limpar();
     this.entrada.soltarTudo();
+    this.toque.exibir();
     if (estado === 'pausado') {
       this.jogador.carregando = false;
       this.jogador.avisouCarga = false;
@@ -205,8 +211,14 @@ export class Jogo {
   retomar() {
     if (this.estado !== 'pausado') return;
     this.som.ligar();
-    if (this.teste || this.entrada.travado) this.definirEstado('jogando');
+    if (this.entrada.podeJogar()) this.definirEstado('jogando');
     else this.entrada.travarMouse();
+  }
+
+  pausar() {
+    if (this.estado !== 'jogando') return;
+    this.definirEstado('pausado');
+    if (this.entrada.travado) document.exitPointerLock();
   }
 
   mostrarPainel(painel) {
@@ -424,9 +436,9 @@ export class Jogo {
     return [`E — ${verbo} ${nome}`, () => {
       this.registrarEvento(evento);
       this.eventos.emitir('objeto:interagiu', acao);
-      if (FRASCOS[evento]) this.hud.avisar(`Frascos de cura +${FRASCOS[evento]} · R para usar`);
+      if (FRASCOS[evento]) this.hud.avisar(`Frascos de cura +${FRASCOS[evento]}${this.entrada.toque ? '' : ' · R para usar'}`);
       else if (acao === 'acionar') this.hud.avisar('Atalho aberto para a nave.');
-      else if (acao === 'recolher') this.hud.avisar('Chave da sacristia recolhida · I para abrir a bolsa');
+      else if (acao === 'recolher') this.hud.avisar(this.entrada.toque ? 'Chave da sacristia recolhida' : 'Chave da sacristia recolhida · I para abrir a bolsa');
       else this.hud.avisar('Passagem aberta.');
     }];
   }
@@ -451,7 +463,9 @@ export class Jogo {
   }
 
   atualizar(dt) {
-    this.camera.aspect = this.render.proporcao; this.camera.updateProjectionMatrix();
+    this.camera.aspect = this.render.proporcao;
+    this.camera.fov = this.entrada.toque && this.camera.aspect < 1 ? 88 : CONFIG.render.campoDeVisao;
+    this.camera.updateProjectionMatrix();
 
     if (this.estado === 'titulo') {
       // Câmera parada na entrada do vilarejo, olhando para a lua.
@@ -487,7 +501,8 @@ export class Jogo {
     for (const i of this.inimigos) i.atualizar(dt);
     if (this.estado === 'jogando') {
       const [mensagem, acao] = this.interacao();
-      this.hud.fixar(mensagem || '');
+      this.hud.fixar(this.entrada.toque ? (mensagem || '').replace(/^E — /, '') : mensagem || '');
+      if (this.entrada.toque) this.toque.atualizarAcoes(!!acao, contarFrascos(this.progresso) > 0);
       if (acao && this.entrada.apertou('KeyE') && this.podeInteragir()) {
         acao();
         if (this.tDescanso > 0 || this.estado !== 'jogando') return;
@@ -519,7 +534,7 @@ export class Jogo {
         this.hud.fecharVeu(true);
         setTimeout(() => {
           this.renascer();
-          this.definirEstado(this.entrada.travado || this.teste ? 'jogando' : 'pausado');
+          this.definirEstado(this.entrada.podeJogar() && (!this.entrada.toque || !document.hidden) ? 'jogando' : 'pausado');
           this.renascendo = false;
           this.hud.fecharVeu(false);
         }, 1000);

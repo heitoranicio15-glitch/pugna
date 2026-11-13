@@ -65,12 +65,12 @@ export class Jogador {
     this.pitch = THREE.MathUtils.clamp(this.pitch - e.mouseDY * sensibilidade, -1.45, 1.45);
 
     // ---------- direção desejada ----------
-    const lado = (e.segurando('KeyD') ? 1 : 0) - (e.segurando('KeyA') ? 1 : 0);
-    const adiante = (e.segurando('KeyW') ? 1 : 0) - (e.segurando('KeyS') ? 1 : 0);
+    const lado = (e.segurando('KeyD') ? 1 : 0) - (e.segurando('KeyA') ? 1 : 0) + (e.ladoToque || 0);
+    const adiante = (e.segurando('KeyW') ? 1 : 0) - (e.segurando('KeyS') ? 1 : 0) + (e.frenteToque || 0);
     const sen = Math.sin(this.yaw), cos = Math.cos(this.yaw);
     let dx = -sen * adiante + cos * lado, dz = -cos * adiante - sen * lado;
     const comp = Math.hypot(dx, dz);
-    if (comp > 0) { dx /= comp; dz /= comp; }
+    if (comp > 1) { dx /= comp; dz /= comp; }
 
     // ---------- esquiva ----------
     const querEsquivar = e.apertou('ControlLeft') || e.apertou('ControlRight') || e.apertou('AltLeft') || e.apertou('AltRight') || e.apertou('KeyQ');
@@ -83,7 +83,7 @@ export class Jogador {
       this.gastar(CB.esquiva.custo);
       this.tEsquiva = CB.esquiva.duracao; this.invencivel = CB.esquiva.invencivel;
       this.esperaEsquiva = CB.esquiva.duracao + CB.esquiva.espera;
-      if (comp > 0) this.dirEsquiva.set(dx, dz); else this.dirEsquiva.set(sen, cos); // parado = pula para trás
+      if (comp > 0) this.dirEsquiva.set(dx, dz).normalize(); else this.dirEsquiva.set(sen, cos);
       this.acao = 'livre'; this.ataque = null; this.carregando = false; this.bloqueando = false;
       this.ataqueNaFila = 0;
       this.esquivaNaFila = 0;
@@ -93,7 +93,8 @@ export class Jogador {
     this.atualizarCombate(dt, e);
 
     // ---------- velocidade ----------
-    const correndo = e.segurando('ShiftLeft') && adiante > 0 && !this.exausto && !this.bloqueando && !this.carregando && this.acao === 'livre';
+    const correndo = (e.segurando('ShiftLeft') || e.corridaToque) && adiante > 0 &&
+      !this.exausto && !this.bloqueando && !this.carregando && this.acao === 'livre';
     let alvo = correndo ? C.velCorrer : C.velAndar;
     if (this.bloqueando) alvo *= CB.bloqueio.velocidade;
     if (this.carregando || this.acao === 'preparo' || this.acao === 'ativo') alvo *= 0.45;
