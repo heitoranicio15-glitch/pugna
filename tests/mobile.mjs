@@ -36,6 +36,21 @@ export async function validarMobile(browser, url) {
     await page.locator('#botao-comecar').tap();
     await page.locator('#controles-toque').waitFor();
     assert.equal(await page.evaluate(() => document.pointerLockElement), null);
+    const superficie = await page.evaluate(() => {
+      const alvo = document.elementFromPoint(48, 230);
+      return { canvas: alvo instanceof HTMLCanvasElement, gesto: getComputedStyle(alvo.parentElement).touchAction };
+    });
+    assert.deepEqual(superficie, { canvas: true, gesto: 'none' });
+    const zoomInicial = await page.evaluate(() => visualViewport.scale);
+    await cdp.send('Input.synthesizePinchGesture', {
+      x: 66, y: 235, scaleFactor: 1.65, relativeSpeed: 500, gestureSourceType: 'touch',
+    });
+    assert.equal(await page.evaluate(() => visualViewport.scale), zoomInicial);
+    await page.touchscreen.tap(48, 230);
+    await page.touchscreen.tap(48, 230);
+    assert.equal(await page.evaluate(() => visualViewport.scale), zoomInicial);
+    const permitePinca = () => document.dispatchEvent(new Event('gesturestart', { cancelable: true }));
+    assert.equal(await page.evaluate(permitePinca), false);
     const [x, y] = await centro('#direcional-toque');
     const origem = await page.evaluate(() => jogo.jogador.pos.z);
     await toque('touchStart', 1, x, y);
@@ -105,6 +120,8 @@ export async function validarMobile(browser, url) {
     }
     await page.locator('#toque-pausa').tap();
     await page.locator('#tela-pausa').waitFor();
+    assert.equal(await page.evaluate(permitePinca), true);
+    assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById('jogo')).touchAction), 'auto');
     assert.deepEqual(erros, []);
     console.log('Passou: celular sem captura do mouse, multitoque, ataque, guarda, esquiva, pulo, lanterna, cura, bolsa, rotação e pausa.');
   } finally {

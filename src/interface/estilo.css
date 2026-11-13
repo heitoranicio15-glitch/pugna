@@ -168,6 +168,10 @@ dialog.painel-menu::backdrop { background: #04030bd9; }
 }
 
 /* Controles de toque ficam atrás dos menus e acima da cena. */
+.partida-toque, .partida-toque #jogo {
+  touch-action: none;
+  overscroll-behavior: none;
+}
 .dica-toque { display: none; }
 .modo-toque .dica-teclado, .modo-toque #frascos-hud kbd { display: none; }
 .modo-toque .dica-toque { display: block; max-width: 40ch; }
