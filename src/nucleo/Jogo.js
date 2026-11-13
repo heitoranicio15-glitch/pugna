@@ -3,6 +3,8 @@
 //  Junta todas as partes e roda o "laço" (o que acontece ~60 vezes por segundo).
 //
 //  Estados: 'titulo' → 'jogando' ⇄ 'pausado', e 'morto' → volta a 'jogando'.
+//  Só o Esc pausa. A bolsa e as anotações abertas durante a partida NÃO pausam:
+//  o mundo continua correndo e o caçador fica parado (this.painelAoVivo).
 //
 //  Onde encaixar coisas novas no futuro:
 //   - multiplayer: escute this.eventos e use jogador.exportarEstado() para enviar;
@@ -101,20 +103,23 @@ export class Jogo {
     document.addEventListener('pointerlockchange', () => {
       if (this.entrada.travado && this.estado === 'pausado' && !this.painel && !this.menu.opcoesAbertas && !this.menu.dialogo.open) {
         this.definirEstado('jogando');
-      } else if (!this.entrada.podeJogar() && this.estado === 'jogando') {
+      } else if (!this.entrada.podeJogar() && this.estado === 'jogando' && !this.painel) {
         this.definirEstado('pausado');
       }
     });
     document.addEventListener('pointerlockerror', () => {
       if (this.estado === 'pausado' && !this.entrada.toque && !this.painel && !this.menu.opcoesAbertas) {
         this.menu.avisar('Clique em Continuar para capturar o mouse.', this.estado);
+      } else if (this.estado === 'jogando' && !this.painel && !this.entrada.podeJogar()) {
+        this.definirEstado('pausado');   // fechou a bolsa e o navegador não devolveu o mouse
       }
     });
     addEventListener('keydown', (e) => {
       if (e.repeat || this.menu.dialogo.open) return;
       if ((e.code === 'Escape' || e.code === 'KeyI') && this.painel) {
         e.preventDefault();
-        this.fecharPainel();
+        // Com a bolsa aberta no meio da partida, I volta ao jogo e Esc pausa.
+        this.fecharPainel(e.code === 'Escape' && this.painelAoVivo);
       } else if (e.code === 'KeyI' && (this.estado === 'jogando' || this.estado === 'pausado') && !this.menu.opcoesAbertas) {
         this.abrirBolsa();
       } else if (e.code === 'Escape' && this.menu.opcoesAbertas) {
@@ -147,7 +152,11 @@ export class Jogo {
     // Ensina a regra de ouro: a resposta que não serve para aquele tipo de golpe.
     this.eventos.em('jogador:resposta-errada', ({ resposta }) => this.hud.avisar(
       resposta === 'aparar' ? 'A rasteira não pode ser aparada. Pule.' : 'A rasteira passa por baixo da guarda. Pule.'));
+    // Contra o spam: avisa quando a cura é cortada e conclui o gole do frasco.
+    this.eventos.em('jogador:curou', () => this.concluirCura());
+    this.eventos.em('jogador:interrompido', ({ cura }) => { if (cura) this.interromperCura(); });
     this.eventos.em('jogador:morreu', () => {
+      this.painel = null;
       this.tMorte = 0;
       this.hud.limparAviso();
       this.definirEstado('morto');
@@ -188,6 +197,8 @@ export class Jogo {
       this.reporInimigos();
     }
     this.definirEstado(this.entrada.podeJogar() ? 'jogando' : 'pausado');
+    // Celular congelado: o jogo abre, mas as mecânicas novas não têm botão de toque.
+    if (this.entrada.toque) this.hud.avisar('O celular não é suportado por enquanto. Jogue no computador.', 7);
     this.iniciando = false;
   }
 
@@ -197,24 +208,29 @@ export class Jogo {
 
   definirEstado(estado) {
     this.estado = estado;
+    this.painelAoVivo = false;
     this.entrada.habilitada = estado === 'jogando';
     this.toque.limpar();
     this.entrada.soltarTudo();
     this.toque.exibir();
-    if (estado === 'pausado') {
-      this.jogador.carregando = false;
-      this.jogador.avisouCarga = false;
-      this.jogador.bloqueando = false;
-      this.jogador.apararNaFila = 0;
-      this.jogador.ataqueNaFila = 0;
-      this.jogador.esquivaNaFila = 0;
-    }
+    if (estado === 'pausado') this.soltarComandos();
     this.hud.mostrarTela({ titulo: 'titulo', pausado: 'pausa', morto: 'morte', jogando: null }[estado]);
     if (estado === 'pausado' || estado === 'titulo') {
       this.menu.atualizarProgresso(this.progresso, this.localizarCheckpoint(this.progresso)?.lanterna.nome);
     }
     if (estado === 'pausado') document.getElementById('continuar').focus();
     this.atualizarAudio();
+  }
+
+  /** Esquece os comandos que estavam a caminho (carga, filas de ataque e de esquiva). */
+  soltarComandos() {
+    const j = this.jogador;
+    j.carregando = false;
+    j.avisouCarga = false;
+    j.bloqueando = false;
+    j.apararNaFila = 0;
+    j.ataqueNaFila = 0;
+    j.esquivaNaFila = 0;
   }
 
   retomar() {
@@ -230,14 +246,25 @@ export class Jogo {
     if (this.entrada.travado) document.exitPointerLock();
   }
 
+  /**
+   * Abre a bolsa ou uma anotação. Durante a partida o jogo NÃO pausa: o mouse é
+   * solto para clicar nos botões, o caçador para de receber comandos e o mundo
+   * continua correndo. A partir do menu de pausa, o jogo continua pausado.
+   * (No celular, congelado, vale o comportamento antigo: pausa.)
+   */
   mostrarPainel(painel) {
     const jogando = this.estado === 'jogando';
     this.painel = painel;
-    if (jogando) {
-      this.definirEstado('pausado');
+    if (jogando && !this.entrada.toque) {
+      this.painelAoVivo = true;
+      this.entrada.habilitada = false;
+      this.entrada.soltarTudo();
+      this.soltarComandos();
       if (this.entrada.travado) document.exitPointerLock();
+    } else if (jogando) {
+      this.definirEstado('pausado');
     }
-    this.hud.mostrarTela(painel);
+    this.hud.mostrarTela(painel, this.painelAoVivo);
   }
 
   abrirBolsa() {
@@ -252,26 +279,64 @@ export class Jogo {
     this.bolsa.ler(ANOTACOES[id]);
   }
 
-  fecharPainel() {
-    if (this.painel === 'leitura' && this.voltarParaBolsa) {
+  /** Fecha a bolsa ou a anotação. pausar = true leva ao menu de pausa (tecla Esc). */
+  fecharPainel(pausar = false) {
+    if (this.painel === 'leitura' && this.voltarParaBolsa && !pausar) {
       this.abrirBolsa();
       return;
     }
     this.painel = null;
+    if (this.painelAoVivo && !pausar && this.estado === 'jogando') {
+      // Volta direto para a partida, que não parou.
+      this.painelAoVivo = false;
+      this.hud.mostrarTela(null);
+      this.entrada.habilitada = true;
+      if (!this.entrada.podeJogar()) this.entrada.travarMouse();
+      return;
+    }
     this.definirEstado('pausado');
   }
 
+  /**
+   * Começa a beber um frasco. A cura não é na hora: leva CONFIG.combate.frasco.tempo,
+   * o caçador anda devagar e, se apanhar antes do fim, a cura é interrompida.
+   * Devolve o texto a mostrar.
+   */
   usarFrasco() {
     if (contarFrascos(this.progresso) === 0) return 'Você não tem frascos de cura.';
-    if (this.tDescanso || !this.podeInteragir()) return 'Espere o fim da ação para usar o frasco.';
     const j = this.jogador;
+    if (j.acao === 'curando') return 'O caçador já está bebendo.';
+    if (this.tDescanso || !this.podeInteragir()) return 'Espere o fim da ação para usar o frasco.';
     if (j.vida >= CONFIG.jogador.vidaMax) return 'Sua vida já está cheia.';
+    j.comecarCura();
+    return this.estado === 'pausado' ? 'O caçador bebe o frasco assim que o jogo voltar.' : 'Bebendo o frasco…';
+  }
+
+  /** O gole terminou sem o caçador apanhar: gasta o frasco e recupera a vida. */
+  concluirCura() {
+    const j = this.jogador;
     this.progresso.frascosUsados++;
     j.vida = Math.min(CONFIG.jogador.vidaMax, j.vida + CURA_FRASCO);
+    j.recuperavel = Math.min(j.recuperavel, CONFIG.jogador.vidaMax - j.vida);
     this.salvamento.salvar(this.progresso);
     this.hud.mostrarFrascos(contarFrascos(this.progresso));
     this.eventos.emitir('item:cura');
-    return 'Frasco usado. Vida recuperada.';
+    this.avisarCura('Frasco usado. Vida recuperada.');
+  }
+
+  /** O caçador apanhou no meio do gole: não cura (e o frasco só é gasto se o config mandar). */
+  interromperCura() {
+    if (CONFIG.combate.frasco.perdeAoSerInterrompido) {
+      this.progresso.frascosUsados++;
+      this.salvamento.salvar(this.progresso);
+      this.hud.mostrarFrascos(contarFrascos(this.progresso));
+    }
+    this.avisarCura('Cura interrompida!');
+  }
+
+  avisarCura(texto) {
+    if (this.painel === 'bolsa') this.bolsa.informar(texto);
+    else this.hud.avisar(texto, 1.8);
   }
 
   /**
@@ -283,10 +348,12 @@ export class Jogo {
   usarOsso() {
     if (!['jogando', 'pausado'].includes(this.estado)) return '';
     if (this.tDescanso || !this.podeInteragir()) return 'Espere o fim da ação para usar o osso.';
+    const aoVivo = this.painelAoVivo;
     this.painel = null;
     this.renascer();
     this.eventos.emitir('item:retorno');
     this.hud.avisar(`Osso de Retorno · ${this.descanso.nome}`, 3);
+    if (aoVivo) { this.fecharPainel(); return ''; }
     if (this.estado === 'jogando') return '';
     this.definirEstado('pausado');
     this.retomar();
@@ -526,7 +593,7 @@ export class Jogo {
 
     this.jogador.atualizar(dt);
     for (const i of this.inimigos) i.atualizar(dt);
-    if (this.estado === 'jogando') {
+    if (this.estado === 'jogando' && !this.painel) {
       const [mensagem, acao] = this.interacao();
       this.hud.fixar(this.entrada.toque ? (mensagem || '').replace(/^E — /, '') : mensagem || '');
       if (this.entrada.toque) this.toque.atualizarAcoes(!!acao, contarFrascos(this.progresso) > 0);

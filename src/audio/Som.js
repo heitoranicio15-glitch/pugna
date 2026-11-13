@@ -52,6 +52,9 @@ export class Som {
         this.ruido({ volume: 0.24 * perto, duracao: 0.38, de: 135, ate: 460, ataque: 0.14 });
       } else this.metal(0.12 * perto, 0.5);
     });
+    eventos.em('inimigo:aguentou', (i) => this.metal(0.4 * this.perto(i)));   // o golpe não fez cambalear
+    eventos.em('jogador:interrompido', () => this.tom({ volume: 0.12, duracao: 0.1, de: 180, ate: 90 }));
+    eventos.em('jogador:rally', () => this.tom({ volume: 0.07, duracao: 0.09, de: 520, ate: 780 }));
     eventos.em('inimigo:alerta', (i) => this.rosnado(0.3 * this.perto(i), i.tipo === 'cavaleiro' ? 70 : 120));
     eventos.em('inimigo:morreu', (i) => { this.rosnado(0.35 * this.perto(i), 50); this.passo(0.6 * this.perto(i), 0.5, 0.45); });
     eventos.em('descanso', () => this.sino(392, 2.5, 0.25));

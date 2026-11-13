@@ -496,3 +496,171 @@ test('aparar mantém o desequilíbrio e o crítico; o pesado aparado deixa o gan
   rodar(() => inimigo.estado !== 'desequilibrado');
   assert.equal(inimigo.abertoParaExecucao, false);
 });
+
+// -----------------------------------------------------------------------------
+//  Etapa A: contra o spam
+// -----------------------------------------------------------------------------
+
+test('apanhar interrompe o ataque leve; a parte final do forte aguenta um golpe fraco', () => {
+  const { jogador, eventos, alvo } = arena();
+  const I = CONFIG.combate.interrupcao;
+  const fraco = I.armaduraForte.danoMax, pesado = fraco + 10;
+  const interrompidos = [];
+  eventos.em('jogador:interrompido', (d) => interrompidos.push(d.cura));
+
+  // Leve: qualquer golpe corta o ataque, e a lâmina não chega a acertar.
+  jogador.iniciarAtaque('leve');
+  jogador.atualizar(0.03);
+  assert.equal(jogador.receberDano(fraco, alvo.pos, alvo), 'ferido');
+  assert.deepEqual([jogador.acao, jogador.ataque], ['atordoado', null]);
+  for (let i = 0; i < 10; i++) jogador.atualizar(0.02);
+  assert.equal(alvo.vida, 100, 'trocar golpe não compensa: o leve interrompido não acerta');
+  jogador.atualizar(I.cambaleio);
+  assert.equal(jogador.acao, 'livre');
+
+  // Forte no começo do preparo: é interrompido.
+  jogador.reiniciar(0, 0, 0);
+  jogador.iniciarAtaque('forte');
+  jogador.atualizar(CONFIG.combate.forte.preparo * 0.2);
+  jogador.receberDano(fraco, alvo.pos, alvo);
+  assert.equal(jogador.acao, 'atordoado');
+
+  // Forte na parte final: aguenta o golpe fraco (leva o dano, mas o golpe sai)...
+  jogador.reiniciar(0, 0, 0);
+  jogador.iniciarAtaque('forte');
+  jogador.atualizar(CONFIG.combate.forte.preparo * 0.8);
+  jogador.receberDano(fraco, alvo.pos, alvo);
+  assert.deepEqual([jogador.acao, jogador.ataque, jogador.vida], ['preparo', 'forte', 100 - fraco]);
+  for (let i = 0; i < 12; i++) jogador.atualizar(0.02);
+  assert.equal(alvo.vida, 100 - CONFIG.combate.forte.dano);
+
+  // ...mas não aguenta um golpe forte do inimigo.
+  jogador.reiniciar(0, 0, 0);
+  jogador.iniciarAtaque('forte');
+  jogador.atualizar(CONFIG.combate.forte.preparo * 0.8);
+  jogador.receberDano(pesado, alvo.pos, alvo);
+  assert.equal(jogador.acao, 'atordoado');
+  assert.deepEqual(interrompidos, [false, false, false]);
+});
+
+test('firmeza: o caçador corrompido não pode ser travado até morrer e revida no meio do spam', () => {
+  const AT = CONFIG.combate.atordoamentoInimigo;
+  const cfg = CONFIG.inimigos.cacador;
+
+  // Direto na regra: o segundo golpe não reinicia o cambaleio e quase não empurra.
+  {
+    const { inimigo, eventos } = duelo('cacador');
+    let aguentou = 0;
+    eventos.em('inimigo:aguentou', () => aguentou++);
+    inimigo.mudar('perseguir');
+    inimigo.receberDano(10, { x: 0, z: -1 }, 2.5, false);
+    assert.equal(inimigo.estado, 'atordoado');
+    const empurraoCheio = inimigo.empurrao.length();
+    inimigo.atualizar(0.1);
+    inimigo.receberDano(10, { x: 0, z: -1 }, 2.5, false);
+    assert.ok(inimigo.tEstado > 0.05, 'o cambaleio não recomeça');
+    assert.equal(aguentou, 1);
+    assert.ok(inimigo.empurrao.length() < empurraoCheio * 0.3, 'sem cambalear ele quase não recua');
+    // Um golpe crítico (inimigo aparado) passa por cima do fôlego.
+    inimigo.mudar('desequilibrado');
+    inimigo.receberDano(1, { x: 0, z: -1 }, 0, false);
+    assert.equal(inimigo.estado, 'atordoado');
+    // Passado o fôlego, ele volta a cambalear.
+    inimigo.jogo.jogador.morto = true;   // isola a regra do combate
+    for (let t = 0; t < (cfg.atordoamento ?? AT.duracao) + (cfg.folego ?? AT.folego) + 0.1; t += 0.05) inimigo.atualizar(0.05);
+    inimigo.receberDano(10, { x: 0, z: -1 }, 2.5, false);
+    assert.equal(inimigo.estado, 'atordoado');
+  }
+
+  // Na prática: o jogador só aperta o ataque leve sem parar, colado no inimigo.
+  const { jogador, entrada, inimigo } = duelo('cacador');
+  inimigo.pos.z = -1.6;
+  inimigo.mudar('perseguir');
+  let cambaleios = 0, anterior = inimigo.estado, feridoEm = null, mortoEm = null;
+  for (let i = 0; i < 400 && !jogador.morto; i++) {
+    entrada.botoesApertados[0] = i % 4 === 0;   // aperta e solta o tempo todo
+    jogador.atualizar(0.02);
+    inimigo.atualizar(0.02);
+    if (inimigo.estado === 'atordoado' && anterior !== 'atordoado') cambaleios++;
+    anterior = inimigo.estado;
+    if (feridoEm === null && jogador.vida < 100) feridoEm = i * 0.02;
+    if (inimigo.morto) { mortoEm = i * 0.02; break; }
+  }
+  assert.notEqual(feridoEm, null, 'o caçador corrompido precisa conseguir revidar');
+  assert.ok(mortoEm === null || feridoEm < mortoEm, 'ele acerta o jogador antes de cair');
+  assert.ok(cambaleios <= 1 + Math.floor((mortoEm ?? 8) / ((cfg.atordoamento ?? AT.duracao) + (cfg.folego ?? AT.folego))),
+    `cambaleou ${cambaleios} vezes`);
+});
+
+test('rally: parte do dano fica recuperável por um tempo e cada acerto devolve vida', () => {
+  const { jogador, eventos, alvo } = arena();
+  const R = CONFIG.combate.rally;
+  const curas = [];
+  eventos.em('jogador:rally', (d) => curas.push(d.cura));
+
+  jogador.receberDano(40, alvo.pos, alvo);
+  assert.equal(jogador.vida, 60);
+  assert.equal(jogador.recuperavel, 40 * R.parte);
+
+  // Um golpe leve acertado devolve vida, descontando da parte recuperável.
+  jogador.iniciarAtaque('leve');
+  for (let i = 0; i < 10; i++) jogador.atualizar(0.02);
+  const devolvido = Math.min(40 * R.parte, CONFIG.combate.leve.dano * R.porDano);
+  assert.equal(jogador.vida, 60 + devolvido);
+  assert.equal(jogador.recuperavel, 40 * R.parte - devolvido);
+  assert.deepEqual(curas, [devolvido]);
+
+  // Passado o tempo, o que sobrou some e bater não devolve mais nada.
+  for (let t = 0; t < R.duracao + 1.5; t += 0.05) jogador.atualizar(0.05);
+  assert.equal(jogador.recuperavel, 0);
+  const vida = jogador.vida;
+  jogador.iniciarAtaque('leve');
+  for (let i = 0; i < 10; i++) jogador.atualizar(0.02);
+  assert.equal(jogador.vida, vida);
+
+  // Dano bloqueado não vira rally; a vida nunca passa do máximo; a morte zera.
+  jogador.reiniciar(0, 0, 0);
+  jogador.bloqueando = true;
+  assert.equal(jogador.receberDano(20, alvo.pos, alvo), 'bloqueou');
+  assert.equal(jogador.recuperavel, 0);
+  jogador.bloqueando = false;
+  jogador.vida = 100;
+  jogador.receberDano(4, alvo.pos, alvo);
+  assert.equal(jogador.recuperarComGolpe(999), 4 * R.parte);
+  assert.ok(jogador.vida <= CONFIG.jogador.vidaMax);
+  jogador.receberDano(1000, alvo.pos, alvo);
+  assert.deepEqual([jogador.morto, jogador.recuperavel], [true, 0]);
+});
+
+test('frasco: a cura leva tempo, o caçador anda devagar e apanhar interrompe', () => {
+  const { jogador, entrada, eventos, alvo } = arena();
+  const F = CONFIG.combate.frasco;
+  const avisos = [];
+  eventos.em('jogador:curou', () => avisos.push('curou'));
+  eventos.em('jogador:interrompido', (d) => avisos.push(d.cura ? 'cura interrompida' : 'interrompido'));
+
+  // Sem apanhar: a cura só sai no fim do gole.
+  jogador.comecarCura();
+  jogador.atualizar(F.tempo * 0.5);
+  assert.deepEqual([jogador.acao, avisos.length], ['curando', 0]);
+  jogador.atualizar(F.tempo * 0.6);
+  assert.deepEqual([jogador.acao, avisos], ['livre', ['curou']]);
+
+  // Bebendo ele anda devagar e não ataca.
+  jogador.comecarCura();
+  entrada.segurando = (codigo) => codigo === 'KeyW';
+  entrada.botoesApertados[0] = true;
+  for (let i = 0; i < 10; i++) { jogador.atualizar(0.02); entrada.botoesApertados[0] = false; }
+  entrada.segurando = () => false;
+  assert.equal(jogador.ataque, null);
+  assert.ok(Math.hypot(jogador.vel.x, jogador.vel.z) <= CONFIG.jogador.velAndar * F.velocidade + 1e-6);
+
+  // Apanhou no meio do gole: a cura não acontece.
+  jogador.reiniciar(0, 0, 0);
+  jogador.comecarCura();
+  jogador.atualizar(F.tempo * 0.5);
+  jogador.receberDano(10, alvo.pos, alvo);
+  assert.equal(jogador.acao, 'atordoado');
+  for (let i = 0; i < 40; i++) jogador.atualizar(0.05);
+  assert.deepEqual(avisos, ['curou', 'cura interrompida']);
+});

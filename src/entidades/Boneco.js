@@ -150,6 +150,9 @@ export class Boneco {
         }
       } else if (j.acao === 'atordoado') {
         alvo.cx = -0.35; alvo.bdx = 0.4; alvo.bex = 0.4;
+      } else if (j.acao === 'curando') {
+        // Bebendo o frasco: leva a mão esquerda à boca e inclina a cabeça para trás.
+        alvo.bex = -2.3; alvo.bez = -0.35; alvo.cx = -0.14;
       } else if (j.acao === 'aparar') {
         // O broquel varre de fora para dentro, na frente do corpo.
         const ap = CB.aparar;

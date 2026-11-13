@@ -1,3 +1,11 @@
+// =============================================================================
+//  CONTROLES DE TOQUE (CELULAR) — CONGELADO
+//  O celular não é suportado por enquanto (decisão registrada no PASSAGEM.md).
+//  Este código fica guardado para voltar depois: não apague, mas também não
+//  adicione botões de toque para mecânicas novas. O jogo mostra um aviso em
+//  aparelhos de toque, e o teste do celular saiu dos testes obrigatórios
+//  (rode `npm run test:celular` se quiser conferir como ele está).
+// =============================================================================
 const CONTROLE = '(pointer: coarse)';
 const ZONA_MORTA = 0.12;
 const GANHO_CAMERA = 2.45;

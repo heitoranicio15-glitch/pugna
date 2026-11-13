@@ -12,7 +12,8 @@
 
   <!-- Barras de vida e estamina + avisos (ficam por cima do 3D). -->
   <div id="hud" class="oculto">
-    <div class="barra vida"><div id="barra-vida"></div></div>
+    <!-- A faixa de rally (laranja) fica atrás da vida: é o que dá para recuperar batendo. -->
+    <div class="barra vida"><div id="barra-rally"></div><div id="barra-vida"></div></div>
     <div class="barra estamina"><div id="barra-estamina"></div></div>
     <div id="guardiao" class="oculto">
       <span id="nome-guardiao"></span>
@@ -25,6 +26,8 @@
     <div id="dano"></div>
   </div>
 
+  <!-- CELULAR CONGELADO: estes controles ficam guardados para voltar depois.
+       Não adicionar botões de toque para mecânicas novas (veja PASSAGEM.md). -->
   <div id="controles-toque" class="oculto" aria-label="Controles por toque">
     <div id="olhar-toque"></div>
     <div class="toque-menu">
@@ -54,6 +57,7 @@
       <button id="reset-titulo" class="oculto">Apagar progresso</button>
     </div>
     <p id="estado-titulo" class="estado-menu" role="status"></p>
+    <p class="aviso-celular" role="note">O celular não é suportado por enquanto. Jogue no computador, com teclado e mouse.</p>
     <p class="dica dica-teclado">
       WASD andar · mouse girar a câmera · Shift correr · Espaço pular<br />
       clique esquerdo atacar (segure: ataque forte) · clique direito bloquear · C aparar<br />
@@ -104,6 +108,7 @@
   <div id="tela-bolsa" class="tela oculto">
     <section class="painel-menu painel-bolsa" aria-labelledby="titulo-bolsa">
       <h2 id="titulo-bolsa">Bolsa</h2>
+      <p id="bolsa-ao-vivo" class="estado-menu"></p>
       <div class="bolsa-conteudo">
         <section>
           <h3>Consumíveis</h3>

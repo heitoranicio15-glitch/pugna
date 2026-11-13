@@ -8,6 +8,10 @@
 //    a qualquer momento: atordoado (levou golpe forte), desequilibrado
 //    (teve o golpe aparado: fica aberto a um golpe crítico) ou morto
 //
+//  Firmeza (contra o spam): depois de cambalear, o inimigo ganha um "fôlego" em
+//  que aguenta os golpes sem cambalear de novo e quase sem sair do lugar. Os
+//  números ficam em CONFIG.combate.atordoamentoInimigo.
+//
 //  As três fases do golpe (preparo, ativo, recuperacao) e os tipos de ataque
 //  (alto, pesado, rasteira) vêm da máquina única em Ataques.js. Aqui ficam a
 //  escolha do ataque, as poses e os avisos de cada tipo.
@@ -158,6 +162,7 @@ export class Inimigo {
     this.ataque.encerrar();
     this.ultimaSequencia = null;
     this.abertoParaExecucao = false;
+    this.folego = 0;            // segundos em que ele não cambaleia de novo
     this.vida = this.cfg.vida;
     this.morto = false;
     this.estado = 'patrulha'; this.tEstado = 0;
@@ -255,6 +260,7 @@ export class Inimigo {
       return;
     }
 
+    this.folego -= dt;
     const dx = jog.pos.x - this.pos.x, dz = jog.pos.z - this.pos.z;
     const dist = Math.hypot(dx, dz);
     const anguloJogador = Math.atan2(dx, dz);
@@ -352,7 +358,7 @@ export class Inimigo {
       }
       case 'atordoado': {
         inclinar = -0.35; bracoAlvo = 0.4;
-        if (this.tEstado >= 0.75) this.mudar('perseguir');
+        if (this.tEstado >= (c.atordoamento ?? CONFIG.combate.atordoamentoInimigo.duracao)) this.mudar('perseguir');
         break;
       }
       case 'desequilibrado': {   // golpe aparado: braço jogado para trás, guarda aberta
@@ -461,17 +467,25 @@ export class Inimigo {
     this.jogo.eventos.emitir('inimigo:aparado', this);
   }
 
-  /** Chamado pelo jogador. direcao = para onde empurrar. Devolve 'critico' se pegou o inimigo aberto. */
+  /**
+   * Chamado pelo jogador. direcao = para onde empurrar. Devolve 'critico' se
+   * pegou o inimigo aberto.
+   *
+   * Firmeza: um golpe só faz o inimigo cambalear se for forte o bastante E se
+   * ele não estiver no "fôlego" depois de um cambaleio anterior. Sem cambalear,
+   * ele quase não sai do lugar: aguenta o golpe e revida.
+   */
   receberDano(dano, direcao, forca, forte) {
     if (this.morto) return;
+    const AT = CONFIG.combate.atordoamentoInimigo;
     const critico = this.estado === 'desequilibrado';
     if (critico) dano *= CONFIG.combate.critico.multiplicador;
     this.vida -= dano;
     this.piscar = critico ? 0.16 : 0.09;
     this.barra.visible = this.tipo !== 'guardiao';
-    this.empurrao.set(direcao.x * forca, 0, direcao.z * forca);
     this.jogo.eventos.emitir('inimigo:ferido', this);
     if (this.vida <= 0) {
+      this.empurrao.set(direcao.x * forca, 0, direcao.z * forca);
       this.vida = 0; this.morto = true; this.mudar('morto'); this.barra.visible = false;
       this.jogo.eventos.emitir('inimigo:morreu', this);
       return critico ? 'critico' : undefined;
@@ -481,8 +495,19 @@ export class Inimigo {
       this.corOlho = 0xff416c;
       this.jogo.eventos.emitir('guardiao:fase-final');
     }
-    if (critico || dano >= this.cfg.firmeza || (forte && !this.base.faseFinal)) this.mudar('atordoado');
-    else if (this.estado === 'patrulha') this.mudar('perseguir');
+    // O golpe tem força para abalar? E o inimigo está em condição de ser abalado?
+    const abala = dano >= this.cfg.firmeza || (forte && !this.base.faseFinal);
+    const emGolpeFirme = !forte && !!this.ataque.golpe?.aguentaLeve && (this.estado === 'preparo' || this.estado === 'ativo');
+    const cambaleia = critico || (abala && !emGolpeFirme && this.folego <= 0);
+    const empurrar = forca * (cambaleia ? 1 : AT.empurraoFirme);
+    this.empurrao.set(direcao.x * empurrar, 0, direcao.z * empurrar);
+    if (cambaleia) {
+      this.mudar('atordoado');
+      this.folego = (this.cfg.atordoamento ?? AT.duracao) + (this.cfg.folego ?? AT.folego);
+    } else {
+      if (abala) this.jogo.eventos.emitir('inimigo:aguentou', this);
+      if (this.estado === 'patrulha') this.mudar('perseguir');
+    }
     return critico ? 'critico' : undefined;
   }
 }

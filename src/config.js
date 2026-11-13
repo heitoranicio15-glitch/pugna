@@ -91,6 +91,39 @@ export const CONFIG = {
     aparar: { custo: 12, preparo: 0.05, janela: 0.2, recuperacao: 0.4, desequilibrio: 1.9 },
     critico: { multiplicador: 2.6, pausa: 0.14 },
 
+    // ---- Contra o spam (Etapa A do plano) ----
+    // Apanhar interrompe o caçador: ele perde o golpe e cambaleia um instante.
+    //   cambaleio     segundos sem agir depois de ser interrompido
+    //   armaduraForte a parte final do ataque forte aguenta um golpe fraco:
+    //                 "aPartirDe" é a fração do preparo já cumprida (0.5 = da
+    //                 metade em diante, até o fim da passagem da lâmina) e
+    //                 "danoMax" é o maior dano que ele aguenta sem perder o golpe
+    interrupcao: { cambaleio: 0.4, armaduraForte: { aPartirDe: 0.5, danoMax: 20 } },
+    guardaQuebrada: 0.7,     // segundos atordoado quando a guarda quebra no bloqueio
+    // Firmeza dos inimigos: depois de cambalear, o inimigo ganha um "fôlego" em
+    // que não cambaleia de novo (só um golpe crítico passa por cima). É isso que
+    // impede travar um inimigo até a morte só apertando o ataque.
+    //   duracao   segundos que o inimigo fica cambaleando
+    //   folego    segundos, depois de cambalear, em que ele aguenta os golpes
+    //   (cada inimigo pode ter os seus "atordoamento" e "folego" em CONFIG.inimigos)
+    //   empurraoFirme  fração do empurrão quando o golpe NÃO faz cambalear
+    //                  (0 = não sai do lugar; 1 = recua como antes)
+    atordoamentoInimigo: { duracao: 0.6, folego: 1.6, empurraoFirme: 0.12 },
+    // Rally: parte do dano que o caçador leva fica "recuperável" por alguns
+    // segundos (aparece em laranja na barra de vida). Cada golpe acertado
+    // devolve vida dessa parte. Apanhou? Revide logo.
+    //   parte     fração do dano que fica recuperável (golpe bloqueado não conta)
+    //   duracao   segundos para revidar; apanhar de novo reinicia a contagem
+    //   porDano   vida devolvida por ponto de dano causado (0.35: o leve devolve quase 8 e o forte, 20)
+    //   escoa     pontos por segundo que somem quando o tempo acaba
+    rally: { parte: 0.7, duracao: 4, porDano: 0.35, escoa: 70 },
+    // Frasco de cura: beber leva tempo, o caçador anda devagar e, se apanhar
+    // antes do fim, a cura é interrompida.
+    //   tempo                 segundos bebendo até a cura acontecer
+    //   velocidade            fração da velocidade de andar enquanto bebe
+    //   perdeAoSerInterrompido  true = o frasco é gasto mesmo sem curar
+    frasco: { tempo: 0.6, velocidade: 0.35, perdeAoSerInterrompido: false },
+
     // ---- Tipos de ataque dos inimigos (a "regra de ouro" do combate) ----
     // Cada tipo pede uma resposta diferente do jogador. Os números abaixo
     // MULTIPLICAM os do inimigo (dano, preparo, ativo, recuperacao, alcance).
@@ -100,23 +133,25 @@ export const CONFIG = {
     //   janelaAparar  multiplica a janela do aparo (menor = mais difícil)
     //   custoBloqueio multiplica a estamina gasta ao bloquear
     //   evitaPulando  estar no ar (acima de alturaPulo) evita o golpe
-    //   abreExecucao  aparar este golpe abre a execução (item 3 do plano)
+    //   abreExecucao  aparar este golpe abre a execução (Etapa B do plano)
+    //   aguentaLeve   durante o aviso e o golpe, o ataque leve do caçador não
+    //                 interrompe: o inimigo aguenta e revida
     //   aviso         cor que acende na arma e nos olhos durante o preparo
     ataquesInimigos: {
       alto: {
         dano: 1, preparo: 1, preparoMin: 0, ativo: 1, recuperacao: 1, alcance: 1, abertura: 0.35,
         aparavel: true, janelaAparar: 1, bloqueavel: true, custoBloqueio: 1,
-        evitaPulando: false, alturaPulo: 0, abreExecucao: false, aviso: null,
+        evitaPulando: false, alturaPulo: 0, abreExecucao: false, aguentaLeve: false, aviso: null,
       },
       pesado: {
         dano: 1.5, preparo: 1.45, preparoMin: 0.7, ativo: 1.1, recuperacao: 1.3, alcance: 1.05, abertura: 0.45,
         aparavel: true, janelaAparar: 0.55, bloqueavel: true, custoBloqueio: 1.8,
-        evitaPulando: false, alturaPulo: 0, abreExecucao: true, aviso: 0xff2a1e,
+        evitaPulando: false, alturaPulo: 0, abreExecucao: true, aguentaLeve: true, aviso: 0xff2a1e,
       },
       rasteira: {
         dano: 0.75, preparo: 1.25, preparoMin: 0.55, ativo: 1.2, recuperacao: 1.15, alcance: 1.2, abertura: -0.3,
         aparavel: false, janelaAparar: 0, bloqueavel: false, custoBloqueio: 1,
-        evitaPulando: true, alturaPulo: 0.25, abreExecucao: false, aviso: 0xffb21e,
+        evitaPulando: true, alturaPulo: 0.25, abreExecucao: false, aguentaLeve: false, aviso: 0xffb21e,
       },
     },
     // Como um golpe se liga ao seguinte numa sequência: quanto espera na
@@ -134,7 +169,7 @@ export const CONFIG = {
       nome: 'Cavaleiro corrompido',
       vida: 130, velPatrulha: 1.0, velPerseguir: 2.1,
       dano: 34, alcance: 2.7, preparo: 0.95, ativo: 0.18, recuperacao: 1.2,
-      visao: 15, firmeza: 40,  // dano mínimo de um golpe para ele cambalear
+      visao: 15, firmeza: 40,  // dano mínimo de um golpe LEVE para ele cambalear (o forte sempre faz cambalear os inimigos comuns)
       escala: 1.22, raio: 0.6, recua: false,
       ataques: [
         { golpes: ['alto'], peso: 3 },
@@ -147,6 +182,9 @@ export const CONFIG = {
       vida: 62, velPatrulha: 1.5, velPerseguir: 4.6,
       dano: 13, alcance: 2.1, preparo: 0.34, ativo: 0.12, recuperacao: 0.55,
       visao: 19, firmeza: 0,
+      // Ágil: cambaleia por pouco tempo e depois aguenta os golpes por 1,8 s
+      // (veja combate.atordoamentoInimigo). É o que impede travá-lo até a morte.
+      atordoamento: 0.4, folego: 1.8,
       escala: 1.0, raio: 0.45, recua: true,
       ataques: [
         { golpes: ['alto', 'alto'], peso: 3 },

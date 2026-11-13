@@ -13,6 +13,7 @@ Antes de qualquer tarefa, leia [PASSAGEM.md](PASSAGEM.md), [LEIAME.md](LEIAME.md
 ## Durante a implementação
 
 - Mantenha o PR focado na atualização pedida. Reuse os componentes do jogo e ajuste os valores de combate e renderização em `src/config.js` quando couber. Atualize o `LEIAME.md` ao mudar controles, comportamentos ou instruções de uso.
+- **O celular está congelado** (decisão registrada no PASSAGEM.md). O código de toque continua no repositório, mas não recebe botões para mecânicas novas, e o jogo avisa em aparelhos de toque que o celular não é suportado por enquanto. O cenário de celular saiu dos testes obrigatórios: ele só roda com `npm run test:celular`, que é opcional.
 - Ao criar uma área, declare seu ID, limites, portais, chegadas, checkpoints e patrulhas. Dê IDs únicos a checkpoints e eventos persistentes no formato `area:evento`. Preserve os identificadores já publicados. Se precisar mudar o formato do save, faça a migração e teste com dados antigos. Progresso e preferências usam chaves separadas.
 - Para modelos, texturas e áudio, confira a autorização de distribuição pública e registre a origem e a licença em `CREDITOS.md` conforme a informação disponível. Use caminhos compatíveis com a publicação em `/pugna/`.
 
