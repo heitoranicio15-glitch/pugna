@@ -5,8 +5,7 @@ gótico, à noite, com visual retrô estilo PS1. Você é um caçador que enfren
 cavaleiros e caçadores corrompidos, sob uma **lua enorme com rosto** que não tira
 os olhos de você.
 
-> Este arquivo é o ponto de partida para qualquer pessoa (ou IA) que for continuar
-> o projeto. **Mantenha-o atualizado a cada mudança.**
+> Para atualizar o jogo em equipe, consulte o [protocolo de colaboração](AGENTS.md).
 
 ---
 
@@ -30,8 +29,8 @@ Para parar o jogo, feche a janela preta do terminal (ou aperte Ctrl+C nela).
 
 ## Publicar para os amigos jogarem (GitHub Pages)
 
-O projeto já vem preparado: o arquivo `.github/workflows/publicar.yml` monta e publica
-o jogo sozinho toda vez que uma versão nova é enviada ao GitHub.
+O arquivo `.github/workflows/publicar.yml` monta e publica o jogo após uma integração
+na `main`.
 
 **Só na primeira vez:**
 1. Crie uma conta grátis em https://github.com
@@ -44,9 +43,10 @@ o jogo sozinho toda vez que uma versão nova é enviada ao GitHub.
 6. Aba **Actions** → "Publicar o jogo" → **Run workflow**. Espere ficar verde (~1 min).
 7. O jogo estará em `https://SEU-USUARIO.github.io/pugna/`. Mande esse link aos amigos.
 
-**A cada versão nova:** abra o GitHub Desktop, escreva um resumo do que mudou no campo
-"Summary", clique em **Commit to main** e depois em **Push origin**. Em cerca de um
-minuto o link já mostra a versão nova.
+**A cada atualização:** no GitHub Desktop, crie uma branch a partir da `main`
+atualizada, registre as alterações nessa branch e abra um pull request. Depois
+da integração, acompanhe **Publicar o jogo** na aba **Actions** e confira a
+versão online. Veja os passos de validação e reversão no [protocolo](AGENTS.md).
 
 A pasta `referencias/` fica de fora do GitHub de propósito (está no `.gitignore`):
 são imagens de outros autores.
