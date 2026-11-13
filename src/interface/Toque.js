@@ -37,10 +37,14 @@ export class Toque {
     document.getElementById('toque-bolsa').addEventListener('click', () => jogo.abrirBolsa());
     document.getElementById('toque-pausa').addEventListener('click', () => jogo.pausar());
     addEventListener('blur', () => this.limpar());
-    addEventListener('resize', () => this.limpar());
+    addEventListener('orientationchange', () => this.limpar());
   }
 
   definirModo(ativo) {
+    if (ativo !== this.entrada.toque) {
+      this.limpar();
+      this.entrada.soltarTudo();
+    }
     this.entrada.toque = ativo;
     document.body.classList.toggle('modo-toque', ativo);
     this.exibir();
@@ -57,7 +61,7 @@ export class Toque {
 
   ligarPonteiro(elemento, tipo) {
     elemento.addEventListener('pointerdown', (e) => {
-      if (!this.entrada.ativo() || !this.entrada.toque ||
+      if (!this.entrada.ativo() || !this.entrada.toque || e.button !== 0 ||
           [...this.ponteiros.values()].some((p) => p.elemento === elemento)) return;
       e.preventDefault();
       elemento.setPointerCapture(e.pointerId);
@@ -73,6 +77,12 @@ export class Toque {
     elemento.addEventListener('pointerup', (e) => this.soltar(e.pointerId));
     elemento.addEventListener('pointercancel', (e) => this.soltar(e.pointerId, true));
     elemento.addEventListener('lostpointercapture', (e) => this.soltar(e.pointerId, true));
+    if (tipo === 'acao' && elemento.dataset.tecla) {
+      // Ativação por teclado ou leitor de tela. O toque já dispara no pointerdown.
+      elemento.addEventListener('click', (e) => {
+        if (e.detail === 0 && this.entrada.ativo()) this.entrada.apertadas.add(elemento.dataset.tecla);
+      });
+    }
   }
 
   mover(e) {

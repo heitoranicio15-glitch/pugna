@@ -534,7 +534,7 @@ export class Jogo {
         this.hud.fecharVeu(true);
         setTimeout(() => {
           this.renascer();
-          this.definirEstado(this.entrada.podeJogar() ? 'jogando' : 'pausado');
+          this.definirEstado(this.entrada.podeJogar() && (!this.entrada.toque || !document.hidden) ? 'jogando' : 'pausado');
           this.renascendo = false;
           this.hud.fecharVeu(false);
         }, 1000);
