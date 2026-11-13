@@ -39,7 +39,7 @@ export class Vilarejo {
     // Como nada fica abaixo do chão, tudo o mais é desenhado por cima sem conflito.
     const chao = new THREE.Mesh(new THREE.PlaneGeometry(700, 700), m.terra.clone());
     chao.material.map = texturas().terra.clone();
-    chao.material.map.repeat.set(230, 230);
+    chao.material.map.repeat.set(100, 100);
     chao.material.onBeforeCompile = m.terra.onBeforeCompile;
     chao.material.depthWrite = false;
     chao.rotation.x = -Math.PI / 2;
@@ -49,7 +49,9 @@ export class Vilarejo {
     const rua = (x, z, l, pf) => {
       const geo = new THREE.PlaneGeometry(l, pf);
       const uv = geo.attributes.uv;
-      for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * l / 1.6, uv.getY(i) * pf / 1.6);
+      for (let i = 0; i < uv.count; i++) {
+        uv.setXY(i, (x + (uv.getX(i) - 0.5) * l) / 5.8, (-z + (uv.getY(i) - 0.5) * pf) / 5.8);
+      }
       const r = new THREE.Mesh(geo, m.calcamentoChao);
       r.rotation.x = -Math.PI / 2;
       r.position.set(x, 0.02, z);
@@ -199,8 +201,8 @@ export class Vilarejo {
 
     // ---------- pontos de descanso (lanternas) ----------
     this.pontosDeDescanso = [
-      { id: 'portao-sul', x: -2.7, z: 49, olhar: Math.PI }, // olhar: direção ao renascer
-      { id: 'adro-da-igreja', x: 8.5, z: -36, olhar: Math.PI },
+      { id: 'portao-sul', nome: 'Portão Sul', x: -2.7, z: 49, olhar: Math.PI },
+      { id: 'adro-da-igreja', nome: 'Adro da Igreja', x: 8.5, z: -36, olhar: Math.PI },
     ];
     this.nascimento = { x: 0, z: 53.5 };
 

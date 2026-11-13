@@ -75,6 +75,17 @@ que está em `historico-git.bundle`. Depois disso, `git log` mostra as etapas e 
 | Tela cheia | F |
 | Pausar / soltar o mouse | Esc |
 
+### Configurações e progresso
+
+**Configurações** está disponível na tela inicial e no menu de pausa. É possível
+ajustar o volume da música e dos efeitos separadamente, a sensibilidade do mouse,
+o brilho, a pixelização e o tremor dos vértices.
+
+No menu de pausa, **Voltar ao checkpoint** recupera vida e estamina na última
+lanterna usada e repõe os inimigos comuns. Os selos e a vitória sobre o Guardião
+continuam registrados. **Apagar progresso** pede confirmação e limpa a partida
+do navegador. As preferências de áudio, imagem e controles continuam salvas.
+
 **Atenção com o Ctrl:** no Chrome, Ctrl+W fecha a aba, e isso não pode ser desligado
 por um site. O jogo pede confirmação antes de fechar se o Ctrl estiver apertado, e em
 **tela cheia (F)** o atalho deixa de fechar a aba. Se preferir não arriscar, use **Q**
@@ -98,7 +109,8 @@ ou **Alt** para esquivar.
 Aproxime-se do portal ao norte do vilarejo e pressione **E**. A nave tem uma
 lanterna à direita da entrada. Explore o **Ossário**, a oeste, e o **Relicário**,
 a leste. Recolha com **E** o selo de cada ala para abrir a grade do **Santuário**.
-O **Guardião do Véu** passa a atacar em sequência quando perde metade da vida.
+O **Guardião do Véu** passa a atacar com dois golpes laterais quando perde
+metade da vida. A posição da maça e dois sons diferentes sinalizam a sequência.
 Para voltar ao vilarejo, use **E** na porta ao sul da nave.
 
 O jogo guarda neste navegador a última lanterna usada, os dois selos e a derrota
@@ -121,7 +133,7 @@ onde você volta ao morrer ou reabrir o jogo.
 - Combate com ataque leve, forte, bloqueio, esquiva e estamina.
 - Cavaleiro, caçador, penitente e Guardião do Véu, com patrulha e combate.
 - Vida, tela de morte e três lanternas de descanso (portão sul, adro e nave).
-- Sons sintetizados: passos, espada, impacto, metal, vento.
+- Efeitos sintetizados e quatro faixas de música para exploração e combate.
 - Tela inicial.
 
 > **Mudança de rumo registrada:** a ideia original tinha um gigante encapuzado no
@@ -139,7 +151,7 @@ pugna/
 ├─ LEIAME.md               este arquivo
 ├─ CREDITOS.md             origem de bibliotecas e assets
 ├─ referencias/            imagens-guia de estilo (não fazem parte do jogo)
-├─ public/assets/          assets baixados no futuro (hoje vazio)
+├─ public/assets/trilha/   faixas do vilarejo, da catedral e do Guardião
 └─ src/
    ├─ main.js              ponto de entrada
    ├─ config.js            ★ TODOS os números ajustáveis: cores, velocidades, dano...
@@ -198,7 +210,7 @@ pugna/
 - [x] Paredes bloqueiam a detecção inicial e golpes
 - [ ] Mãos/braços do caçador mais detalhados e a capa aparecendo ao olhar para baixo
 - [ ] Trocar sons sintetizados por gravações CC0; música ambiente
-- [ ] Menu de opções (sensibilidade do mouse, volume, nível de pixelado)
+- [x] Menu de configurações e opções de checkpoint e progresso
 - [ ] Combate menos genérico: travar a mira no inimigo, aparar (parry), golpe pelas
       costas, sequências de ataques, armas com ritmos diferentes
 - [x] Interior da catedral

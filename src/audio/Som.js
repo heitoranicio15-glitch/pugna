@@ -1,13 +1,13 @@
 // =============================================================================
 //  SONS
-//  Todos os sons são FABRICADOS no código (ruído + filtros), sem arquivos.
-//  Para usar gravações de verdade no futuro: carregue arquivos de
-//  public/assets/sons e toque-os nos mesmos pontos (os métodos abaixo).
+//  Efeitos sintetizados em tempo real (ruído, filtros e osciladores).
 // =============================================================================
 export class Som {
   constructor(eventos, jogo) {
     this.ctx = null;
     this.jogo = jogo;
+    this.volume = 0.8;
+    this.pausado = false;
     // Liga cada aviso do jogo ao seu som.
     eventos.em('jogador:passo', (d) => this.passo(d?.correndo ? 0.5 : 0.32));
     eventos.em('jogador:pouso', () => this.passo(0.7, 0.7));
@@ -19,7 +19,13 @@ export class Som {
     eventos.em('jogador:ferido', () => { this.impacto(0.8); this.gemido(); });
     eventos.em('jogador:morreu', () => this.sino(55, 4, 0.5));
     eventos.em('inimigo:golpe', (i) => this.zunido(0.4 * this.perto(i), 0.25, i.tipo === 'cavaleiro' ? 320 : 800));
-    eventos.em('inimigo:preparo', (i) => this.metal(0.12 * this.perto(i), 0.5));
+    eventos.em('inimigo:preparo', (i) => {
+      const perto = this.perto(i);
+      if (i.emFaseFinal && i.perfilAtaque === i.cfg) {
+        this.sino(i.golpesRestantes > 1 ? 165 : 220, 0.5, 0.22 * perto);
+        this.ruido({ volume: 0.24 * perto, duracao: 0.38, de: 135, ate: 460, ataque: 0.14 });
+      } else this.metal(0.12 * perto, 0.5);
+    });
     eventos.em('inimigo:alerta', (i) => this.rosnado(0.3 * this.perto(i), i.tipo === 'cavaleiro' ? 70 : 120));
     eventos.em('inimigo:morreu', (i) => { this.rosnado(0.35 * this.perto(i), 50); this.passo(0.6 * this.perto(i), 0.5, 0.45); });
     eventos.em('descanso', () => this.sino(392, 2.5, 0.25));
@@ -37,7 +43,9 @@ export class Som {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     this.ctx = new AC();
-    this.saida = this.ctx.createGain(); this.saida.gain.value = 0.8; this.saida.connect(this.ctx.destination);
+    this.saida = this.ctx.createGain();
+    this.saida.gain.value = this.pausado ? 0 : this.volume;
+    this.saida.connect(this.ctx.destination);
     // Um segundo de chiado, reaproveitado por quase todos os sons.
     const n = this.ctx.sampleRate * 2;
     this.chiado = this.ctx.createBuffer(1, n, this.ctx.sampleRate);
@@ -47,7 +55,12 @@ export class Som {
     this.zumbido();
   }
 
-  silenciar(sim) { if (this.ctx) this.saida.gain.setTargetAtTime(sim ? 0.15 : 0.8, this.ctx.currentTime, 0.2); }
+  definirVolume(volume, pausado) {
+    if (volume === this.volume && pausado === this.pausado) return;
+    this.volume = volume;
+    this.pausado = pausado;
+    if (this.ctx) this.saida.gain.setTargetAtTime(pausado ? 0 : volume, this.ctx.currentTime, 0.08);
+  }
 
   /** Estouro de chiado filtrado: a base de passos, zunidos e impactos. */
   ruido({ volume = 0.5, duracao = 0.2, tipo = 'bandpass', de = 800, ate = de, q = 1, ataque = 0.005 }) {

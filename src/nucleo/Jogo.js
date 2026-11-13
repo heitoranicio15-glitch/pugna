@@ -16,6 +16,7 @@ import { CONFIG } from '../config.js';
 import { Eventos } from './Eventos.js';
 import { Entrada } from './Entrada.js';
 import { SalvamentoLocal, SELOS_DO_VEU } from './Salvamento.js';
+import { carregarPreferencias, salvarPreferencias } from './Preferencias.js';
 import { RenderizadorRetro } from '../render/RenderizadorRetro.js';
 import { Ceu } from '../mundo/Ceu.js';
 import { Vilarejo } from '../mundo/Vilarejo.js';
@@ -25,7 +26,9 @@ import { Arma } from '../entidades/Arma.js';
 import { Inimigo } from '../entidades/Inimigo.js';
 import { Lanterna } from '../entidades/Lanterna.js';
 import { Som } from '../audio/Som.js';
+import { Trilha } from '../audio/Trilha.js';
 import { Hud } from '../interface/Hud.js';
+import { Menu } from '../interface/Menu.js';
 
 export class Jogo {
   constructor(container) {
@@ -33,6 +36,8 @@ export class Jogo {
     this.render = new RenderizadorRetro(container);
     this.entrada = new Entrada(this.render.canvas);
     this.salvamento = new SalvamentoLocal();
+    this.preferencias = carregarPreferencias();
+    this.render.aplicarPreferencias(this.preferencias);
     this.hud = new Hud();
 
     // ---------- mundo ----------
@@ -61,29 +66,48 @@ export class Jogo {
     this.ativarArea(this.vilarejo);
 
     this.som = new Som(this.eventos, this);
+    this.trilha = new Trilha();
     this.estado = 'titulo';
     this.tempo = 0;
     this.congelado = 0;                      // pausa de impacto ("hit stop")
     this.tMorte = 0;
     this.tDescanso = 0;
     this.teste = new URLSearchParams(location.search).has('teste'); // usado nos testes automáticos
+    this.entrada.ignorarTrava = this.teste;
 
     document.getElementById('titulo-jogo').textContent = CONFIG.titulo;
     document.title = CONFIG.titulo;
+    this.menu = new Menu(this);
+    this.salvamento.carregar().then((salvo) => this.menu.atualizarProgresso(salvo, this.localizarCheckpoint(salvo)?.lanterna.nome));
     this.ligarInterface();
     this.ligarEventos();
   }
 
   // ---------------------------------------------------------------------------
   ligarInterface() {
-    document.getElementById('botao-comecar').addEventListener('click', () => this.comecar());
-    document.getElementById('tela-pausa').addEventListener('click', () => this.entrada.travarMouse());
     document.addEventListener('pointerlockchange', () => {
-      if (this.entrada.travado && this.estado === 'pausado') { this.estado = 'jogando'; this.hud.mostrarTela(null); this.som.silenciar(false); }
-      else if (!this.entrada.travado && this.estado === 'jogando' && !this.teste) { this.estado = 'pausado'; this.hud.mostrarTela('pausa'); this.som.silenciar(true); }
+      if (this.entrada.travado && this.estado === 'pausado' && !this.menu.opcoesAbertas && !this.menu.dialogo.open) {
+        this.definirEstado('jogando');
+      } else if (!this.entrada.travado && this.estado === 'jogando' && !this.teste) {
+        this.definirEstado('pausado');
+      }
+    });
+    document.addEventListener('pointerlockerror', () => {
+      if (this.estado === 'pausado' && !this.menu.opcoesAbertas) {
+        this.menu.avisar('Clique em Continuar para capturar o mouse.', this.estado);
+      }
     });
     addEventListener('keydown', (e) => {
-      if (e.code === 'KeyF' && this.estado !== 'titulo') this.alternarTelaCheia();
+      if (e.repeat || this.menu.dialogo.open) return;
+      if (e.code === 'Escape' && this.menu.opcoesAbertas) {
+        e.preventDefault();
+        this.menu.fecharOpcoes();
+      } else if (e.code === 'Escape' && this.estado === 'jogando') {
+        this.definirEstado('pausado');
+        if (this.entrada.travado) document.exitPointerLock();
+      } else if (e.code === 'KeyF' && this.estado === 'jogando') {
+        this.alternarTelaCheia();
+      }
     });
     // Ctrl+W fecha a aba no Chrome e o jogo usa Ctrl para esquivar: se a aba for
     // fechar com Ctrl apertado durante o jogo, o navegador pede confirmação.
@@ -94,22 +118,27 @@ export class Jogo {
 
   ligarEventos() {
     this.eventos.em('jogador:ferido', () => this.hud.piscarDano());
-    this.eventos.em('jogador:morreu', () => { this.estado = 'morto'; this.tMorte = 0; this.hud.mostrarTela('morte'); this.hud.fixar(''); });
+    this.eventos.em('jogador:morreu', () => {
+      this.tMorte = 0;
+      this.hud.limparAviso();
+      this.definirEstado('morto');
+    });
     this.eventos.em('guardiao:fase-final', () => this.hud.avisar('O Guardião investe com mais fúria.'));
     this.eventos.em('inimigo:morreu', (inimigo) => {
       if (inimigo !== this.guardiao) return;
       this.progresso.guardiaoDerrotado = true;
       this.salvamento.salvar(this.progresso);
+      this.atualizarAudio();
       this.hud.avisar('Guardião do Véu derrotado', 4);
     });
   }
 
   alternarTelaCheia() {
     if (document.fullscreenElement) { document.exitFullscreen(); return; }
-    document.documentElement.requestFullscreen?.().then(() => {
+    document.documentElement.requestFullscreen?.()?.then(() => {
       // Em tela cheia o Chrome deixa o jogo "segurar" atalhos como Ctrl+W.
       navigator.keyboard?.lock?.().catch(() => {});
-      this.entrada.travarMouse();
+      if (!this.entrada.travado && this.estado === 'jogando') this.entrada.travarMouse();
     }).catch(() => {});
   }
 
@@ -118,21 +147,100 @@ export class Jogo {
     if (this.estado !== 'titulo' || this.iniciando) return;
     this.iniciando = true;
     this.som.ligar();
+    // Solicita a captura enquanto o clique do usuário ainda está ativo.
+    if (!this.teste) this.entrada.travarMouse();
     this.progresso = await this.salvamento.carregar();
-    const area = this.areas.find((mundo) => mundo.lanternas.some((l) => l.id === this.progresso.descanso));
+    const checkpoint = this.localizarCheckpoint(this.progresso);
     this.catedral.aplicarProgresso(this.progresso.selos);
-    if (area) {
-      this.descanso = area.lanternas.find((l) => l.id === this.progresso.descanso);
+    this.descanso = checkpoint?.lanterna || this.vilarejo.lanternas[0];
+    if (checkpoint) {
       this.renascer();
     } else {
       this.jogador.reiniciar(this.vilarejo.nascimento.x, this.vilarejo.nascimento.z, 0);
       this.reporInimigos();
     }
-    this.estado = 'jogando';
-    this.hud.mostrarTela(null);
-    this.entrada.ignorarTrava = this.teste;
-    this.entrada.travarMouse();
+    this.definirEstado(this.teste || this.entrada.travado ? 'jogando' : 'pausado');
     this.iniciando = false;
+  }
+
+  localizarCheckpoint(progresso) {
+    for (const area of this.areas) {
+      const lanterna = area.lanternas.find((l) => l.id === progresso.descanso);
+      if (lanterna) return { area, lanterna };
+    }
+    return null;
+  }
+
+  definirEstado(estado) {
+    this.estado = estado;
+    this.entrada.habilitada = estado === 'jogando';
+    this.entrada.soltarTudo();
+    if (estado === 'pausado') {
+      this.jogador.carregando = false;
+      this.jogador.avisouCarga = false;
+      this.jogador.bloqueando = false;
+    }
+    this.hud.mostrarTela({ titulo: 'titulo', pausado: 'pausa', morto: 'morte', jogando: null }[estado]);
+    if (estado === 'pausado' || estado === 'titulo') {
+      this.menu.atualizarProgresso(this.progresso, this.localizarCheckpoint(this.progresso)?.lanterna.nome);
+    }
+    if (estado === 'pausado') document.getElementById('continuar').focus();
+    this.atualizarAudio();
+  }
+
+  retomar() {
+    if (this.estado !== 'pausado') return;
+    this.som.ligar();
+    if (this.teste || this.entrada.travado) this.definirEstado('jogando');
+    else this.entrada.travarMouse();
+  }
+
+  voltarAoCheckpoint() {
+    if (this.estado !== 'pausado') return;
+    this.renascer();
+    this.hud.avisar(this.descanso.nome);
+    this.retomar();
+  }
+
+  voltarAoTitulo() {
+    this.tDescanso = 0;
+    this.hud.fecharVeu(false);
+    this.hud.limparAviso();
+    this.hud.mostrarGuardiao(null);
+    this.ativarArea(this.vilarejo);
+    this.definirEstado('titulo');
+    if (this.entrada.travado) document.exitPointerLock();
+    document.getElementById('botao-comecar').focus();
+  }
+
+  apagarProgresso() {
+    if (!this.salvamento.apagar()) {
+      this.menu.avisar('O navegador não permitiu apagar o progresso.', this.estado);
+      return;
+    }
+    this.progresso = { descanso: null, selos: [], guardiaoDerrotado: false };
+    this.descanso = this.vilarejo.lanternas[0];
+    this.catedral.aplicarProgresso(this.progresso.selos);
+    this.reporInimigos();
+    this.voltarAoTitulo();
+    this.menu.avisar('Progresso apagado.', 'titulo');
+  }
+
+  aplicarPreferencias() {
+    salvarPreferencias(this.preferencias);
+    this.render.aplicarPreferencias(this.preferencias);
+    this.atualizarAudio();
+  }
+
+  atualizarAudio() {
+    let faixa = this.mundo === this.catedral ? 'catedral' : 'vilarejo';
+    if (this.mundo === this.catedral && this.jogador.pos.z <= this.guardiao.limiteZ && !this.guardiao.morto) {
+      faixa = this.guardiao.emFaseFinal ? 'guardiao-final' : 'guardiao';
+    }
+    this.som.definirVolume(this.preferencias.efeitos / 100, this.estado === 'pausado' || this.estado === 'titulo');
+    if (this.estado !== 'titulo' || this.trilha.faixa) {
+      this.trilha.atualizar(faixa, this.estado === 'jogando', this.preferencias.musica);
+    }
   }
 
   ativarArea(area) {
@@ -160,6 +268,12 @@ export class Jogo {
     const l = this.descanso;
     this.ativarArea(this.areas.find((area) => area.lanternas.includes(l)));
     this.jogador.reiniciar(l.x - Math.sin(l.olhar) * 1.2, l.z - Math.cos(l.olhar) * 1.2 + 0.001, l.olhar === Math.PI ? 0 : l.olhar);
+    this.jogador.atualizarCamera(0, 0);
+    this.luzJogador.position.copy(this.camera.position);
+    this.congelado = 0;
+    this.tDescanso = 0;
+    this.hud.fecharVeu(false);
+    this.hud.limparAviso();
     this.reporInimigos();
   }
 
@@ -215,6 +329,8 @@ export class Jogo {
     if (c.bloqueio.ativa && perto(c.portao, 3.5)) {
       return [`Selos da grade ${this.progresso.selos.length}/${SELOS_DO_VEU.length} · Ossário a oeste, Relicário a leste`];
     }
+    const passagem = c.passagens.find((p) => perto(p, 2.5));
+    if (passagem) return [passagem.nome];
     if (this.progresso.guardiaoDerrotado && perto(c.altar, 3.5)) return ['O santuário está livre do Véu.'];
     return [];
   }
@@ -301,15 +417,15 @@ export class Jogo {
         this.hud.fecharVeu(true);
         setTimeout(() => {
           this.renascer();
-          this.estado = this.entrada.travado || this.teste ? 'jogando' : 'pausado';
+          this.definirEstado(this.entrada.travado || this.teste ? 'jogando' : 'pausado');
           this.renascendo = false;
-          this.hud.mostrarTela(this.estado === 'pausado' ? 'pausa' : null);
           this.hud.fecharVeu(false);
         }, 1000);
       }
     }
 
     const noSantuario = this.mundo === this.catedral && this.jogador.pos.z <= this.guardiao.limiteZ;
+    this.atualizarAudio();
     this.hud.mostrarGuardiao(noSantuario && !this.guardiao.morto && this.estado === 'jogando' ? this.guardiao : null);
     this.hud.atualizar(dt, this.jogador, CONFIG.jogador.vidaMax, CONFIG.jogador.estaminaMax);
     this.render.desenhar(this.cena, this.camera, this.arma.cena, this.arma.camera);

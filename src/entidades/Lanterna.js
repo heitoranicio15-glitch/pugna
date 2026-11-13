@@ -9,8 +9,8 @@ import { texturas } from '../render/texturas.js';
 import { retro } from '../render/retro.js';
 
 export class Lanterna {
-  constructor(mundo, { id, x, z, olhar = 0 }) {
-    this.id = id; this.x = x; this.z = z; this.olhar = olhar;
+  constructor(mundo, { id, nome, x, z, olhar = 0 }) {
+    this.id = id; this.nome = nome; this.x = x; this.z = z; this.olhar = olhar;
     const m = materiais();
     const g = new THREE.Group();
     const poste = caixa(0.12, 1.5, 0.12, m.metal, 1); poste.position.y = 0.75;

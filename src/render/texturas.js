@@ -61,20 +61,58 @@ function pedra() {
 }
 
 function calcamento() {
-  // Pedras irregulares: cada pixel pertence à "semente" mais próxima.
+  // Um trecho maior e ladrilhável, com pedras, juntas de barro e bordas lascadas.
+  const tam = 128;
   const r = criarSorteio(23);
-  const pts = Array.from({ length: 14 }, () => [r() * 32, r() * 32, 0.6 + r() * 0.6]);
-  return pintarTextura(32, (x, y) => {
-    let d1 = 99, d2 = 99, tom = 1;
+  const pts = Array.from({ length: 81 }, (_, i) => [
+    ((i % 9) + 0.2 + r() * 0.6) * tam / 9,
+    (Math.floor(i / 9) + 0.2 + r() * 0.6) * tam / 9,
+    0.68 + r() * 0.55,
+  ]);
+  return pintarTextura(tam, (x, y) => {
+    let d1 = Infinity, d2 = Infinity, tom = 1;
     for (const p of pts) {
-      let dx = Math.abs(x - p[0]); dx = Math.min(dx, 32 - dx);
-      let dy = Math.abs(y - p[1]); dy = Math.min(dy, 32 - dy);
-      const d = Math.hypot(dx, dy);
+      let dx = Math.abs(x - p[0]); dx = Math.min(dx, tam - dx);
+      let dy = Math.abs(y - p[1]); dy = Math.min(dy, tam - dy);
+      const d = dx * dx + dy * dy;
       if (d < d1) { d2 = d1; d1 = d; tom = p[2]; } else if (d < d2) d2 = d;
     }
-    const borda = d2 - d1 < 1.3;
-    const f = borda ? 0.3 : tom * (0.85 + r() * 0.3);
-    return mult([62, 64, 118], f);
+    const junta = Math.sqrt(d2) - Math.sqrt(d1);
+    if (junta < 1.45) return mult([45, 33, 40], 0.8 + r() * 0.32);
+    const relevo = junta < 2.6 ? 0.8 : 1;
+    const manchas = 0.92 + 0.09 * Math.sin(x * Math.PI / 16 + Math.sin(y * Math.PI / 32));
+    return mult([99, 92, 111], tom * relevo * manchas * (0.92 + r() * 0.16));
+  });
+}
+
+function lajes() {
+  const r = criarSorteio(127);
+  const tons = Array.from({ length: 16 }, () => 0.72 + r() * 0.35);
+  return pintarTextura(128, (x, y) => {
+    const fila = y >> 5;
+    const u = (x + (fila % 2) * 16) % 128;
+    const px = u % 32, py = y % 32;
+    if (px === 0 || py === 0) return mult([38, 32, 48], 0.8 + r() * 0.3);
+    const borda = px === 1 || py === 1 ? 1.25 : px === 31 || py === 31 ? 0.7 : 1;
+    const veios = 0.9 + 0.12 * Math.sin((px + py) * 0.32 + Math.sin(py * 0.2));
+    return mult([112, 103, 124], tons[fila * 4 + (u >> 5)] * borda * veios * (0.91 + r() * 0.18));
+  });
+}
+
+function mosaico() {
+  const r = criarSorteio(137);
+  return pintarTextura(128, (x, y) => {
+    const a = Math.abs(x - 63.5), b = Math.abs(y - 63.5);
+    const raio = Math.hypot(a, b);
+    const losango = a + b;
+    let cor = [69, 55, 81];
+    if (raio > 50 && raio < 55 || losango > 44 && losango < 49) cor = [168, 122, 75];
+    else if (losango <= 44) cor = a < 6 || b < 6 ? [162, 122, 78] : [112, 50, 67];
+    else if (raio < 50) cor = [85, 61, 104];
+    else if ((x >> 4) % 2 === (y >> 4) % 2) cor = [96, 79, 100];
+    const desgaste = r() < 0.06 ? 0.58 : 1;
+    const junta = x % 4 === 0 || y % 4 === 0 ? 0.64 : 1;
+    return mult(cor, junta * desgaste * (0.88 + r() * 0.24));
   });
 }
 
@@ -100,9 +138,11 @@ function madeira() {
 
 function terra() {
   const r = criarSorteio(53);
-  return pintarTextura(32, () => {
-    const f = 0.6 + r() * 0.6;
-    return r() < 0.2 ? mult([34, 62, 74], f) : mult([36, 40, 82], f);
+  return pintarTextura(128, (x, y) => {
+    const u = x * Math.PI / 64, v = y * Math.PI / 64;
+    const limo = Math.sin(u * 2 + Math.cos(v * 3)) * Math.cos(v * 2 - u);
+    const f = 0.74 + r() * 0.38 + 0.13 * Math.cos(u * 5 + v * 4);
+    return mult(limo > 0.24 ? [43, 55, 47] : [56, 46, 58], f);
   });
 }
 
@@ -160,7 +200,7 @@ let cache = null;
 export function texturas() {
   if (!cache) {
     cache = {
-      pedra: pedra(), calcamento: calcamento(), telhado: telhado(), madeira: madeira(),
+      pedra: pedra(), calcamento: calcamento(), lajes: lajes(), mosaico: mosaico(), telhado: telhado(), madeira: madeira(),
       terra: terra(), metal: metal(), tecido: tecido(),
       janelaAcesa: janela(true), janelaApagada: janela(false), vitral: vitral(),
       brilho: brilho(), nevoa: nevoa(),

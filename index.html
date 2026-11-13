@@ -27,19 +27,63 @@
   <div id="tela-titulo" class="tela">
     <h1 id="titulo-jogo">PUGNA</h1>
     <p class="subtitulo">a noite não termina</p>
-    <button id="botao-comecar">começar</button>
+    <div class="acoes-menu">
+      <button id="botao-comecar" class="principal">Começar</button>
+      <button id="opcoes-titulo">Configurações</button>
+      <button id="reset-titulo" class="oculto">Apagar progresso</button>
+    </div>
+    <p id="estado-titulo" class="estado-menu" role="status"></p>
     <p class="dica">
       WASD andar · mouse olhar · Shift correr · Espaço pular<br />
       clique esquerdo atacar (segure: ataque forte) · clique direito bloquear<br />
-      Ctrl, Alt ou Q esquivar · E interagir · F tela cheia
+      Ctrl, Alt ou Q esquivar · E interagir · F tela cheia · Esc pausar
     </p>
   </div>
 
   <!-- Pausa (aparece quando o mouse é solto com Esc). -->
   <div id="tela-pausa" class="tela oculto">
-    <h2>pausado</h2>
-    <p class="dica">clique para continuar</p>
+    <div class="painel-menu">
+      <h2>Pausado</h2>
+      <p id="estado-pausa" class="estado-menu" role="status"></p>
+      <div class="acoes-menu">
+        <button id="continuar" class="principal">Continuar</button>
+        <button id="voltar-checkpoint">Voltar ao checkpoint</button>
+        <button id="opcoes-pausa">Configurações</button>
+        <button id="voltar-titulo">Voltar ao título</button>
+        <button id="reset-pausa">Apagar progresso</button>
+      </div>
+    </div>
   </div>
+
+  <div id="tela-opcoes" class="tela oculto">
+    <section class="painel-menu" aria-labelledby="titulo-opcoes">
+      <h2 id="titulo-opcoes">Configurações</h2>
+      <form id="preferencias" class="preferencias">
+        <label>Música <output for="musica"></output><input id="musica" name="musica" type="range" min="0" max="100"></label>
+        <label>Efeitos <output for="efeitos"></output><input id="efeitos" name="efeitos" type="range" min="0" max="100"></label>
+        <label>Sensibilidade do mouse <output for="sensibilidade"></output><input id="sensibilidade" name="sensibilidade" type="range" min="40" max="200" step="5"></label>
+        <label>Brilho <output for="brilho"></output><input id="brilho" name="brilho" type="range" min="70" max="160" step="5"></label>
+        <label>Pixelização
+          <select name="resolucao">
+            <option value="180">Alta</option><option value="270">Média</option><option value="360">Baixa</option>
+          </select>
+        </label>
+        <label>Tremor dos vértices <input name="tremor" type="checkbox"></label>
+      </form>
+      <div class="acoes-menu"><button id="fechar-opcoes" class="principal">Voltar</button></div>
+    </section>
+  </div>
+
+  <dialog id="confirmar-reset" class="painel-menu" aria-labelledby="titulo-reset" aria-describedby="texto-reset">
+    <form method="dialog">
+      <h2 id="titulo-reset">Apagar progresso?</h2>
+      <p id="texto-reset">Isso apaga a lanterna salva, os selos e a vitória sobre o Guardião neste navegador. Suas configurações serão mantidas.</p>
+      <div class="acoes-menu">
+        <button value="cancelar" autofocus>Cancelar</button>
+        <button value="apagar" class="perigo">Apagar progresso</button>
+      </div>
+    </form>
+  </dialog>
 
   <!-- Tela de morte. -->
   <div id="tela-morte" class="tela oculto">

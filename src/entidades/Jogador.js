@@ -34,7 +34,7 @@ export class Jogador {
     this.tAcao = 0;             // tempo dentro da ação atual
     this.ataque = null;         // 'leve' ou 'forte'
     this.golpeAlternado = false;
-    this.carregando = false; this.tCarga = 0;
+    this.carregando = false; this.tCarga = 0; this.avisouCarga = false;
     this.bloqueando = false;
     this.tEsquiva = 0; this.esperaEsquiva = 0; this.invencivel = 0;
     this.dirEsquiva = new THREE.Vector2();
@@ -57,8 +57,9 @@ export class Jogador {
     if (this.morto) { this.atualizarCamera(dt, 0); return; }
 
     // ---------- olhar ----------
-    this.yaw -= e.mouseDX * C.sensibilidadeMouse;
-    this.pitch = THREE.MathUtils.clamp(this.pitch - e.mouseDY * C.sensibilidadeMouse, -1.45, 1.45);
+    const sensibilidade = C.sensibilidadeMouse * this.jogo.preferencias.sensibilidade / 100;
+    this.yaw -= e.mouseDX * sensibilidade;
+    this.pitch = THREE.MathUtils.clamp(this.pitch - e.mouseDY * sensibilidade, -1.45, 1.45);
 
     // ---------- combate (decide o estado antes de mover) ----------
     this.atualizarCombate(dt, e);

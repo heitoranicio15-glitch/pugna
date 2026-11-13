@@ -16,6 +16,7 @@ const FRAG = /* glsl */ `
   uniform float uNiveis;   // tons por canal
   uniform float uDither;
   uniform float uEscurecer; // 0 = normal, 1 = preto (usado em transições)
+  uniform float uBrilho;
   varying vec2 vUv;
 
   // Matriz de Bayer 4x4: o padrão clássico de pontilhado.
@@ -42,7 +43,7 @@ const FRAG = /* glsl */ `
     cor *= 1.0 - dot(c, c) * 0.85;
 
     // Converte de luz "linear" para as cores da tela (sRGB), com um leve contraste.
-    cor = pow(max(cor, 0.0), vec3(1.0 / 2.2));
+    cor = pow(max(cor * uBrilho, 0.0), vec3(1.0 / 2.2));
     cor = mix(cor, cor * cor * (3.0 - 2.0 * cor), 0.35);
 
     // Reduz as cores com pontilhado.
@@ -76,6 +77,7 @@ export class RenderizadorRetro {
       uNiveis: { value: CONFIG.render.niveisDeCor },
       uDither: { value: CONFIG.render.forcaDither },
       uEscurecer: { value: 0 },
+      uBrilho: { value: 1 },
     };
     this.cenaFinal = new THREE.Scene();
     this.cameraFinal = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -90,6 +92,7 @@ export class RenderizadorRetro {
     ));
 
     this.proporcao = 16 / 9;
+    this.alturaInterna = CONFIG.render.alturaInterna;
     addEventListener('resize', () => this.ajustarTamanho());
     this.ajustarTamanho();
   }
@@ -97,12 +100,20 @@ export class RenderizadorRetro {
   ajustarTamanho() {
     const l = innerWidth, a = innerHeight;
     this.proporcao = l / a;
-    const altura = CONFIG.render.alturaInterna;
+    const altura = this.alturaInterna;
     const largura = Math.max(2, Math.round(altura * this.proporcao / 2) * 2);
     this.renderer.setSize(l, a, false);
     this.alvo.setSize(largura, altura);
     this.uniformes.uRes.value.set(largura, altura);
     uniformesRetro.uRetroRes.value.set(largura, altura);
+  }
+
+  aplicarPreferencias({ resolucao, brilho, tremor }) {
+    this.uniformes.uBrilho.value = brilho / 100;
+    uniformesRetro.uTremor.value = tremor ? CONFIG.render.tremor : 0;
+    if (resolucao === this.alturaInterna) return;
+    this.alturaInterna = resolucao;
+    this.ajustarTamanho();
   }
 
   /** Desenha a cena do mundo e, por cima, a cena da arma (mãos/espada). */

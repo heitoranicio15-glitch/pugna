@@ -1,14 +1,24 @@
 # Créditos
 
 ## Código e arte
-Todo o conteúdo desta fase foi feito no próprio código do projeto:
+Arte e efeitos produzidos no código do projeto:
 
 - **Modelos 3D**: montados com formas simples (caixas, cones, cilindros) em `src/mundo/pecas.js` e `src/entidades/`.
 - **Texturas**: pintadas pixel a pixel em `src/render/texturas.js`.
-- **Sons**: sintetizados em tempo real em `src/audio/Som.js` (não há arquivos de áudio).
+- **Efeitos sonoros**: sintetizados em tempo real em `src/audio/Som.js`.
 - **Lua e céu**: desenhados por shaders em `src/mundo/Lua.js` e `src/mundo/Ceu.js`.
 
-Nenhum asset de terceiros foi baixado até agora. A pasta `public/assets` está vazia de propósito.
+## Trilha sonora
+
+As quatro faixas vieram do ZIP fornecido pelo colaborador, que confirmou a autorização
+de publicação. Os arquivos de origem não trazem título nem autoria nos metadados.
+
+| Arquivo em `public/assets/trilha/` | Uso no jogo |
+|---|---|
+| `vilarejo.mp3` | Exploração do vilarejo |
+| `catedral.mp3` | Exploração da catedral |
+| `guardiao.mp3` | Primeira fase do Guardião do Véu |
+| `guardiao-fase-final.mp3` | Segunda fase do Guardião do Véu |
 
 ## Bibliotecas
 | Biblioteca | Para quê | Licença |
