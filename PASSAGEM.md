@@ -49,6 +49,13 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Direção de arte, Fase 1: limpeza (pronto).** Relatório em `docs/auditoria-visual.md`. As casas importadas tinham buracos de verdade: `House_3` e `House_4` são ruínas sem telhado, e o muro `TallWallBricks` só tem a face da frente (nos lados sul e leste da muralha o verso ficava para dentro da vila). Todas eram esticadas numa proporção diferente.
+  - **Kit modular próprio** em `src/mundo/pecas.js`: `casa()` monta paredes de pedra fechadas, rodapé escuro, cantos e vigas de madeira queimada, telhado de ardósia com beiral e empenas de pedra; porta, janela, pé-direito, beiral e caimento iguais para todas (`CONFIG.arte.casa`), sem sorteio. `torre()`, `muralha()`, as paredes da catedral, das alas e dos Bairros também usam só peças do jogo. Cada casa é desenhada com 6 a 8 malhas (uma por material).
+  - **Textura do mesmo tamanho em tudo** (`CONFIG.arte.ladrilho`, por família de material): pedra 2 m, madeira 1,4, telhado 2, calçamento 4, lajes 4, assoalho 1,6. Os modelos importados com pedra/madeira/telhado no HD têm UV projetado em metros, já com a escala do encaixe (`src/render/modelos.js`).
+  - **Adereços:** teste novo `tests/aderecos.test.js` (falha se um adereço flutuar, entrar em parede ou casa, ficar sem chão ou, se for de parede, ficar solto). Foram movidos ou tirados uns 20 (lista no relatório). O colisor do riacho ganhou `agua: true`.
+  - **17 GLBs sem uso apagados** (casas, torres, muros e peças de catedral do Quaternius, RGS e KayKit), uns 4 MB a menos; `CREDITOS.md` atualizado.
+  - **Decidido pela IA (o Heitor revisa):** trocar todas as construções importadas pelo kit do próprio jogo, em vez de consertar modelo por modelo (é o que garante parede fechada e um só conjunto de materiais); os dois livros dos bancos da nave saíram; o altar das capelas voltou a ser de pedra; as medidas de porta, janela e beiral são minhas. Save, IDs, checkpoints, colisores das casas e rotas não mudaram. `npm test` (119) e `npm run build` passam; **ninguém viu ainda**: olhar a vila, a igreja por dentro e a estrada no link.
+
 - **S6: a floresta, ligada pela estrada (pronto).** Spec 05. Área nova `floresta` (`src/mundo/Floresta.js`, `CONFIG.areas.floresta`), 40 × 90 m, `usaCeu` true, `luzJogador` 5, névoa verde-azulada 0x16302f. 40 árvores, 5 troncos caídos, 6 rochas, 26 vagalumes, paredes invisíveis nos 4 lados. Sem assets novos.
   - **Ligação:** a ponta sul da Estrada deixou de ser fechada. Portal `E — seguir pela trilha da floresta` em (0; 57,4) leva à floresta (chegada (0; -38,5)); na floresta, `E — voltar à estrada` em (0; -42,4) volta à estrada (chegada nova `chegadas.floresta` (0; 52,4)). A carroça virou cenário ao lado da pista; saíram a placa "Em obras", as estacas e o colisor que fechava a ponta; entrou a placa "Trilha da floresta". No fim da trilha há uma barricada com a placa "Trilha interrompida" (onde o Castelo entra depois).
   - **Lanterna** `floresta-clareira` ("Clareira da Floresta") a uns 6 m da chegada. **Patrulhas:** caçador, cavaleiro e penitente, com os números atuais de `CONFIG.inimigos`, a mais de 18 m da chegada e da lanterna.
@@ -295,6 +302,7 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
   taverna e Catedral e embarcadouro na estrada.
 - [x] **Gráficos, seleção de fantasia sombria** — Witch Hunter, Scary
   Doctor, mulher encapuzada, Alma das Cinzas e Cavaleiro Negro do Sketchfab.
+- [ ] **Direção de arte (prompt 7)** — Fase 1 limpeza feita (kit modular, textura por metro, teste de adereços); Fase 2 plano da vila e Fase 3 atmosfera na fila
 - [ ] **Gráficos, próximo incremento** — testar o percurso real e medir o custo
   do HD com GPU. Usar o guia gráfico para comparar o primeiro piloto de
   Blender com a fachada procedural. Alinhar iluminação com S5 e os modelos

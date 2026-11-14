@@ -20,7 +20,7 @@ export function montarRio(estrada, { z, riacho }, meioX, larguraDaPonte) {
   });
   const pedras = [
     [-27, -1], [-19, 1], [-15.4, -1], [-13, 1], [-10.9, -1], [-5.7, 1],
-    [5.35, -1], [7.9, 1], [12.4, -1], [15.4, 1], [21, -1], [32, 1],
+    [5.35, -1], [7.9, 1], [13.1, -1], [15.4, 1], [21, -1], [32, 1],
   ];
   for (const [i, [x, lado]] of pedras.entries()) {
     const dz = lado * (margem + 0.15 + 0.45 * (i % 2));
