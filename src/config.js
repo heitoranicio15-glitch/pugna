@@ -61,6 +61,39 @@ export const CONFIG = {
   areas: {
     vilarejo: { luzJogador: 5 },
     catedral: { luzJogador: 8 },
+    // Estrada ao sul do vilarejo (120 x 30 m, corre de norte a sul; o vilarejo fica no norte).
+    estrada: {
+      luzJogador: 5,
+      limites: { minX: -18, maxX: 12, minZ: -60, maxZ: 60 },
+      nevoaDensidade: 0.013,   // um pouco mais rala que a do vilarejo: dá para ver a estrada longe
+      larguraDaPista: 8,       // terra batida, centrada em x = 0
+      portaoNorte: { z: -60 }, // o Portão Sul do vilarejo visto de fora (portal para o vilarejo)
+      ponte: { z: 22, comprimento: 8, riacho: 6 },
+      carroca: { z: 57 },      // carroça tombada: fecha a ponta sul (áreas novas virão depois)
+      taverna: { x: -12.5, z: -15, largura: 14, profundidade: 10, altura: 6 },   // fachada voltada para a pista
+      fumaca: { particulas: 5, subida: 3.2, tempo: 4.5 },
+      lanterna: { x: -5.4, z: -10.6 },  // 'taverna-da-estrada', perto da porta
+    },
+    // Interior da taverna (12 x 9 m). Sem inimigos.
+    taverna: {
+      luzJogador: 3,           // o salão já é iluminado pela lareira
+      limites: { minX: -6, maxX: 6, minZ: -4.5, maxZ: 4.5 },
+      nevoa: { cor: 0x2b1a12, densidade: 0.03 },   // fraca e quente
+      altura: 3.5,
+      lareira: { intensidade: 38, alcance: 14 },    // luz laranja que tremula
+      lampiao: { intensidade: 12, alcance: 12 },    // vela no teto, bem fraca
+      // O taverneiro (decidido pela IA): fala em rodízio, tom seco, sem explicar mecânica.
+      taverneiro: {
+        alcance: 3.2,
+        falas: [
+          '— Senta. Ou não. A lareira não pergunta.',
+          '— A carroça lá no sul tombou faz tempo. Ninguém foi ver.',
+          '— Alguém deixou um bilhete na mesa. Não é meu.',
+          '— Não pergunto de onde vem o sangue. Só onde pinga.',
+        ],
+        segundosDaFala: 4,
+      },
+    },
   },
 
   // ---- Jogador ----

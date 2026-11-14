@@ -45,7 +45,7 @@ async function comecar() {
 }
 
 const estado = () => page.evaluate(() => ({
-  area: jogo.mundo === jogo.catedral ? 'catedral' : 'vilarejo',
+  area: jogo.mundo.id,
   pos: jogo.jogador.pos.toArray(),
   progresso: jogo.progresso,
   morte: jogo.jogador.morto,
@@ -107,6 +107,50 @@ async function mirar(x, y, z) {
     jogo.hud.limparAviso();
   }, { x, y, z });
   await passos();
+}
+
+// Vilarejo -> estrada -> taverna e de volta; bilhete, taverneiro e a lanterna nova (sobrevive ao recarregar).
+async function validarEstradaETaverna() {
+  await page.evaluate(() => jogo.ativarArea(jogo.vilarejo));
+  await prepararCombate();
+  await posicionar(0, 54.6);
+  await passos();
+  assert.match((await estado()).aviso, /sair pelo Portão Sul/);
+  await tecla('e');
+  assert.equal((await estado()).area, 'estrada');
+  assert.ok((await estado()).pos[2] < -50);
+  await prepararCombate();
+  await posicionar(-6.2, -15, Math.PI / 2);
+  await passos();
+  assert.match((await estado()).aviso, /entrar na taverna/);
+  await tecla('e');
+  assert.equal((await estado()).area, 'taverna');
+  await posicionar(-3.35, 1.5, 0);
+  await mirar(-3.35, 1.0, 0.35);
+  assert.match((await estado()).aviso, /ler: Bilhete na mesa/);
+  await tecla('e');
+  assert.ok((await estado()).progresso.eventos.includes('taverna:bilhete-da-mesa'));
+  await page.evaluate(() => jogo.fecharPainel(false));
+  await passos();
+  await posicionar(-2, -1.35, 0);
+  await mirar(-2, 1.4, -3.7);
+  assert.match((await estado()).aviso, /falar com o taverneiro/);
+  await tecla('e');
+  assert.match((await estado()).aviso, /Senta/);
+  await posicionar(0, 3.9, 0);
+  await passos();
+  assert.match((await estado()).aviso, /sair da taverna/);
+  await tecla('e');
+  assert.equal((await estado()).area, 'estrada');
+  await prepararCombate();
+  await posicionar(-6.6, -10.6, Math.PI / 2);
+  await passos();
+  assert.match((await estado()).aviso, /descansar na lanterna/);
+  await tecla('e');
+  assert.equal((await estado()).progresso.descanso, 'taverna-da-estrada');
+  await comecar();
+  assert.equal((await estado()).area, 'estrada');
+  assert.ok(Math.abs((await estado()).pos[2] + 10.6) < 1.5);
 }
 
 async function validarExploracao() {
@@ -531,8 +575,9 @@ try {
   await comecar();
   assert.ok((await estado()).pos[2] > 50);
   await validarExploracao();
+  await validarEstradaETaverna();
   assert.deepEqual(erros, []);
-  console.log('Passou: Catedral, navegação, combate, saves antigos, mira, baú, frasco com tempo, rally, bolsa sem pausa, osso de retorno, chave, sacristia e atalho após recarregar.');
+  console.log('Passou: Catedral, navegação, combate, saves antigos, mira, baú, frasco com tempo, rally, bolsa sem pausa, osso de retorno, chave, sacristia, atalho após recarregar, estrada, taverna e a lanterna nova.');
   if (testarCelular) {
     await validarMobile(browser, url);
     console.log('Passou: cenário de celular (congelado, fora dos testes obrigatórios).');
