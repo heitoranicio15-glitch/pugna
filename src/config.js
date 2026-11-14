@@ -202,6 +202,11 @@ export const CONFIG = {
         evitaPulando: true, alturaPulo: 0.25, abreExecucao: false, aguentaLeve: false, aviso: 0xffb21e,
       },
     },
+    // Avisos com nome: uma sequência pode trocar a cor de um golpe escrevendo
+    // aviso: 'nome' (veja a fase final do Guardião). O inaparável é
+    // branco-violeta (o vermelho é do pesado e o amarelo, da rasteira) e tem
+    // som próprio, um sino grave duplo.
+    avisosInimigos: { inaparavel: 0xd9c8ff },
     // Como um golpe se liga ao seguinte numa sequência: quanto espera na
     // recuperação e que fração do preparo do próximo golpe já começa cumprida.
     emendaInimigos: { espera: 0.16, adiantar: 0.35 },
@@ -277,14 +282,29 @@ export const CONFIG = {
         { golpes: ['pesado'], peso: 2 },
         { golpes: ['rasteira'], peso: 1.5 },
       ],
+      // Fase final (abaixo de metade da vida, Etapa C, PR C2): não dá para vencer
+      // só com parry. Pelo menos metade do peso é de golpes que o tiro NÃO apara
+      // (aparavel: false, aviso branco-violeta 'inaparavel'): a resposta é a
+      // esquiva ou o quickstep. Sequências de até 3 golpes.
+      //   desequilibrio  segundos aberto depois de um aparo (o visceral só
+      //                  sai para quem emenda na hora)
+      //   virada         na troca de fase ele ruge, fica invencível por
+      //                  "invencivel" segundos e se afasta "passo" metros
       faseFinal: {
         velPerseguir: 2.9, dano: 25, preparo: 0.73, recuperacao: 1.1,
         emenda: { espera: 0.25, adiantar: 0 },
+        desequilibrio: 0.9,
+        virada: { invencivel: 1, passo: 1.2 },
         ataques: [
-          // dois golpes laterais: "lado" diz de que lado a maça vem
-          { golpes: [{ tipo: 'alto', lado: 1 }, { tipo: 'alto', lado: -1 }], peso: 3 },
-          { golpes: ['rasteira'], peso: 2 },
-          { golpes: ['pesado'], peso: 1 },
+          // varrida dupla inaparável: "lado" diz de que lado a maça vem
+          { golpes: [
+            { tipo: 'alto', lado: 1, aparavel: false, aviso: 'inaparavel' },
+            { tipo: 'alto', lado: -1, aparavel: false, aviso: 'inaparavel' },
+          ], peso: 3 },
+          // pesado inaparável que segura a pose antes de bater
+          { golpes: [{ tipo: 'pesado', atraso: 0.35, aparavel: false, aviso: 'inaparavel' }], peso: 2 },
+          { golpes: ['rasteira', 'alto'], peso: 2 },
+          { golpes: ['alto', 'alto'], peso: 2 },
         ],
       },
     },

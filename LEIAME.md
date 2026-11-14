@@ -223,8 +223,13 @@ Aproxime-se do portal ao norte do vilarejo e pressione **E**. A nave tem uma
 lanterna à direita da entrada. Explore o **Ossário**, a oeste, e o **Relicário**,
 a leste. Recolha com **E** o selo de cada ala para abrir a grade do **Santuário**.
 O **Guardião do Véu** usa golpes altos, pesados e rasteiras. Quando perde
-metade da vida, passa a atacar com dois golpes laterais. A posição da maça e
-dois sons diferentes sinalizam a sequência.
+metade da vida, ruge, fica invencível por 1 segundo e se afasta um passo. Na
+**fase final** ele não pode ser vencido só com parry: a maior parte dos golpes
+acende a arma e os olhos em **branco-violeta** e toca um sino grave duplo, que
+cresce ao contrário. Esses golpes (a varrida dupla e um pesado que segura a pose)
+**não podem ser aparados**: o tiro gasta a bala e só arranha. A resposta é a
+esquiva ou o quickstep. Os outros golpes da fase (rasteira + alto, alto + alto)
+seguem as regras de sempre, e o desequilíbrio depois de um parry dura só 0,9 s.
 Para voltar ao vilarejo, use **E** na porta ao sul da nave.
 
 O jogo guarda neste navegador a última lanterna usada, os dois selos e a derrota
@@ -353,6 +358,11 @@ pugna/
 - **mudar a variação do aviso:** `combate.imprevisibilidade.variacaoPreparo`;
   **golpe atrasado:** escreva o golpe da sequência como
   `{ tipo: 'pesado', atraso: 0.35 }` em `CONFIG.inimigos`
+- **golpe que não pode ser aparado:** escreva o golpe como
+  `{ tipo: 'pesado', aparavel: false, aviso: 'inaparavel' }` (qualquer campo do
+  tipo pode ser trocado assim); a cor fica em `combate.avisosInimigos`
+- **mudar a fase final do Guardião:** `CONFIG.inimigos.guardiao.faseFinal`
+  (sequências, `desequilibrio` e `virada`: invencibilidade e passo para trás)
 - **mudar as regras contra o spam:** blocos `combate.interrupcao` (apanhar corta
   o ataque), `combate.atordoamentoInimigo` (firmeza), `combate.rally` e
   `combate.frasco` em `src/config.js`
@@ -430,7 +440,7 @@ pugna/
 ## Testes
 
 - `npm test` verifica a janela de acerto, o custo da esquiva, o quickstep com a mira, o tiro de pistola
-  (janela do parry, balas, parede, alcance), o golpe crítico, o visceral, a execução e a carga do forte, as fases e os tipos de ataque dos inimigos, a interrupção ao apanhar,
+  (janela do parry, balas, parede, alcance), o golpe crítico, o visceral, a execução e a carga do forte, as fases e os tipos de ataque dos inimigos, o golpe inaparável e a fase final do Guardião, a interrupção ao apanhar,
   a firmeza dos inimigos, o rally, o frasco interrompido, a mira travada, a câmera em terceira pessoa, colisões, navegação,
   interação com objetos, inventário, Osso de Retorno e migração de saves.
 - `npx playwright-core install chromium` instala o navegador de teste.
@@ -438,8 +448,8 @@ pugna/
   incluindo transições, checkpoint, morte, recarga e derrota do Guardião.
   Também testa o percurso da vila até a sacristia, o frasco com tempo, o rally,
   a bolsa sem pausa, o Osso de Retorno, o contador de balas (atirar baixa,
-  descansar repõe), o dano do forte com carga, um visceral no Guardião e o
-  atalho após recarregar.
+  descansar repõe), o dano do forte com carga, um visceral no Guardião, a
+  virada de fase e o aviso do golpe inaparável, e o atalho após recarregar.
   O cenário de celular está congelado e saiu dos testes obrigatórios. Para
   conferi-lo mesmo assim, rode `npm run test:celular`.
   Para usar um Chrome instalado, aponte `PUGNA_CHROME` para o executável.

@@ -579,6 +579,104 @@ test('regra de ouro: a rasteira pede pulo; o tiro não a apara, gasta bala e avi
   assert.equal(jogador.receberDano(10, inimigo.pos, inimigo, montarGolpe(CONFIG.inimigos.cavaleiro, 'alto')), 'ferido');
 });
 
+test('golpe inaparável: aviso branco-violeta, o tiro não apara, gasta bala e avisa; a esquiva evita', () => {
+  const { jogador, eventos, inimigo, rodar, entrada } = duelo('guardiao');
+  const P = CONFIG.combate.pistola, cor = CONFIG.combate.avisosInimigos.inaparavel;
+  // a cor é própria: não é a do pesado nem a da rasteira
+  assert.ok(!Object.values(CONFIG.combate.ataquesInimigos).some((t) => t.aviso === cor));
+  const erros = [];
+  eventos.em('jogador:resposta-errada', (e) => erros.push([e.resposta, e.tipo, e.aviso]));
+  const pesadoInaparavel = { tipo: 'pesado', aparavel: false, aviso: 'inaparavel' };
+  const g = montarGolpe(CONFIG.inimigos.guardiao, pesadoInaparavel);
+  // sobrescreve só o que pediu: o resto continua sendo do pesado
+  assert.deepEqual([g.tipo, g.aparavel, g.aviso, g.nomeAviso, g.aguentaLeve], ['pesado', false, cor, 'inaparavel', true]);
+
+  inimigo.mudar('perseguir');
+  inimigo.atacar([pesadoInaparavel]);
+  inimigo.atualizar(0.2);
+  assert.deepEqual([inimigo.olho.color.getHex(), inimigo.aco.emissive.getHex() > 0], [cor, true]);
+  // Tiro onde o pesado comum seria aparado: não desequilibra, só arranha e avisa (sem texto).
+  inimigo.ataque.t = inimigo.golpe.preparo - P.janelaNoAviso * inimigo.golpe.janelaAparar * 0.5;
+  assert.deepEqual(jogador.atirar(), { acertou: true, aparou: false });
+  assert.equal(jogador.balas, P.balasMax - 1);
+  assert.deepEqual([inimigo.estado, inimigo.vida], ['preparo', CONFIG.inimigos.guardiao.vida - P.dano]);
+  assert.deepEqual(erros, [['aparar', 'pesado', 'inaparavel']]);
+  rodar(() => inimigo.estado === 'recuperacao');
+  assert.equal(jogador.vida, 100 - inimigo.golpe.dano);
+
+  // A esquiva no fim do aviso evita o golpe.
+  jogador.reiniciar(0, 0, 0);
+  inimigo.mudar('perseguir');
+  inimigo.atacar([pesadoInaparavel]);
+  rodar(() => inimigo.ataque.t + 0.05 >= inimigo.golpe.preparo);
+  entrada.apertou = (codigo) => codigo === 'KeyQ';
+  jogador.atualizar(0.01);
+  entrada.apertou = () => false;
+  assert.ok(jogador.invencivel > 0);
+  rodar(() => inimigo.estado === 'recuperacao');
+  assert.equal(jogador.vida, 100);
+});
+
+test('fase final do Guardião: sequências da lista nova, metade do peso inaparável e desequilíbrio de 0,9 s', () => {
+  const { inimigo } = duelo('guardiao');
+  const F = CONFIG.inimigos.guardiao.faseFinal;
+  const inaparavel = (s) => s.golpes.some((e) => montarGolpe(CONFIG.inimigos.guardiao, e).nomeAviso === 'inaparavel');
+  const total = F.ataques.reduce((soma, s) => soma + s.peso, 0);
+  const semParry = F.ataques.filter(inaparavel).reduce((soma, s) => soma + s.peso, 0);
+  assert.ok(semParry >= total / 2, `${semParry} de ${total}`);
+  assert.ok(F.ataques.every((s) => s.golpes.length <= 3));
+  assert.equal(F.desequilibrio, 0.9);
+
+  inimigo.receberDano(CONFIG.inimigos.guardiao.vida / 2 + 1, { x: 0, z: -1 }, 0, true);
+  assert.equal(inimigo.emFaseFinal, true);
+  let semente = 11;
+  inimigo.sorteio = () => ((semente = (semente * 16807) % 2147483647) / 2147483647);
+  const vistas = new Set();
+  for (let i = 0; i < 200; i++) {
+    inimigo.mudar('perseguir');
+    inimigo.atacar();
+    assert.ok(F.ataques.includes(inimigo.ultimaSequencia));
+    vistas.add(inimigo.ultimaSequencia);
+  }
+  assert.equal(vistas.size, F.ataques.length);
+
+  // Aparado na fase final, ele se recompõe em 0,9 s.
+  inimigo.mudar('perseguir');
+  inimigo.serAparado();
+  let t = 0;
+  while (inimigo.estado === 'desequilibrado' && t < 3) { inimigo.atualizar(0.02); t += 0.02; }
+  assert.ok(Math.abs(t - 0.9) < 0.05, `durou ${t}`);
+});
+
+test('virada de fase: rugido, 1 s de invencibilidade e um passo para trás', () => {
+  const { eventos, inimigo, rodar } = duelo('guardiao');
+  const V = CONFIG.inimigos.guardiao.faseFinal.virada;
+  assert.equal(V.invencivel, 1);
+  let rugidos = 0;
+  eventos.em('guardiao:fase-final', () => rugidos++);
+  inimigo.mudar('perseguir');
+  inimigo.atacar(['alto']);
+  const zAntes = inimigo.pos.z;
+  inimigo.receberDano(CONFIG.inimigos.guardiao.vida / 2 + 1, { x: 0, z: -1 }, 0, true);
+  const vida = inimigo.vida;
+  assert.deepEqual([rugidos, inimigo.estado, inimigo.golpe, inimigo.emFaseFinal], [1, 'virada', null, true]);
+  // Invencível: golpe, tiro e visceral não tiram vida.
+  inimigo.receberDano(50, { x: 0, z: -1 }, 0, true);
+  inimigo.levarTiro(6);
+  inimigo.receberVisceral(80, { x: 0, z: -1 });
+  assert.deepEqual([inimigo.vida, inimigo.estado], [vida, 'virada']);
+  rodar(() => false, 45);   // 0,9 s
+  assert.deepEqual([inimigo.vida, inimigo.estado], [vida, 'virada']);
+  assert.ok(zAntes - inimigo.pos.z > V.passo * 0.8, `andou ${zAntes - inimigo.pos.z}`);   // se afastou do jogador (em z = 0)
+  inimigo.receberDano(10, { x: 0, z: -1 }, 0, false);
+  assert.equal(inimigo.vida, vida);
+  rodar(() => false, 10);   // passou de 1 s
+  assert.notEqual(inimigo.estado, 'virada');
+  inimigo.receberDano(10, { x: 0, z: -1 }, 0, false);
+  assert.equal(inimigo.vida, vida - 10);
+  assert.equal(rugidos, 1);
+});
+
 test('regra de ouro: a janela do parry do pesado é menor que a do alto', () => {
   const { jogador, inimigo } = duelo();
   const P = CONFIG.combate.pistola;

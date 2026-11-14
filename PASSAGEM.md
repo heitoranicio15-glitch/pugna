@@ -86,6 +86,14 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
   - **Nenhuma sequência sai três vezes seguidas** (`sortearSequencia` recebe também a penúltima). A regra antiga continua: uma sequência especial não sai duas vezes seguidas.
   - Save não mudou; `Toque.js` não mudou; sem assets novos.
   - **Decidido pela IA (o Heitor revisa):** peso 2 para cada sequência nova; o atraso de 0,35 s fica escrito na própria sequência (não há um valor padrão no `combate`); a variação vale também para o Guardião (inclusive a fase final, que ainda não mudou); o brilho do aviso para de acelerar quando a pose chega ao alto e fica aceso durante o atraso; numa emenda de golpes o adiantamento só come a subida, nunca o atraso.
+- **Etapa C, PR C2: fase final do Guardião (pronto).** Números em `CONFIG.inimigos.guardiao.faseFinal` e `CONFIG.combate.avisosInimigos`:
+  - **Golpe que sobrescreve o tipo:** um golpe da sequência pode trocar qualquer campo do tipo, por exemplo `{ tipo: 'pesado', aparavel: false, aviso: 'inaparavel' }` (`montarGolpe` em `Ataques.js`). Um aviso com nome vira a cor de `combate.avisosInimigos` e fica em `golpe.nomeAviso`.
+  - **Aviso próprio do inaparável:** arma e olhos branco-violeta e um sino grave duplo tocado "ao contrário" (cresce e corta). Sem texto de tutorial.
+  - **Tiro no inaparável:** gasta a bala, só arranha (6) e emite `jogador:resposta-errada` com `aviso: 'inaparavel'`; o HUD só mostra o texto "Pule" para a rasteira comum. A resposta certa é a esquiva ou o quickstep.
+  - **Sequências da fase final:** varrida dupla inaparável (lados +1 e −1) peso 3, pesado inaparável com atraso de 0,35 s peso 2, rasteira + alto peso 2, alto + alto peso 2: 5 de 9 do peso não podem ser aparados.
+  - **Virada de fase:** rugido (som sintetizado), 1 s de invencibilidade (golpe, tiro e visceral não tiram vida) num estado novo `virada`, e ele se afasta 1,2 m do jogador (`faseFinal.virada`). O `desequilibrio` da fase final caiu de 1,15 s para 0,9 s.
+  - `eventoDeDerrota`, IDs e formato do save não mudaram; `Toque.js` não mudou; sem assets novos.
+  - **Decidido pela IA (o Heitor revisa):** a cor branco-violeta é `0xd9c8ff`; o passo para trás é de 1,2 m (um empurrão que some sozinho); durante a virada o Guardião fica de braços abertos encarando o jogador e não ataca; o dano que causa a virada entra inteiro, mas não faz cambalear; o golpe inaparável mantém a pose do tipo (lateral ou pesado), só a cor e o som mudam; o `tests/catedral.mjs` agora espera a virada acabar antes de testar o golpe da fase final (o passo para trás deixava o jogador fora do alcance).
 - **Ganchos deixados:** `inimigo.abertoParaExecucao` (já usado pela execução do B2) e `inimigo.desequilibrar()` (abre o visceral sem execução; serve ao golpe pelas costas da Etapa D). O aviso `jogador:pulou-golpe` sai quando o jogador pula uma rasteira (Etapa D). `jogador.recuperarComGolpe(dano)` é o ponto de entrada do rally (`Infinity` = rally cheio, usado pelo visceral). `Jogador.receberDano` recebe os dados do golpe (`aparavel`, `bloqueavel`, `evitaPulando`...).
 - **Ainda não existe:** contra-ataque pisando e dano extra ao pular contra golpe alto.
 - **Infra:** `jogar.bat` com atualização automática, `atualizar.bat`, e regra de integração automática no `AGENTS.md` com o `CLAUDE.md` apontando para ele.
@@ -113,7 +121,7 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
   - Visceral: depois do parry, o ataque de frente vira um golpe especial, com dano alto (3 a 4×), um instante de cinema (pausa e tremor), invencibilidade durante a animação e rally cheio. O pesado aparado vira execução (usar `inimigo.abertoParaExecucao`, que já existe), com ainda mais dano.
   - Ataque forte carregado por completo: o dano cresce com a carga, e pelas costas abre o visceral.
   - Quickstep: com a mira travada, a esquiva vira um passo curto, com menos invencibilidade e recuperação curta. Sem mira, continua o rolamento. Reduzir um pouco a invencibilidade do rolamento.
-- [ ] **C. Chefe e imprevisibilidade** (C1 feito; faltam C2 fase final e C3 grupo/frasco): pequena variação no tempo do aviso, golpes atrasados, sequências mais longas, e uma fase final do Guardião com golpes que não podem ser aparados (a fase 2 não pode ser vencida só com parry). Inimigos punem quem usa frasco perto deles. Limite de quantos inimigos atacam ao mesmo tempo. Rasteira mais frequente.
+- [ ] **C. Chefe e imprevisibilidade** (C1 e C2 feitos; falta C3 grupo/frasco): pequena variação no tempo do aviso, golpes atrasados, sequências mais longas, e uma fase final do Guardião com golpes que não podem ser aparados (a fase 2 não pode ser vencida só com parry). Inimigos punem quem usa frasco perto deles. Limite de quantos inimigos atacam ao mesmo tempo. Rasteira mais frequente.
 - [ ] **D. Golpe pelas costas e pulo contra rasteira:** agachar (anda devagar, menos barulho), cone de visão, execução silenciosa por trás, alerta dos vizinhos se o jogador for visto (sem botão de toque). No ar durante o golpe ativo da rasteira, não leva dano; cair perto abre o contra-ataque pisando; pular contra ataque alto leva dano extra.
 - [ ] **E. Ajuste fino com os amigos.**
 - [ ] **Depois:** broquel como item ou mão secundária alternativa (bloqueio), celular de volta se fizer sentido, golpes em sequência, armas com ritmos diferentes, interior de mais casas, sons gravados, Supabase (login e progresso), multiplayer para uns 5 amigos, mapa maior (floresta, castelo, caverna), modelos e animações de verdade.
@@ -125,7 +133,7 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 - [x] **0. Specs 00 a 08 escritas** (`docs/specs/`)
 - [x] **0b. Contrato de área aplicado** (spec 00: `src/mundo/areas.js`)
 - [x] **1. B: pistola, parry, visceral e quickstep** (spec 07; Opus ou Fable) — B1, B2 e B3 feitos (pistola, parry, balas, broquel fora; visceral, execução, forte carregado; quickstep)
-- [ ] **2. C: chefe e imprevisibilidade** (spec 08; Opus ou Fable) — C1 feito (variação do aviso, golpe atrasado, sequências novas, rasteira mais frequente); faltam C2 fase final e C3 grupo/frasco
+- [ ] **2. C: chefe e imprevisibilidade** (spec 08; Opus ou Fable) — C1 e C2 feitos (variação do aviso, golpe atrasado, sequências novas, rasteira mais frequente; fase final do Guardião com golpes inaparáveis); falta C3 grupo/frasco
 - [ ] **3. S2: botão de gráfico PS1 / HD** (spec 02)
 - [ ] **4. S3: estrada e taverna** (spec 01)
 - [ ] **5. D: golpe pelas costas e pulo contra rasteira** (sem spec ainda; Opus)

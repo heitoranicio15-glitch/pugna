@@ -8,6 +8,9 @@
 //    alto      → tiro de pistola no tempo certo (parry) ou esquivar
 //    pesado    → parry com janela menor (abre a execução) ou esquivar
 //    rasteira  → pular (é larga, não pode ser aparada)
+//  Um golpe da sequência pode sobrescrever campos do tipo, por exemplo
+//  { tipo: 'pesado', aparavel: false, aviso: 'inaparavel' } (fase final do
+//  Guardião): pose do pesado, mas o tiro não apara e o aviso tem cor própria.
 //
 //  Os números de cada tipo ficam em CONFIG.combate.ataquesInimigos e multiplicam
 //  os números do inimigo (CONFIG.inimigos). Este arquivo só tem REGRAS: não
@@ -20,17 +23,22 @@ export const ehFaseDeAtaque = (estado) => FASES.includes(estado);
 
 /**
  * Junta os números do inimigo com os do tipo de ataque.
- * entrada: 'alto' | 'pesado' | 'rasteira', ou { tipo, lado, atraso } para um
- * golpe lateral ou atrasado.
+ * entrada: 'alto' | 'pesado' | 'rasteira', ou { tipo, lado, atraso, ...campos }
+ * para um golpe lateral, atrasado ou que sobrescreve campos do tipo (aparavel,
+ * aviso...). Um aviso escrito como nome ('inaparavel') vira a cor de
+ * CONFIG.combate.avisosInimigos e fica guardado em nomeAviso.
  * Imprevisibilidade: o aviso (subida) varia um pouco a cada golpe, sorteado por
  * `sorteio` (0 = o mais curto, 1 = o mais longo), sem passar abaixo do preparoMin.
  * O atraso é o tempo que o inimigo SEGURA a pose final do aviso antes de bater;
  * ele soma ao preparo, então a janela do parry (presa ao fim do preparo) acompanha.
  */
 export function montarGolpe(cfg, entrada, sorteio = Math.random) {
-  const { tipo, lado = 0, atraso = 0 } = typeof entrada === 'string' ? { tipo: entrada } : entrada;
-  const t = CONFIG.combate.ataquesInimigos[tipo];
-  if (!t) throw new Error(`Tipo de ataque desconhecido: ${tipo}`);
+  const { tipo, lado = 0, atraso = 0, ...troca } = typeof entrada === 'string' ? { tipo: entrada } : entrada;
+  const doTipo = CONFIG.combate.ataquesInimigos[tipo];
+  if (!doTipo) throw new Error(`Tipo de ataque desconhecido: ${tipo}`);
+  const t = { ...doTipo, ...troca };
+  const nomeAviso = typeof t.aviso === 'string' ? t.aviso : null;
+  if (nomeAviso && !(nomeAviso in CONFIG.combate.avisosInimigos)) throw new Error(`Aviso desconhecido: ${nomeAviso}`);
   const variacao = 1 + (sorteio() * 2 - 1) * CONFIG.combate.imprevisibilidade.variacaoPreparo;
   const subida = Math.max(t.preparoMin, cfg.preparo * t.preparo * variacao);
   return {
@@ -51,7 +59,8 @@ export function montarGolpe(cfg, entrada, sorteio = Math.random) {
     alturaPulo: t.alturaPulo,
     abreExecucao: t.abreExecucao,
     aguentaLeve: t.aguentaLeve,
-    aviso: t.aviso,
+    aviso: nomeAviso ? CONFIG.combate.avisosInimigos[nomeAviso] : t.aviso,
+    nomeAviso,                 // 'inaparavel' ou null (o som e o HUD usam)
   };
 }
 
@@ -106,7 +115,7 @@ export class MaquinaDeAtaque {
    * O tiro de pistola agora seria um parry? A janela fica presa à fase do golpe:
    * os últimos instantes do preparo (o aviso) e os primeiros do golpe ativo,
    * ambos encolhidos pelo janelaAparar do tipo (o pesado tem janela menor).
-   * Golpes que não podem ser aparados (rasteira) nunca entram na janela.
+   * Golpes que não podem ser aparados (rasteira, inaparável) nunca entram na janela.
    */
   naJanelaDeAparo(cfgPistola) {
     const g = this.golpe;
