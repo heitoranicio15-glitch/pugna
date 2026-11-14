@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { CONFIG } from '../config.js';
 import { Colisores } from './Colisores.js';
 import { abobadaOgival, arcoOgival, caixa, colunaFacetada, materiais, tocha, animarTochas } from './pecas.js';
 import { retro } from '../render/retro.js';
@@ -9,6 +10,8 @@ export class Catedral {
   constructor(cena) {
     this.id = 'catedral';
     this.nome = 'Catedral do Véu';
+    this.luzJogador = CONFIG.areas.catedral.luzJogador;
+    this.usaCeu = false;
     this.limites = { minX: -22, maxX: 22, minZ: -33, maxZ: 9 };
     this.grupo = new THREE.Group();
     this.colisores = new Colisores();

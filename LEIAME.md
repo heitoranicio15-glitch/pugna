@@ -271,6 +271,7 @@ pugna/
    │  └─ texturas.js       texturas pixeladas feitas no código
    ├─ mundo/
    │  ├─ Vilarejo.js       ★ o MAPA: onde fica cada casa, tocha, inimigo, lanterna
+   │  ├─ areas.js          registro das áreas: uma linha por área nova
    │  ├─ Catedral.js       nave, alas, selos e santuário
    │  ├─ pecas.js          como construir casa, torre, igreja, tocha, árvore...
    │  ├─ Colisores.js      colisões
@@ -315,8 +316,12 @@ pugna/
   como mais uma lista em `Jogo.js`, igual a `this.inimigos`.
 - **Salvar no Supabase:** escreva uma classe com os métodos `carregar()` e
   `salvar(dados)` (iguais aos de `SalvamentoLocal`) e troque uma linha em `Jogo.js`.
-- **Mapa maior / outras áreas:** declare `id`, `nome`, `limites`, `portais`,
-  `chegadas`, `pontosDeDescanso` e `inimigos` na classe do mapa. Cada portal
+- **Mapa maior / outras áreas:** área nova = uma classe com os campos do contrato
+  (`id`, `nome`, `limites`, `nevoa`, `luzJogador`, `usaCeu`, `portais`, `chegadas`,
+  `pontosDeDescanso` e `inimigos`) + uma linha no `REGISTRO` de `src/mundo/areas.js`;
+  o `Jogo.js` não precisa mudar. `luzJogador` é a força da luz que acompanha o
+  caçador (valor em `CONFIG.areas`) e `usaCeu` diz se a área mostra o céu e a lua.
+  O registro confere tudo ao iniciar e avisa se algo estiver errado. Cada portal
   aponta para o ID da área de destino, que declara a posição de chegada.
   Os checkpoints usam IDs únicos. Eventos persistentes usam `area:evento`,
   e a área pode implementar `aplicarProgresso(progresso)` para atualizar
