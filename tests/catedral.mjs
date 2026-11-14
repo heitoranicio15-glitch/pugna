@@ -4,6 +4,7 @@ import { NearestFilter } from 'three';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { validarMobile } from './mobile.mjs';
+import { CONFIG } from '../src/config.js';
 
 // Uso: node tests/catedral.mjs [URL] [--celular]
 // O celular está congelado (veja PASSAGEM.md): o cenário de toque só roda com
@@ -412,7 +413,27 @@ try {
   await passos(8);
   await page.mouse.up();
   await passos(9);
-  assert.equal((await estado()).guardiao.vida, 272);
+  // O dano do forte cresce com a carga (o tempo segurando o clique).
+  const CB = CONFIG.combate;
+  const carga = await page.evaluate(() => jogo.jogador.cargaGolpe);
+  const esperadoForte = CONFIG.inimigos.guardiao.vida - CB.forte.dano * (1 + (CB.carga.multiplicadorMax - 1) * carga);
+  assert.ok(Math.abs((await estado()).guardiao.vida - esperadoForte) < 0.01);
+
+  // Visceral: atacar de frente o Guardião desequilibrado vira o golpe especial.
+  await page.evaluate(() => {
+    const g = jogo.guardiao;
+    jogo.jogador.reiniciar(g.pos.x, g.pos.z + 1.8, 0);
+    g.angulo = 0;
+    g.mudar('perseguir');
+    g.serAparado(null);
+  });
+  const antesVisceral = (await estado()).guardiao.vida;
+  await page.mouse.down();
+  await passos();
+  await page.mouse.up();
+  await passos(10);
+  assert.ok(Math.abs((await estado()).guardiao.vida - (antesVisceral - CB.leve.dano * CB.visceral.multiplicador)) < 0.01);
+  assert.equal(await page.evaluate(() => document.getElementById('destaque').textContent), 'VISCERAL');
 
   // Exercita a mudança de fase e um golpe do Guardião pelo ciclo de combate.
   await page.evaluate(() => {

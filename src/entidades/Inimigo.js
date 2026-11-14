@@ -6,7 +6,7 @@
 //  "Cérebro" (IA) em estados:
 //    patrulha → perseguir → (procurar) → preparo → ativo → recuperacao
 //    a qualquer momento: atordoado (levou golpe forte), desequilibrado
-//    (teve o golpe aparado: fica aberto a um golpe crítico) ou morto
+//    (teve o golpe aparado: fica aberto a um golpe crítico ou ao visceral) ou morto
 //
 //  Firmeza (contra o spam): depois de cambalear, o inimigo ganha um "fôlego" em
 //  que aguenta os golpes sem cambalear de novo e quase sem sair do lugar. Os
@@ -162,6 +162,7 @@ export class Inimigo {
     this.ataque.encerrar();
     this.ultimaSequencia = null;
     this.abertoParaExecucao = false;
+    this.visceralPelasCostas = false;   // desequilibrado por um forte carregado pelas costas
     this.folego = 0;            // segundos em que ele não cambaleia de novo
     this.vida = this.cfg.vida;
     this.morto = false;
@@ -196,7 +197,7 @@ export class Inimigo {
       if (!this.ataque.ativa) this.ataque.iniciar(this.cfg, ['alto']);
       this.ataque.irPara(estado);
     }
-    if (estado !== 'desequilibrado') this.abertoParaExecucao = false;
+    if (estado !== 'desequilibrado') { this.abertoParaExecucao = false; this.visceralPelasCostas = false; }
   }
 
   get emFaseFinal() { return !!this.base.faseFinal && this.cfg !== this.base; }
@@ -363,7 +364,9 @@ export class Inimigo {
       }
       case 'desequilibrado': {   // golpe aparado: braço jogado para trás, guarda aberta
         inclinar = -0.5; bracoAlvo = -3.5; bracoLateral = -0.5; rapidezBraco = 16;
-        if (this.tEstado >= (c.desequilibrio ?? CONFIG.combate.pistola.desequilibrio)) this.mudar('perseguir');
+        // Durante o visceral ele fica preso no desequilíbrio até a lâmina entrar.
+        const preso = jog.acao === 'visceral' && jog.alvoVisceral === this;
+        if (!preso && this.tEstado >= (c.desequilibrio ?? CONFIG.combate.pistola.desequilibrio)) this.mudar('perseguir');
         break;
       }
     }
@@ -462,10 +465,37 @@ export class Inimigo {
    */
   serAparado(golpe = this.ataque.golpe) {
     if (this.morto) return;
-    this.empurrao.set(-Math.sin(this.angulo) * 2.2, 0, -Math.cos(this.angulo) * 2.2);
-    this.mudar('desequilibrado');
+    this.desequilibrar();
     this.abertoParaExecucao = !!golpe?.abreExecucao;
     this.jogo.eventos.emitir('inimigo:aparado', this);
+  }
+
+  /**
+   * Deixa o inimigo aberto (desequilibrado) ao crítico e ao visceral, sem
+   * execução. Usado pelo aparo e pelo ataque forte carregado pelas costas
+   * (pelasCostas = true: o visceral vale por trás, e o empurrão do golpe fica).
+   */
+  desequilibrar({ pelasCostas = false } = {}) {
+    if (this.morto) return;
+    if (!pelasCostas) this.empurrao.set(-Math.sin(this.angulo) * 2.2, 0, -Math.cos(this.angulo) * 2.2);
+    this.mudar('desequilibrado');
+    this.abertoParaExecucao = false;
+    this.visceralPelasCostas = pelasCostas;
+  }
+
+  /**
+   * Visceral (ou execução, se o golpe pesado tinha sido aparado): o dano já vem
+   * multiplicado pelo jogador, então não passa pelo crítico de novo. Empurra
+   * forte e o inimigo sai do desequilíbrio para o atordoamento.
+   */
+  receberVisceral(dano, direcao, execucao = false) {
+    if (this.morto) return;
+    const AT = CONFIG.combate.atordoamentoInimigo, forca = CONFIG.combate.visceral.empurrao;
+    this.jogo.eventos.emitir('golpe:visceral', { execucao, inimigo: this });
+    this.empurrao.set(direcao.x * forca, 0, direcao.z * forca);
+    if (this.tirarVida(dano, 0.25)) return;
+    this.mudar('atordoado');
+    this.folego = (this.cfg.atordoamento ?? AT.duracao) + (this.cfg.folego ?? AT.folego);
   }
 
   /**

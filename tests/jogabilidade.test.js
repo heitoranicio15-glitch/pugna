@@ -749,3 +749,136 @@ test('frasco: a cura leva tempo, o caçador anda devagar e apanhar interrompe', 
   for (let i = 0; i < 40; i++) jogador.atualizar(0.05);
   assert.deepEqual(avisos, ['curou', 'cura interrompida']);
 });
+
+// -----------------------------------------------------------------------------
+//  Etapa B, PR B2: visceral, execução e ataque forte carregado
+// -----------------------------------------------------------------------------
+
+/** Roda o caçador e o inimigo juntos por "segundos". */
+function rodarJuntos(jogador, inimigo, segundos) {
+  for (let t = 0; t < segundos; t += 0.02) { jogador.atualizar(0.02); inimigo.atualizar(0.02); }
+}
+
+test('visceral: atacar de frente o inimigo desequilibrado dá 3,5× o leve, com invencibilidade e rally cheio', () => {
+  const { jogador, eventos, inimigo } = duelo();
+  const V = CONFIG.combate.visceral;
+  const viscerais = [];
+  eventos.em('golpe:visceral', (d) => viscerais.push(d.execucao));
+  inimigo.mudar('perseguir');
+  jogador.receberDano(40, inimigo.pos, inimigo);   // deixa vida recuperável (rally)
+  jogador.acao = 'livre';
+  const recuperavel = jogador.recuperavel;
+  assert.ok(recuperavel > 0);
+  inimigo.serAparado(null);
+  const estamina = jogador.estamina;
+
+  jogador.iniciarAtaque('leve');
+  assert.equal(jogador.acao, 'visceral');
+  assert.equal(jogador.estamina, estamina);           // não gasta estamina
+  assert.ok(jogador.invencivel >= V.duracao - 1e-9);
+  assert.equal(jogador.receberDano(30, inimigo.pos, inimigo), 'esquivou');
+
+  // Preso no desequilíbrio até a lâmina entrar, mesmo passando do tempo normal.
+  inimigo.tEstado = 99;
+  rodarJuntos(jogador, inimigo, V.momento - 0.05);
+  assert.deepEqual([inimigo.estado, inimigo.vida], ['desequilibrado', inimigo.cfg.vida]);
+
+  rodarJuntos(jogador, inimigo, 0.1);
+  assert.ok(Math.abs(inimigo.vida - (inimigo.cfg.vida - CONFIG.combate.leve.dano * V.multiplicador)) < 1e-9);
+  assert.equal(inimigo.estado, 'atordoado');
+  assert.deepEqual(viscerais, [false]);
+  assert.deepEqual([jogador.vida, jogador.recuperavel], [60 + recuperavel, 0]);   // rally cheio
+
+  rodarJuntos(jogador, inimigo, V.duracao);
+  assert.equal(jogador.acao, 'livre');
+});
+
+test('execução: o pesado aparado vira execução de 5× o leve', () => {
+  const { jogador, eventos, inimigo } = duelo();
+  const P = CONFIG.combate.pistola;
+  const viscerais = [];
+  eventos.em('golpe:visceral', (d) => viscerais.push(d.execucao));
+  inimigo.mudar('perseguir');
+  inimigo.atacar(['pesado']);
+  const g = inimigo.golpe;
+  inimigo.ataque.t = g.preparo - P.janelaNoAviso * g.janelaAparar * 0.5;
+  assert.equal(jogador.atirar().aparou, true);
+  assert.equal(inimigo.abertoParaExecucao, true);
+  jogador.acao = 'livre';
+  jogador.iniciarAtaque('forte');
+  assert.deepEqual([jogador.acao, jogador.execucao], ['visceral', true]);
+  rodarJuntos(jogador, inimigo, CONFIG.combate.visceral.duracao);
+  assert.ok(Math.abs(inimigo.vida - (inimigo.cfg.vida - CONFIG.combate.leve.dano * CONFIG.combate.execucao.multiplicador)) < 1e-9);
+  assert.deepEqual(viscerais, [true]);
+});
+
+test('golpe comum de lado no inimigo desequilibrado continua sendo o crítico de 2,6×', () => {
+  const { jogador, eventos, inimigo } = duelo();
+  const criticos = [];
+  eventos.em('golpe:acertou', (d) => criticos.push(d.critico));
+  inimigo.pos.set(-2, 0, 0);   // o caçador está do lado dele (ele olha para +Z)
+  inimigo.mudar('perseguir');
+  inimigo.serAparado(null);
+  jogador.iniciarAtaque('leve');
+  assert.equal(jogador.acao, 'preparo');
+  for (let i = 0; i < 12; i++) jogador.atualizar(0.02);
+  assert.deepEqual(criticos, [true]);
+  assert.ok(Math.abs(inimigo.vida - (inimigo.cfg.vida - CONFIG.combate.leve.dano * CONFIG.combate.critico.multiplicador)) < 1e-9);
+
+  // De longe também não vira visceral.
+  const longe = duelo();
+  longe.inimigo.pos.set(0, 0, -(CONFIG.combate.visceral.alcance + 0.1));
+  longe.inimigo.mudar('perseguir');
+  longe.inimigo.serAparado(null);
+  longe.jogador.iniciarAtaque('leve');
+  assert.equal(longe.jogador.acao, 'preparo');
+});
+
+test('o dano do ataque forte cresce com a carga', () => {
+  const CB = CONFIG.combate;
+  const danoCom = (tCarga) => {
+    const { jogador, alvo } = arena();
+    jogador.tCarga = tCarga;
+    jogador.iniciarAtaque('forte');
+    for (let i = 0; i < 20; i++) jogador.atualizar(0.02);
+    return 100 - alvo.vida;
+  };
+  const meio = (CB.tempoSegurarForte + CB.tempoMaximoCarga) / 2;
+  assert.equal(danoCom(CB.tempoSegurarForte), CB.forte.dano);
+  assert.ok(Math.abs(danoCom(meio) - CB.forte.dano * (1 + (CB.carga.multiplicadorMax - 1) / 2)) < 1e-9);
+  assert.ok(Math.abs(danoCom(CB.tempoMaximoCarga) - CB.forte.dano * CB.carga.multiplicadorMax) < 1e-9);
+
+  // Segurando o botão até a carga máxima, o golpe sai sozinho com o dano cheio.
+  const { jogador, entrada, alvo } = arena();
+  entrada.botoesApertados[0] = true; entrada.botoes[0] = true;
+  jogador.atualizar(0.01);
+  entrada.botoesApertados[0] = false;
+  for (let i = 0; i < 40 && jogador.ataque !== 'forte'; i++) jogador.atualizar(0.05);
+  entrada.botoes[0] = false;
+  assert.equal(jogador.cargaGolpe, 1);
+  for (let i = 0; i < 20; i++) jogador.atualizar(0.02);
+  assert.ok(Math.abs(100 - alvo.vida - CB.forte.dano * CB.carga.multiplicadorMax) < 1e-9);
+});
+
+test('carga completa pelas costas desequilibra (sem execução) e abre o visceral', () => {
+  const CB = CONFIG.combate;
+  const golpeForte = (angulo, tCarga) => {
+    const d = duelo();
+    d.inimigo.angulo = angulo;
+    d.inimigo.mudar('perseguir');
+    d.jogador.tCarga = tCarga;
+    d.jogador.iniciarAtaque('forte');
+    for (let i = 0; i < 20; i++) d.jogador.atualizar(0.02);
+    return d;
+  };
+  // Pelas costas (o inimigo olha para longe do caçador), carga completa.
+  const { jogador, inimigo } = golpeForte(Math.PI, CB.tempoMaximoCarga);
+  assert.deepEqual([inimigo.estado, inimigo.visceralPelasCostas, inimigo.abertoParaExecucao], ['desequilibrado', true, false]);
+  for (let i = 0; i < 40 && jogador.acao !== 'livre'; i++) jogador.atualizar(0.02);
+  jogador.iniciarAtaque('leve');
+  assert.deepEqual([jogador.acao, jogador.execucao], ['visceral', false]);
+
+  // De frente, ou pelas costas sem carga completa, só cambaleia.
+  assert.equal(golpeForte(0, CB.tempoMaximoCarga).inimigo.estado, 'atordoado');
+  assert.equal(golpeForte(Math.PI, CB.tempoMaximoCarga * 0.7).inimigo.estado, 'atordoado');
+});

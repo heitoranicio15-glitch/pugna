@@ -26,6 +26,13 @@ export class Som {
     });
     eventos.em('jogador:tiro', () => this.tiro());
     eventos.em('jogador:sem-bala', () => this.ruido({ volume: 0.16, duracao: 0.04, tipo: 'highpass', de: 2600 }));   // clique seco
+    eventos.em('jogador:visceral', () => this.zunido(0.4, 0.22, 420));
+    // Visceral: impacto grave e um sino; a execução é mais grave e mais longa.
+    eventos.em('golpe:visceral', ({ execucao }) => {
+      this.impacto(execucao ? 1.4 : 1.2);
+      this.tom({ volume: execucao ? 0.5 : 0.4, duracao: execucao ? 0.7 : 0.45, de: execucao ? 90 : 120, ate: 30 });
+      this.sino(execucao ? 98 : 147, execucao ? 2.4 : 1.4, execucao ? 0.3 : 0.24);
+    });
     eventos.em('jogador:aparou', () => { this.metal(0.75, 0.6); this.sino(880, 0.5, 0.16); });
     eventos.em('mira:travou', () => this.tom({ volume: 0.08, duracao: 0.07, de: 620, ate: 880 }));
     eventos.em('jogador:ferido', () => { this.impacto(0.8); this.gemido(); });

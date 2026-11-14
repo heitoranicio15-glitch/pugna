@@ -43,7 +43,7 @@ export class Jogador {
     this.exausto = false;
     this.esperaEstamina = 0;
     // combate
-    this.acao = 'livre';        // livre | preparo | ativo | recuperacao | tiro | curando | atordoado
+    this.acao = 'livre';        // livre | preparo | ativo | recuperacao | tiro | curando | atordoado | visceral
     this.tAcao = 0;             // tempo dentro da ação atual
     this.tAtordoado = CB.interrupcao.cambaleio;   // quanto dura o atordoamento atual
     // Rally: vida que ainda dá para recuperar batendo, e o tempo que resta para isso.
@@ -51,6 +51,8 @@ export class Jogador {
     this.ataque = null;         // 'leve' ou 'forte'
     this.golpeAlternado = false;
     this.carregando = false; this.tCarga = 0; this.avisouCarga = false;
+    this.cargaGolpe = 0;        // carga do forte em andamento (0 a 1)
+    this.alvoVisceral = null; this.execucao = false; this.visceralEntrou = false;
     this.bloqueando = false;    // sempre false: o bloqueio saiu com o broquel (fica para quem lê o campo)
     this.balas = CB.pistola.balasMax;   // munição da pistola (não vai para o save)
     this.tEsquiva = 0; this.esperaEsquiva = 0; this.invencivel = 0;
@@ -147,7 +149,15 @@ export class Jogador {
     if (this.acao === 'atordoado') alvo = 0;
     if (correndo && comp > 0 && this.noChao) this.gastar(C.custoCorrer * dt);
 
-    if (this.tEsquiva > 0) {
+    if (this.acao === 'visceral') {
+      // Visceral: o caçador cola no inimigo e não anda por conta própria.
+      const i = this.alvoVisceral, V = CB.visceral;
+      this.vel.x = 0; this.vel.z = 0;
+      if (i && !i.morto) {
+        const ix = i.pos.x - this.pos.x, iz = i.pos.z - this.pos.z, d = Math.hypot(ix, iz);
+        if (d > V.encosta) { this.vel.x = ix / d * (d - V.encosta) / V.momento; this.vel.z = iz / d * (d - V.encosta) / V.momento; }
+      }
+    } else if (this.tEsquiva > 0) {
       this.tEsquiva -= dt;
       const f = CB.esquiva.velocidade * (0.45 + 0.55 * this.tEsquiva / CB.esquiva.duracao);
       this.vel.x = this.dirEsquiva.x * f; this.vel.z = this.dirEsquiva.y * f;
@@ -159,7 +169,7 @@ export class Jogador {
     }
 
     // ---------- pulo e gravidade ----------
-    if (e.apertou('Space') && this.noChao && this.estamina >= C.custoPulo && this.acao !== 'atordoado' && this.acao !== 'curando' && this.tEsquiva <= 0) {
+    if (e.apertou('Space') && this.noChao && this.estamina >= C.custoPulo && this.acao !== 'atordoado' && this.acao !== 'curando' && this.acao !== 'visceral' && this.tEsquiva <= 0) {
       this.vel.y = C.forcaPulo; this.noChao = false; this.gastar(C.custoPulo);
       this.jogo.eventos.emitir('jogador:pulo');
     }
@@ -313,6 +323,12 @@ export class Jogador {
       }
     }
     if (this.acao === 'atordoado' && this.tAcao >= this.tAtordoado) this.acao = 'livre';
+    if (this.acao === 'visceral') {
+      const i = this.alvoVisceral;
+      if (i && !i.morto) this.rumo = anguloPara(this.pos, i.pos);
+      if (!this.visceralEntrou && this.tAcao >= CB.visceral.momento) { this.visceralEntrou = true; this.golpeVisceral(); }
+      if (this.tAcao >= CB.visceral.duracao) { this.acao = 'livre'; this.alvoVisceral = null; }
+    }
     // Frasco: a cura só acontece no fim do gole (quem aplica é o Jogo, que cuida da bolsa).
     if (this.acao === 'curando' && this.tAcao >= CB.frasco.tempo) {
       this.acao = 'livre';
@@ -423,6 +439,9 @@ export class Jogador {
   }
 
   iniciarAtaque(tipo) {
+    // Inimigo desequilibrado à frente: o ataque vira visceral (não gasta estamina).
+    const aberto = this.alvoDoVisceral();
+    if (aberto) { this.iniciarVisceral(aberto); return; }
     if (this.exausto || this.estamina < CB[tipo].custo) {
       this.jogo.eventos.emitir('jogador:sem-estamina');
       return;
@@ -434,7 +453,58 @@ export class Jogador {
     this.contatoParede = null;
     this.alvosDoGolpe.clear();
     this.gastar(CB[tipo].custo);
-    this.jogo.eventos.emitir('jogador:golpe', { forte: tipo === 'forte' });
+    // Carga do forte: 0 ao soltar logo depois de virar forte, 1 na carga máxima.
+    this.cargaGolpe = tipo === 'forte'
+      ? THREE.MathUtils.clamp((this.tCarga - CB.tempoSegurarForte) / (CB.tempoMaximoCarga - CB.tempoSegurarForte), 0, 1)
+      : 0;
+    this.jogo.eventos.emitir('jogador:golpe', { forte: tipo === 'forte', carga: this.cargaGolpe });
+  }
+
+  /**
+   * O inimigo que um ataque agora transformaria em visceral: desequilibrado, a
+   * até CONFIG.combate.visceral.alcance, à frente do caçador, sem parede no meio,
+   * e com o caçador à frente dele (ou atrás, se ele foi aberto pelas costas).
+   * De lado ou de longe, o golpe continua sendo o crítico comum.
+   */
+  alvoDoVisceral() {
+    const V = CB.visceral, col = this.jogo.mundo.colisores;
+    this.orientarParaGolpe();
+    let melhor = null, menor = Infinity;
+    for (const i of this.jogo.inimigos) {
+      if (i.morto || i.estado !== 'desequilibrado' || Math.abs(i.pos.y - this.pos.y) > 1.6) continue;
+      const dx = this.pos.x - i.pos.x, dz = this.pos.z - i.pos.z, d = Math.hypot(dx, dz) || 1e-4;
+      if (d > V.alcance || d >= menor) continue;
+      if (Math.cos(anguloPara(this.pos, i.pos) - this.rumo) < V.abertura) continue;   // não está à frente do caçador
+      const lado = (Math.sin(i.angulo) * dx + Math.cos(i.angulo) * dz) / d;           // 1 = caçador bem na frente dele
+      if (!(lado >= V.abertura || (i.visceralPelasCostas && lado <= -V.abertura))) continue;
+      if (col.bloqueiaTrecho(this.pos, i.pos, this.pos.y + 1.22)) continue;
+      menor = d; melhor = i;
+    }
+    return melhor;
+  }
+
+  /** Começa o visceral (ou a execução, se o golpe pesado do inimigo foi aparado). */
+  iniciarVisceral(inimigo) {
+    this.ataque = null; this.acao = 'visceral'; this.tAcao = 0;
+    this.alvoVisceral = inimigo;
+    this.execucao = !!inimigo.abertoParaExecucao;
+    this.visceralEntrou = false;
+    this.carregando = false; this.avisouCarga = false; this.ataqueNaFila = 0; this.tiroNaFila = 0;
+    this.invencivel = Math.max(this.invencivel, CB.visceral.duracao);
+    this.rumo = anguloPara(this.pos, inimigo.pos);
+    this.jogo.eventos.emitir('jogador:visceral', { execucao: this.execucao, inimigo });
+  }
+
+  /** O instante em que a lâmina entra: dano do tipo, pausa, tremor e rally cheio. */
+  golpeVisceral() {
+    const i = this.alvoVisceral;
+    if (!i || i.morto) return;
+    const T = this.execucao ? CB.execucao : CB.visceral;
+    const f = this.frente();
+    i.receberVisceral(CB.leve.dano * T.multiplicador, { x: f.x, z: f.z }, this.execucao);
+    this.jogo.pausaDeImpacto(T.pausa);
+    this.tremor = Math.max(this.tremor, T.tremor);
+    this.recuperarComGolpe(Infinity);   // rally cheio
   }
 
   varrerGolpe(a, de, ate) {
@@ -460,9 +530,17 @@ export class Jogador {
             aoLongo - Math.sqrt(raio * raio - lateral * lateral) > alcance ||
             col.bloqueiaTrecho(this.pos, i.pos, altura)) continue;
         this.alvosDoGolpe.add(i);
-        // Inimigo desequilibrado por um aparo leva um golpe crítico.
-        const critico = i.receberDano(a.dano, { x, z }, a.empurrao, forte) === 'critico';
-        this.recuperarComGolpe(a.dano);
+        // O forte cresce com a carga. Inimigo desequilibrado leva um golpe crítico.
+        const K = CB.carga;
+        const dano = forte ? a.dano * (1 + (K.multiplicadorMax - 1) * this.cargaGolpe) : a.dano;
+        const critico = i.receberDano(dano, { x, z }, a.empurrao, forte) === 'critico';
+        // Carga completa pelas costas: o inimigo fica desequilibrado e abre o visceral.
+        if (forte && K.abrePelasCostas && !critico && this.cargaGolpe >= K.completa && !i.morto &&
+            typeof i.desequilibrar === 'function' &&
+            (Math.sin(i.angulo) * dx + Math.cos(i.angulo) * dz) / (Math.hypot(dx, dz) || 1e-4) > -K.costas) {
+          i.desequilibrar({ pelasCostas: true });
+        }
+        this.recuperarComGolpe(dano);
         this.tremor = Math.max(this.tremor, critico ? 0.09 : forte ? 0.05 : 0.025);
         this.jogo.pausaDeImpacto(critico ? CB.critico.pausa : forte ? CB.pausaImpacto * 1.4 : CB.pausaImpacto);
         this.jogo.eventos.emitir('golpe:acertou', { forte, critico });
@@ -495,7 +573,9 @@ export class Jogador {
    */
   recuperarComGolpe(dano) {
     if (this.recuperavel <= 0 || this.morto) return 0;
-    const cura = Math.max(0, Math.min(this.recuperavel, dano * CB.rally.porDano, C.vidaMax - this.vida));
+    // dano = Infinity é o "rally cheio" do visceral: devolve todo o recuperável.
+    const devolve = dano === Infinity ? this.recuperavel : dano * CB.rally.porDano;
+    const cura = Math.max(0, Math.min(this.recuperavel, devolve, C.vidaMax - this.vida));
     this.vida += cura;
     this.recuperavel -= cura;
     if (this.recuperavel < 0.01) this.recuperavel = 0;

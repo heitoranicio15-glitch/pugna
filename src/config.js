@@ -113,6 +113,28 @@ export const CONFIG = {
       pausa: 0.12, tremor: 0.045,
     },
     critico: { multiplicador: 2.6, pausa: 0.14 },
+    // Visceral: atacar (leve ou forte) um inimigo desequilibrado de frente vira
+    // um golpe especial. Não gasta estamina, o caçador fica invencível durante a
+    // animação e o acerto devolve todo o rally (a parte laranja da vida).
+    // Golpe comum de lado ou de longe continua sendo o crítico acima.
+    //   multiplicador  vezes o dano do ataque leve
+    //   alcance        metros até o inimigo para o ataque virar visceral
+    //   duracao        segundos da animação inteira (e da invencibilidade)
+    //   momento        segundos até a lâmina entrar
+    //   pausa / tremor congelamento e tremida de tela no acerto
+    //   abertura       cosseno do cone: o inimigo tem de estar à frente do caçador
+    //                  e o caçador à frente do inimigo (0.5 = até 60° de lado)
+    //   encosta        distância (metros) em que o caçador cola no inimigo
+    //   empurrao       força com que o inimigo é jogado para trás
+    visceral: { multiplicador: 3.5, alcance: 2.3, duracao: 0.7, momento: 0.25, pausa: 0.18, tremor: 0.12, abertura: 0.5, encosta: 1.15, empurrao: 7 },
+    // Execução: o visceral num inimigo que teve o golpe PESADO aparado.
+    execucao: { multiplicador: 5, pausa: 0.28, tremor: 0.18 },
+    // Ataque forte carregado: o dano cresce com a carga (0 ao soltar em
+    // tempoSegurarForte, 1 em tempoMaximoCarga) até multiplicadorMax.
+    // Carga completa (a partir de "completa") acertando pelas costas desequilibra
+    // o inimigo e abre o visceral (sem execução). "costas" é o cosseno entre a
+    // frente do inimigo e a direção dele até o caçador (menor = mais atrás).
+    carga: { multiplicadorMax: 1.6, abrePelasCostas: true, completa: 0.95, costas: -0.3 },
 
     // ---- Contra o spam (Etapa A do plano) ----
     // Apanhar interrompe o caçador: ele perde o golpe e cambaleia um instante.

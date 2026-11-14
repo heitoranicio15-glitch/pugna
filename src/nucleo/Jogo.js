@@ -150,6 +150,7 @@ export class Jogo {
     this.eventos.em('jogador:aparou', () => this.hud.destacar('aparou'));
     this.eventos.em('golpe:acertou', ({ critico }) => { if (critico) this.hud.destacar('critico'); });
     this.eventos.em('jogador:pulou-golpe', () => this.hud.destacar('pulou'));
+    this.eventos.em('golpe:visceral', ({ execucao }) => { this.hud.destacar(execucao ? 'execucao' : 'visceral'); this.hud.mostrarContato('inimigo'); });
     // Ensina a regra de ouro: a resposta que não serve para aquele tipo de golpe.
     this.eventos.em('jogador:resposta-errada', () => this.hud.avisar('A rasteira não pode ser aparada. Pule.'));
     // Contra o spam: avisa quando a cura é cortada e conclui o gole do frasco.
