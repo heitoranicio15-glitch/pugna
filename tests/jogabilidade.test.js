@@ -401,6 +401,31 @@ test('a câmera fica atrás do caçador, encurta na parede e ignora postes finos
   assert.ok(camera.position.z < 2 - CONFIG.camera.folga + 1e-6 && camera.position.z > 0.3);
 });
 
+test('a primeira pessoa acompanha os olhos e usa o olhar para orientar o ataque sem trava', () => {
+  const { jogador, colisores } = arena();
+  const { camera, preferencias, entrada } = jogador.jogo;
+  preferencias.perspectiva = 'primeira';
+  jogador.pos.set(3, 0.4, -2);
+  jogador.yaw = 0;
+  jogador.rumo = Math.PI;
+  jogador.entradaDir = Math.PI;
+  colisores.adicionar(3, 0.5, 8, 1);
+  jogador.atualizarCamera(0);
+  assert.deepEqual(camera.position.toArray(), [3, jogador.pos.y + jogador.alturaOlhos, -2]);
+  assert.equal(jogador.distCamera, 0);
+  jogador.orientarParaGolpe();
+  assert.equal(jogador.rumo, jogador.yaw);
+
+  entrada.toque = true;
+  jogador.atualizarCamera(0);
+  assert.equal(jogador.primeiraPessoa, false);
+  assert.ok(camera.position.z > jogador.pos.z && camera.position.z < 0);
+  entrada.toque = false;
+  preferencias.perspectiva = 'terceira';
+  jogador.atualizarCamera(0);
+  assert.ok(jogador.distCamera > 0);
+});
+
 test('em terceira pessoa a interação vale para o objeto próximo e à frente do corpo ou da câmera', () => {
   const col = new Colisores();
   const objeto = { x: 0, y: 0.5, z: -1.8 };
@@ -1256,21 +1281,24 @@ test('estilo de imagem: padrão PS1, preferência antiga vira PS1, escolha persi
     const antiga = carregarPreferencias();
     assert.equal(antiga.estiloGrafico, 'ps1');
     assert.equal(antiga.resolucaoHd, 720);
+    assert.equal(antiga.perspectiva, 'terceira');
     assert.deepEqual([antiga.musica, antiga.resolucao, antiga.tremor], [30, 180, false]);
     // Valor desconhecido também volta ao PS1.
     registros.set('pugna-preferencias-v1', '{"estiloGrafico":"ultra"}');
     assert.equal(carregarPreferencias().estiloGrafico, 'ps1');
     // Escolher HD persiste ao "recarregar" e guarda os valores do PS1.
-    salvarPreferencias({ ...antiga, estiloGrafico: 'hd', resolucaoHd: 2160 });
+    salvarPreferencias({ ...antiga, estiloGrafico: 'hd', resolucaoHd: 2160, perspectiva: 'primeira' });
     const recarregada = carregarPreferencias();
     assert.equal(recarregada.estiloGrafico, 'hd');
     assert.equal(recarregada.resolucaoHd, 2160);
+    assert.equal(recarregada.perspectiva, 'primeira');
     assert.deepEqual([recarregada.resolucao, recarregada.tremor], [180, false]);
     // Apagar o progresso não mexe nas preferências.
     const saves = new SalvamentoLocal();
     await saves.salvar(normalizarProgresso({ descanso: 'adro-da-igreja' }));
     assert.equal(saves.apagar(), true);
     assert.equal(carregarPreferencias().estiloGrafico, 'hd');
+    assert.equal(carregarPreferencias().perspectiva, 'primeira');
   } finally {
     delete globalThis.localStorage;
   }

@@ -64,6 +64,10 @@ Guarde a criação de NPCs e o contrato de falas para S4.
    Compare o movimento da capa ao correr e rolar, a pose da pistola durante
    o tiro e o aviso dos três tipos de ataque. Confira o Guardião em ambas
    as fases e o encaixe das mãos do taverneiro na caneca.
+   Em **Configurações → Câmera → Primeira pessoa**, confira o enquadramento
+   das mãos, a mira pelo Tab, a espada e o coice da pistola. Passe por uma
+   porta ou portal, recarregue após descansar e volte para terceira pessoa
+   durante a pausa. Repita em PS1 e HD.
 4. Heitor, repita o trecho em HD 1080p, 1440p e, se houver tela 4K, em 2160p
    com **F** para tela cheia. Anote quedas de fluidez e o tempo até aparecerem
    os materiais na primeira seleção de HD. Para medir, grave 20 segundos do

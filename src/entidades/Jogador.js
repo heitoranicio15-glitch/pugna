@@ -72,6 +72,10 @@ export class Jogador {
   /** Direção para onde o corpo está virado, no plano do chão. */
   frente(alvo = new THREE.Vector3()) { return alvo.set(-Math.sin(this.rumo), 0, -Math.cos(this.rumo)); }
 
+  get primeiraPessoa() {
+    return this.jogo.preferencias.perspectiva === 'primeira' && !this.jogo.entrada.toque;
+  }
+
   gastar(q) {
     this.estamina = Math.max(0, this.estamina - q);
     this.esperaEstamina = C.estaminaEspera;
@@ -85,9 +89,17 @@ export class Jogador {
     // ---------- câmera ----------
     this.atualizarMira(dt, e);
     if (this.alvo) {
-      // Mira travada: a câmera fica atrás do caçador, apontada para o alvo.
+      // A mira em primeira pessoa acompanha a altura do ponto marcado no alvo.
       this.yaw += difAngulo(anguloPara(this.pos, this.alvo.pos), this.yaw) * (1 - Math.exp(-dt * M.giroCamera));
-      this.pitch += (M.inclinacao - this.pitch) * (1 - Math.exp(-dt * 4));
+      let inclinacao = M.inclinacao;
+      if (this.primeiraPessoa) {
+        const alvo = this.alvo;
+        const alturaAlvo = alvo.pos.y + 1.25 * alvo.cfg.escala;
+        const distancia = Math.hypot(alvo.pos.x - this.pos.x, alvo.pos.z - this.pos.z);
+        inclinacao = THREE.MathUtils.clamp(Math.atan2(alturaAlvo - this.pos.y - this.alturaOlhos, distancia),
+          CAM.inclinacaoMin, CAM.inclinacaoMax);
+      }
+      this.pitch += (inclinacao - this.pitch) * (1 - Math.exp(-dt * 4));
     } else {
       const sensibilidade = C.sensibilidadeMouse * this.jogo.preferencias.sensibilidade / 100;
       this.yaw -= e.mouseDX * sensibilidade;
@@ -147,7 +159,8 @@ export class Jogador {
     // Com a mira travada ele encara o alvo (menos correndo ou rolando);
     // sem trava, vira para onde anda.
     if (this.tEsquiva <= 0 && (this.acao === 'livre' || this.acao === 'curando')) {
-      const desejado = this.alvo && !correndo ? anguloPara(this.pos, this.alvo.pos) : this.entradaDir;
+      const desejado = this.alvo && !correndo ? anguloPara(this.pos, this.alvo.pos)
+        : this.primeiraPessoa ? this.yaw : this.entradaDir;
       if (desejado !== null) this.rumo += THREE.MathUtils.clamp(difAngulo(desejado, this.rumo), -C.giro * dt, C.giro * dt);
     }
     let alvo = correndo ? C.velCorrer : C.velAndar;
@@ -293,6 +306,7 @@ export class Jogador {
   /** Vira o corpo para o golpe: alvo travado, direção do movimento ou inimigo colado. */
   orientarParaGolpe() {
     if (this.alvo) { this.rumo = anguloPara(this.pos, this.alvo.pos); return; }
+    if (this.primeiraPessoa) { this.rumo = this.yaw; return; }
     if (this.entradaDir !== null) { this.rumo = this.entradaDir; return; }
     const col = this.jogo.mundo.colisores;
     let melhor = null, menor = M.ajudaSemTrava;
@@ -646,14 +660,24 @@ export class Jogador {
   }
 
   // ---------------------------------------------------------------------------
-  //  Câmera em terceira pessoa: gira em volta de um ponto acima da cabeça,
-  //  encurta ao encostar em paredes e treme nos impactos.
+  //  A câmera fica nos olhos em primeira pessoa, ou orbita com colisão em terceira.
   // ---------------------------------------------------------------------------
   atualizarCamera(dt, rapidez = 0) {
     const cam = this.jogo.camera, col = this.jogo.mundo.colisores;
     this.tremor *= Math.exp(-dt * 9);
     this.afundar *= Math.exp(-dt * 8);
     const suave = (k) => (dt > 0 ? 1 - Math.exp(-dt * k) : 1);
+    cam.rotation.order = 'YXZ';
+    const t = this.tremor;
+    if (this.primeiraPessoa) {
+      const altura = this.morto ? 0.55 : this.alturaOlhos;
+      this.alturaPivo += (altura - this.alturaPivo) * suave(this.morto ? 2.5 : 12);
+      const tremor = (Math.random() - 0.5) * t * 0.22;
+      cam.position.set(this.pos.x, this.pos.y + Math.max(0.35, this.alturaPivo - this.afundar), this.pos.z);
+      cam.rotation.set(this.pitch + tremor, this.yaw, 0);
+      this.distCamera = 0;
+      return;
+    }
     this.alturaPivo += ((this.morto ? 0.9 : CAM.alturaPivo) - this.alturaPivo) * suave(this.morto ? 2.5 : 12);
     const py = this.pos.y + this.alturaPivo - this.afundar;
 
@@ -668,13 +692,12 @@ export class Jogador {
     // Encurta na hora (nunca atravessa a parede) e volta devagar.
     this.distCamera = d < this.distCamera ? d : this.distCamera + (d - this.distCamera) * suave(6);
 
-    const t = this.tremor, D = this.distCamera;
+    const D = this.distCamera;
     cam.position.set(
       this.pos.x - fx * D + (Math.random() - 0.5) * t,
       py - fy * D + (Math.random() - 0.5) * t,
       this.pos.z - fz * D + (Math.random() - 0.5) * t,
     );
-    cam.rotation.order = 'YXZ';
     cam.rotation.set(this.pitch + (Math.random() - 0.5) * t * 0.6, this.yaw, 0);
   }
 

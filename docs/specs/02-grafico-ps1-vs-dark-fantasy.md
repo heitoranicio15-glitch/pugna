@@ -20,7 +20,7 @@ Um botão no menu de **Configurações** para escolher o estilo de imagem:
 
 ## Fora do escopo
 
-- **Primeira pessoa: só se o Heitor aprovar.** A decisão registrada é terceira pessoa. Não implementar; deixar apenas esta nota.
+- A perspectiva fica em um controle próprio de câmera, entregue depois de S2.
 - Modelos novos, sombras dinâmicas, pós-processamento pesado (bloom, SSAO).
 - Qualquer coisa de celular.
 

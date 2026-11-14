@@ -185,7 +185,7 @@ export class RenderizadorRetro {
     r.render(cena, camera);
     if (cenaArma) {
       r.autoClear = false;
-      r.clearDepth();           // a arma nunca atravessa paredes
+      r.clearDepth();           // as mãos e armas são desenhadas separadas do cenário
       r.render(cenaArma, cameraArma);
       r.autoClear = true;
     }

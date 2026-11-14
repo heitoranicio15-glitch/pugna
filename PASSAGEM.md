@@ -21,7 +21,8 @@ Ação e exploração num mundo medieval gótico, vazio e triste, à noite, no e
 
 ## Decisões já tomadas (não mudar sem o Heitor pedir)
 
-- **Câmera:** terceira pessoa, com mira travada (Tab ou botão do meio do mouse).
+- **Câmera:** terceira pessoa é o padrão. O computador também tem primeira
+  pessoa opcional em Configurações. A mira travada usa Tab ou o botão do meio.
 - **Sem o gigante encapuzado:** ele foi excluído. A lua é a presença no céu.
 - **Salvamento estilo Souls:** o jogo salva sozinho o tempo todo. Ao morrer, o jogador renasce na última lanterna em que descansou, e os inimigos comuns voltam. Não existe salvar manualmente. O "voltar ao checkpoint" vira o Osso de Retorno: item único, de uso ilimitado. A penalidade por usar (como perder as almas nos Souls) será decidida mais para a frente.
 - **Escopo:** semi-linear (vilarejo, catedral, depois áreas ligadas por atalhos). Nada de mundo aberto. Os inimigos são humanos de armadura, que reaproveitam o mesmo esqueleto e as mesmas animações.
@@ -47,6 +48,13 @@ Cada resposta do jogador precisa ser a melhor contra algum tipo de ataque. Se n�
 O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (PR B3) já funcionam.
 
 ## Estado atual
+
+- **Primeira pessoa opcional** a pedido de Gabriel. A câmera fica nos olhos e
+  acompanha a altura do marcador na mira travada. Espada e pistola têm poses em
+  uma cena de sobreposição. Sem trava, a direção do ataque segue o olhar
+  horizontal. Perspectiva e gráfico são independentes e salvos como preferências.
+  Regras de alcance, dano, colisões, progressão e controles de toque seguem as
+  implementações atuais.
 
 - **Terceiro incremento gráfico:** em cima de `c2f882b`, o caçador, os quatro
   tipos de inimigo e o taverneiro ganharam malhas facetadas. Couro, lã e metal
@@ -125,7 +133,7 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
   - No HD, "Pixelização" e "Tremor dos vértices" ficam cinza e desativados; os valores do PS1 continuam guardados e voltam ao trocar.
   - A escolha é a preferência `estiloGrafico` na chave de preferências (`pugna-preferencias-v1`), não no progresso: persiste ao recarregar e "Apagar progresso" não a apaga. Preferência antiga sem o campo (ou com valor desconhecido) vira `'ps1'`. Formato do save de progresso não mudou.
   - Código: `RenderizadorRetro.definirEstilo(nome)` troca a resolução interna e os uniformes (mesmo renderizador); `texturas.js` ganhou `registrarTextura` e `definirFiltroTexturas` (Nearest ↔ Linear nas texturas já criadas, guardando o filtro original do PS1); o shader só aplica saturação/contraste quando são diferentes de 1 e só reduz cores quando `niveisDeCor` > 0, então o PS1 faz exatamente as mesmas contas de antes. `Toque.js` não mudou; sem assets novos.
-  - **Primeira pessoa fica fora:** a câmera continua em terceira pessoa (decisão registrada). Só entra se o Heitor aprovar.
+  - A primeira pessoa entrou em uma entrega posterior como opção de câmera.
   - **Desempenho:** o `npm run test:browser` (em PS1) levou 22 s, igual aos 23 s de antes. Forçando o HD no teste inteiro levou 49 s, mas o teste usa renderização por software (SwiftShader, sem placa de vídeo), em que o custo cresce com o número de pixels; num PC com placa de vídeo a diferença deve ser pequena. Vale o Heitor sentir jogando.
   - **Decidido pela IA (o Heitor revisa):** os valores do PS1 saíram do topo de `CONFIG.render` e foram para `estilos.ps1` (`alturaInterna` continua sendo a pixelização padrão); no HD a imagem interna nunca passa da altura da janela (numa janela de 650 px ficam 650 linhas, não 720); o nome no menu é "PS1 (retrô)" e "HD", logo antes de "Pixelização"; a vinheta e o leve contraste de sempre continuam no HD; a placa de texto e o chão clonado do vilarejo também seguem o filtro; valor desconhecido de `estiloGrafico` vira PS1.
 - **S3: estrada e taverna (pronto).** Spec 01. Números em `CONFIG.areas.estrada` e `CONFIG.areas.taverna`; código em `src/mundo/Estrada.js` e `Taverna.js`, mais duas linhas em `areas.js`:
@@ -176,7 +184,7 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 - [x] **0b. Contrato de área aplicado** (spec 00: `src/mundo/areas.js`)
 - [x] **1. B: pistola, parry, visceral e quickstep** (spec 07; Opus ou Fable) — B1, B2 e B3 feitos (pistola, parry, balas, broquel fora; visceral, execução, forte carregado; quickstep)
 - [x] **2. C: chefe e imprevisibilidade** (spec 08; Opus ou Fable) — C1, C2 e C3 feitos (variação do aviso, golpe atrasado, sequências novas, rasteira mais frequente; fase final do Guardião com golpes inaparáveis; no máximo 2 atacando juntos e punição do frasco)
-- [x] **3. S2: botão de gráfico PS1 / HD** (spec 02) — PS1 padrão, HD com troca na hora; primeira pessoa fora (só se o Heitor aprovar)
+- [x] **3. S2: botão de gráfico PS1 / HD** (spec 02) — PS1 padrão, HD com troca na hora
 - [x] **4. S3: estrada e taverna** (spec 01) — estrada, fachada, taverna por dentro, taverneiro e bilhete; PR 23
 - [ ] **5. D: golpe pelas costas e pulo contra rasteira** (sem spec ainda; Opus)
 - [ ] **6. S4: personagens e NPCs** (spec 03)
@@ -191,6 +199,8 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
   distância, ardósia HD, sombras de contato, riacho animado, rosácea e lareira.
 - [x] **Gráficos, incremento 3** — silhuetas do caçador, inimigos e taverneiro,
   com materiais HD de personagem e avisos de golpe preservados.
+- [x] **Câmera em primeira pessoa** — opção de desktop com espada, pistola
+  e mira travada nos dois modos gráficos.
 - [ ] **Gráficos, próximo incremento** — testar o percurso real e medir o custo
   do HD com GPU. Usar o guia gráfico para comparar o primeiro piloto de
   Blender com a fachada procedural. Alinhar iluminação com S5 e os modelos

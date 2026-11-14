@@ -4,9 +4,9 @@
 //  paredes. Este arquivo só ANIMA: quem decide o que acontece é o Jogador.js.
 // =============================================================================
 import * as THREE from 'three';
-import { retro } from '../render/retro.js';
 import { texturas } from '../render/texturas.js';
 import { CONFIG } from '../config.js';
+import { caixa, materialDePersonagem, parte } from './formas.js';
 
 // Poses: posição [x, y, z] e rotação [x, y, z] da espada em relação à câmera.
 const POSES = {
@@ -17,7 +17,7 @@ const POSES = {
   leveFim2:     { p: [0.5, -0.46, -0.66],  r: [-1.35, -0.2, -0.9] },
   carregar:     { p: [0.42, 0.08, -0.58],  r: [0.9, 0.0, -0.3] },
   forteFim:     { p: [0.0, -0.62, -0.72],  r: [-1.75, 0.0, 0.2] },
-  bloqueio:     { p: [0.02, -0.2, -0.5],   r: [-0.25, 0.0, 1.32] },
+  visceral:     { p: [0.18, -0.18, -0.74], r: [-1.55, 0.0, 0.05] },
   atordoado:    { p: [0.42, -0.6, -0.55],  r: [-0.9, -0.4, -0.5] },
   esquiva:      { p: [0.42, -0.5, -0.55],  r: [-0.9, -0.3, 0.1] },
 };
@@ -33,13 +33,12 @@ export class Arma {
     this.camera = new THREE.PerspectiveCamera(58, 16 / 9, 0.01, 10);
     this.cena.add(new THREE.AmbientLight(0x6a6ae8, 2.2));
     const luz = new THREE.DirectionalLight(0xa9b8ff, 2.0); luz.position.set(-0.5, 1, 0.6); this.cena.add(luz);
-    // Luz quente que acende perto de tochas (controlada pelo Jogo).
-    this.luzFogo = new THREE.PointLight(CONFIG.paleta.fogo, 0, 4); this.luzFogo.position.set(0.3, 0.3, 0.2); this.cena.add(this.luzFogo);
-
     const t = texturas();
-    const aco = retro(new THREE.MeshLambertMaterial({ map: t.metal, color: 0xdfe4ff }));
-    const escuro = retro(new THREE.MeshLambertMaterial({ map: t.metal, color: 0x5a5a8a }));
-    const couro = retro(new THREE.MeshLambertMaterial({ map: t.madeira }));
+    const metal = { asset: 'Metal032', metalness: 0.46, normal: 0.25 };
+    const aco = materialDePersonagem(t.metal, 0xdfe4ff, metal);
+    const escuro = materialDePersonagem(t.metal, 0x787990, metal);
+    const couro = materialDePersonagem(t.madeira, 0x9d8175, { asset: 'fabric_leather_01' });
+    const manga = materialDePersonagem(t.trama, 0x807085, { asset: 'caban' });
 
     this.espada = new THREE.Group();
     const laminaGeo = new THREE.CylinderGeometry(0.021, 0.051, 0.94, 4);
@@ -51,7 +50,7 @@ export class Arma {
     const mao = new THREE.Mesh(new THREE.IcosahedronGeometry(0.083, 1), couro);
     mao.scale.set(0.69, 0.92, 0.8);
     mao.position.set(0, 0, 0.028);
-    const braco = new THREE.Mesh(new THREE.CylinderGeometry(0.061, 0.085, 0.43, 6), escuro);
+    const braco = new THREE.Mesh(new THREE.CylinderGeometry(0.061, 0.085, 0.43, 6), manga);
     braco.rotation.x = Math.PI / 2;
     braco.position.set(0, -0.038, 0.265);
     this.espada.add(lamina, ponta, guarda, cabo, pomo, mao, braco);
@@ -70,12 +69,28 @@ export class Arma {
     this.espada.scale.setScalar(0.66);
     this.cena.add(this.espada);
 
+    this.pistola = new THREE.Group();
+    const cano = parte(new THREE.CylinderGeometry(0.033, 0.043, 0.46, 8), aco, 0, 0.045, -0.23);
+    cano.rotation.x = Math.PI / 2;
+    this.pistola.add(cano,
+      caixa(0.082, 0.093, 0.17, escuro, 0, 0.018, -0.065),
+      caixa(0.075, 0.17, 0.083, couro, 0, -0.072, 0.002),
+      caixa(0.101, 0.097, 0.091, couro, 0, -0.083, 0.021),
+    );
+    const mangaEsquerda = parte(new THREE.CylinderGeometry(0.06, 0.095, 0.43, 6), manga, 0, -0.12, 0.24);
+    mangaEsquerda.rotation.x = Math.PI / 2;
+    this.pistola.add(mangaEsquerda);
+    this.pistola.scale.setScalar(0.72);
+    this.cena.add(this.pistola);
+
     this.pos = new THREE.Vector3(...POSES.repouso.p);
     this.rot = new THREE.Vector3(...POSES.repouso.r);
   }
 
   atualizar(dt, jogador, proporcao) {
-    this.camera.aspect = proporcao; this.camera.updateProjectionMatrix();
+    // Mantém as armas nas bordas em janelas estreitas e monitores ultrawide.
+    this.camera.aspect = Math.max(1.35, proporcao);
+    this.camera.updateProjectionMatrix();
 
     // Escolhe a pose-alvo e a velocidade conforme o que o jogador está fazendo.
     let pose = POSES.repouso, rapidez = 9;
@@ -88,6 +103,7 @@ export class Arma {
       (jogador.acao === 'recuperacao' && jogador.tAcao < 0.075));
     if (jogador.morto || jogador.acao === 'atordoado') { pose = POSES.atordoado; rapidez = 10; }
     else if (jogador.tEsquiva > 0) { pose = POSES.esquiva; rapidez = 14; }
+    else if (jogador.acao === 'visceral') { pose = POSES.visceral; rapidez = 32; }
     else if (jogador.acao === 'preparo') { pose = inicio; rapidez = 42; }
     else if (emCorte) {
       const progresso = jogador.contatoParede ?? (jogador.acao === 'ativo' ? jogador.tAcao / golpe.ativo : 1);
@@ -103,9 +119,8 @@ export class Arma {
     }
     else if (jogador.acao === 'recuperacao') { rapidez = jogador.ataque === 'forte' ? 4.5 : 7; }
     else if (jogador.carregando) { pose = jogador.tCarga > 0.12 ? POSES.carregar : (alt ? POSES.leveErguer2 : POSES.leveErguer); rapidez = 14; }
-    else if (jogador.bloqueando) { pose = POSES.bloqueio; rapidez = 20; }
 
-    const k = emCorte ? 1 : 1 - Math.exp(-dt * rapidez);
+    const k = emCorte || dt === 0 ? 1 : 1 - Math.exp(-dt * rapidez);
     this.pos.x += (pose.p[0] - this.pos.x) * k; this.pos.y += (pose.p[1] - this.pos.y) * k; this.pos.z += (pose.p[2] - this.pos.z) * k;
     this.rot.x += (pose.r[0] - this.rot.x) * k; this.rot.y += (pose.r[1] - this.rot.y) * k; this.rot.z += (pose.r[2] - this.rot.z) * k;
 
@@ -119,5 +134,11 @@ export class Arma {
       this.pos.z,
     );
     this.espada.rotation.set(this.rot.x, this.rot.y, this.rot.z);
+    const tiro = jogador.acao === 'tiro' && !jogador.morto;
+    const coice = tiro ? Math.max(0, 1 - jogador.tAcao / (CONFIG.combate.pistola.recuperacao * 0.35)) : 0;
+    const elevar = tiro ? Math.sin(Math.PI * (1 - jogador.tAcao / CONFIG.combate.pistola.recuperacao) * 0.5) : 0;
+    this.pistola.position.set(-0.35 + elevar * 0.18 + bx, -0.295 + elevar * 0.175 + by + coice * 0.035, -0.71 + coice * 0.07);
+    this.pistola.rotation.set(-0.82 + elevar * 0.82 + coice * 0.38, 0.12 - elevar * 0.12, -0.12);
+    this.pistola.visible = !jogador.morto && jogador.acao !== 'curando';
   }
 }

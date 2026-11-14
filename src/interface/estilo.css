@@ -90,11 +90,12 @@ html, body {
 }
 #guardiao .barra { position: static; height: 10px; margin-top: 6px; }
 #barra-guardiao { background: linear-gradient(#c15574, #64182d); }
-/* Em terceira pessoa a mira só aparece travada num inimigo; os contatos piscam nela. */
+/* Na primeira pessoa, o ponto central marca a direção do golpe sem trava. */
 #mira {
   position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px;
   background: rgba(225, 225, 255, 0.6); opacity: 0;
 }
+#mira.primeira-pessoa { opacity: 1; border-radius: 50%; }
 #mira.travada {
   opacity: 1; width: 8px; height: 8px; margin: -4px; border-radius: 50%;
   background: #fff3d6; outline: 2px solid #ffdb9bcc; outline-offset: 5px;

@@ -27,6 +27,7 @@ import { criarAreas } from '../mundo/areas.js';
 import { Navegacao } from '../mundo/Navegacao.js';
 import { Jogador } from '../entidades/Jogador.js';
 import { Boneco } from '../entidades/Boneco.js';
+import { Arma } from '../entidades/Arma.js';
 import { Inimigo } from '../entidades/Inimigo.js';
 import { Fichas } from '../entidades/Fichas.js';
 import { Lanterna } from '../entidades/Lanterna.js';
@@ -68,6 +69,7 @@ export class Jogo {
     // ---------- entidades ----------
     this.jogador = new Jogador(this);
     this.boneco = new Boneco(this.cena);
+    this.arma = new Arma();
     this.boneco.grupo.visible = false;
     for (const area of this.areas) {
       area.fichas = new Fichas();   // limite de inimigos atacando juntos (CONFIG.combate.grupo)
@@ -75,7 +77,7 @@ export class Jogo {
       area.lanternas = area.pontosDeDescanso.map((p) => new Lanterna(area, p));
       area.navegacao = new Navegacao(area.colisores, area.limites);
     }
-    this.materiaisHd = new MateriaisHd([...areas, this.boneco]);
+    this.materiaisHd = new MateriaisHd([...areas, this.boneco, { grupo: this.arma.cena }]);
     this.materiaisHd.definirEstilo(this.render.estilo);
     this.checkpoints = new Map(this.areas.flatMap((area) => area.lanternas.map((lanterna) => [lanterna.id, { area, lanterna }])));
     this.guardiao = this.catedral.entidades.find((i) => i.tipo === 'guardiao');
@@ -399,6 +401,7 @@ export class Jogo {
     salvarPreferencias(this.preferencias);
     this.render.aplicarPreferencias(this.preferencias);
     this.materiaisHd.definirEstilo(this.render.estilo);
+    if (this.estado === 'pausado') this.jogador.atualizarCamera(0);
     this.atualizarAudio();
   }
 
@@ -585,7 +588,7 @@ export class Jogo {
       this.render.desenhar(this.cena, this.camera);
       return;
     }
-    if (this.estado === 'pausado') { this.render.desenhar(this.cena, this.camera); return; }
+    if (this.estado === 'pausado') { this.desenharPartida(0); return; }
 
     if (this.tDescanso > 0) {
       this.tDescanso = Math.max(0, this.tDescanso - dt);
@@ -649,11 +652,23 @@ export class Jogo {
     this.atualizarAudio();
     this.hud.mostrarGuardiao(noSantuario && !this.guardiao.morto && this.estado === 'jogando' ? this.guardiao : null);
     this.hud.atualizar(dt, this.jogador, CONFIG.jogador.vidaMax, CONFIG.jogador.estaminaMax);
-    this.render.desenhar(this.cena, this.camera);
+    this.desenharPartida(dt);
+  }
+
+  desenharPartida(dt) {
+    if (this.jogador.primeiraPessoa) {
+      this.boneco.grupo.visible = false;
+      this.arma.atualizar(dt, this.jogador, this.render.proporcao);
+      this.render.desenhar(this.cena, this.camera, this.arma.cena, this.arma.camera);
+    } else {
+      this.boneco.grupo.visible = this.jogador.distCamera > 0.85;
+      this.render.desenhar(this.cena, this.camera);
+    }
   }
 
   /** Posiciona na tela o marcador do inimigo com a mira travada. */
   atualizarTrava() {
+    this.hud.mira.classList.toggle('primeira-pessoa', this.jogador.primeiraPessoa && this.estado === 'jogando');
     const alvo = this.estado === 'jogando' ? this.jogador.alvo : null;
     if (!alvo) { this.hud.mostrarTrava(null); return; }
     this.camera.updateMatrixWorld();

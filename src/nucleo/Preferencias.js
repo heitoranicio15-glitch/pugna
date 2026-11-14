@@ -24,6 +24,7 @@ export function carregarPreferencias() {
     resolucaoHd: CONFIG.render.estilos.hd.resolucoes.includes(salvo?.resolucaoHd)
       ? salvo.resolucaoHd : PADRAO.resolucaoHd,
     tremor: typeof salvo?.tremor === 'boolean' ? salvo.tremor : PADRAO.tremor,
+    perspectiva: salvo?.perspectiva === 'primeira' ? 'primeira' : 'terceira',
     // Preferência antiga (sem o campo) ou valor desconhecido: fica no PS1.
     estiloGrafico: Object.hasOwn(CONFIG.render.estilos, salvo?.estiloGrafico ?? '')
       ? salvo.estiloGrafico : PADRAO.estiloGrafico,

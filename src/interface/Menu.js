@@ -32,8 +32,9 @@ export class Menu {
     this.form.addEventListener('submit', (evento) => evento.preventDefault());
     this.form.addEventListener('input', (evento) => {
       const campo = evento.target;
+      const texto = campo.name === 'estiloGrafico' || campo.name === 'perspectiva';
       jogo.preferencias[campo.name] = campo.type === 'checkbox' ? campo.checked
-        : campo.name === 'estiloGrafico' ? campo.value : Number(campo.value);
+        : texto ? campo.value : Number(campo.value);
       this.exibirPreferencias();
       jogo.aplicarPreferencias();
     });
@@ -58,6 +59,7 @@ export class Menu {
     const hd = this.jogo.preferencias.estiloGrafico === 'hd';
     for (const nome of ['resolucao', 'tremor']) this.form.elements[nome].disabled = hd;
     this.form.elements.resolucaoHd.disabled = !hd;
+    this.form.elements.perspectiva.disabled = this.jogo.entrada.toque;
   }
 
   atualizarProgresso(progresso, nome) {

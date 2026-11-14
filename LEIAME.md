@@ -1,6 +1,6 @@
 # PUGNA
 
-Base de um jogo 3D de navegador: ação e exploração em terceira pessoa, no estilo
+Base de um jogo 3D de navegador: ação e exploração, no estilo
 souls-like, num vilarejo gótico, à noite, com visual retrô estilo PS1. Você é um caçador que enfrenta
 cavaleiros e caçadores corrompidos, sob uma **lua enorme com rosto** que não tira
 os olhos de você.
@@ -112,9 +112,12 @@ o brilho, o gráfico, a pixelização e o tremor dos vértices.
   e o tremor dos vértices ficam cinza e não valem; os valores escolhidos para o PS1
   ficam guardados e voltam ao trocar de novo.
 
-Os números de cada estilo ficam em `CONFIG.render.estilos` (`src/config.js`). A
-escolha fica salva com as outras preferências. A primeira pessoa não faz parte
-deste botão: a câmera continua em terceira pessoa (só muda se o Heitor aprovar).
+Os números de cada estilo ficam em `CONFIG.render.estilos` (`src/config.js`).
+Em **Configurações → Câmera**, escolha **Terceira pessoa** (padrão) ou
+**Primeira pessoa** no computador. A câmera e o gráfico são preferências
+independentes e ficam salvos ao recarregar. Na primeira pessoa, a espada e a
+pistola aparecem nas mãos do caçador e os golpes sem trava seguem o seu olhar
+no plano horizontal. **Tab** ou o botão do meio do mouse trava a mira.
 
 O salvamento é no estilo Souls: **o jogo salva sozinho** a cada coisa que
 acontece (descansar, recolher, abrir, usar um item, derrotar o Guardião). Não
@@ -317,8 +320,8 @@ ficam em `CONFIG.areas.estrada` e `CONFIG.areas.taverna` (`src/config.js`).
 - Nas duas versões, as casas têm guarnições de madeira e ferragens visíveis
   de perto, a rosácea da catedral tem nervuras, o riacho tem ondas e a lareira
   tem arco e cornija. O HD também usa ardósia escaneada nos telhados e nas lajes.
-- Movimento em terceira pessoa com colisão; dá para subir em caixotes e degraus.
-  A câmera gira em volta do caçador e encurta ao encostar em paredes.
+- Movimento com colisão; dá para subir em caixotes e degraus. A câmera em terceira
+  pessoa encurta ao encostar em paredes. A primeira pessoa acompanha os olhos.
 - Caçador com chapéu, capa com pregas, espada e pistola animados no código.
   Os inimigos têm armaduras facetadas e viseiras que acendem nos avisos de
   golpe. O modo HD acrescenta materiais de tecido, couro e aço.
@@ -378,6 +381,7 @@ pugna/
    ├─ entidades/
    │  ├─ Jogador.js        movimento, câmera, mira travada, vida, estamina e combate
    │  ├─ Boneco.js         o boneco do caçador em terceira pessoa (só animação)
+   │  ├─ Arma.js           mãos, espada e pistola para a câmera em primeira pessoa
    │  ├─ Inimigo.js        aparência, patrulha e combate dos inimigos
    │  ├─ Ataques.js        fases e tipos de ataque (a máquina única dos inimigos)
    │  ├─ Fichas.js         quantos inimigos atacam ao mesmo tempo (fichas de ataque)
@@ -461,6 +465,7 @@ pugna/
 - [x] Inimigos contornam obstáculos e procuram a última posição visível
 - [x] Paredes bloqueiam a detecção inicial e golpes
 - [x] Câmera em terceira pessoa com boneco simples do caçador
+- [x] Primeira pessoa opcional no menu de câmera do computador
 - [x] Boneco facetado do caçador com capa, botas, chapéu e armas remodelados
 - [ ] Trocar sons sintetizados por gravações CC0; música ambiente
 - [x] Menu de configurações e opção de apagar o progresso
