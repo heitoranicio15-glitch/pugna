@@ -108,6 +108,27 @@ mantêm os IDs publicados.
   avulsa. Os GLBs na pasta pública podem ser baixados diretamente pelo
   navegador, então a build pública usa os modelos CC0 descritos acima.
 
+## Personagens e vestígios da Romaria
+
+- O caçador de chapéu e o taverneiro usam o Pirate Kit do Quaternius.
+  O cavaleiro vem do Animated Knight Pack. O penitente, o caçador
+  corrompido e o Guardião usam o KayKit Adventurers em tons distintos.
+  Cada arquivo leva a pose de repouso e o esqueleto. O jogo aplica as
+  poses de caminhada e combate aos ossos e prende o equipamento às mãos.
+  O jogo conserva os corpos anteriores como reserva durante a carga.
+- A pistola importada aparece nas duas câmeras. Na primeira pessoa o
+  braço e o coice usam a animação da cena sobreposta.
+- A decoração inclui oferendas e estandartes no exterior da Catedral,
+  livros e objetos litúrgicos no interior, provisões no pátio da taverna
+  e utensílios, comida e garrafas no salão. Junto à ponte, uma malha
+  instanciada desenha os reflexos animados. O cais e o barco são visíveis
+  da margem. A travessia continua pela ponte.
+- As referências da Quixel para este trecho são a
+  [margem erodida](https://www.fab.com/listings/82159ab9-2ed2-47ac-97b8-8528b984cd84),
+  o [barco de madeira](https://www.fab.com/listings/b7ea9cbf-fd48-462b-8e7e-14eb87395739)
+  e os [utensílios medievais](https://www.fab.com/sellers/Quixel%20Megascans?q=domestic).
+  Os arquivos distribuídos são os modelos CC0 registrados nos créditos.
+
 ## Teste de jogo para Gabriel e Heitor
 
 1. Abra o [jogo publicado](https://heitoranicio15-glitch.github.io/pugna/) e anote

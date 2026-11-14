@@ -16,6 +16,7 @@ import { materiais, caixa, piramide, casa, torre, igreja, tocha, animarTochas, a
 import { sombrasDeContato } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
 import { montarBairrosVilarejo } from './BairrosVilarejo.js';
+import { decorarVilarejo } from './Decoracao.js';
 import { modeloPronto } from '../render/modelos.js';
 
 const C = CONFIG.areas.vilarejo;
@@ -192,6 +193,7 @@ export class Vilarejo {
     cerca(28, -54, 0.14, 20);
     montarExploracaoVilarejo(this);
     montarBairrosVilarejo(this);
+    decorarVilarejo(this);
 
     // ---------- caixotes e barris (dá para pular em cima) ----------
     for (const [x, z, t] of [[4.6, 30, 1], [5.2, 31.2, 0.8], [-12.6, 8, 1], [11.5, -3.5, 0.9], [-21, -3.8, 1], [20, 4.2, 1.1], [-5, -36, 1]]) {

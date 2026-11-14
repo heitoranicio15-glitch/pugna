@@ -83,6 +83,10 @@ export class Arma {
       caixa(0.075, 0.17, 0.083, couro, 0, -0.072, 0.002),
       caixa(0.101, 0.097, 0.091, couro, 0, -0.083, 0.021),
     );
+    modeloPronto(this.pistola, 'pistola-pugna', {
+      pos: [0,-0.145,-0.208], tamanho: [0.13,0.24,0.53], orientacao: [0, Math.PI / 2, 0],
+      reserva: [...this.pistola.children],
+    });
     const mangaEsquerda = parte(new THREE.CylinderGeometry(0.06, 0.095, 0.43, 6), manga, 0, -0.12, 0.24);
     mangaEsquerda.rotation.x = Math.PI / 2;
     this.pistola.add(mangaEsquerda);

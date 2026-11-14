@@ -9,6 +9,7 @@ import { feixeDeLuz, sombrasDeContato } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
 import { montarClaustro } from './Claustro.js';
 import { montarAlasCatedral } from './AlasCatedral.js';
+import { decorarCatedral } from './Decoracao.js';
 import { modeloPronto } from '../render/modelos.js';
 
 const C = CONFIG.areas.catedral;
@@ -271,6 +272,7 @@ export class Catedral {
     luz(0, 4, -29, 0xa466eb, 63, 19);
     luz(0, 4.2, -17.3, 0xd3a6ed, 27, 15);
     for (const feixe of C.feixes) feixeDeLuz(this.grupo, feixe);
+    decorarCatedral(this);
 
     this.saida = { x: 0, z: 8.45 };
     this.entrada = { x: 0, z: 6, yaw: 0 };

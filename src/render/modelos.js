@@ -7,12 +7,12 @@ import { registrarMaterialHd } from './materiaisHd.js';
 const modelos = new Map();
 const tintas = new WeakMap();
 
-function carregar(id) {
+export function carregarModelo(id) {
   if (!modelos.has(id)) {
     const loader = new GLTFLoader();
-    modelos.set(id, loader.loadAsync(`${import.meta.env.BASE_URL}assets/modelos/${id}.glb`).then(({ scene }) => {
+    modelos.set(id, loader.loadAsync(`${import.meta.env.BASE_URL}assets/modelos/${id}.glb`).then(gltf => {
       const texturas = new Set();
-      scene.traverse(malha => {
+      gltf.scene.traverse(malha => {
         if (!malha.isMesh) return;
         for (const mat of [malha.material].flat()) {
           retro(mat);
@@ -24,7 +24,7 @@ function carregar(id) {
         mapa.minFilter = mapa.generateMipmaps ? THREE.NearestMipmapLinearFilter : THREE.NearestFilter;
         registrarTextura(mapa);
       }
-      return scene;
+      return gltf;
     }).catch(erro => {
       console.warn(`PUGNA: modelo ${id} indisponível.`, erro);
       return null;
@@ -94,9 +94,9 @@ export function modeloPronto(grupo, id, {
   grupo.add(encaixe);
   // A montagem de mapas em Node também serve aos testes de navegação.
   if (!import.meta.env || typeof window === 'undefined') return encaixe;
-  encaixe.userData.pronto = carregar(id).then(original => {
-    if (!original) return false;
-    const o = original.clone();
+  encaixe.userData.pronto = carregarModelo(id).then(gltf => {
+    if (!gltf) return false;
+    const o = gltf.scene.clone();
     o.rotation.set(...orientacao);
     const caixa = new THREE.Box3().setFromObject(o);
     const centro = caixa.getCenter(new THREE.Vector3());

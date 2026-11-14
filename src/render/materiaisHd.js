@@ -51,6 +51,7 @@ async function criarVariante(material, { asset, intensidade, metalness, preserva
 export class MateriaisHd {
   constructor(areas) {
     this.malhas = [];
+    this.registradas = new WeakSet();
     this.variantes = new Map();
     this.hd = false;
     for (const { grupo } of areas) {
@@ -64,10 +65,11 @@ export class MateriaisHd {
 
   registrar(grupo) {
     grupo.traverse(malha => {
-      if (!malha.isMesh) return;
+      if (!malha.isMesh || this.registradas.has(malha)) return;
       const original = malha.material;
       if (![original].flat().some(material => porMaterial.has(material))) return;
       const entrada = { malha, original };
+      this.registradas.add(malha);
       this.malhas.push(entrada);
       this.aplicar(entrada);
     });

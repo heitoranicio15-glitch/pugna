@@ -12,6 +12,7 @@ import { CONFIG } from '../config.js';
 import { texturas } from '../render/texturas.js';
 import { caixa as cx, corpoFacetado, lamina, manto, materialDePersonagem, parte } from './formas.js';
 import { modeloPronto } from '../render/modelos.js';
+import { modeloDePersonagem } from './ModeloDePersonagem.js';
 
 const CB = CONFIG.combate;
 const ALTURA_MIOLO = 0.95;   // centro do corpo: é em volta dele que o boneco rola
@@ -123,7 +124,15 @@ export class Boneco {
       cx(0.078, 0.022, 0.075, latao, 0, -0.27, 0.028),
       cx(0.06, 0.09, 0.2, couro, 0, 0.03, -0.1),       // coronha
     );
+    modeloPronto(this.pistola, 'pistola-pugna', {
+      pos: [0, -0.375, -0.05], tamanho: [0.13, 0.49, 0.25], orientacao: [0, 0, -Math.PI / 2],
+      reserva: [...this.pistola.children],
+    });
     this.bracoE.add(this.pistola);
+    this.modelo = modeloDePersonagem(base, 'cacador-pugna', {
+      reserva: [this.pernaD, this.pernaE, this.corpo],
+      armas: [['maoD', this.espada, [0.52, 0.16, 0]], ['maoE', this.pistola, [-0.1, 0, 0]]],
+    });
 
     this.pose = { ...REPOUSO };
     this.rumo = 0;
@@ -213,6 +222,14 @@ export class Boneco {
     this.pernaE.rotation.x = passo;
     this.pernaD.rotation.x = -passo;
     this.capa.rotation.x = 0.1 + Math.min(0.75, rapidez * 0.085) + Math.sin(j.fasePasso * 2) * 0.03;
+    const rig = this.modelo.userData.pose;
+    if (rig) {
+      rig.tronco(pose.cx, pose.cy, 0);
+      rig.bracoD(pose.bdx + 0.2, 0, pose.bdz);
+      rig.bracoE(pose.bex, 0, pose.bez);
+      rig.pernaE(passo, 0, 0);
+      rig.pernaD(-passo, 0, 0);
+    }
 
     // Morte: cai de costas. Esquiva: gira em volta do centro do corpo.
     this.miolo.rotation.x = rolo - this.queda * Math.PI / 2;

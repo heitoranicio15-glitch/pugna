@@ -16,6 +16,8 @@ import { placa } from './Aderecos.js';
 import { materiais, caixa, casa, torre, tocha, animarTochas, arvoreSeca, muralha, planoDeChao, barril } from './pecas.js';
 import { sombrasDeContato } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
+import { decorar } from './Decoracao.js';
+import { montarRio } from './Rio.js';
 
 const C = CONFIG.areas.estrada;
 
@@ -48,11 +50,6 @@ export class Estrada {
       planoDeChao(this, { x, z: meioZ, l: 0.55, p: maxZ - minZ - 4, ladrilho: 7, material: m.terraChao, ordem: -4.9, y: 0.01 });
     }
     const zPonte = C.ponte.z;
-    this.agua = texturas().riacho;
-    planoDeChao(this, {
-      x: meioX, z: zPonte, l: 420, p: C.ponte.riacho, ladrilho: 5, y: 0.02, ordem: -4,
-      material: retro(new THREE.MeshBasicMaterial({ map: this.agua, depthWrite: false })),
-    });
 
     // ---------- Portão Sul do vilarejo, visto de fora (ponta norte) ----------
     const zN = C.portaoNorte.z;
@@ -115,6 +112,16 @@ export class Estrada {
     const bordaL = maxX - (lp / 2), bordaO = (lp / 2) - minX;
     this.colisores.adicionar(lp / 2 + bordaL / 2, zPonte, bordaL, C.ponte.riacho);
     this.colisores.adicionar(-lp / 2 - bordaO / 2, zPonte, bordaO, C.ponte.riacho);
+    this.animarRio = montarRio(this, C.ponte, meioX, lp);
+    this.animarRio(0);
+    decorar(this.grupo, [
+      ['Bags', -3.15, 0, -54.65, 0.6], ['box_stacked', 4.55, 0, -54.3, -0.3],
+      ['Grass_2', -4.62, 0, -36.75, 2.1, 1.4], ['Rock_Moss_4', -5.1, 0, -36.3, 0.7],
+      ['WoodLog_Moss', 6.75, 0, -25.9, 0.5], ['Plant_3', 7.03, 0, -25.3, 0.2],
+      ['Rock_Moss_2', 7.74, 0, 8.28, 1.2], ['Grass_2', 8.64, 0, 8.35, 0.9, 1.3],
+      ['Grass_2', -12.1, 0, 32.75, 0.34], ['Rock_Moss_4', -12, 0, 32.2, 0.8],
+      ['Package_1', 5.39, 0, 53.2, -0.4], ['Bags', -3.42, 0, 52.9, 0.4],
+    ]);
 
     // ---------- carroça tombada (ponta sul, "em obras") ----------
     const zC = C.carroca.z;
@@ -255,6 +262,18 @@ export class Estrada {
     banco.position.set(T.x + frente + 0.45, 0.25, T.z - 3.0);
     this.grupo.add(banco);
     this.colisores.adicionar(banco.position.x, banco.position.z, 0.5, 2.2, 0.5);
+    const parede = T.x + frente;
+    decorar(this.grupo, [
+      ['Bags', parede + 0.79, 0, T.z + 2.6, 1.02], ['box_stacked', parede + 0.58, 0, T.z + 1.98, -0.28],
+      ['banco-peixes', parede + 0.73, 0, T.z + 3.3, 0.28],
+      ['Hay', parede + 0.71, 0, T.z + 6.1, 1.33, 1.08],
+      ['Package_1', parede + 1.47, 0, T.z + 5.8, 0.5],
+      ['WoodLog_Moss', parede + 0.42, 0, T.z - 7.4, 1.66, 0.82],
+      ['Cauldron', parede + 1.63, 0, T.z - 7.27, 0.62, 0.8],
+      ['Grass_2', parede + 1.9, 0, T.z - 7.47, 1.65, 0.81],
+    ]);
+    this.colisores.adicionar(parede + 0.58, T.z + 1.98, 0.92, 0.88, 0.94);
+    sombrasDeContato(this.grupo, [[parede + 0.96, T.z + 3.25, 2.4, 3.2], [parede + 0.75, T.z - 6.8, 2.3, 2.9]]);
     this.fachada = fachada;
     // A porta fica em (T.x + frente, T.z). O portal fica 1 m à frente dela.
     this.portaDaTaverna = { x: T.x + frente + 1, z: T.z };
@@ -262,7 +281,7 @@ export class Estrada {
 
   atualizar(dt, tempo) {
     animarTochas(this.tochas, tempo);
-    this.agua.offset.x = (tempo * 0.13) % 1;
+    this.animarRio(tempo);
     for (const n of this.nevoas) {
       n.sprite.position.x += n.vel * dt;
       if (n.sprite.position.x > this.limites.maxX + 20) n.sprite.position.x = this.limites.minX - 20;

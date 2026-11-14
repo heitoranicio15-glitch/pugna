@@ -18,6 +18,8 @@ import { fagulhasDaLareira, sombrasDeContato } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
 import { modeloPronto } from '../render/modelos.js';
 import { caixa as cx, corpoFacetado, materialDePersonagem, parte } from '../entidades/formas.js';
+import { modeloDePersonagem } from '../entidades/ModeloDePersonagem.js';
+import { decorar } from './Decoracao.js';
 
 const C = CONFIG.areas.taverna;
 
@@ -131,6 +133,11 @@ export class Taverna {
       }));
       colocar(halo, chama.position.x, 1.14, chama.position.z);
       this.tochas.push({ chama, halo, luz: null, fase: x * 7.3 + z, base: 0 });
+      decorar(this.grupo, [
+        [x < 0 ? 'plate_food_A' : 'plate_food_B', x + 0.27, 0.936, z + 0.21, z],
+        ['Chalice', x - 0.46, 0.936, z - 0.25],
+        ['plate_stack', x - 0.45, 0.936, z + 0.22, x, 0.56],
+      ]);
     }
     // O bilhete na primeira mesa (anotação lida com E, como as outras).
     const bilhete = bloco(-3.35, 0.945, 0.35, 0.5, 0.012, 0.36, retro(new THREE.MeshLambertMaterial({ color: 0xd9c9a0, emissive: 0x3a3220 })));
@@ -177,6 +184,19 @@ export class Taverna {
     const luzTeto = new THREE.PointLight(0xffc27a, C.lampiao.intensidade, C.lampiao.alcance, 1.7);
     luzTeto.position.set(0, H - 1.1, 0.4);
     this.grupo.add(luzTeto);
+    decorar(this.grupo, [
+      ['bottle_A_green', -4.9, 1.606, -4.25], ['bottle_B_brown', -4.42, 1.606, -4.23, 0.5],
+      ['bottle_A_green', -1.85, 2.306, -4.28], ['bottle_B_brown', -2.15, 2.306, -4.29],
+      ['plate_stack', -0.55, 1.606, -4.27], ['bottle_B_brown', -0.6, 2.306, -4.25, 1.8],
+      ['Book3_Closed', -2.75, 1.101, -2.25, 0.22], ['bottle_A_green', -2.87, 1.101, -2.73],
+      ['plate_stack', -4.55, 1.101, -2.32], ['Pouch', -4.91, 1.101, -2.48, -0.7, 0.83],
+      ['banco-peixes', 4.94, 0, -3.48, 1.2, 0.85],
+      ['Cauldron', 5.36, 0.16, -0.52, 0.33, 0.87], ['WoodLog_Moss', 5.22, 0, 2.1, 1.58, 0.62],
+      ['candle_triple', 4.96, 1.86, -0.04, 1.5, 0.7],
+      ['Chalice', 5.24, 1.86, -1.12, 0.4],
+      ['banner_patternC_brown', 3.9, 1.35, -4.43, 0, 0.77],
+      ['box_stacked', 5.15, 0, 3.68, 0.15],
+    ]);
 
     this.montarTaverneiro();
 
@@ -244,6 +264,10 @@ export class Taverna {
     this.bracoEsquerdo.add(caneca);
     this.bracoDireito.add(cx(0.2, 0.02, 0.14, avental, 0, -0.62, 0.06));   // o pano
     this.grupo.add(g);
+    this.modeloTaverneiro = modeloDePersonagem(g, 'taverneiro-pugna', {
+      reserva: [...g.children],
+      armas: [['maoE', caneca, [0, 0, 0]]],
+    });
 
     // E — falar: cada vez mostra a fala seguinte (o Jogo.js trata acao 'falar').
     this.objetos.push({
@@ -265,5 +289,12 @@ export class Taverna {
     this.bracoEsquerdo.rotation.set(-1.15 + Math.sin(tempo * 1.9) * 0.1, 0, 0.1);
     this.bracoDireito.rotation.set(-1.0 + Math.sin(tempo * 1.9 + 1.2) * 0.14, 0, -0.1);
     this.cabecaTaverneiro.rotation.y = Math.sin(tempo * 0.35) * 0.3;
+    const rig = this.modeloTaverneiro.userData.pose;
+    if (rig) {
+      rig.tronco(this.corpoTaverneiro.rotation.x, 0, 0);
+      rig.cabeca(0.05, this.cabecaTaverneiro.rotation.y, 0);
+      rig.bracoE(this.bracoEsquerdo.rotation.x * 1.42, 0, -0.42);
+      rig.bracoD(this.bracoDireito.rotation.x * 1.26, 0, 0.38);
+    }
   }
 }

@@ -49,6 +49,15 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Vestígios da Romaria e personagens importados.** Os seis tipos de
+  personagem agora usam modelos com esqueleto do Quaternius e do KayKit.
+  As armas e poses do PUGNA acompanham os ossos, inclusive os avisos de
+  golpe dos inimigos. A taverna recebeu provisões na fachada, pratos,
+  garrafas e panelas no salão. A Estrada do Sul ganhou um embarcadouro,
+  barco, rochas com musgo e reflexos animados na água. O adro, a fachada,
+  as alas e o santuário da Catedral ganharam oferendas, panos e livros.
+  Os adereços maiores ficam fora dos corredores e dos pontos de interação.
+
 - **Expansão do vilarejo e da Catedral:** o mapa da vila passou de 94 ×
   155 m para 132 × 184 m, com o Bairro dos Estábulos, Largo da Romaria e
   Caminho das Urnas fechando o percurso lateral. A Catedral passou de
@@ -230,8 +239,10 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 - [x] **Gráficos, incremento 5** — redistribuição do vilarejo e interior da
   Catedral, com novos percursos e cinco registros da história do Véu.
 - [x] **Gráficos, expansão dos mapas e primeira troca em escala de modelos**
-  — 42 GLBs CC0, novas alas e bairros. A substituição de corpos animados
-  completos, lanterna, pistola e fachada da Catedral segue em aberto.
+  — 42 GLBs CC0, novas alas e bairros.
+- [x] **Gráficos, personagens e decoração das quatro áreas** — modelos
+  para o caçador, o taverneiro e os quatro tipos de inimigo, detalhes de
+  taverna e Catedral e embarcadouro na estrada.
 - [ ] **Gráficos, próximo incremento** — testar o percurso real e medir o custo
   do HD com GPU. Usar o guia gráfico para comparar o primeiro piloto de
   Blender com a fachada procedural. Alinhar iluminação com S5 e os modelos

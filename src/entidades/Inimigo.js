@@ -28,8 +28,10 @@ import { texturas } from '../render/texturas.js';
 import { MaquinaDeAtaque, ehFaseDeAtaque, golpeAlcanca, sortearSequencia } from './Ataques.js';
 import { caixa as cx, corpoFacetado, lamina, manto, materialDePersonagem, parte as facetado } from './formas.js';
 import { modeloPronto } from '../render/modelos.js';
+import { modeloDePersonagem } from './ModeloDePersonagem.js';
 
 const v2 = new THREE.Vector3();
+const MODELOS = { guardiao: 'guardiao-pugna', cavaleiro: 'cavaleiro-pugna', penitente: 'penitente-pugna', cacador: 'vigia-pugna' };
 
 /** Monta o corpo facetado e devolve o grupo e as partes animadas. */
 function montarCorpo(tipo) {
@@ -146,14 +148,33 @@ function montarCorpo(tipo) {
       reserva: [...arma.children] });
   }
   bracoD.add(arma);
+  const armas = [['maoD', arma, [-0.12, 0, 0]]];
   if (cavaleiro) {
     const escudo = facetado(new THREE.CylinderGeometry(0.25, 0.25, 0.065, 6), armadura, -0.12, -0.47, 0.06);
     escudo.rotation.z = Math.PI / 2;
     escudo.scale.x = 1.32;
     bracoE.add(escudo);
+    const suporte = new THREE.Group();
+    suporte.add(escudo.clone());
+    suporte.children[0].position.set(0, 0.2, 0.12);
+    armas.push(['maoE', suporte, [0, 0, Math.PI / 2]]);
   }
 
-  return { grupo: g, corpo, pernaE, pernaD, bracoE, bracoD, olho, aco, materiais: [armadura, pano, aco] };
+  const modelo = modeloDePersonagem(g, MODELOS[tipo], {
+    reserva: [corpo, pernaE, pernaD], armas, emissao: armadura.emissive,
+    aoMontar(cabeca) {
+      const pos = cabeca.getWorldPosition(new THREE.Vector3());
+      const altura = guardiao ? 1.76 : penitente ? 1.56 : tipo === 'cacador' ? 1.61 : 1.72;
+      const face = guardiao ? 0.46 : penitente ? 0.43 : tipo === 'cacador' ? 0.4 : 0.24;
+      for (const lado of [-1, 1]) {
+        const marca = cx(0.062, 0.021, 0.018, olho, 0, 0, 0);
+        marca.position.copy(cabeca.worldToLocal(pos.clone().set(pos.x + lado * 0.085, altura, face)));
+        marca.scale.setScalar(1 / cabeca.getWorldScale(new THREE.Vector3()).x);
+        cabeca.add(marca);
+      }
+    },
+  });
+  return { grupo: g, corpo, pernaE, pernaD, bracoE, bracoD, modelo, olho, aco, materiais: [armadura, pano, aco] };
 }
 
 export class Inimigo {
@@ -220,6 +241,8 @@ export class Inimigo {
     this.grupo.visible = true; this.grupo.scale.setScalar(this.cfg.escala); this.grupo.rotation.set(0, 0, 0); this.grupo.position.copy(this.pos);
     this.barra.visible = false;
     for (const m of this.materiais) m.emissive.setRGB(0, 0, 0);
+    this.modelo.scale.y = 1;
+    this.modelo.userData.clarao?.();
   }
 
   ocultarDerrotado() {
@@ -332,6 +355,7 @@ export class Inimigo {
     this.piscar -= dt;
     const claro = this.piscar > 0 ? 0.7 : 0;
     for (const m of this.materiais) m.emissive.setRGB(claro, claro, claro * 1.1);
+    this.modelo.userData.clarao?.();
 
     if (this.morto) {
       // Cai para trás e, depois de um tempo, se desfaz.
@@ -539,6 +563,15 @@ export class Inimigo {
       this.olho.color.setHex(aviso);
       this.aco.emissive.setHex(aviso).multiplyScalar(forcaAviso);
     } else this.olho.color.setHex(this.corOlho);
+    const rig = this.modelo.userData.pose;
+    if (rig) {
+      rig.tronco(this.corpo.rotation.x, this.corpo.rotation.y, 0);
+      rig.bracoD(this.bracoD.rotation.x, 0, -this.bracoD.rotation.z);
+      rig.bracoE(this.bracoE.rotation.x, 0, 0);
+      rig.pernaD(passo, 0, 0);
+      rig.pernaE(-passo, 0, 0);
+      this.modelo.scale.y = 1 + this.corpo.position.y * 0.46;
+    }
     this.grupo.position.set(this.pos.x, Math.abs(Math.sin(this.fase)) * 0.04, this.pos.z);
     this.grupo.rotation.y = this.angulo;
 
