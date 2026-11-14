@@ -10,7 +10,7 @@ export class Som {
     this.volume = 0.8;
     this.pausado = false;
     // Liga cada aviso do jogo ao seu som.
-    eventos.em('jogador:passo', (d) => this.passo(d?.correndo ? 0.5 : 0.32));
+    eventos.em('jogador:passo', (d) => this.passo(d?.correndo ? 0.5 : d?.agachado ? 0.14 : 0.32));
     eventos.em('jogador:pouso', () => this.passo(0.7, 0.7));
     eventos.em('jogador:pulo', () => this.passo(0.25, 1.3));
     eventos.em('jogador:golpe', (d) => this.zunido(d.forte ? 0.5 : 0.35, d.forte ? 0.32 : 0.2, d.forte ? 500 : 900));
@@ -28,7 +28,10 @@ export class Som {
     });
     eventos.em('jogador:tiro', () => this.tiro());
     eventos.em('jogador:sem-bala', () => this.ruido({ volume: 0.16, duracao: 0.04, tipo: 'highpass', de: 2600 }));   // clique seco
-    eventos.em('jogador:visceral', () => this.zunido(0.4, 0.22, 420));
+    eventos.em('jogador:visceral', (d) => { if (!d?.costas) this.zunido(0.4, 0.22, 420); });
+    // Golpe pelas costas: só um baque curto e seco, sem sino.
+    eventos.em('golpe:costas', () => { this.impacto(0.5); this.ruido({ volume: 0.18, duracao: 0.06, tipo: 'lowpass', de: 900, ate: 200 }); });
+    eventos.em('jogador:pisou', () => { this.impacto(1); this.metal(0.35, 0.3); });
     // Visceral: impacto grave e um sino; a execução é mais grave e mais longa.
     eventos.em('golpe:visceral', ({ execucao }) => {
       this.impacto(execucao ? 1.4 : 1.2);
@@ -76,7 +79,10 @@ export class Som {
       setTimeout(() => this.rosnado(0.45 * perto, 42), 260);
     });
     eventos.em('inimigo:alerta', (i) => this.rosnado(0.3 * this.perto(i), i.tipo === 'cavaleiro' ? 70 : 120));
-    eventos.em('inimigo:morreu', (i) => { this.rosnado(0.35 * this.perto(i), 50); this.passo(0.6 * this.perto(i), 0.5, 0.45); });
+    eventos.em('inimigo:morreu', (i) => {   // morto pelas costas: cai sem grito
+      if (!i.silencioso) this.rosnado(0.35 * this.perto(i), 50);
+      this.passo((i.silencioso ? 0.3 : 0.6) * this.perto(i), 0.5, 0.45);
+    });
     eventos.em('descanso', () => this.sino(392, 2.5, 0.25));
     eventos.em('item:cura', () => this.sino(330, 0.58, 0.13));
     eventos.em('item:retorno', () => this.sino(262, 1.8, 0.2));

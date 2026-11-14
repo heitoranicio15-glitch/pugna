@@ -305,6 +305,37 @@ export const CONFIG = {
     // segundos, avança e começa a sequência mais rápida que tem (respeitando
     // as fichas). Um inimigo pode trocar a chance com punirFrasco: { chance }.
     punirFrasco: { distancia: 7, chance: 0.8, reacao: 0.15 },
+    // ---- Etapa D: furtividade, golpe pelas costas e pulo contra a rasteira ----
+    // Furtividade: Z alterna agachado. O inimigo que patrulha percebe o caçador
+    // se ele estiver no cone de visão e no alcance, ou perto demais (barulho).
+    // Em pé vale a regra de antes: cone largo (coneEmPe) e a visao inteira.
+    //   velocidade     fração da velocidade de andar, agachado
+    //   alturaOlhos    fração da altura dos olhos, agachado (primeira pessoa)
+    //   raioAgachado / raioAndando / raioCorrendo  metros em que ele "ouve"
+    //                  (raioAndando vale também parado em pé: os 5 m de antes)
+    //   anguloVisao    graus do cone de visão de quem vê o caçador agachado
+    //   visaoNoEscuro  fração da visao do inimigo para ver o caçador agachado
+    //   coneEmPe       cosseno do cone para quem está em pé (-0.15, o de antes)
+    //   raioAlerta / atrasoAlerta  quem passa a perseguir chama os vizinhos
+    //                  da área até este raio, depois deste atraso (segundos)
+    furtividade: {
+      velocidade: 0.45, alturaOlhos: 0.62,
+      raioAgachado: 1, raioAndando: 5, raioCorrendo: 7,
+      anguloVisao: 100, visaoNoEscuro: 0.5, coneEmPe: -0.15,
+      raioAlerta: 10, atrasoAlerta: 0.4,
+    },
+    // Golpe pelas costas: atacar um inimigo comum que ainda não percebeu o
+    // caçador, por trás dele (cone de "cone" graus) e a até "alcance" metros,
+    // mata em silêncio (sem pausa, sem tremor, sem alertar ninguém).
+    costas: { alcance: 1.6, cone: 60 },
+    // Pisada: quem pulou a rasteira e cai a até "alcance" metros do atacante
+    // em até "janela" segundos pisa nele. Dano = multiplicador × o leve, o
+    // inimigo fica desequilibrado "desequilibrio" segundos (abre o visceral) e
+    // o caçador quica para cima com velocidade "quique".
+    pisada: { alcance: 1.8, janela: 0.8, multiplicador: 1.5, desequilibrio: 1.2, quique: 3.5 },
+    // Pular contra golpe alto: no ar acima de alturaMin durante o golpe ativo
+    // de um golpe do tipo alto, o dano é multiplicado (é só um custo).
+    danoExtraNoAr: { multiplicador: 1.5, alturaMin: 0.25 },
     pausaImpacto: 0.07,      // "hit stop": o jogo congela um instante ao acertar (dá peso)
   },
 

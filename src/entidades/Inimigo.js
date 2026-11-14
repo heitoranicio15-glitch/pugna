@@ -17,6 +17,10 @@
 //  Punir o frasco (CONFIG.combate.punirFrasco): ao ver o caçador beber, quem
 //  está livre e perto avança com a sequência mais rápida que tem.
 //
+//  Furtividade (Etapa D, CONFIG.combate.furtividade): quem patrulha percebe o
+//  caçador pelo cone de visão ou pelo barulho (Furtividade.js) e, ao passar a
+//  perseguir, chama os vizinhos. Desatento, morre com um golpe pelas costas.
+//
 //  As três fases do golpe (preparo, ativo, recuperacao) e os tipos de ataque
 //  (alto, pesado, rasteira) vêm da máquina única em Ataques.js. Aqui ficam a
 //  escolha do ataque, as poses e os avisos de cada tipo.
@@ -26,6 +30,7 @@ import { CONFIG } from '../config.js';
 import { retro } from '../render/retro.js';
 import { texturas } from '../render/texturas.js';
 import { MaquinaDeAtaque, ehFaseDeAtaque, golpeAlcanca, sortearSequencia } from './Ataques.js';
+import { cossenoDaFrente, percebe, vizinhosParaAlertar } from './Furtividade.js';
 import { caixa as cx, corpoFacetado, lamina, manto, materialDePersonagem, parte as facetado } from './formas.js';
 import { modeloPronto } from '../render/modelos.js';
 import { modeloDePersonagem } from './ModeloDePersonagem.js';
@@ -214,6 +219,9 @@ export class Inimigo {
     this.penultimaSequencia = null;
     this.abertoParaExecucao = false;
     this.visceralPelasCostas = false;   // desequilibrado por um forte carregado pelas costas
+    this.tempoDesequilibrio = null;     // duração própria do desequilíbrio atual (pisada)
+    this.alertaEm = null;       // segundos até atender ao alerta de um vizinho (null = nada)
+    this.silencioso = false;    // morreu pelas costas: sem grito
     this.folego = 0;            // segundos em que ele não cambaleia de novo
     this.invencivel = 0;        // segundos sem levar dano (virada de fase do chefe)
     this.vida = this.cfg.vida;
@@ -257,7 +265,7 @@ export class Inimigo {
       if (!this.ataque.ativa) this.ataque.iniciar(this.cfg, ['alto'], this.sorteio);
       this.ataque.irPara(estado);
     }
-    if (estado !== 'desequilibrado') { this.abertoParaExecucao = false; this.visceralPelasCostas = false; }
+    if (estado !== 'desequilibrado') { this.abertoParaExecucao = false; this.visceralPelasCostas = false; this.tempoDesequilibrio = null; }
   }
 
   get emFaseFinal() { return !!this.base.faseFinal && this.cfg !== this.base; }
@@ -365,6 +373,16 @@ export class Inimigo {
       this.reacaoFrasco -= dt;
       if (this.reacaoFrasco <= 0) { this.reacaoFrasco = null; this.punirFrasco(); }
     }
+    if (this.alertaEm !== null) {   // um vizinho viu o caçador: vem atrás dele também
+      this.alertaEm -= dt;
+      if (this.alertaEm <= 0) {
+        this.alertaEm = null;
+        if (this.estado === 'patrulha' && !jog.morto) {
+          this.ultimaVista = { x: jog.pos.x, z: jog.pos.z };
+          this.mudar('perseguir'); this.jogo.eventos.emitir('inimigo:alerta', this);
+        }
+      }
+    }
     const dx = jog.pos.x - this.pos.x, dz = jog.pos.z - this.pos.z;
     const dist = Math.hypot(dx, dz);
     const anguloJogador = Math.atan2(dx, dz);
@@ -379,17 +397,20 @@ export class Inimigo {
 
     switch (this.estado) {
       case 'patrulha': {
+        // Levando o golpe pelas costas: fica parado, sem perceber nada.
+        if (jog.acao === 'visceral' && jog.alvoVisceral === this) break;
         const p = this.rota[this.pontoAtual];
         const px = p[0] - this.pos.x, pz = p[1] - this.pos.z, pd = Math.hypot(px, pz);
         if (pd < 0.7) {
           this.espera += dt;
           if (this.espera > 2.2) { this.espera = 0; this.pontoAtual = (this.pontoAtual + 1) % this.rota.length; }
         } else { destino = { x: p[0], z: p[1] }; andar = c.velPatrulha; giro = 3; }
-        // Viu o jogador? (de frente enxerga longe; de costas só bem de perto)
-        const deFrente = Math.cos(anguloJogador - this.angulo) > -0.15;
-        if (visivel && dist < (deFrente ? c.visao : 5)) {
+        // Percebeu o jogador? Cone de visão e alcance, ou barulho de perto
+        // (em pé: de frente enxerga longe, de costas ouve a 5 m, como antes).
+        if (visivel && percebe({ dist, cosFrente: Math.cos(anguloJogador - this.angulo), visao: c.visao,
+          agachado: !!jog.agachado, correndo: !!jog.correndo })) {
           this.ultimaVista = { x: jog.pos.x, z: jog.pos.z };
-          this.mudar('perseguir'); this.jogo.eventos.emitir('inimigo:alerta', this);
+          this.perceber(); this.jogo.eventos.emitir('inimigo:alerta', this);
         }
         break;
       }
@@ -488,7 +509,8 @@ export class Inimigo {
         inclinar = -0.5; bracoAlvo = -3.5; bracoLateral = -0.5; rapidezBraco = 16;
         // Durante o visceral ele fica preso no desequilíbrio até a lâmina entrar.
         const preso = jog.acao === 'visceral' && jog.alvoVisceral === this;
-        if (!preso && this.tEstado >= (c.desequilibrio ?? CONFIG.combate.pistola.desequilibrio)) this.mudar('perseguir');
+        const duracao = this.tempoDesequilibrio ?? c.desequilibrio ?? CONFIG.combate.pistola.desequilibrio;
+        if (!preso && this.tEstado >= duracao) this.mudar('perseguir');
         break;
       }
     }
@@ -613,13 +635,50 @@ export class Inimigo {
    * Deixa o inimigo aberto (desequilibrado) ao crítico e ao visceral, sem
    * execução. Usado pelo aparo e pelo ataque forte carregado pelas costas
    * (pelasCostas = true: o visceral vale por trás, e o empurrão do golpe fica).
+   * duracao: segundos próprios do desequilíbrio (a pisada usa o seu).
    */
-  desequilibrar({ pelasCostas = false } = {}) {
+  desequilibrar({ pelasCostas = false, duracao = null } = {}) {
     if (this.morto) return;
     if (!pelasCostas) this.empurrao.set(-Math.sin(this.angulo) * 2.2, 0, -Math.cos(this.angulo) * 2.2);
     this.mudar('desequilibrado');
     this.abertoParaExecucao = false;
     this.visceralPelasCostas = pelasCostas;
+    this.tempoDesequilibrio = duracao;
+  }
+
+  /** Passa a perseguir o caçador e chama os vizinhos da área (depois de atrasoAlerta). */
+  perceber() {
+    this.mudar('perseguir');
+    this.alertarVizinhos();
+  }
+
+  alertarVizinhos() {
+    if (this.cfg.chefe) return;
+    for (const o of vizinhosParaAlertar(this, this.mundo.entidades ?? [])) {
+      if (o.alertaEm === null) o.alertaEm = CONFIG.combate.furtividade.atrasoAlerta;
+    }
+  }
+
+  /**
+   * Golpe pelas costas (Etapa D): o inimigo comum desatento morre em silêncio.
+   * Sem empurrão forte, sem grito e sem alertar ninguém.
+   */
+  receberCostas(direcao) {
+    if (this.morto || this.invencivel > 0 || this.cfg.chefe) return;
+    this.silencioso = true;
+    this.jogo.eventos.emitir('golpe:costas', { inimigo: this });
+    this.empurrao.set(direcao.x, 0, direcao.z);
+    this.tirarVida(this.vida, 0.1);
+  }
+
+  /** O caçador pulou a rasteira e caiu em cima: dano e desequilíbrio (abre o visceral). */
+  receberPisada(dano, direcao) {
+    if (this.morto || this.invencivel > 0) return;
+    this.receberDano(dano, direcao, 0, false);
+    if (this.morto || this.invencivel > 0) return;
+    const jog = this.jogo.jogador;
+    const atras = cossenoDaFrente(this.angulo, jog.pos.x - this.pos.x, jog.pos.z - this.pos.z) < 0;
+    this.desequilibrar({ pelasCostas: atras, duracao: CONFIG.combate.pisada.desequilibrio });
   }
 
   /**
@@ -648,6 +707,7 @@ export class Inimigo {
   receberDano(dano, direcao, forca, forte) {
     if (this.morto || this.invencivel > 0) return;
     const AT = CONFIG.combate.atordoamentoInimigo;
+    if (this.estado === 'patrulha') this.alertarVizinhos();   // apanhou desatento: chama os vizinhos
     const critico = this.estado === 'desequilibrado';
     if (critico) dano *= CONFIG.combate.critico.multiplicador;
     if (this.tirarVida(dano, critico ? 0.16 : 0.09)) {
@@ -678,7 +738,7 @@ export class Inimigo {
   levarTiro(dano) {
     if (this.morto || this.invencivel > 0) return;
     if (this.tirarVida(dano, 0.09) || this.invencivel > 0) return;
-    if (this.estado === 'patrulha') this.mudar('perseguir');
+    if (this.estado === 'patrulha') this.perceber();
   }
 
   /** Tira vida, pisca e cuida da morte e da fase final. Devolve true se morreu. */

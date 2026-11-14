@@ -6,11 +6,13 @@
 // =============================================================================
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
+import { alcancaPisada, pelasCostas } from './Furtividade.js';
 
 const C = CONFIG.jogador;
 const CB = CONFIG.combate;
 const CAM = CONFIG.camera;
 const M = CONFIG.mira;
+const F = CONFIG.combate.furtividade;
 
 /** Menor diferença entre dois ângulos (a - b), entre -PI e PI. */
 const difAngulo = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
@@ -53,6 +55,10 @@ export class Jogador {
     this.carregando = false; this.tCarga = 0; this.avisouCarga = false;
     this.cargaGolpe = 0;        // carga do forte em andamento (0 a 1)
     this.alvoVisceral = null; this.execucao = false; this.visceralEntrou = false;
+    this.costas = false;        // o visceral atual é o golpe pelas costas (silencioso)
+    this.agachado = false;      // Z alterna (CONFIG.combate.furtividade)
+    this.correndo = false;
+    this.pisadaDe = null; this.tPisada = 0;   // quem teve a rasteira pulada, e há quanto tempo
     this.bloqueando = false;    // sempre false: o bloqueio saiu com o broquel (fica para quem lê o campo)
     this.balas = CB.pistola.balasMax;   // munição da pistola (não vai para o save)
     this.tEsquiva = 0; this.esperaEsquiva = 0; this.invencivel = 0;
@@ -84,7 +90,7 @@ export class Jogador {
 
   atualizar(dt) {
     const e = this.jogo.entrada;
-    if (this.morto) { this.soltarMira(); this.atualizarCamera(dt, 0); return; }
+    if (this.morto) { this.soltarMira(); this.agachado = false; this.atualizarCamera(dt, 0); return; }
 
     // ---------- câmera ----------
     this.atualizarMira(dt, e);
@@ -147,13 +153,23 @@ export class Jogador {
       this.acao = 'livre'; this.ataque = null; this.carregando = false;
       this.ataqueNaFila = 0;
       this.esquivaNaFila = 0;
+      this.agachado = false;
       this.jogo.eventos.emitir('jogador:esquiva', { quickstep: this.quickstep });
     }
     this.atualizarCombate(dt, e);
 
+    // ---------- agachar (Z alterna; não corre nem pula agachado) ----------
+    if (e.apertou('KeyZ')) {
+      this.agachado = !this.agachado && this.noChao && this.tEsquiva <= 0 &&
+        (this.acao === 'livre' || this.acao === 'curando');
+    }
+    const olhos = C.alturaOlhos * (this.agachado ? F.alturaOlhos : 1);
+    this.alturaOlhos += (olhos - this.alturaOlhos) * (dt > 0 ? 1 - Math.exp(-dt * 12) : 1);
+
     // ---------- velocidade ----------
     const correndo = (e.segurando('ShiftLeft') || e.corridaToque) && comp > 0.3 &&
-      !this.exausto && !this.carregando && this.acao === 'livre';
+      !this.exausto && !this.carregando && this.acao === 'livre' && !this.agachado;
+    this.correndo = correndo;   // o barulho que os inimigos ouvem
 
     // ---------- para onde o corpo vira ----------
     // Com a mira travada ele encara o alvo (menos correndo ou rolando);
@@ -168,6 +184,7 @@ export class Jogador {
     if (this.acao === 'recuperacao') alvo *= 0.65;
     if (this.acao === 'curando') alvo *= CB.frasco.velocidade;   // bebendo o frasco: anda devagar
     if (this.acao === 'atordoado') alvo = 0;
+    if (this.agachado) alvo *= F.velocidade;
     if (correndo && comp > 0 && this.noChao) this.gastar(C.custoCorrer * dt);
 
     if (this.acao === 'visceral') {
@@ -191,7 +208,7 @@ export class Jogador {
     }
 
     // ---------- pulo e gravidade ----------
-    if (e.apertou('Space') && this.noChao && this.estamina >= C.custoPulo && this.acao !== 'atordoado' && this.acao !== 'curando' && this.acao !== 'visceral' && this.tEsquiva <= 0) {
+    if (e.apertou('Space') && this.noChao && !this.agachado && this.estamina >= C.custoPulo && this.acao !== 'atordoado' && this.acao !== 'curando' && this.acao !== 'visceral' && this.tEsquiva <= 0) {
       this.vel.y = C.forcaPulo; this.noChao = false; this.gastar(C.custoPulo);
       this.jogo.eventos.emitir('jogador:pulo');
     }
@@ -209,9 +226,12 @@ export class Jogador {
     col.resolver(this.pos, this.raio, this.pos.y, this.noChao ? 0.4 : 0.05);
     this.pos.y += this.vel.y * dt;
     const chao = col.alturaDoChao(this.pos.x, this.pos.z, this.pos.y, this.noChao ? 0.4 : 0.05);
+    this.tPisada += dt;
     if (this.pos.y <= chao || (this.noChao && this.pos.y - chao < 0.45 && this.vel.y <= 0)) {
       if (!this.noChao && this.vel.y < -5) { this.afundar = Math.min(0.25, -this.vel.y * 0.022); this.jogo.eventos.emitir('jogador:pouso'); }
+      const pousou = !this.noChao;
       this.pos.y = chao; this.vel.y = 0; this.noChao = true;
+      if (pousou) this.pousar();
     } else {
       this.noChao = false;
     }
@@ -228,7 +248,7 @@ export class Jogador {
     if (this.noChao && rapidez > 0.6 && this.tEsquiva <= 0) {
       const antes = Math.floor(this.fasePasso / Math.PI);
       this.fasePasso += rapidez * dt * 1.85;
-      if (Math.floor(this.fasePasso / Math.PI) !== antes) this.jogo.eventos.emitir('jogador:passo', { correndo });
+      if (Math.floor(this.fasePasso / Math.PI) !== antes) this.jogo.eventos.emitir('jogador:passo', { correndo, agachado: this.agachado });
     }
     this.atualizarCamera(dt, rapidez);
   }
@@ -409,6 +429,7 @@ export class Jogador {
     if (this.morto || this.acao !== 'livre' || this.tEsquiva > 0) return null;
     if (this.balas <= 0) { this.jogo.eventos.emitir('jogador:sem-bala'); return null; }
     this.balas--;
+    this.agachado = false;
     this.carregando = false; this.avisouCarga = false; this.ataqueNaFila = 0;
     this.orientarParaGolpe();
     this.acao = 'tiro'; this.tAcao = 0;
@@ -465,7 +486,11 @@ export class Jogador {
   iniciarAtaque(tipo) {
     // Inimigo desequilibrado à frente: o ataque vira visceral (não gasta estamina).
     const aberto = this.alvoDoVisceral();
-    if (aberto) { this.iniciarVisceral(aberto); return; }
+    if (aberto) { this.agachado = false; this.iniciarVisceral(aberto); return; }
+    // Inimigo desatento de costas, bem perto: golpe pelas costas (silencioso).
+    const desatento = this.alvoDasCostas();
+    if (desatento) { this.iniciarVisceral(desatento, true); return; }
+    this.agachado = false;
     if (this.exausto || this.estamina < CB[tipo].custo) {
       this.jogo.eventos.emitir('jogador:sem-estamina');
       return;
@@ -507,16 +532,40 @@ export class Jogador {
     return melhor;
   }
 
-  /** Começa o visceral (ou a execução, se o golpe pesado do inimigo foi aparado). */
-  iniciarVisceral(inimigo) {
+  /**
+   * O inimigo que um ataque agora mataria pelas costas: comum, ainda patrulhando
+   * (não percebeu o caçador), à frente do caçador, com o caçador no cone de
+   * costas dele (CONFIG.combate.costas) e sem parede no meio.
+   */
+  alvoDasCostas() {
+    const col = this.jogo.mundo.colisores;
+    let melhor = null, menor = Infinity;
+    for (const i of this.jogo.inimigos) {
+      if (i.morto || i.estado !== 'patrulha' || i.cfg?.chefe || typeof i.receberCostas !== 'function' ||
+        Math.abs(i.pos.y - this.pos.y) > 1.6) continue;
+      const dx = this.pos.x - i.pos.x, dz = this.pos.z - i.pos.z, d = Math.hypot(dx, dz);
+      if (d >= menor || !pelasCostas(i.angulo, dx, dz)) continue;
+      if (Math.cos(anguloPara(this.pos, i.pos) - this.rumo) < CB.visceral.abertura) continue;
+      if (col.bloqueiaTrecho(this.pos, i.pos, this.pos.y + 1.22)) continue;
+      menor = d; melhor = i;
+    }
+    return melhor;
+  }
+
+  /**
+   * Começa o visceral (ou a execução, se o golpe pesado do inimigo foi aparado).
+   * costas = golpe pelas costas: mesma estocada, mas silenciosa e letal.
+   */
+  iniciarVisceral(inimigo, costas = false) {
     this.ataque = null; this.acao = 'visceral'; this.tAcao = 0;
     this.alvoVisceral = inimigo;
-    this.execucao = !!inimigo.abertoParaExecucao;
+    this.costas = costas;
+    this.execucao = !costas && !!inimigo.abertoParaExecucao;
     this.visceralEntrou = false;
     this.carregando = false; this.avisouCarga = false; this.ataqueNaFila = 0; this.tiroNaFila = 0;
     this.invencivel = Math.max(this.invencivel, CB.visceral.duracao);
     this.rumo = anguloPara(this.pos, inimigo.pos);
-    this.jogo.eventos.emitir('jogador:visceral', { execucao: this.execucao, inimigo });
+    this.jogo.eventos.emitir('jogador:visceral', { execucao: this.execucao, inimigo, costas });
   }
 
   /** O instante em que a lâmina entra: dano do tipo, pausa, tremor e rally cheio. */
@@ -525,6 +574,11 @@ export class Jogador {
     if (!i || i.morto) return;
     const T = this.execucao ? CB.execucao : CB.visceral;
     const f = this.frente();
+    if (this.costas) {   // pelas costas: sem pausa de cinema e sem tremor
+      i.receberCostas({ x: f.x, z: f.z });
+      this.recuperarComGolpe(Infinity);
+      return;
+    }
     i.receberVisceral(CB.leve.dano * T.multiplicador, { x: f.x, z: f.z }, this.execucao);
     this.jogo.pausaDeImpacto(T.pausa);
     this.tremor = Math.max(this.tremor, T.tremor);
@@ -641,9 +695,16 @@ export class Jogador {
     // Gancho do pulo: golpes rasteiros passam por baixo de quem está no ar.
     // (O contra-ataque pisando, item 5 do plano, parte do aviso 'jogador:pulou-golpe'.)
     if (golpe?.evitaPulando && !this.noChao && this.pos.y - (origem.y ?? 0) >= golpe.alturaPulo) {
+      this.pisadaDe = atacante; this.tPisada = 0;   // caindo perto dele, pisa (veja pousar)
       this.jogo.eventos.emitir('jogador:pulou-golpe', atacante);
       return 'pulou';
     }
+    // Pular contra golpe alto custa caro: no ar, o dano é maior.
+    const X = CB.danoExtraNoAr;
+    if (golpe?.tipo === 'alto' && !golpe.evitaPulando && !this.noChao && this.pos.y - (origem.y ?? 0) >= X.alturaMin) {
+      dano *= X.multiplicador;
+    }
+    this.agachado = false;
     const dx = origem.x - this.pos.x, dz = origem.z - this.pos.z, d = Math.hypot(dx, dz) || 1;
     this.vida -= dano;
     this.tremor = Math.max(this.tremor, 0.07);
@@ -657,6 +718,25 @@ export class Jogador {
     this.interromper(dano);
     if (this.vida <= 0) { this.recuperavel = 0; this.vida = 0; this.morto = true; this.carregando = false; this.jogo.eventos.emitir('jogador:morreu'); }
     return 'ferido';
+  }
+
+  /**
+   * Chamado ao tocar o chão. Se o caçador acabou de pular a rasteira e caiu
+   * perto do atacante, pisa nele (CONFIG.combate.pisada).
+   */
+  pousar() {
+    const i = this.pisadaDe, P = CB.pisada;
+    this.pisadaDe = null;
+    if (!i || i.morto || typeof i.receberPisada !== 'function') return;
+    const dx = i.pos.x - this.pos.x, dz = i.pos.z - this.pos.z, d = Math.hypot(dx, dz) || 1e-4;
+    if (!alcancaPisada(this.tPisada, d)) return;
+    const dano = CB.leve.dano * P.multiplicador;
+    i.receberPisada(dano, { x: dx / d, z: dz / d });
+    this.recuperarComGolpe(dano);
+    this.vel.y = P.quique; this.noChao = false;   // quica um pouco
+    this.jogo.pausaDeImpacto(CB.pausaImpacto);
+    this.tremor = Math.max(this.tremor, 0.05);
+    this.jogo.eventos.emitir('jogador:pisou', { inimigo: i });
   }
 
   // ---------------------------------------------------------------------------
