@@ -8,6 +8,7 @@ import { Vilarejo } from './Vilarejo.js';
 import { Catedral } from './Catedral.js';
 import { Estrada } from './Estrada.js';
 import { Taverna } from './Taverna.js';
+import { Floresta } from './Floresta.js';
 import { validarNpc } from '../entidades/Npc.js';
 
 export const REGISTRO = [
@@ -15,6 +16,7 @@ export const REGISTRO = [
   { id: 'catedral', criar: (cena) => new Catedral(cena) },
   { id: 'estrada', criar: (cena, ceu) => new Estrada(cena, ceu.direcaoLua) },
   { id: 'taverna', criar: (cena) => new Taverna(cena) },
+  { id: 'floresta', criar: (cena, ceu) => new Floresta(cena, ceu.direcaoLua) },
 ];
 
 const CAMPOS_LISTA = ['portais', 'pontosDeDescanso', 'inimigos', 'objetos'];

@@ -312,8 +312,9 @@ onde você volta ao morrer ou reabrir o jogo.
 Saia pelo **Portão Sul** do vilarejo (aproxime-se do portão e pressione **E**) para
 chegar à **Estrada do Sul**: uma faixa de terra batida de uns 120 × 30 m, com cercas,
 árvores secas, um riacho com ponte de pedra e três inimigos em patrulha. O céu e a lua
-aparecem como no vilarejo. A ponta sul está fechada por uma **carroça tombada** ("Em
-obras"): é por ali que as áreas novas vão entrar. Na ponta norte, **E** volta ao vilarejo.
+aparecem como no vilarejo. Na ponta sul a **carroça tombada** virou cenário ao lado da
+pista, e a trilha continua entre duas árvores grandes: **E — seguir pela trilha da floresta**
+leva à **floresta** (veja abaixo). Na ponta norte, **E** volta ao vilarejo.
 
 Do lado esquerdo da estrada fica a **taverna**: fachada de madeira e pedra, janelas
 acesas, placa pendurada e chaminé soltando fumaça. Perto da porta há uma **lanterna**
@@ -327,15 +328,32 @@ Numa das mesas há um **bilhete**, que se lê com **E** como as outras anotaçõ
 Para sair, **E** na porta ao sul. Os tamanhos, a névoa, a luz da lareira e as falas
 ficam em `CONFIG.areas.estrada` e `CONFIG.areas.taverna` (`src/config.js`).
 
+## Floresta
+
+Primeira área nova depois da estrada (**decidido pela IA, o Heitor revisa**). Como chegar: ande
+até a **ponta sul da Estrada do Sul** (depois da ponte) e aperte **E — seguir pela trilha da
+floresta**. É uma clareira com trilha de 40 × 90 m, árvores secas e altas dos dois lados, troncos
+caídos e rochas (dá para pular em cima), vagalumes fracos, névoa verde-azulada densa e a lua por
+cima. Logo na chegada fica a lanterna **Clareira da Floresta** (descanse com **E**; ao morrer ou
+recarregar a página, o caçador volta a ela). Há três inimigos em patrulha (caçador, cavaleiro
+e Penitente), todos longe da chegada e da lanterna. A trilha acaba numa barricada de troncos
+("Trilha interrompida"): o Castelo virá depois. **E — voltar à estrada**, na ponta norte,
+devolve o caçador à ponta sul da estrada. Entrar na floresta não grava nada no save.
+
+Onde mexer: `src/mundo/Floresta.js` (cenário, colisores, patrulhas, portais) e
+`CONFIG.areas.floresta` em `src/config.js` (limites, névoa, luz, som, posição da lanterna e da
+barricada). O som é o tipo `floresta` (vento, coruja, galhos que estalam; `src/audio/`) e a
+trilha é a mesma do vilarejo.
+
 ## O que existe hoje
 
 - Vilarejo gótico pequeno: ruas de pedra, 17 casas, torres, cemitério, muralha,
   tochas e névoa.
 - **Catedral** ao norte: fachada com torres, rosácea e vitrais. O portal leva à
   nave, ao Ossário, ao Relicário e ao Santuário.
-- **Estrada do Sul** e **taverna** (saída pelo Portão Sul): estrada com ponte, patrulhas e
-  uma carroça tombada que ainda fecha o caminho; taverna com lareira, taverneiro e um
-  bilhete para ler.
+- **Estrada do Sul**, **taverna** (saída pelo Portão Sul) e **floresta** (pela ponta sul da estrada):
+  estrada com ponte e patrulhas; taverna com lareira, taverneiro e um bilhete para ler;
+  floresta escura com trilha, troncos, rochas, vagalumes e três patrulhas.
 - Céu noturno roxo-azulado com nuvens, estrelas e a **lua com rosto**: ela ocupa boa
   parte do céu, está sempre visível (a nordeste, ao lado das torres), tem um
   sorriso aberto com dentes tortos à mostra, vira o rosto e as pupilas na direção do
@@ -366,7 +384,7 @@ ficam em `CONFIG.areas.estrada` e `CONFIG.areas.taverna` (`src/config.js`).
 - Cavaleiro, caçador, penitente e Guardião do Véu, com patrulha e combate.
 - Ataques inimigos de três tipos (alto, pesado e rasteira), cada um com aviso
   visual e sonoro próprio.
-- Vida, tela de morte e quatro lanternas de descanso (portão sul, adro, nave e taverna da estrada).
+- Vida, tela de morte e cinco lanternas de descanso (portão sul, adro, nave, taverna da estrada e clareira da floresta).
 - Efeitos sintetizados e quatro faixas de música para exploração e combate.
 - Tela inicial.
 
@@ -407,6 +425,7 @@ pugna/
    │  ├─ Catedral.js       nave, alas, selos e santuário
    │  ├─ Estrada.js        estrada ao sul, ponte, carroça e a fachada da taverna
    │  ├─ Taverna.js        interior da taverna, lareira e taverneiro
+   │  ├─ Floresta.js       floresta ao sul da estrada: trilha, árvores, troncos, rochas, vagalumes
    │  ├─ pecas.js          como construir casa, torre, igreja, tocha, árvore...
    │  ├─ Colisores.js      colisões
    │  ├─ Ceu.js            céu, nuvens, estrelas
@@ -431,7 +450,7 @@ pugna/
 - **mudar a atmosfera de uma área:** `CONFIG.areas` em `src/config.js`
   reúne a névoa, a cor de fundo, a luz ambiente e a paleta de céu dos exteriores.
 - **mudar o som ambiente de uma área:** `som` em `CONFIG.areas.<área>` (`tipo`:
-  `vila`, `pedra`, `taverna` ou `estrada`; cada camada vai de 0 a 1). Os tipos e as
+  `vila`, `pedra`, `taverna`, `estrada` ou `floresta`; cada camada vai de 0 a 1). Os tipos e as
   taxas dos eventos esparsos (grilo, sino, gota...) ficam em `src/audio/regras.js`.
 - **mudar a música de uma área:** `trilha` em `CONFIG.areas.<área>` (`vilarejo` ou
   `catedral`). Faixa diferente na área nova troca com crossfade; igual continua.
@@ -459,7 +478,7 @@ pugna/
   `src/entidades/Furtividade.js`)
 - **mudar a aparência ou as poses do caçador:** `src/entidades/Boneco.js`
 - **mudar o mapa** (mover casa, pôr tocha, pôr inimigo): `src/mundo/Vilarejo.js`
-  (a estrada e a taverna ficam em `Estrada.js` e `Taverna.js`; o que o taverneiro diz,
+  (a estrada, a taverna e a floresta ficam em `Estrada.js`, `Taverna.js` e `Floresta.js`; o que o taverneiro diz,
   em `CONFIG.areas.taverna.taverneiro.falas`, e o viajante, em `CONFIG.areas.estrada.viajante`)
 - **mudar o título do jogo:** `titulo` em `src/config.js`
 - **mudar o rosto da lua:** função `relevoLua` em `src/mundo/Lua.js`
@@ -501,8 +520,10 @@ pugna/
   paradas na área (`modelo` é um personagem GLB já integrado; `olhar` 0 olha para +Z). `validarArea`
   recusa NPC sem `id` ou sem `falas` (cada fala com até 90 letras, tom sombrio, sem tutorial).
   O `Jogo.js` os cria com `criarNpcs` (`src/entidades/Npc.js`); números em `CONFIG.npc`.
-  A estrada e a taverna foram acrescentadas só com duas classes e duas linhas no
-  registro (o portal do Portão Sul no vilarejo é um portal comum).
+  A estrada, a taverna e a floresta foram acrescentadas só com uma classe e uma linha no
+  registro cada (o portal do Portão Sul no vilarejo é um portal comum). Os `limites` não
+  prendem o jogador sozinhos: a área precisa de colisores nas bordas (a floresta tem paredes
+  invisíveis nos quatro lados).
   Os checkpoints usam IDs únicos. Eventos persistentes usam `area:evento`,
   e a área pode implementar `aplicarProgresso(progresso)` para atualizar
   obstáculos ou outros elementos do cenário.
@@ -565,8 +586,8 @@ pugna/
   (janela do parry, balas, parede, alcance), o golpe crítico, o visceral, a execução e a carga do forte, as fases e os tipos de ataque dos inimigos, o golpe inaparável e a fase final do Guardião, as fichas de ataque (no máximo 2 atacando juntos) e a punição do frasco, a interrupção ao apanhar,
   a firmeza dos inimigos, o rally, o frasco interrompido, a mira travada, a câmera em terceira pessoa, colisões, navegação,
   interação com objetos, inventário, Osso de Retorno e migração de saves. O
-  `tests/areas.test.js` também monta as quatro áreas de verdade (sem navegador) e confere
-  o contrato, os portais e chegadas, a estrada aberta até a carroça, a lanterna, o bilhete e os NPCs
+  `tests/areas.test.js` também monta as cinco áreas de verdade (sem navegador) e confere
+  o contrato, os portais e chegadas, a estrada aberta até a trilha da floresta, a floresta (patrulhas e lanterna longe da chegada, caminho até a porta de volta e até cada patrulha, chegadas antigas inalteradas, save antigo), a lanterna, o bilhete e os NPCs
   (o `tests/npc.test.js` cobre as falas e o olhar).
 - `node tests/equilibrio.mjs` roda o simulador de equilíbrio (60 lutas por cenário, lento para o `npm test`):
   quem só aperta o leve contra quem apara e esquiva. Premissas e números na spec 08, seção E1.

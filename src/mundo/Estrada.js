@@ -3,7 +3,8 @@
 //  Faixa comprida e estreita (uns 120 x 30 m) ao sul do vilarejo. O NORTE é o lado -Z.
 //  O caçador chega pelo Portão Sul do vilarejo (ponta norte da estrada) e anda para o sul
 //  (+Z). No caminho: a taverna (fachada à esquerda), um riacho com ponte de pedra e,
-//  na ponta sul, uma carroça tombada que fecha o caminho (as áreas novas entram ali).
+//  na ponta sul, a boca da trilha da floresta (portal para a área `floresta`), com uma
+//  carroça tombada ao lado como cenário.
 //
 //  Valores (tamanhos, posições, névoa) em CONFIG.areas.estrada.
 // =============================================================================
@@ -80,9 +81,9 @@ export class Estrada {
     };
     const T = C.taverna;
     const ladoTaverna = [T.z - T.largura / 2, T.z + T.largura / 2];   // a taverna ocupa este trecho do fundo
-    cercaLinha(maxX - 0.5, zN + 3, C.carroca.z - 1);
+    cercaLinha(maxX - 0.5, zN + 3, maxZ - 1);
     cercaLinha(minX + 0.5, zN + 3, ladoTaverna[0]);
-    cercaLinha(minX + 0.5, ladoTaverna[1], C.carroca.z - 1);
+    cercaLinha(minX + 0.5, ladoTaverna[1], maxZ - 1);
 
     // ---------- taverna vista de fora ----------
     this.montarTaverna(sorteio);
@@ -123,10 +124,10 @@ export class Estrada {
       ['Package_1', 5.39, 0, 53.2, -0.4], ['Bags', -3.42, 0, 52.9, 0.4],
     ]);
 
-    // ---------- carroça tombada (ponta sul, "em obras") ----------
-    const zC = C.carroca.z;
+    // ---------- ponta sul: a boca da trilha da floresta e a carroça tombada ao lado ----------
+    const zC = C.carroca.z, zT = C.trilhaSul.z;
     const carroca = new THREE.Group();
-    carroca.position.set(2.2, 0.82, zC - 0.6);
+    carroca.position.set(8, 0.82, zC - 3.2);
     carroca.rotation.set(0.1, 0.35, 1.28);
     this.grupo.add(carroca);
     const peca = (l, a, pf, x, y, z, mat = m.madeira) => { const c = caixa(l, a, pf, mat, 1); c.position.set(x, y, z); carroca.add(c); return c; };
@@ -135,27 +136,27 @@ export class Estrada {
     peca(1.8, 0.55, 0.14, 0, 0.3, 1.38);
     const rodaPresa = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.08, 5, 10), m.metal);
     rodaPresa.rotation.y = Math.PI / 2; rodaPresa.position.set(-1.0, -0.2, 0.3); carroca.add(rodaPresa);
+    this.colisores.adicionar(8, zC - 3.2, 2.8, 3.4);
     const rodaSolta = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.08, 5, 10), m.metal);
-    rodaSolta.rotation.set(Math.PI / 2 - 0.25, 0, 0.3); rodaSolta.position.set(-4.4, 0.2, zC - 2.4); this.grupo.add(rodaSolta);
-    for (const [x, z, t] of [[-1.8, zC - 1.2, 0.9], [-2.7, zC - 0.2, 0.7], [5.4, zC - 1.8, 0.8], [6.3, zC - 0.6, 1]]) {
+    rodaSolta.rotation.set(Math.PI / 2 - 0.25, 0, 0.3); rodaSolta.position.set(5.6, 0.2, zC - 1.4); this.grupo.add(rodaSolta);
+    for (const [x, z, t] of [[10.4, zC - 6.4, 0.9], [10.2, zC - 0.2, 1], [-6.6, zC - 2.6, 0.8], [-7.7, zC - 1.4, 0.7]]) {
       const cx = caixa(t, t, t, m.madeira, 1); cx.position.set(x, t / 2, z); cx.rotation.y = sorteio() * 1.2; this.grupo.add(cx);
+      this.colisores.adicionar(x, z, t * 1.1, t * 1.1, t);
     }
-    for (const [x, z] of [[-6.2, zC - 0.4], [8.2, zC - 0.9]]) {
+    for (const [x, z] of [[-9.2, zC - 1.2], [10.6, zC - 3.4]]) {
       const tambor = barril(0.46, 0.95);
       tambor.position.set(x, 0.47, z); tambor.rotation.z = (sorteio() - 0.5) * 0.4; this.grupo.add(tambor);
+      this.colisores.adicionar(x, z, 0.9, 0.9, 0.95);
     }
-    // Estacas e tábuas cruzadas: "em obras".
-    for (const x of [-9, -3, 3, 8.5]) {
-      const estaca = caixa(0.22, 1.7, 0.22, m.madeira, 1); estaca.position.set(x, 0.85, zC - 2.1); this.grupo.add(estaca);
-    }
-    for (const [y, rot] of [[0.6, 0.04], [1.15, -0.06]]) {
-      const tabua = caixa(18.5, 0.22, 0.14, m.madeira, 1.4); tabua.position.set(-0.3, y, zC - 2.12); tabua.rotation.z = rot; this.grupo.add(tabua);
-    }
-    const poste = caixa(0.16, 1.7, 0.16, m.madeira, 1); poste.position.set(-1.9, 0.85, zC - 3.4); this.grupo.add(poste);
-    placa(this.grupo, 'Em obras', -1.9, 1.55, zC - 3.5, 1.6, Math.PI);
+    // A trilha continua para o sul: dois troncos grandes, um vão escuro no fim e a placa.
+    for (const lado of [-1, 1]) arvoreSeca(this, { x: lado * 5.6, z: maxZ - 1.2, altura: 11, sorteio });
+    const vaoTrilha = new THREE.Mesh(new THREE.BoxGeometry(10.6, 5.5, 0.4), retro(new THREE.MeshBasicMaterial({ color: 0x03090a })));
+    vaoTrilha.position.set(0, 2.75, maxZ - 0.4); this.grupo.add(vaoTrilha);
+    const poste = caixa(0.16, 1.7, 0.16, m.madeira, 1); poste.position.set(-4.8, 0.85, zT - 3.4); this.grupo.add(poste);
+    placa(this.grupo, 'Trilha da floresta', -4.8, 1.55, zT - 3.5, 1.8, Math.PI);
     this.colisores.adicionar(poste.position.x, poste.position.z, 0.3, 0.3);
-    // Fecha a ponta inteira (a spec 05 abre aqui as áreas novas).
-    this.colisores.adicionar(meioX, zC - 0.8, maxX - minX, 3.2);
+    // Fecha só o fim da área (o resto da ponta fica aberto até o portal).
+    this.colisores.adicionar(meioX, maxZ + 0.2, maxX - minX, 0.8);
 
     // ---------- tochas ----------
     for (const [x, z] of [[3.8, zN + 3.5], [-3.8, -33], [3.8, 0], [3.9, zPonte - 5], [-3.9, zPonte + 5], [3.8, zC - 7]]) tocha(this, { x, z });
@@ -200,10 +201,12 @@ export class Estrada {
     this.portais = [
       { x: 0, z: zN + 1.4, raio: 2.2, destino: 'vilarejo', texto: 'E — voltar ao vilarejo' },
       { ...this.portaDaTaverna, raio: 1.7, destino: 'taverna', texto: 'E — entrar na taverna' },
+      { x: 0, z: zT, raio: 2.2, destino: 'floresta', texto: 'E — seguir pela trilha da floresta' },
     ];
     this.chegadas = {
       vilarejo: { x: 0, z: zN + 4.8, yaw: Math.PI },
       taverna: { x: this.portaDaTaverna.x + 2.1, z: this.portaDaTaverna.z, yaw: -Math.PI / 2 },
+      floresta: { x: 0, z: zT - 5, yaw: 0 },   // volta da floresta olhando para o norte
     };
     this.pontosDeDescanso = [
       { id: 'taverna-da-estrada', nome: 'Taverna da Estrada', x: C.lanterna.x, z: C.lanterna.z, olhar: Math.PI / 2 },
