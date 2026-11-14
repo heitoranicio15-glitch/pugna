@@ -263,6 +263,8 @@ onde você volta ao morrer ou reabrir o jogo.
 - **Catedral:** procure as inscrições no Ossário e no Relicário. A chave da
   oficina abre a porta ao sul do Relicário. Dentro da sacristia há uma inscrição,
   um frasco e uma alavanca que abre a grade de serviço para a lanterna da nave.
+- **Taverna:** o bilhete na mesa é uma anotação (vai para a bolsa); o taverneiro responde
+  a **E — falar**.
 - Chegue perto do objeto, virado para ele, e pressione **E** quando aparecer a ação. Use
   **I** para abrir a bolsa e reler anotações (o jogo não pausa). Um frasco recupera até 42 pontos
   de vida e pode ser usado pela bolsa ou com **R** durante a partida. A cura leva um
@@ -272,12 +274,35 @@ onde você volta ao morrer ou reabrir o jogo.
 - O navegador guarda itens, anotações, frascos usados e o estado de portas,
   baús e da grade. Morrer, descansar ou recarregar preserva esses registros.
 
+## Estrada e taverna
+
+Saia pelo **Portão Sul** do vilarejo (aproxime-se do portão e pressione **E**) para
+chegar à **Estrada do Sul**: uma faixa de terra batida de uns 120 × 30 m, com cercas,
+árvores secas, um riacho com ponte de pedra e três inimigos em patrulha. O céu e a lua
+aparecem como no vilarejo. A ponta sul está fechada por uma **carroça tombada** ("Em
+obras"): é por ali que as áreas novas vão entrar. Na ponta norte, **E** volta ao vilarejo.
+
+Do lado esquerdo da estrada fica a **taverna**: fachada de madeira e pedra, janelas
+acesas, placa pendurada e chaminé soltando fumaça. Perto da porta há uma **lanterna**
+(descanse com **E**; ao morrer ou recarregar a página, o caçador volta a ela). Na
+porta, **E — entrar na taverna**.
+
+Dentro (12 × 9 m, sem inimigos) há balcão, três mesas, barris, uma escada que não leva a
+lugar nenhum e uma lareira de luz laranja que tremula. No balcão, o **taverneiro**:
+**E — falar** mostra uma fala curta por vez, em rodízio (ele não vende nada por enquanto).
+Numa das mesas há um **bilhete**, que se lê com **E** como as outras anotações e fica na bolsa.
+Para sair, **E** na porta ao sul. Os tamanhos, a névoa, a luz da lareira e as falas
+ficam em `CONFIG.areas.estrada` e `CONFIG.areas.taverna` (`src/config.js`).
+
 ## O que existe hoje
 
 - Vilarejo gótico pequeno: ruas de pedra, 17 casas, torres, cemitério, muralha,
   tochas e névoa.
 - **Catedral** ao norte: fachada com torres, rosácea e vitrais. O portal leva à
   nave, ao Ossário, ao Relicário e ao Santuário.
+- **Estrada do Sul** e **taverna** (saída pelo Portão Sul): estrada com ponte, patrulhas e
+  uma carroça tombada que ainda fecha o caminho; taverna com lareira, taverneiro e um
+  bilhete para ler.
 - Céu noturno roxo-azulado com nuvens, estrelas e a **lua com rosto**: ela ocupa boa
   parte do céu, está sempre visível (a nordeste, ao lado das torres), tem um
   sorriso aberto com dentes tortos à mostra, vira o rosto e as pupilas na direção do
@@ -296,7 +321,7 @@ onde você volta ao morrer ou reabrir o jogo.
 - Cavaleiro, caçador, penitente e Guardião do Véu, com patrulha e combate.
 - Ataques inimigos de três tipos (alto, pesado e rasteira), cada um com aviso
   visual e sonoro próprio.
-- Vida, tela de morte e três lanternas de descanso (portão sul, adro e nave).
+- Vida, tela de morte e quatro lanternas de descanso (portão sul, adro, nave e taverna da estrada).
 - Efeitos sintetizados e quatro faixas de música para exploração e combate.
 - Tela inicial.
 
@@ -334,6 +359,8 @@ pugna/
    │  ├─ Vilarejo.js       ★ o MAPA: onde fica cada casa, tocha, inimigo, lanterna
    │  ├─ areas.js          registro das áreas: uma linha por área nova
    │  ├─ Catedral.js       nave, alas, selos e santuário
+   │  ├─ Estrada.js        estrada ao sul, ponte, carroça e a fachada da taverna
+   │  ├─ Taverna.js        interior da taverna, lareira e taverneiro
    │  ├─ pecas.js          como construir casa, torre, igreja, tocha, árvore...
    │  ├─ Colisores.js      colisões
    │  ├─ Ceu.js            céu, nuvens, estrelas
@@ -371,6 +398,8 @@ pugna/
   `chefe: true`, que dispensa a ficha, e `punirFrasco: { chance: 1 }`)
 - **mudar a aparência ou as poses do caçador:** `src/entidades/Boneco.js`
 - **mudar o mapa** (mover casa, pôr tocha, pôr inimigo): `src/mundo/Vilarejo.js`
+  (a estrada e a taverna ficam em `Estrada.js` e `Taverna.js`; o que o taverneiro diz,
+  em `CONFIG.areas.taverna.taverneiro.falas`)
 - **mudar o título do jogo:** `titulo` em `src/config.js`
 - **mudar o rosto da lua:** função `relevoLua` em `src/mundo/Lua.js`
 - **criar um inimigo novo:** um bloco novo em `CONFIG.inimigos` + aparência em
@@ -407,6 +436,8 @@ pugna/
   caçador (valor em `CONFIG.areas`) e `usaCeu` diz se a área mostra o céu e a lua.
   O registro confere tudo ao iniciar e avisa se algo estiver errado. Cada portal
   aponta para o ID da área de destino, que declara a posição de chegada.
+  A estrada e a taverna foram acrescentadas só com duas classes e duas linhas no
+  registro (o portal do Portão Sul no vilarejo é um portal comum).
   Os checkpoints usam IDs únicos. Eventos persistentes usam `area:evento`,
   e a área pode implementar `aplicarProgresso(progresso)` para atualizar
   obstáculos ou outros elementos do cenário.
@@ -466,14 +497,18 @@ pugna/
 - `npm test` verifica a janela de acerto, o custo da esquiva, o quickstep com a mira, o tiro de pistola
   (janela do parry, balas, parede, alcance), o golpe crítico, o visceral, a execução e a carga do forte, as fases e os tipos de ataque dos inimigos, o golpe inaparável e a fase final do Guardião, as fichas de ataque (no máximo 2 atacando juntos) e a punição do frasco, a interrupção ao apanhar,
   a firmeza dos inimigos, o rally, o frasco interrompido, a mira travada, a câmera em terceira pessoa, colisões, navegação,
-  interação com objetos, inventário, Osso de Retorno e migração de saves.
+  interação com objetos, inventário, Osso de Retorno e migração de saves. O
+  `tests/areas.test.js` também monta as quatro áreas de verdade (sem navegador) e confere
+  o contrato, os portais e chegadas, a estrada aberta até a carroça, a lanterna e o bilhete.
 - `npx playwright-core install chromium` instala o navegador de teste.
   Em seguida, `npm run test:browser` inicia o jogo e percorre a catedral,
   incluindo transições, checkpoint, morte, recarga e derrota do Guardião.
   Também testa o percurso da vila até a sacristia, o frasco com tempo, o rally,
   a bolsa sem pausa, o Osso de Retorno, o contador de balas (atirar baixa,
   descansar repõe), o dano do forte com carga, um visceral no Guardião, a
-  virada de fase e o aviso do golpe inaparável, e o atalho após recarregar.
+  virada de fase e o aviso do golpe inaparável, e o atalho após recarregar. Ele também
+  atravessa os portais do Portão Sul e da taverna, lê o bilhete, fala com o taverneiro
+  e descansa na lanterna nova.
   O cenário de celular está congelado e saiu dos testes obrigatórios. Para
   conferi-lo mesmo assim, rode `npm run test:celular`.
   Para usar um Chrome instalado, aponte `PUGNA_CHROME` para o executável.

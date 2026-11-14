@@ -526,6 +526,7 @@ export class Jogo {
   interacaoObjeto(objeto) {
     const { acao, evento, nome, ativo, chave } = objeto;
     if (acao === 'informar') return [objeto.mensagem];
+    if (acao === 'falar') return [`E — falar com ${nome}`, () => this.hud.avisar(objeto.falar(), objeto.segundos || 4)];
     if (acao === 'ler') return [`E — ler: ${ANOTACOES[evento].nome}`, () => {
       this.registrarEvento(evento);
       this.abrirLeitura(evento);

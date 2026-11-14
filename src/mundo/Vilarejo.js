@@ -79,6 +79,9 @@ export class Vilarejo {
       { ...porta, raio: 2.6, destino: 'catedral', texto: 'E — entrar na Catedral do Véu' },
     ];
     this.chegadas = { catedral: { x: porta.x, z: porta.z + 4, yaw: Math.PI } };
+    // Portão Sul: leva à estrada. Quem volta da estrada chega logo dentro do portão, olhando para o norte.
+    this.portais.push({ x: 0, z: 55.4, raio: 1.6, destino: 'estrada', texto: 'E — sair pelo Portão Sul' });
+    this.chegadas.estrada = { x: 0, z: 52.6, yaw: 0 };
 
     // ---------- casas ----------
     const casas = [
@@ -119,7 +122,7 @@ export class Vilarejo {
     muralha(this, -LX, ZS, -6, ZS, 6);
     muralha(this, 6, ZS, LX, ZS, 6);
     for (const [tx, tz] of [[-LX, ZN], [LX, ZN], [-LX, ZS], [LX, ZS]]) torre(this, { x: tx, z: tz, lado: 5, a: 10, tipo: 'ameias' });
-    // portão sul (fechado, atrás do jogador)
+    // portão sul (o portal 'estrada' fica logo em frente, em this.portais)
     torre(this, { x: -6.2, z: ZS, lado: 4.4, a: 11, tipo: 'ameias' });
     torre(this, { x: 6.2, z: ZS, lado: 4.4, a: 11, tipo: 'ameias' });
     const arco = caixa(8, 3, 2, m.pedraEscura); arco.position.set(0, 6.5, ZS); this.grupo.add(arco);

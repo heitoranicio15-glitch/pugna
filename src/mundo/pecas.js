@@ -22,10 +22,14 @@ export function materiais() {
     // Chão e ruas não gravam profundidade: são desenhados primeiro e tudo o mais fica por
     // cima. Isso evita o "pisca-pisca" entre a grama e o calçamento (veja Vilarejo.js).
     calcamentoChao: lambert(t.calcamento, { depthWrite: false }),
+    terraChao: lambert(t.terra, { depthWrite: false }),
+    caminhoChao: lambert(t.terra, { color: 0xcdb89a, depthWrite: false }),   // terra batida da estrada
+    madeiraChao: lambert(t.madeira, { color: 0xb59a86, depthWrite: false }), // assoalho da taverna
     lajesChao: lambert(t.lajes, { depthWrite: false }),
     mosaicoChao: lambert(t.mosaico, { depthWrite: false }),
     telhado: lambert(t.telhado, { side: THREE.DoubleSide }),
     madeira: lambert(t.madeira),
+    madeiraEscura: lambert(t.madeira, { color: 0x9a7e6c }),
     terra: lambert(t.terra),
     morro: lambert(t.terra, { color: 0x8890c0, flatShading: true }),
     metal: lambert(t.metal),
@@ -52,6 +56,24 @@ export function caixa(l, a, p, material, ladrilho = 2) {
     }
   }
   return new THREE.Mesh(geo, material);
+}
+
+/**
+ * Plano horizontal cuja textura se repete a cada `ladrilho` metros. Para chãos e ruas:
+ * use um material com depthWrite: false e uma `ordem` fixa (veja o comentário em Vilarejo.js).
+ */
+export function planoDeChao(mundo, { x, z, l, p, ladrilho = 5, material, ordem = -6, y = 0 }) {
+  const geo = new THREE.PlaneGeometry(l, p);
+  const uv = geo.attributes.uv;
+  for (let i = 0; i < uv.count; i++) {
+    uv.setXY(i, (x + (uv.getX(i) - 0.5) * l) / ladrilho, (-z + (uv.getY(i) - 0.5) * p) / ladrilho);
+  }
+  const malha = new THREE.Mesh(geo, material);
+  malha.rotation.x = -Math.PI / 2;
+  malha.position.set(x, y, z);
+  malha.renderOrder = ordem;
+  mundo.grupo.add(malha);
+  return malha;
 }
 
 function perfilOgival(meia, altura) {
@@ -149,7 +171,12 @@ const ROTACAO = { S: 0, L: Math.PI / 2, N: Math.PI, O: -Math.PI / 2 };
  * Casa de pedra. frente = para onde a porta aponta ('N','S','L','O').
  * l = largura da fachada, p = profundidade, a = altura das paredes.
  */
-export function casa(mundo, { x, z, l = 7, p = 8, a = 5, frente = 'S', acesa = false, sorteio = Math.random }) {
+export function casa(mundo, {
+  x, z, l = 7, p = 8, a = 5, frente = 'S', acesa = false, sorteio = Math.random,
+  todasAcesas = false,      // todas as janelas acesas (a taverna)
+  xPorta: xPortaFixo = null, // posição da porta na fachada (padrão: sorteada)
+  chamine: posChamine = null, // { x, z } da chaminé (padrão: sorteada)
+}) {
   const m = materiais();
   const g = new THREE.Group();
   const corpo = caixa(l, a, p, m.pedra); corpo.position.y = a / 2; g.add(corpo);
@@ -159,14 +186,17 @@ export function casa(mundo, { x, z, l = 7, p = 8, a = 5, frente = 'S', acesa = f
   teto.rotation.y = Math.PI / 2; teto.position.y = a; g.add(teto);
 
   const chamine = caixa(0.8, 1.8, 0.8, m.pedraEscura, 1.5);
-  chamine.position.set((sorteio() - 0.5) * (l - 2), a + altTelhado * 0.55, (sorteio() - 0.5) * 2); g.add(chamine);
+  chamine.position.set((sorteio() - 0.5) * (l - 2), a + altTelhado * 0.55, (sorteio() - 0.5) * 2);
+  if (posChamine) chamine.position.set(posChamine.x, chamine.position.y, posChamine.z);
+  g.add(chamine);
+  g.userData.topoChamine = new THREE.Vector3(chamine.position.x, chamine.position.y + 0.9, chamine.position.z);
 
   const porta = caixa(1.15, 2.1, 0.16, m.madeira, 1.2);
-  const xPorta = (sorteio() - 0.5) * (l - 3.2);
+  const xPorta = xPortaFixo ?? (sorteio() - 0.5) * (l - 3.2);
   porta.position.set(xPorta, 1.05, p / 2 + 0.03); g.add(porta);
 
   const janela = (jx, jy, jz, lateral) => {
-    const luz = acesa && sorteio() < 0.6;
+    const luz = todasAcesas || (acesa && sorteio() < 0.6);
     const j = caixa(0.95, 1.15, 0.12, luz ? m.janelaAcesa : m.janelaApagada, 1);
     j.geometry.attributes.uv.array.fill(0); // refaz o UV para mostrar a janela inteira
     const uv = j.geometry.attributes.uv;

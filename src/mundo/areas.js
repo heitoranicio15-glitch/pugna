@@ -6,10 +6,14 @@
 // =============================================================================
 import { Vilarejo } from './Vilarejo.js';
 import { Catedral } from './Catedral.js';
+import { Estrada } from './Estrada.js';
+import { Taverna } from './Taverna.js';
 
 export const REGISTRO = [
   { id: 'vilarejo', criar: (cena, ceu) => new Vilarejo(cena, ceu.direcaoLua) },
   { id: 'catedral', criar: (cena) => new Catedral(cena) },
+  { id: 'estrada', criar: (cena, ceu) => new Estrada(cena, ceu.direcaoLua) },
+  { id: 'taverna', criar: (cena) => new Taverna(cena) },
 ];
 
 const CAMPOS_LISTA = ['portais', 'pontosDeDescanso', 'inimigos', 'objetos'];

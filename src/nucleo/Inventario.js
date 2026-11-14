@@ -22,6 +22,10 @@ export const ANOTACOES = Object.freeze({
     nome: 'Lápide do aprendiz',
     texto: 'Ao aprendiz da oficina do poço. Deixou um cinzel, três limas e o molde das chaves. O mestre pediu que enterrassem o molde com ele.',
   },
+  'taverna:bilhete-da-mesa': {
+    nome: 'Bilhete na mesa',
+    texto: 'Esperei até a vela acabar. O dono do cavalo no pátio subiu para a catedral e não voltou. O cavalo sumiu na segunda noite. Deixo isto para quem vier depois: a carroça ao sul foi derrubada de dentro para fora.',
+  },
   'catedral:registro-ossario': {
     nome: 'Registro do Ossário',
     texto: 'As marcas nos nichos são datas de vigília. À terceira noite, o Guardião mandou recolher os nomes e guardar apenas os ossos. Alguém riscou a ordem por baixo.',
