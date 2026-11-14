@@ -49,6 +49,12 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **E1: equilíbrio por simulação (pronto; o resto da Etapa E precisa de gente jogando).** Simulador em `tests/equilibrio.mjs` (`node tests/equilibrio.mjs`, uns 3 s; usa Jogador e Inimigos de verdade, passo de 1/60 s, sementes 1 a 60, 60 lutas por cenário) e teste rápido `tests/equilibrio.test.js` (8 lutas). Três jogadores simulados: **spam** (só o leve a cada 0,08 s, sem frasco), **hábil** (reação de 0,15 a 0,25 s, apara no meio da janela com erro de 0,045 s, pula a rasteira, quickstep no inaparável, visceral depois do parry) e **esquiva** (quickstep em todo golpe e bate). Só números em `src/config.js`:
+  - `combate.leve.custo` 14 → 18; `combate.rally.porDano` 0,35 → 0,25; `inimigos.penitente.dano` 19 → 24; `inimigos.cacador.dano` 13 → 16; `inimigos.cacador.vida` 62 → 70. Guardião, janelas do parry, fichas e firmeza não mudaram. 2 rodadas de 3.
+  - **Spam vence (antes → depois):** Guardião 70% → 7%; 2 cavaleiros 73% → 15%; 3 cavaleiros 32% → 0%; 3 mistos 70% → 13%. (Conferido com 200 lutas: 14%, 16%, 1%, 14%; a meta era no máximo 20% e 25%.) **Hábil:** 100%, 98%, 95%, 100% (era 100%, 98%, 95%, 98%). **Esquiva:** 100%, 100%, 97%, 95%.
+  - O "antes" do simulador novo (Guardião 70%) não é o 58/60 antigo: a rotina antiga não foi guardada, então só vale comparar dentro do mesmo simulador. Premissas completas e tabela na spec 08, seção "E1".
+  - **Decidido pela IA (o Heitor revisa):** a escolha das alavancas (estamina do leve mais cara, rally menor, dano dos comuns maior, caçador com mais vida) em vez de mexer no Guardião; o jogador hábil simulado é muito bom (sabe o instante do golpe, com erro pequeno), então a margem de "vencer mais da metade" ficou folgada: **sentir jogando** se o Guardião ficou duro para quem ainda aprende o parry. A pausa de impacto (hit stop) não entra na simulação.
+
 - **Etapa D: golpe pelas costas e pulo contra rasteira (pronto).** Spec 09. Números em `CONFIG.combate.furtividade`, `costas`, `pisada` e `danoExtraNoAr`; regras puras em `src/entidades/Furtividade.js`:
   - **Z agacha** (anda a 45%, pose baixa; atacar, esquivar, atirar ou apanhar levantam; funciona na primeira pessoa e com mira travada). O inimigo percebe pelo cone de visão e pelo barulho (agachado quase não se ouve). **Em pé a percepção é a de antes** (um teste compara as duas regras); a única diferença é que correr pelas costas agora é ouvido a 7 m (antes 5). Quando um inimigo percebe o caçador, leva tiro ou apanha patrulhando, os vizinhos a até 10 m passam a perseguir após 0,4 s.
   - **Golpe pelas costas:** inimigo comum ainda sem perceber, caçador no cone de 60° atrás dele a até 1,6 m, aperta o ataque: execução silenciosa (letal, sem pausa nem tremor, sem alertar vizinhos, rally cheio, texto discreto "PELAS COSTAS"). Não vale no Guardião.
@@ -227,7 +233,7 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
   - Quickstep: com a mira travada, a esquiva vira um passo curto, com menos invencibilidade e recuperação curta. Sem mira, continua o rolamento. Reduzir um pouco a invencibilidade do rolamento.
 - [x] **C. Chefe e imprevisibilidade** (C1, C2 e C3 feitos): pequena variação no tempo do aviso, golpes atrasados, sequências mais longas, e uma fase final do Guardião com golpes que não podem ser aparados (a fase 2 não pode ser vencida só com parry). Inimigos punem quem usa frasco perto deles. Limite de quantos inimigos atacam ao mesmo tempo. Rasteira mais frequente.
 - [x] **D. Golpe pelas costas e pulo contra rasteira:** agachar (anda devagar, menos barulho), cone de visão, execução silenciosa por trás, alerta dos vizinhos se o jogador for visto (sem botão de toque). No ar durante o golpe ativo da rasteira, não leva dano; cair perto abre o contra-ataque pisando; pular contra ataque alto leva dano extra.
-- [ ] **E. Ajuste fino com os amigos.**
+- [ ] **E. Ajuste fino com os amigos.** (E1, equilíbrio por simulação, feito; falta o ajuste jogando)
 - [ ] **Depois:** broquel como item ou mão secundária alternativa (bloqueio), celular de volta se fizer sentido, golpes em sequência, armas com ritmos diferentes, interior de mais casas, sons gravados, Supabase (login e progresso), multiplayer para uns 5 amigos, mapa maior (floresta, castelo, caverna), modelos e animações de verdade.
 
 ## Fila do Gabriel (uma por vez, cada uma num chat novo)
@@ -244,7 +250,7 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 - [ ] **6. S4: personagens e NPCs** (spec 03)
 - [ ] **7. S5: atmosfera por área** (spec 04) — parte visual entregue no
   quarto incremento. Falta o som ambiente por área com transições.
-- [ ] **8. E: ajuste fino com os amigos**
+- [ ] **8. E: ajuste fino com os amigos** (E1 por simulação feito; falta o ajuste jogando)
 - [ ] **9. S6: primeira área nova** (castelo, floresta ou caverna; spec 05; o Heitor escolhe)
 - [x] **10. S7: bolsa cobrindo a barra de vida em telas estreitas** — com a luta rolando, a tela da bolsa reserva 140 px embaixo (`.tela.ao-vivo` no `estilo.css`) e o painel rola por dentro; PR 24
 - [ ] **11. S8: Supabase** (spec 06; precisa do Heitor para criar o projeto)

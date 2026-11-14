@@ -157,7 +157,7 @@ export const CONFIG = {
 
   // ---- Combate do jogador ----
   combate: {
-    leve: { dano: 22, custo: 14, preparo: 0.055, ativo: 0.15, recuperacao: 0.27, empurrao: 2.5, alcance: 2.45, arco: 0.94, liberarEsquiva: 0.07 },
+    leve: { dano: 22, custo: 18, preparo: 0.055, ativo: 0.15, recuperacao: 0.27, empurrao: 2.5, alcance: 2.45, arco: 0.94, liberarEsquiva: 0.07 },
     forte: { dano: 58, custo: 32, preparo: 0.11, ativo: 0.19, recuperacao: 0.52, empurrao: 6.5, alcance: 2.65, arco: 0.36, liberarEsquiva: 0.23 },
     tempoSegurarForte: 0.32, // segurar o clique por mais que isso vira ataque forte
     tempoMaximoCarga: 1.4,
@@ -234,9 +234,9 @@ export const CONFIG = {
     // devolve vida dessa parte. Apanhou? Revide logo.
     //   parte     fração do dano que fica recuperável
     //   duracao   segundos para revidar; apanhar de novo reinicia a contagem
-    //   porDano   vida devolvida por ponto de dano causado (0.35: o leve devolve quase 8 e o forte, 20)
+    //   porDano   vida devolvida por ponto de dano causado (0.25: o leve devolve 5,5 e o forte, 14,5)
     //   escoa     pontos por segundo que somem quando o tempo acaba
-    rally: { parte: 0.7, duracao: 4, porDano: 0.35, escoa: 70 },
+    rally: { parte: 0.7, duracao: 4, porDano: 0.25, escoa: 70 },
     // Frasco de cura: beber leva tempo, o caçador anda devagar e, se apanhar
     // antes do fim, a cura é interrompida.
     //   tempo                 segundos bebendo até a cura acontecer
@@ -360,8 +360,8 @@ export const CONFIG = {
     },
     cacador: {
       nome: 'Caçador corrompido',
-      vida: 62, velPatrulha: 1.5, velPerseguir: 4.6,
-      dano: 13, alcance: 2.1, preparo: 0.34, ativo: 0.12, recuperacao: 0.55,
+      vida: 70, velPatrulha: 1.5, velPerseguir: 4.6,
+      dano: 16, alcance: 2.1, preparo: 0.34, ativo: 0.12, recuperacao: 0.55,
       visao: 19, firmeza: 0,
       // Ágil: cambaleia por pouco tempo e depois aguenta os golpes por 1,8 s
       // (veja combate.atordoamentoInimigo). É o que impede travá-lo até a morte.
@@ -376,7 +376,7 @@ export const CONFIG = {
     penitente: {
       nome: 'Penitente do Véu',
       vida: 84, velPatrulha: 1.2, velPerseguir: 2.8,
-      dano: 19, alcance: 2.2, preparo: 0.53, ativo: 0.14, recuperacao: 0.8,
+      dano: 24, alcance: 2.2, preparo: 0.53, ativo: 0.14, recuperacao: 0.8,
       visao: 12, firmeza: 26,
       escala: 1.05, raio: 0.44, recua: false,
       ataques: [
