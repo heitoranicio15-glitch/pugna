@@ -13,6 +13,7 @@ import { Colisores } from './Colisores.js';
 import { montarExploracaoVilarejo } from './ExploracaoVilarejo.js';
 import { texturas, criarSorteio } from '../render/texturas.js';
 import { materiais, caixa, piramide, casa, torre, igreja, tocha, animarTochas, arvoreSeca, muralha, planoDeChao } from './pecas.js';
+import { sombrasDeContato } from './efeitosCenario.js';
 
 export class Vilarejo {
   constructor(cena, direcaoLua) {
@@ -99,6 +100,10 @@ export class Vilarejo {
       { x: 8.6, z: -28, l: 8, p: 6.5, a: 6.6, frente: 'O' },
     ];
     for (const c of casas) casa(this, { ...c, sorteio });
+    sombrasDeContato(this.grupo, casas.map(({ x, z, l = 7, p = 8, frente }) => {
+      const deLado = frente === 'L' || frente === 'O';
+      return [x, z, (deLado ? p : l) * 1.5, (deLado ? l : p) * 1.5];
+    }));
 
     // ---------- torres ----------
     torre(this, { x: -21, z: 31, lado: 5.5, a: 15, tipo: 'ameias' });

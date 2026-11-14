@@ -5,6 +5,7 @@ import { abobadaOgival, arcoOgival, caixa, colunaFacetada, materiais, tocha, ani
 import { retro } from '../render/retro.js';
 import { placa } from './Aderecos.js';
 import { montarSacristia } from './Sacristia.js';
+import { sombrasDeContato } from './efeitosCenario.js';
 
 export class Catedral {
   constructor(cena) {
@@ -98,12 +99,14 @@ export class Catedral {
     gotico(0, 3.55, -12.54, 4.15, 2.75, 0.36, 0.58);
 
     // Nervuras, colunas e bancos da nave deixam o corredor central livre.
+    const sombrasNave = [];
     for (const z of [5, 0, -10]) {
       for (const lado of [-1, 1]) {
         const coluna = colunaFacetada(5.42, 0.44, m.pedra, m.pedraEscura);
         coluna.position.set(lado * 6.8, 0, z);
         this.grupo.add(coluna);
         this.colisores.adicionar(lado * 6.8, z, 0.98, 0.98);
+        sombrasNave.push([lado * 6.8, z, 2.65, 2.65]);
       }
       gotico(0, 5.15, z, 13.35, 4.6, 0.34, 0.48, 0, m.pedra);
     }
@@ -115,8 +118,10 @@ export class Catedral {
       for (const lado of [-1, 1]) {
         movel(lado * 4.25, z, 3.1, 0.48, 0.5, m.madeira);
         bloc(lado * 4.25, 0.69, z + 0.22, 3.1, 0.43, 0.12, m.madeira);
+        sombrasNave.push([lado * 4.25, z, 4.2, 1.75]);
       }
     }
+    sombrasDeContato(this.grupo, sombrasNave);
     for (const x of [-5.8, 5.8]) tocha(this, { x, z: 5.4 });
     luz(0, 3.2, -6.3, 0xbca3df, 15, 12);
 

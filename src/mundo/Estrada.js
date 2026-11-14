@@ -14,6 +14,7 @@ import { criarSorteio, texturas } from '../render/texturas.js';
 import { retro } from '../render/retro.js';
 import { placa } from './Aderecos.js';
 import { materiais, caixa, casa, torre, tocha, animarTochas, arvoreSeca, muralha, planoDeChao, barril } from './pecas.js';
+import { sombrasDeContato } from './efeitosCenario.js';
 
 const C = CONFIG.areas.estrada;
 
@@ -52,14 +53,11 @@ export class Estrada {
       planoDeChao(this, { x, z: meioZ, l: 0.55, p: maxZ - minZ - 4, ladrilho: 7, material: m.terraChao, ordem: -4.9, y: 0.01 });
     }
     const zPonte = C.ponte.z;
-    const agua = new THREE.Mesh(
-      new THREE.PlaneGeometry(420, C.ponte.riacho),
-      retro(new THREE.MeshBasicMaterial({ color: 0x0a1f4d, depthWrite: false })),
-    );
-    agua.rotation.x = -Math.PI / 2;
-    agua.position.set(meioX, 0.02, zPonte);
-    agua.renderOrder = -4;
-    this.grupo.add(agua);
+    this.agua = texturas().riacho;
+    planoDeChao(this, {
+      x: meioX, z: zPonte, l: 420, p: C.ponte.riacho, ladrilho: 5, y: 0.02, ordem: -4,
+      material: retro(new THREE.MeshBasicMaterial({ map: this.agua, depthWrite: false })),
+    });
 
     // ---------- Portão Sul do vilarejo, visto de fora (ponta norte) ----------
     const zN = C.portaoNorte.z;
@@ -101,14 +99,17 @@ export class Estrada {
     const dp = C.ponte.comprimento, lp = C.larguraDaPista + 0.5;
     const tabuleiro = caixa(lp, 0.3, dp, m.pedra, 1.6); tabuleiro.position.set(0, 0.15, zPonte); this.grupo.add(tabuleiro);
     this.colisores.adicionar(0, zPonte, lp, dp, 0.3);
+    const sombrasPonte = [];
     for (const lado of [-1, 1]) {
       const x = lado * (lp / 2 - 0.25);
       const mureta = caixa(0.5, 1.0, dp, m.pedraEscura, 1.4); mureta.position.set(x, 0.8, zPonte); this.grupo.add(mureta);
       const topo = caixa(0.7, 0.18, dp + 0.3, m.pedra, 1.4); topo.position.set(x, 1.38, zPonte); this.grupo.add(topo);
       this.colisores.adicionar(x, zPonte, 0.5, dp);
+      sombrasPonte.push([x - lado * 0.4, zPonte, 1.1, dp, 0.315]);
       const ponta = caixa(0.9, 1.7, 0.9, m.pedraEscura, 1.4);
       for (const pz of [-1, 1]) { const p2 = ponta.clone(); p2.position.set(x, 0.85, zPonte + pz * (dp / 2)); this.grupo.add(p2); }
     }
+    sombrasDeContato(this.grupo, sombrasPonte);
     for (const pz of [-1, 1]) {   // degrau de cada ponta (dá para subir andando)
       const degrau = caixa(lp - 0.9, 0.15, 0.9, m.pedra, 1.6);
       const z = zPonte + pz * (dp / 2 + 0.45);
@@ -265,6 +266,7 @@ export class Estrada {
 
   atualizar(dt, tempo) {
     animarTochas(this.tochas, tempo);
+    this.agua.offset.x = (tempo * 0.13) % 1;
     for (const n of this.nevoas) {
       n.sprite.position.x += n.vel * dt;
       if (n.sprite.position.x > this.limites.maxX + 20) n.sprite.position.x = this.limites.minX - 20;

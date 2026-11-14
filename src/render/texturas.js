@@ -215,6 +215,24 @@ function nevoa() {
   });
 }
 
+function sombra() {
+  return pintarTextura(32, (x, y) => {
+    const d = Math.min(1, Math.hypot(x - 15.5, y - 15.5) / 15.5);
+    const f = (1 - d * d) ** 2 * 255;
+    return [f, f, f];
+  });
+}
+
+function riacho() {
+  return prepararPiso(pintarTextura(128, (x, y) => {
+    const u = x * Math.PI / 64, v = y * Math.PI / 64;
+    const crista = (0.5 + 0.5 * Math.sin(v * 7 + Math.sin(u * 2 + v) + 0.4 * Math.sin(u * 5))) ** 9;
+    const fiapo = 0.3 + 0.7 * (0.5 + 0.5 * Math.cos(u * 3 - v)) ** 3;
+    const onda = 0.08 * Math.sin(v * 4 - u) + 0.85 * crista * fiapo;
+    return [18 + 39 * onda, 34 + 55 * onda, 63 + 69 * onda];
+  }));
+}
+
 // ---- Filtro das texturas (PS1 = pixelado, HD = suavizado) ----
 // Cada textura registrada guarda o filtro original (o do PS1). No HD ela passa a
 // suavizar; ao voltar para o PS1, recebe de novo o filtro original.
@@ -257,12 +275,14 @@ export function texturas() {
       mosaico: prepararPiso(mosaico()), tapete: prepararPiso(tapete()), telhado: telhado(), madeira: madeira(),
       terra: prepararPiso(terra()), metal: metal(), tecido: tecido(),
       janelaAcesa: janela(true), janelaApagada: janela(false), vitral: vitral(),
-      brilho: brilho(), nevoa: nevoa(),
+      brilho: brilho(), nevoa: nevoa(), sombra: sombra(), riacho: riacho(),
     };
-    for (const n of ['brilho', 'nevoa']) {
+    for (const n of ['brilho', 'nevoa', 'sombra']) {
       cache[n].wrapS = cache[n].wrapT = THREE.ClampToEdgeWrapping;
       cache[n].magFilter = cache[n].minFilter = THREE.LinearFilter; // manchas suaves
     }
+    // alphaMap lê o canal verde como dado linear.
+    cache.sombra.colorSpace = THREE.NoColorSpace;
     for (const tex of Object.values(cache)) registrarTextura(tex);
   }
   return cache;

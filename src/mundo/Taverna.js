@@ -13,7 +13,8 @@ import { CONFIG } from '../config.js';
 import { Colisores } from './Colisores.js';
 import { retro } from '../render/retro.js';
 import { texturas } from '../render/texturas.js';
-import { materiais, caixa, animarTochas, planoDeChao, barril } from './pecas.js';
+import { materiais, caixa, animarTochas, planoDeChao, barril, arcoOgival } from './pecas.js';
+import { sombrasDeContato } from './efeitosCenario.js';
 
 const C = CONFIG.areas.taverna;
 
@@ -104,6 +105,7 @@ export class Taverna {
 
     // ---------- mesas e bancos ----------
     this.mesas = [[-3.2, 0.4], [1.4, 1.8], [2.6, -0.3]];
+    sombrasDeContato(this.grupo, this.mesas.map(([x, z]) => [x, z, 2.7, 2.05]));
     for (const [x, z] of this.mesas) {
       bloco(x, 0.88, z, 1.6, 0.1, 1.1, m.madeira, null, 1);
       for (const [dx, dz] of [[-0.7, -0.45], [0.7, -0.45], [-0.7, 0.45], [0.7, 0.45]]) bloco(x + dx, 0.42, z + dz, 0.12, 0.84, 0.12, m.madeiraEscura);
@@ -129,6 +131,10 @@ export class Taverna {
     const fx = 5.3;
     for (const z of [-1.6, 0.6]) bloco(fx, 0.7, z, 1.4, 1.4, 0.8, m.pedraEscura);
     bloco(fx, (1.4 + H) / 2, -0.5, 1.4, H - 1.4, 3.0, m.pedraEscura);
+    const arcoDaLareira = arcoOgival(1.44, 0.53, 0.15, 0.2, m.pedra);
+    arcoDaLareira.rotation.y = -Math.PI / 2;
+    colocar(arcoDaLareira, fx - 0.72, 0.96, -0.5);
+    bloco(fx - 0.02, 1.76, -0.5, 1.44, 0.17, 2.96, m.madeiraEscura);
     colocar(new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.4, 1.4), preto), 5.9, 0.7, -0.5);
     bloco(4.1, 0.06, -0.5, 1.0, 0.12, 2.2, m.pedraEscura);
     this.colisores.adicionar(fx, -0.5, 1.4, 3.0);

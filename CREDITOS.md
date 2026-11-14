@@ -18,6 +18,8 @@ para WebP. Cada conjunto fica numa subpasta de `public/assets/materiais/`.
 | `castle_wall_slates` | Rob Tuytel / [Poly Haven](https://polyhaven.com/a/castle_wall_slates) | CC0 |
 | `cobblestone_floor_001` | Rob Tuytel / [Poly Haven](https://polyhaven.com/a/cobblestone_floor_001) | CC0 |
 | `old_planks_02` | Rob Tuytel / [Poly Haven](https://polyhaven.com/a/old_planks_02) | CC0 |
+| `patterned_slate_tiles` | Dimitrios Savva / [Poly Haven](https://polyhaven.com/a/patterned_slate_tiles) | CC0 |
+| `roof_slates_02` | Rob Tuytel / [Poly Haven](https://polyhaven.com/a/roof_slates_02) | CC0 |
 | `stony_dirt_path` | eye-candy.xyz / [Poly Haven](https://polyhaven.com/a/stony_dirt_path) | CC0 |
 
 ## Trilha sonora

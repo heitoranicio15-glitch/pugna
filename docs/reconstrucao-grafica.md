@@ -12,8 +12,25 @@ Em `src/mundo/pecas.js`, `materiais()` associa as variantes HD aos materiais
 compartilhados. A montagem de todas as áreas ocorre antes de
 `MateriaisHd` reunir as malhas, inclusive as que têm vários materiais.
 Novas áreas que usem essas peças recebem o acabamento na mesma montagem.
-Os arquivos WebP de 1K somam cerca de 2,7 MiB, baixados na primeira seleção de
+Os arquivos WebP de 1K somam cerca de 3,4 MiB, baixados na primeira seleção de
 HD. Se um conjunto falhar, o material original serve de reserva.
+
+## Segundo incremento
+
+- **Vilarejo e estrada.** Molduras, beirais e ferragens usam a mesma peça
+  de fachada. As geometrias são agrupadas por material e saem do desenho a
+  cerca de 34 m, com uma margem ao voltar para perto. Telhados, portas,
+  janelas e a placa da taverna continuam visíveis à distância.
+- **Catedral.** A rosácea tem nervuras de pedra e o piso das alas e da nave
+  usa ardósia própria no HD. O mosaico do santuário continua com seu desenho.
+- **Ponte e taverna.** A textura procedural do riacho corre sob a ponte.
+  A lareira tem um arco de pedra e uma cornija de madeira.
+- **Sombras de contato.** As manchas sob casas, colunas, bancos e mesas,
+  e junto à mureta da ponte, usam uma única malha instanciada por área.
+  São estáticas, sem mapa de sombras nem luzes dinâmicas adicionais.
+- **Realces.** O HD comprime picos de brilho antes de aplicar o contraste.
+  O PS1 limita os canais à faixa de cor antes do pontilhado. Isso evita a
+  inversão de cor em superfícies muito próximas da lareira e das tochas.
 
 ## Teste de jogo para Gabriel e Heitor
 
@@ -23,6 +40,8 @@ HD. Se um conjunto falhar, o material original serve de reserva.
 2. Na catedral, confira o piso da nave, as paredes ogivais e a legibilidade dos
    avisos de ataque. Volte pelo Portão Sul, atravesse a ponte e aproxime-se da
    taverna. Dentro, compare o assoalho, o tapete e os barris perto da lareira.
+   Compare também a rosácea do adro, a água de cima da ponte e as guarnições
+   da taverna ao se aproximar. O interior tem arco e cornija na lareira.
 3. Troque de modo em pausa e recarregue. Confira que a resolução e o estilo
    foram lembrados. Use a lanterna da taverna na estrada e verifique o
    renascimento após recarregar. Dentro, confira a fala do taverneiro e o bilhete.
@@ -40,7 +59,8 @@ medição em GPU e em 4K precisam de validação à parte.
 
 ## Entregas de Blender para Heitor
 
-1. **Fachada da taverna, primeiro piloto.** Abra
+1. **Fachada da taverna, primeiro piloto em Blender.** Use a fachada
+   procedural publicada como referência de encaixe e detalhe. Abra
    `src/mundo/Estrada.js` no trecho que monta a fachada e
    `src/config.js` em `CONFIG.areas.estrada.taverna` para copiar as medidas.
    No Blender, use metros, origem no centro da casa ao nível do chão e frente

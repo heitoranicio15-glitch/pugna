@@ -314,6 +314,9 @@ ficam em `CONFIG.areas.estrada` e `CONFIG.areas.taverna` (`src/config.js`).
   escaneados que reagem à luz. A **Resolução HD** vai de 720p a 2160p, limitada
   à área visível e ao navegador. Comece em 720p; para 4K, use uma tela 4K em
   tela cheia e um desktop com GPU. A escolha fica salva neste navegador.
+- Nas duas versões, as casas têm guarnições de madeira e ferragens visíveis
+  de perto, a rosácea da catedral tem nervuras, o riacho tem ondas e a lareira
+  tem arco e cornija. O HD também usa ardósia escaneada nos telhados e nas lajes.
 - Movimento em terceira pessoa com colisão; dá para subir em caixotes e degraus.
   A câmera gira em volta do caçador e encurta ao encostar em paredes.
 - Boneco simples do caçador (chapéu, capa, espada e pistola), animado no código.

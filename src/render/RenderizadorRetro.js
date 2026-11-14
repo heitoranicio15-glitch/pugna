@@ -47,8 +47,19 @@ const FRAG = /* glsl */ `
     vec2 c = vUv - 0.5;
     cor *= 1.0 - dot(c, c) * 0.85;
 
-    // Converte de luz "linear" para as cores da tela (sRGB), com um leve contraste.
-    cor = pow(max(cor * uBrilho, 0.0), vec3(1.0 / 2.2));
+    // A curva cúbica só cresce de 0 a 1. Acima de 1, os canais podem
+    // escurecer e trocar a cor dos reflexos perto do fogo.
+    cor = max(cor * uBrilho, 0.0);
+    if (uNiveis > 0.0) {
+      cor = min(cor, 1.0);
+    } else {
+      // Comprime os realces em HD sem alterar a proporção entre canais.
+      float pico = max(cor.r, max(cor.g, cor.b));
+      float excesso = max(pico - 0.65, 0.0);
+      float suavizado = 0.65 + excesso / (1.0 + excesso / 0.35);
+      cor *= min(1.0, suavizado / max(pico, 0.0001));
+    }
+    cor = pow(cor, vec3(1.0 / 2.2));
     cor = mix(cor, cor * cor * (3.0 - 2.0 * cor), 0.35);
 
     // Estilo HD: mais cor e contraste (no PS1 os dois valem 1 e nada muda).

@@ -48,6 +48,14 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Segundo incremento gráfico:** em cima de `44afba9`, casas e fachada da
+  taverna ganharam beirais, molduras e ferragens com nível de detalhe por
+  distância. A catedral ganhou nervuras na rosácea, a estrada ganhou
+  correnteza visível e a taverna ganhou uma moldura de pedra na lareira.
+  Os quatro cenários agora usam sombras de contato estáticas. Telhas e lajes
+  de ardósia têm conjuntos PBR próprios no HD. Veja o
+  [guia gráfico](docs/reconstrucao-grafica.md) para comparar os dois modos.
+
 - **Primeiro incremento da reconstrução gráfica:** após S7 (`2d87986`), o HD
   ganhou materiais PBR de pedra, terra, calçamento e madeira nas quatro áreas.
   O PS1 e o HD ganharam barris remodelados e o tapete ornamentado da taverna.
@@ -174,9 +182,12 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 - [ ] **11. S8: Supabase** (spec 06; precisa do Heitor para criar o projeto)
 - [x] **Gráficos, incremento 1** — materiais PBR nas quatro áreas, barris,
   tapete retrô e resolução HD selecionável. Avaliação visual e desempenho com GPU pendentes.
-- [ ] **Gráficos, próximo incremento** — validar o percurso com e sem GPU, depois
-  testar a fachada modular e os LODs do guia gráfico. Alinhar iluminação com S5 e
-  os modelos animados com S4. Presets de celular ficam para depois.
+- [x] **Gráficos, incremento 2** — fachada modular procedural, detalhes por
+  distância, ardósia HD, sombras de contato, riacho animado, rosácea e lareira.
+- [ ] **Gráficos, próximo incremento** — testar o percurso real e medir o custo
+  do HD com GPU. Usar o guia gráfico para comparar o primeiro piloto de
+  Blender com a fachada procedural. Alinhar iluminação com S5 e os modelos
+  animados com S4. Presets de celular ficam para depois.
 
 **Decidido pela IA, o Heitor revisa** (detalhes nas specs): clique direito e C atiram; 8 balas, repostas na lanterna e não gravadas no save; visceral não gasta estamina; golpe comum de lado em inimigo desequilibrado continua crítico de 2,6×; golpes que não podem ser aparados avisam em branco-violeta; no máximo 2 inimigos comuns atacando juntos; NPCs não podem ser feridos; taverna sem loja; login por link mágico; a floresta como primeira área nova.
 

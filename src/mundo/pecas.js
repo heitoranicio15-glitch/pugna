@@ -4,6 +4,7 @@
 //  simples (caixas, pirâmides, cilindros). O Vilarejo.js decide ONDE colocar.
 // =============================================================================
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { CONFIG } from '../config.js';
 import { retro } from '../render/retro.js';
 import { texturas } from '../render/texturas.js';
@@ -30,9 +31,9 @@ export function materiais() {
     terraChao: terra({ depthWrite: false }),
     caminhoChao: terra({ color: 0xcdb89a, depthWrite: false }),
     madeiraChao: madeira({ color: 0xb59a86, depthWrite: false }),
-    lajesChao: calcamento(t.lajes, { depthWrite: false }),
+    lajesChao: registrarMaterialHd(lambert(t.lajes, { depthWrite: false }), 'patterned_slate_tiles', 0.55),
     mosaicoChao: lambert(t.mosaico, { depthWrite: false }),
-    telhado: lambert(t.telhado, { side: THREE.DoubleSide }),
+    telhado: registrarMaterialHd(lambert(t.telhado, { side: THREE.DoubleSide }), 'roof_slates_02', 0.8),
     madeira: madeira(),
     madeiraEscura: madeira({ color: 0x9a7e6c }),
     morro: terra({ color: 0x8890c0, flatShading: true }),
@@ -196,6 +197,30 @@ export function piramide(lado, altura, material) {
 
 const ROTACAO = { S: 0, L: Math.PI / 2, N: Math.PI, O: -Math.PI / 2 };
 
+/** Agrupa a marcenaria de uma fachada por material e a esconde à distância. */
+function guarnicaoDaCasa(grupo) {
+  const porMaterial = new Map();
+  const adicionar = (x, y, z, l, a, p, material) => {
+    const { geometry } = caixa(l, a, p, material, 1.4);
+    geometry.translate(x, y, z);
+    if (!porMaterial.has(material)) porMaterial.set(material, []);
+    porMaterial.get(material).push(geometry);
+  };
+  const montar = () => {
+    const detalhe = new THREE.Group();
+    detalhe.name = 'Guarnições da fachada';
+    for (const [material, geometrias] of porMaterial) {
+      detalhe.add(new THREE.Mesh(mergeGeometries(geometrias), material));
+      for (const geo of geometrias) geo.dispose();
+    }
+    const lod = new THREE.LOD();
+    lod.addLevel(detalhe, 0);
+    lod.addLevel(new THREE.Group(), 34, 0.12);
+    grupo.add(lod);
+  };
+  return { adicionar, montar };
+}
+
 /**
  * Casa de pedra. frente = para onde a porta aponta ('N','S','L','O').
  * l = largura da fachada, p = profundidade, a = altura das paredes.
@@ -208,11 +233,18 @@ export function casa(mundo, {
 }) {
   const m = materiais();
   const g = new THREE.Group();
+  const guarnicao = guarnicaoDaCasa(g);
+  const detalhe = guarnicao.adicionar;
   const corpo = caixa(l, a, p, m.pedra); corpo.position.y = a / 2; g.add(corpo);
 
   const altTelhado = 2.2 + sorteio() * 1.6;
   const teto = telhado(p + 0.7, altTelhado, l + 0.7, m.telhado, m.pedraEscura);
   teto.rotation.y = Math.PI / 2; teto.position.y = a; g.add(teto);
+  for (const lado of [-1, 1]) {
+    detalhe(0, a - 0.04, lado * (p / 2 + 0.28), l + 0.66, 0.17, 0.19, m.madeiraEscura);
+    detalhe(lado * (l / 2 - 0.18), a / 2, p / 2 + 0.02, 0.19, a, 0.2, m.madeiraEscura);
+  }
+  if (a >= 5) detalhe(0, a - 2.12, p / 2 + 0.02, l, 0.18, 0.18, m.madeiraEscura);
 
   const chamine = caixa(0.8, 1.8, 0.8, m.pedraEscura, 1.5);
   chamine.position.set((sorteio() - 0.5) * (l - 2), a + altTelhado * 0.55, (sorteio() - 0.5) * 2);
@@ -223,6 +255,12 @@ export function casa(mundo, {
   const porta = caixa(1.15, 2.1, 0.16, m.madeira, 1.2);
   const xPorta = xPortaFixo ?? (sorteio() - 0.5) * (l - 3.2);
   porta.position.set(xPorta, 1.05, p / 2 + 0.03); g.add(porta);
+  if (!todasAcesas) {
+    for (const lado of [-1, 1]) detalhe(xPorta + lado * 0.65, 1.09, p / 2 + 0.05, 0.15, 2.18, 0.23, m.pedraEscura);
+    detalhe(xPorta, 2.2, p / 2 + 0.05, 1.5, 0.2, 0.23, m.pedraEscura);
+  }
+  for (const y of [0.62, 1.61]) detalhe(xPorta, y, p / 2 + 0.12, 0.99, 0.085, 0.035, m.metal);
+  detalhe(xPorta + 0.34, 1.08, p / 2 + 0.135, 0.12, 0.15, 0.045, m.metal);
 
   const janela = (jx, jy, jz, lateral) => {
     const luz = todasAcesas || (acesa && sorteio() < 0.6);
@@ -233,6 +271,11 @@ export function casa(mundo, {
     j.position.set(jx, jy, jz);
     if (lateral) j.rotation.y = Math.PI / 2;
     g.add(j);
+    if (!lateral) {
+      detalhe(jx, jy - 0.62, jz + 0.035, 1.25, 0.15, 0.29, m.pedraEscura);
+      detalhe(jx, jy + 0.59, jz + 0.01, 1.17, 0.12, 0.19, m.madeiraEscura);
+      for (const lado of [-1, 1]) detalhe(jx + lado * 0.59, jy, jz + 0.025, 0.18, 1.13, 0.17, m.madeiraEscura);
+    }
   };
   const doisAndares = a >= 5;
   for (const jx of [-l / 2 + 1.3, l / 2 - 1.3]) {
@@ -241,6 +284,7 @@ export function casa(mundo, {
   }
   janela(-l / 2 - 0.02, doisAndares ? a - 1.4 : 1.75, 0.6, true);
   janela(l / 2 + 0.02, 1.75, -0.8, true);
+  guarnicao.montar();
 
   g.position.set(x, 0, z);
   g.rotation.y = ROTACAO[frente];
@@ -377,6 +421,19 @@ export function igreja(mundo, { x, z }) {
   const fc = fz + 2.5;                                                       // face do corpo central
   const rosacea = new THREE.Mesh(new THREE.CircleGeometry(2.1, 10), m.vitral); add(rosacea, 0, 13.6, fc + 0.06);
   const aro = new THREE.Mesh(new THREE.RingGeometry(2.1, 2.5, 10), m.pedraEscura); add(aro, 0, 13.6, fc + 0.07);
+  // Nervuras à frente do vidro, fundidas numa única peça.
+  const anel = new THREE.RingGeometry(0.36, 0.46, 10);
+  const nervuras = [anel.toNonIndexed()];
+  anel.dispose();
+  for (let i = 0; i < 10; i++) {
+    const { geometry } = caixa(0.11, 1.68, 0.09, m.pedraEscura, 1);
+    const raio = geometry.toNonIndexed();
+    geometry.dispose();
+    raio.translate(0, 1.23, 0).rotateZ(i * Math.PI / 5);
+    nervuras.push(raio);
+  }
+  add(new THREE.Mesh(mergeGeometries(nervuras), m.pedraEscura), 0, 13.6, fc + 0.15);
+  for (const geo of nervuras) geo.dispose();
 
   // ---------- portal ----------
   const base = 0.75;                                                         // altura do patamar da escada
