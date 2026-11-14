@@ -49,6 +49,13 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Etapa D: golpe pelas costas e pulo contra rasteira (pronto).** Spec 09. Números em `CONFIG.combate.furtividade`, `costas`, `pisada` e `danoExtraNoAr`; regras puras em `src/entidades/Furtividade.js`:
+  - **Z agacha** (anda a 45%, pose baixa; atacar, esquivar, atirar ou apanhar levantam; funciona na primeira pessoa e com mira travada). O inimigo percebe pelo cone de visão e pelo barulho (agachado quase não se ouve). **Em pé a percepção é a de antes** (um teste compara as duas regras); a única diferença é que correr pelas costas agora é ouvido a 7 m (antes 5). Quando um inimigo percebe o caçador, leva tiro ou apanha patrulhando, os vizinhos a até 10 m passam a perseguir após 0,4 s.
+  - **Golpe pelas costas:** inimigo comum ainda sem perceber, caçador no cone de 60° atrás dele a até 1,6 m, aperta o ataque: execução silenciosa (letal, sem pausa nem tremor, sem alertar vizinhos, rally cheio, texto discreto "PELAS COSTAS"). Não vale no Guardião.
+  - **Pisada:** pular a rasteira e cair a até 1,8 m do atacante em 0,8 s pisa nele (1,5× o leve, desequilibra 1,2 s e abre o visceral, o caçador quica). **Pular contra golpe alto** leva ×1,5 de dano (só um custo, sem aviso).
+  - **Decidido pela IA (o Heitor revisa):** o golpe pelas costas não exige estar agachado, só inimigo comum patrulhando (agachado é só mais fácil de chegar); o golpe mantém o agachamento; quem foi alertado não alerta outros e o Guardião não alerta nem é alertado; a pisada vale também no Guardião; o dano extra no ar vale só para o tipo `alto` (inclui as varridas laterais do Guardião); agachado, Espaço não faz nada e beber o frasco não levanta o caçador; o cone de 100° e a `visaoNoEscuro` só valem para quem está agachado. Mais detalhes na seção "Decidido pela IA" da spec 09.
+  - Save, IDs e `Toque.js` não mudaram; sem assets. `npm test` (80) e `npm run build` passam; o teste de navegador não foi rodado (o Gabriel testa pelo link publicado).
+
 - **Personagens de fantasia sombria escolhidos pelo Gabriel.** Witch Hunter
   é o caçador jogável em terceira pessoa e Scary Doctor é o taverneiro.
   Terrifying Hooded Horror Woman aparece nas patrulhas rápidas da vila e
@@ -193,7 +200,6 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
   - **Testes:** `tests/areas.test.js` monta as quatro áreas de verdade (com um `document` de mentira, sem WebGL) e confere contrato, portais e chegadas, estrada aberta até a carroça, lanterna, bilhete e falas. `tests/catedral.mjs` ganhou um trecho `validarEstradaETaverna` (atravessa os dois portais, lê o bilhete, fala, descansa e recarrega), **escrito mas não rodado** (o dono não tem placa de vídeo e o navegador de teste foi dispensado neste PR). Convém rodar `npm run test:browser` numa máquina com navegador antes de integrar.
   - **Decidido pela IA (o Heitor revisa):** a estrada corre no eixo Z (norte-sul) para continuar o Portão Sul, com limites de 30 × 120 m (x de -18 a 12); a taverna fica do lado oeste da pista, com os fundos na cerca; o portal do vilarejo fica em z = 55,4 (raio 1,6) e a chegada em z = 52,6, para nascer no vilarejo não acender o aviso; o taverneiro **não** usa a classe `Boneco` (ela já traz chapéu, capa e armas): é um boneco simples de caixas, com avental e barba, polindo uma caneca; **o `Jogo.js` ganhou 1 linha** (ação `'falar'` em `interacaoObjeto`, prompt `E — falar com …` e a fala via `hud.avisar`), porque o sistema de anotações só sabe mostrar `E — ler:` e persiste o evento; as falas, o texto do bilhete e a placa "Em obras" são minhas e secas de propósito; luz do jogador 5 na estrada e 3 na taverna; a fala some sozinha em 4 s e não é salva; três patrulhas (caçador, cavaleiro, caçador), nenhuma perto da lanterna; a música continua a do vilarejo nas áreas novas.
 - **Ganchos deixados:** `inimigo.abertoParaExecucao` (já usado pela execução do B2) e `inimigo.desequilibrar()` (abre o visceral sem execução; serve ao golpe pelas costas da Etapa D). O aviso `jogador:pulou-golpe` sai quando o jogador pula uma rasteira (Etapa D). `jogador.recuperarComGolpe(dano)` é o ponto de entrada do rally (`Infinity` = rally cheio, usado pelo visceral). `Jogador.receberDano` recebe os dados do golpe (`aparavel`, `bloqueavel`, `evitaPulando`...).
-- **Ainda não existe:** contra-ataque pisando e dano extra ao pular contra golpe alto.
 - **Infra:** `jogar.bat` com atualização automática, `atualizar.bat`, e regra de integração automática no `AGENTS.md` com o `CLAUDE.md` apontando para ele.
 - **Specs (pronto):** `docs/specs/` tem uma página por tarefa futura (00 a 08), com objetivo, arquivos, critérios de aceite e modelo de IA recomendado. A ordem está na "Fila do Gabriel".
 - **Contrato de área (pronto):** `src/mundo/areas.js` tem o registro das áreas, e cada área declara `luzJogador` e `usaCeu`. Área nova não exige mexer no `Jogo.js`.
@@ -220,7 +226,7 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
   - Ataque forte carregado por completo: o dano cresce com a carga, e pelas costas abre o visceral.
   - Quickstep: com a mira travada, a esquiva vira um passo curto, com menos invencibilidade e recuperação curta. Sem mira, continua o rolamento. Reduzir um pouco a invencibilidade do rolamento.
 - [x] **C. Chefe e imprevisibilidade** (C1, C2 e C3 feitos): pequena variação no tempo do aviso, golpes atrasados, sequências mais longas, e uma fase final do Guardião com golpes que não podem ser aparados (a fase 2 não pode ser vencida só com parry). Inimigos punem quem usa frasco perto deles. Limite de quantos inimigos atacam ao mesmo tempo. Rasteira mais frequente.
-- [ ] **D. Golpe pelas costas e pulo contra rasteira:** agachar (anda devagar, menos barulho), cone de visão, execução silenciosa por trás, alerta dos vizinhos se o jogador for visto (sem botão de toque). No ar durante o golpe ativo da rasteira, não leva dano; cair perto abre o contra-ataque pisando; pular contra ataque alto leva dano extra.
+- [x] **D. Golpe pelas costas e pulo contra rasteira:** agachar (anda devagar, menos barulho), cone de visão, execução silenciosa por trás, alerta dos vizinhos se o jogador for visto (sem botão de toque). No ar durante o golpe ativo da rasteira, não leva dano; cair perto abre o contra-ataque pisando; pular contra ataque alto leva dano extra.
 - [ ] **E. Ajuste fino com os amigos.**
 - [ ] **Depois:** broquel como item ou mão secundária alternativa (bloqueio), celular de volta se fizer sentido, golpes em sequência, armas com ritmos diferentes, interior de mais casas, sons gravados, Supabase (login e progresso), multiplayer para uns 5 amigos, mapa maior (floresta, castelo, caverna), modelos e animações de verdade.
 
@@ -234,7 +240,7 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 - [x] **2. C: chefe e imprevisibilidade** (spec 08; Opus ou Fable) — C1, C2 e C3 feitos (variação do aviso, golpe atrasado, sequências novas, rasteira mais frequente; fase final do Guardião com golpes inaparáveis; no máximo 2 atacando juntos e punição do frasco)
 - [x] **3. S2: botão de gráfico PS1 / HD** (spec 02) — PS1 padrão, HD com troca na hora
 - [x] **4. S3: estrada e taverna** (spec 01) — estrada, fachada, taverna por dentro, taverneiro e bilhete; PR 23
-- [ ] **5. D: golpe pelas costas e pulo contra rasteira** (sem spec ainda; Opus)
+- [x] **5. D: golpe pelas costas e pulo contra rasteira** (spec 09; Opus) — Z agacha, percepção por cone e barulho, alerta dos vizinhos, golpe pelas costas, pisada
 - [ ] **6. S4: personagens e NPCs** (spec 03)
 - [ ] **7. S5: atmosfera por área** (spec 04) — parte visual entregue no
   quarto incremento. Falta o som ambiente por área com transições.
