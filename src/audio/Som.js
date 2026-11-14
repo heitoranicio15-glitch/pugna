@@ -49,7 +49,11 @@ export class Som {
     // O aviso sonoro muda com o tipo do golpe: dá para reagir de ouvido.
     eventos.em('inimigo:preparo', (i) => {
       const perto = this.perto(i), g = i.golpe;
-      if (g?.tipo === 'pesado') {            // sino grave e um ronco que cresce
+      if (g?.nomeAviso === 'inaparavel') {   // não pode ser aparado: sino invertido, grave e duplo
+        this.sinoInvertido(73, 0.55, 0.26 * perto);
+        setTimeout(() => this.sinoInvertido(65, 0.55, 0.26 * perto), 170);
+        this.ruido({ volume: 0.18 * perto, duracao: 0.5, tipo: 'lowpass', de: 300, ate: 70, ataque: 0.2 });
+      } else if (g?.tipo === 'pesado') {            // sino grave e um ronco que cresce
         this.sino(98, 0.9, 0.24 * perto);
         // o ronco dura só a subida da arma: o som não entrega o golpe atrasado
         this.ruido({ volume: 0.26 * perto, duracao: Math.min(0.9, g.subida ?? g.preparo), tipo: 'lowpass', de: 90, ate: 420, ataque: 0.3 });
@@ -65,6 +69,12 @@ export class Som {
     eventos.em('inimigo:aguentou', (i) => this.metal(0.4 * this.perto(i)));   // o golpe não fez cambalear
     eventos.em('jogador:interrompido', () => this.tom({ volume: 0.12, duracao: 0.1, de: 180, ate: 90 }));
     eventos.em('jogador:rally', () => this.tom({ volume: 0.07, duracao: 0.09, de: 520, ate: 780 }));
+    // Virada de fase do Guardião: um rugido longo e grave.
+    eventos.em('guardiao:fase-final', (i) => {
+      const perto = i ? this.perto(i) : 1;
+      this.rosnado(0.55 * perto, 55);
+      setTimeout(() => this.rosnado(0.45 * perto, 42), 260);
+    });
     eventos.em('inimigo:alerta', (i) => this.rosnado(0.3 * this.perto(i), i.tipo === 'cavaleiro' ? 70 : 120));
     eventos.em('inimigo:morreu', (i) => { this.rosnado(0.35 * this.perto(i), 50); this.passo(0.6 * this.perto(i), 0.5, 0.45); });
     eventos.em('descanso', () => this.sino(392, 2.5, 0.25));
@@ -153,6 +163,18 @@ export class Som {
   }
   gemido() { this.tom({ volume: 0.22, duracao: 0.28, de: 190, ate: 95, forma: 'sawtooth' }); }
   rosnado(volume, freq) { this.tom({ volume, duracao: 0.6, de: freq, ate: freq * 0.6, forma: 'sawtooth' }); this.ruido({ volume: volume * 0.5, duracao: 0.5, tipo: 'lowpass', de: 500, ate: 150 }); }
+  /** Sino tocado ao contrário: o som cresce e corta seco (aviso do golpe inaparável). */
+  sinoInvertido(freq, duracao, volume) {
+    if (!this.ctx || volume <= 0.001) return;
+    const t = this.ctx.currentTime;
+    for (const [m, v] of [[1, 1], [2.01, 0.5], [2.76, 0.3], [5.4, 0.15]]) {
+      const o = this.ctx.createOscillator(); o.frequency.value = freq * m;
+      const g = this.ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(volume * v, t + duracao);
+      g.gain.linearRampToValueAtTime(0.0001, t + duracao + 0.03);
+      o.connect(g).connect(this.saida); o.start(t); o.stop(t + duracao + 0.06);
+    }
+  }
   sino(freq, duracao, volume) { for (const [m, v] of [[1, 1], [2.01, 0.5], [2.76, 0.3], [5.4, 0.15]]) this.tom({ volume: volume * v, duracao: duracao / Math.sqrt(m), de: freq * m }); }
 
   /** Vento: chiado grave contínuo que sobe e desce sozinho. */

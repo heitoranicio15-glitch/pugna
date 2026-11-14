@@ -440,12 +440,25 @@ try {
     jogo.guardiao.receberDano(130, jogo.jogador.frente(), 0, true);
   });
   assert.equal((await estado()).guardiao.faseFinal, true);
-  await page.evaluate(() => {
+  // Na virada ele ruge, fica invencível por 1 s e se afasta um passo.
+  const virada = await page.evaluate(() => {
+    const g = jogo.guardiao, vida = g.vida;
+    g.receberDano(20, jogo.jogador.frente(), 0, false);
+    return { estado: g.estado, intacto: g.vida === vida };
+  });
+  assert.deepEqual(virada, { estado: 'virada', intacto: true });
+  await passos(22);
+  assert.notEqual(await page.evaluate(() => jogo.guardiao.estado), 'virada');
+  // A varrida dupla da fase final acende o aviso branco-violeta e não pode ser aparada.
+  const inaparavel = await page.evaluate(() => {
     const g = jogo.guardiao;
     jogo.jogador.reiniciar(g.pos.x, g.pos.z + 2.15, 0);
     g.angulo = 0;
     g.atacar(g.cfg.ataques[0].golpes);
+    g.atualizar(0.1);
+    return { aparavel: g.golpe.aparavel, olho: g.olho.color.getHex() };
   });
+  assert.deepEqual(inaparavel, { aparavel: false, olho: CONFIG.combate.avisosInimigos.inaparavel });
   await passos(25);
   assert.ok(await page.evaluate(() => jogo.jogador.vida < 100));
 

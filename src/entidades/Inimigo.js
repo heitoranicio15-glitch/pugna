@@ -165,6 +165,7 @@ export class Inimigo {
     this.abertoParaExecucao = false;
     this.visceralPelasCostas = false;   // desequilibrado por um forte carregado pelas costas
     this.folego = 0;            // segundos em que ele não cambaleia de novo
+    this.invencivel = 0;        // segundos sem levar dano (virada de fase do chefe)
     this.vida = this.cfg.vida;
     this.morto = false;
     this.estado = 'patrulha'; this.tEstado = 0;
@@ -265,6 +266,7 @@ export class Inimigo {
     }
 
     this.folego -= dt;
+    this.invencivel -= dt;
     const dx = jog.pos.x - this.pos.x, dz = jog.pos.z - this.pos.z;
     const dist = Math.hypot(dx, dz);
     const anguloJogador = Math.atan2(dx, dz);
@@ -364,6 +366,12 @@ export class Inimigo {
       case 'atordoado': {
         inclinar = -0.35; bracoAlvo = 0.4;
         if (this.tEstado >= (c.atordoamento ?? CONFIG.combate.atordoamentoInimigo.duracao)) this.mudar('perseguir');
+        break;
+      }
+      case 'virada': {   // troca de fase do chefe: ruge de braços abertos, encarando o jogador
+        alvoAngulo = anguloJogador; giro = 3;
+        inclinar = -0.45; bracoAlvo = -2.4; bracoLateral = 0.6; rapidezBraco = 10;
+        if (this.tEstado >= (c.virada?.invencivel ?? 0)) this.mudar('perseguir');
         break;
       }
       case 'desequilibrado': {   // golpe aparado: braço jogado para trás, guarda aberta
@@ -493,11 +501,11 @@ export class Inimigo {
    * forte e o inimigo sai do desequilíbrio para o atordoamento.
    */
   receberVisceral(dano, direcao, execucao = false) {
-    if (this.morto) return;
+    if (this.morto || this.invencivel > 0) return;
     const AT = CONFIG.combate.atordoamentoInimigo, forca = CONFIG.combate.visceral.empurrao;
     this.jogo.eventos.emitir('golpe:visceral', { execucao, inimigo: this });
     this.empurrao.set(direcao.x * forca, 0, direcao.z * forca);
-    if (this.tirarVida(dano, 0.25)) return;
+    if (this.tirarVida(dano, 0.25) || this.invencivel > 0) return;   // morreu ou virou de fase
     this.mudar('atordoado');
     this.folego = (this.cfg.atordoamento ?? AT.duracao) + (this.cfg.folego ?? AT.folego);
   }
@@ -511,7 +519,7 @@ export class Inimigo {
    * ele quase não sai do lugar: aguenta o golpe e revida.
    */
   receberDano(dano, direcao, forca, forte) {
-    if (this.morto) return;
+    if (this.morto || this.invencivel > 0) return;
     const AT = CONFIG.combate.atordoamentoInimigo;
     const critico = this.estado === 'desequilibrado';
     if (critico) dano *= CONFIG.combate.critico.multiplicador;
@@ -519,6 +527,7 @@ export class Inimigo {
       this.empurrao.set(direcao.x * forca, 0, direcao.z * forca);
       return critico ? 'critico' : undefined;
     }
+    if (this.invencivel > 0) return critico ? 'critico' : undefined;   // acabou de virar de fase
     // O golpe tem força para abalar? E o inimigo está em condição de ser abalado?
     const abala = dano >= this.cfg.firmeza || (forte && !this.base.faseFinal);
     const emGolpeFirme = !forte && !!this.ataque.golpe?.aguentaLeve && (this.estado === 'preparo' || this.estado === 'ativo');
@@ -540,8 +549,8 @@ export class Inimigo {
    * e não gasta o desequilíbrio (não é crítico), mas acorda quem patrulhava.
    */
   levarTiro(dano) {
-    if (this.morto) return;
-    if (this.tirarVida(dano, 0.09)) return;
+    if (this.morto || this.invencivel > 0) return;
+    if (this.tirarVida(dano, 0.09) || this.invencivel > 0) return;
     if (this.estado === 'patrulha') this.mudar('perseguir');
   }
 
@@ -556,11 +565,24 @@ export class Inimigo {
       this.jogo.eventos.emitir('inimigo:morreu', this);
       return true;
     }
-    if (this.base.faseFinal && this.cfg === this.base && this.vida <= this.base.vida / 2) {
-      this.cfg = { ...this.base, ...this.base.faseFinal };
-      this.corOlho = 0xff416c;
-      this.jogo.eventos.emitir('guardiao:fase-final');
-    }
+    if (this.base.faseFinal && this.cfg === this.base && this.vida <= this.base.vida / 2) this.virarFase();
     return false;
+  }
+
+  /**
+   * Virada para a fase final (chefe): troca os números, ruge, fica invencível
+   * por um instante e se afasta um passo do jogador antes de voltar à luta.
+   */
+  virarFase() {
+    this.cfg = { ...this.base, ...this.base.faseFinal };
+    this.corOlho = 0xff416c;
+    const V = this.cfg.virada ?? { invencivel: 0, passo: 0 };
+    this.invencivel = V.invencivel;
+    this.mudar('virada');
+    // o empurrão some com exp(-7t) (veja atualizar): andar "passo" metros pede 7 × passo
+    const jog = this.jogo.jogador;
+    const dx = this.pos.x - jog.pos.x, dz = this.pos.z - jog.pos.z, d = Math.hypot(dx, dz) || 1;
+    this.empurrao.set(dx / d * V.passo * 7, 0, dz / d * V.passo * 7);
+    this.jogo.eventos.emitir('guardiao:fase-final', this);
   }
 }

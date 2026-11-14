@@ -412,8 +412,9 @@ export class Jogador {
         aparou = true;
       } else {
         alvo.levarTiro(P.dano);
-        if (golpe?.aparavel === false && alvo.ataque.fase !== 'recuperacao') {   // rasteira: a resposta é pular
-          this.jogo.eventos.emitir('jogador:resposta-errada', { resposta: 'aparar', tipo: golpe.tipo });
+        // rasteira (a resposta é pular) ou golpe inaparável (a resposta é esquivar)
+        if (golpe?.aparavel === false && alvo.ataque.fase !== 'recuperacao') {
+          this.jogo.eventos.emitir('jogador:resposta-errada', { resposta: 'aparar', tipo: golpe.tipo, aviso: golpe.nomeAviso });
         }
       }
     }
