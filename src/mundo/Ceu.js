@@ -100,12 +100,23 @@ export class Ceu {
 
   get direcaoLua() { return this.lua.direcao; }
 
-  /** Troca as cores do céu (para quando outros seres cósmicos aparecerem). */
-  definirPaleta({ zenite, meio, horizonte, nuvem } = {}) {
-    if (zenite !== undefined) this.uniformes.uZenite.value.set(zenite);
-    if (meio !== undefined) this.uniformes.uMeio.value.set(meio);
-    if (horizonte !== undefined) this.uniformes.uHorizonte.value.set(horizonte);
-    if (nuvem !== undefined) this.uniformes.uNuvem.value.set(nuvem);
+  /** Usa os valores padrão para os campos que a área não declarar. */
+  definirPaleta({ zenite, meio, horizonte, nuvem } = {}, suavizar = false) {
+    const p = CONFIG.paleta;
+    const cores = [
+      [this.uniformes.uZenite.value, zenite ?? p.ceuZenite],
+      [this.uniformes.uMeio.value, meio ?? p.ceuMeio],
+      [this.uniformes.uHorizonte.value, horizonte ?? p.ceuHorizonte],
+      [this.uniformes.uNuvem.value, nuvem ?? p.nuvem],
+    ];
+    this.transicaoDaPaleta = suavizar ? cores.map(([cor, destino]) => [cor, cor.clone(), new THREE.Color(destino)]) : null;
+    if (!suavizar) for (const [cor, destino] of cores) cor.set(destino);
+  }
+
+  atualizarPaleta(t) {
+    if (!this.transicaoDaPaleta) return;
+    for (const [cor, inicio, destino] of this.transicaoDaPaleta) cor.lerpColors(inicio, destino, t);
+    if (t >= 1) this.transicaoDaPaleta = null;
   }
 
   atualizar(dt, tempo, camera, posJogador) {

@@ -5,21 +5,22 @@ import { abobadaOgival, arcoOgival, caixa, colunaFacetada, materiais, tocha, ani
 import { retro } from '../render/retro.js';
 import { placa } from './Aderecos.js';
 import { montarSacristia } from './Sacristia.js';
-import { sombrasDeContato } from './efeitosCenario.js';
+import { feixeDeLuz, sombrasDeContato } from './efeitosCenario.js';
+import { montarAtmosfera } from './Atmosfera.js';
+
+const C = CONFIG.areas.catedral;
 
 export class Catedral {
   constructor(cena) {
     this.id = 'catedral';
     this.nome = 'Catedral do Véu';
-    this.luzJogador = CONFIG.areas.catedral.luzJogador;
     this.usaCeu = false;
     this.limites = { minX: -22, maxX: 22, minZ: -33, maxZ: 9 };
     this.grupo = new THREE.Group();
     this.colisores = new Colisores();
     this.tochas = [];
     this.objetos = [];
-    this.nevoa = new THREE.FogExp2(0x19162d, 0.027);
-    this.grupo.add(new THREE.HemisphereLight(0xb6a6d6, 0x3d2f49, 1.1));
+    montarAtmosfera(this, C);
     cena.add(this.grupo);
 
     const m = materiais();
@@ -225,6 +226,7 @@ export class Catedral {
     bloc(0, 2.6, -32.58, 4.2, 5.1, 0.2, m.vitral);
     luz(0, 4, -29, 0xa466eb, 63, 19);
     luz(0, 4.2, -17.3, 0xd3a6ed, 27, 15);
+    for (const feixe of C.feixes) feixeDeLuz(this.grupo, feixe);
 
     this.saida = { x: 0, z: 8.45 };
     this.entrada = { x: 0, z: 6, yaw: 0 };

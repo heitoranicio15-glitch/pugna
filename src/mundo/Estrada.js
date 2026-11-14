@@ -15,6 +15,7 @@ import { retro } from '../render/retro.js';
 import { placa } from './Aderecos.js';
 import { materiais, caixa, casa, torre, tocha, animarTochas, arvoreSeca, muralha, planoDeChao, barril } from './pecas.js';
 import { sombrasDeContato } from './efeitosCenario.js';
+import { montarAtmosfera } from './Atmosfera.js';
 
 const C = CONFIG.areas.estrada;
 
@@ -22,7 +23,6 @@ export class Estrada {
   constructor(cena, direcaoLua) {
     this.id = 'estrada';
     this.nome = 'Estrada do Sul';
-    this.luzJogador = C.luzJogador;
     this.usaCeu = true; // céu e lua visíveis
     this.limites = { ...C.limites };
     this.grupo = new THREE.Group();
@@ -32,18 +32,13 @@ export class Estrada {
     this.fumaca = [];
     cena.add(this.grupo);
 
-    const p = CONFIG.paleta;
     const m = materiais();
     const sorteio = criarSorteio(2468); // mesma semente = estrada sempre igual
     const { minX, maxX, minZ, maxZ } = this.limites;
     const meioX = (minX + maxX) / 2, meioZ = (minZ + maxZ) / 2;
 
     // ---------- névoa e luzes gerais ----------
-    this.nevoa = new THREE.FogExp2(p.nevoa, C.nevoaDensidade);
-    this.grupo.add(new THREE.HemisphereLight(p.luzAmbiente, 0x1a0f3a, 1.5));
-    const lua = new THREE.DirectionalLight(p.luzLua, 1.1);
-    lua.position.copy(direcaoLua).multiplyScalar(100);
-    this.grupo.add(lua);
+    montarAtmosfera(this, C, direcaoLua);
 
     // ---------- chão: terra, pista de terra batida, sulcos de carroça e riacho ----------
     // Chão e pista não gravam profundidade e têm ordem fixa (veja o comentário em Vilarejo.js).
@@ -180,17 +175,18 @@ export class Estrada {
     }
 
     // ---------- bancos de névoa rasteira ----------
+    const bruma = C.bruma;
     const matNevoa = new THREE.SpriteMaterial({
-      map: texturas().nevoa, color: 0x5a7fe0, transparent: true, opacity: 0.16, depthWrite: false,
+      map: texturas().nevoa, color: bruma.cor, transparent: true, opacity: bruma.opacidade, depthWrite: false,
     });
     this.nevoas = [];
     for (let i = 0; i < 30; i++) {
       const s = new THREE.Sprite(matNevoa);
       const esc = 9 + sorteio() * 12;
       s.scale.set(esc * 1.8, esc * 0.5, 1);
-      s.position.set(minX + sorteio() * (maxX - minX), 0.7 + sorteio() * 1.6, minZ + sorteio() * (maxZ - minZ));
+      s.position.set(minX + sorteio() * (maxX - minX), bruma.altura + sorteio() * bruma.variacao, minZ + sorteio() * (maxZ - minZ));
       this.grupo.add(s);
-      this.nevoas.push({ sprite: s, vel: 0.25 + sorteio() * 0.5 });
+      this.nevoas.push({ sprite: s, vel: (0.25 + sorteio() * 0.5) * bruma.velocidade });
     }
 
     // ---------- portais, chegadas, lanterna e inimigos ----------

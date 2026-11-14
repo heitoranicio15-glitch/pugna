@@ -2,6 +2,10 @@
 
 **Modelo recomendado:** Sonnet (Opus se precisar mexer no shader do céu).
 
+**Estado:** o quarto incremento gráfico entregou a parte visual, com paletas
+próprias para os quatro cenários. Os perfis de céu usam `paletaDoCeu` em
+`CONFIG.areas`. O som ambiente sintetizado segue pendente.
+
 ## Objetivo
 
 Cada área ter cara e som próprios, declarados em dados, sem código espalhado: paleta, névoa, céu, luz e som ambiente. Hoje a névoa e as luzes da catedral estão escritas direto em `Catedral.js` e a paleta do `config.js` serve só ao vilarejo.
@@ -33,7 +37,8 @@ CONFIG.areas.catedral = {
 
 ## Critérios de aceite
 
-1. Vilarejo e catedral ficam **iguais aos de hoje** na imagem (mesmos números, só mudaram de lugar).
+1. Os quatro cenários têm paletas distinguíveis em PS1 e HD, com os avisos e
+   marcadores de combate preservados. Céu, névoa e fundo assumem o perfil do destino.
 2. Cada área tem um som ambiente audível e diferente; trocar de área troca o som sem estalo.
 3. Mudar a névoa de uma área = mudar um número no `config.js`.
 4. Nenhum arquivo de áudio novo (sem pendência em `CREDITOS.md`).

@@ -320,6 +320,9 @@ ficam em `CONFIG.areas.estrada` e `CONFIG.areas.taverna` (`src/config.js`).
 - Nas duas versões, as casas têm guarnições de madeira e ferragens visíveis
   de perto, a rosácea da catedral tem nervuras, o riacho tem ondas e a lareira
   tem arco e cornija. O HD também usa ardósia escaneada nos telhados e nas lajes.
+- Cada área tem uma paleta própria nos dois modos. O vilarejo tem bruma violeta,
+  a estrada puxa para o azul-esverdeado, os vitrais da catedral projetam feixes
+  e a taverna tem luz quente e fagulhas na lareira.
 - Movimento com colisão; dá para subir em caixotes e degraus. A câmera em terceira
   pessoa encurta ao encostar em paredes. A primeira pessoa acompanha os olhos.
 - Caçador com chapéu, capa com pregas, espada e pistola animados no código.
@@ -393,7 +396,9 @@ pugna/
 ```
 
 ### Onde mexer para…
-- **mudar dano, velocidade, vida, cores, névoa, nível de pixelado:** `src/config.js`
+- **mudar dano, velocidade, vida, cores e nível de pixelado:** `src/config.js`
+- **mudar a atmosfera de uma área:** `CONFIG.areas` em `src/config.js`
+  reúne a névoa, a cor de fundo, a luz ambiente e a paleta de céu dos exteriores.
 - **mudar a distância da câmera ou o alcance da mira:** blocos `camera` e `mira`
   em `src/config.js`
 - **mudar a pistola** (balas, dano, alcance, janela do parry, tempo de

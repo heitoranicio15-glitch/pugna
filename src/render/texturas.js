@@ -201,11 +201,14 @@ function janela(acesa) {
 
 function vitral() {
   const r = criarSorteio(83);
-  const cores = [[125, 255, 46], [130, 70, 255], [255, 138, 42], [40, 190, 255], [220, 60, 160]];
-  const grade = Array.from({ length: 64 }, () => cores[Math.floor(r() * cores.length)]);
-  return pintarTextura(16, (x, y) => {
-    if (x % 4 === 0 || y % 4 === 0) return [14, 10, 28];
-    return mult(grade[Math.floor(y / 4) * 4 + Math.floor(x / 4)], 0.8 + r() * 0.3);
+  const cores = [[76, 118, 167], [112, 89, 153], [179, 122, 65], [74, 139, 148], [146, 64, 101]];
+  const grade = Array.from({ length: 16 }, () => cores[Math.floor(r() * cores.length)]);
+  return pintarTextura(64, (x, y) => {
+    const u = x + y, v = 64 + x - y;
+    if (u % 16 < 2 || v % 16 < 2) return [17, 14, 27];
+    const cor = grade[(Math.floor(u / 16) % 4) * 4 + Math.floor(v / 16) % 4];
+    const vidro = 0.86 + 0.13 * Math.sin((x * 0.26 + y * 0.16) + Math.sin(y * 0.3));
+    return mult(cor, vidro * (0.87 + r() * 0.26));
   });
 }
 
@@ -228,6 +231,15 @@ function sombra() {
   return pintarTextura(32, (x, y) => {
     const d = Math.min(1, Math.hypot(x - 15.5, y - 15.5) / 15.5);
     const f = (1 - d * d) ** 2 * 255;
+    return [f, f, f];
+  });
+}
+
+function feixe() {
+  return pintarTextura(64, (x, y) => {
+    const lateral = Math.sin(Math.PI * x / 63) ** 2;
+    const longitudinal = Math.sin(Math.PI * y / 63) ** 0.65;
+    const f = 255 * lateral * longitudinal;
     return [f, f, f];
   });
 }
@@ -284,14 +296,15 @@ export function texturas() {
       mosaico: prepararPiso(mosaico()), tapete: prepararPiso(tapete()), telhado: telhado(), madeira: madeira(),
       terra: prepararPiso(terra()), metal: metal(), tecido: tecido(), trama: trama(),
       janelaAcesa: janela(true), janelaApagada: janela(false), vitral: vitral(),
-      brilho: brilho(), nevoa: nevoa(), sombra: sombra(), riacho: riacho(),
+      brilho: brilho(), nevoa: nevoa(), sombra: sombra(), riacho: riacho(), feixe: feixe(),
     };
-    for (const n of ['brilho', 'nevoa', 'sombra']) {
+    for (const n of ['brilho', 'nevoa', 'sombra', 'feixe']) {
       cache[n].wrapS = cache[n].wrapT = THREE.ClampToEdgeWrapping;
       cache[n].magFilter = cache[n].minFilter = THREE.LinearFilter; // manchas suaves
     }
     // alphaMap lê o canal verde como dado linear.
     cache.sombra.colorSpace = THREE.NoColorSpace;
+    cache.feixe.colorSpace = THREE.NoColorSpace;
     for (const tex of Object.values(cache)) registrarTextura(tex);
   }
   return cache;

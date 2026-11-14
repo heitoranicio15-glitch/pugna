@@ -5,6 +5,8 @@ import { REGISTRO, criarAreas, montarAreas, validarArea } from '../src/mundo/are
 import { ANOTACOES } from '../src/nucleo/Inventario.js';
 import { normalizarProgresso } from '../src/nucleo/Salvamento.js';
 import { CONFIG } from '../src/config.js';
+import { Atmosfera } from '../src/mundo/Atmosfera.js';
+import { Ceu } from '../src/mundo/Ceu.js';
 
 // Área "de mentira": objeto simples que segue o contrato.
 function areaFalsa(id, outra, pontos) {
@@ -104,6 +106,41 @@ test('as áreas de verdade passam em validarArea e em montarAreas', () => {
   assert.equal(checkpoints.size, 4);
 });
 
+test('a atmosfera aplica os perfis e interpola o céu, a névoa e o fundo entre áreas', () => {
+  ligarDocumentoDeMentira();
+  const cena = new THREE.Scene();
+  const ceu = new Ceu(cena);
+  const { areas, porId } = criarAreas(cena, ceu);
+  const luz = new THREE.PointLight();
+  const atmosfera = new Atmosfera(cena, ceu, luz);
+  for (const area of areas) {
+    const config = CONFIG.areas[area.id];
+    assert.equal(area.nevoa.color.getHex(), config.nevoa.cor);
+    assert.equal(area.nevoa.density, config.nevoa.densidade);
+    assert.equal(area.fundo.getHex(), config.fundo);
+  }
+  const vila = porId.get('vilarejo'), estrada = porId.get('estrada'), taverna = porId.get('taverna');
+  atmosfera.mudarArea(vila);
+  atmosfera.mudarArea(estrada, true);
+  assert.equal(ceu.uniformes.uZenite.value.getHex(), vila.paletaDoCeu.zenite);
+  atmosfera.atualizar(0.3);
+  assert.ok(cena.fog.density > vila.nevoa.density && cena.fog.density < estrada.nevoa.density);
+  assert.ok(!cena.background.equals(vila.fundo) && !cena.background.equals(estrada.fundo));
+  assert.notEqual(ceu.uniformes.uZenite.value.getHex(), vila.paletaDoCeu.zenite);
+  atmosfera.atualizar(0.3);
+  assert.equal(ceu.uniformes.uZenite.value.getHex(), estrada.paletaDoCeu.zenite);
+  assert.equal(cena.fog.color.getHex(), estrada.nevoa.color.getHex());
+  assert.notEqual(cena.fog, estrada.nevoa);
+  atmosfera.mudarArea(taverna, true);
+  assert.equal(ceu.malha.visible, false);
+  assert.equal(luz.color.getHex(), taverna.corLuzJogador);
+  atmosfera.atualizar(0.2);
+  atmosfera.mudarArea(vila);
+  assert.equal(ceu.malha.visible, true);
+  assert.equal(cena.background.getHex(), vila.fundo.getHex());
+  assert.equal(atmosfera.tempo, 0);
+});
+
 test('cada portal tem a chegada no destino e a chegada fica fora do raio do portal de volta', () => {
   const { areas, porId } = montarAsAreasReais();
   for (const area of areas) {
@@ -152,7 +189,7 @@ test('estrada e taverna declaram o contrato com os números do config', () => {
   assert.ok(estrada.inimigos.length >= 2 && estrada.inimigos.length <= 3);
   assert.equal(taverna.inimigos.length, 0);
   assert.equal(taverna.pontosDeDescanso.length, 0);
-  assert.ok(estrada.nevoa && taverna.nevoa, 'as duas têm névoa (o jogo usa a cor dela como fundo)');
+  assert.ok(estrada.nevoa && taverna.nevoa, 'as duas têm névoa');
 });
 
 test('a estrada fica aberta de ponta a ponta e fecha na carroça tombada', () => {

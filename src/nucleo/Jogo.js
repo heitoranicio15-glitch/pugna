@@ -23,6 +23,7 @@ import { carregarPreferencias, salvarPreferencias } from './Preferencias.js';
 import { RenderizadorRetro } from '../render/RenderizadorRetro.js';
 import { MateriaisHd } from '../render/materiaisHd.js';
 import { Ceu } from '../mundo/Ceu.js';
+import { Atmosfera } from '../mundo/Atmosfera.js';
 import { criarAreas } from '../mundo/areas.js';
 import { Navegacao } from '../mundo/Navegacao.js';
 import { Jogador } from '../entidades/Jogador.js';
@@ -65,6 +66,7 @@ export class Jogo {
     // (truque comum nos jogos antigos de masmorra).
     this.luzJogador = new THREE.PointLight(0x7a86ff, 5, 11, 1.6);
     this.cena.add(this.luzJogador);
+    this.atmosfera = new Atmosfera(this.cena, this.ceu, this.luzJogador);
 
     // ---------- entidades ----------
     this.jogador = new Jogador(this);
@@ -432,16 +434,13 @@ export class Jogo {
     }
   }
 
-  ativarArea(area) {
+  ativarArea(area, transicao = false) {
     this.mundo = area;
     this.inimigos = area.entidades;
     area.fichas.limpar();
     this.lanternas = area.lanternas;
     for (const mundo of this.areas) mundo.grupo.visible = mundo === area;
-    this.ceu.malha.visible = area.usaCeu;
-    this.cena.fog = area.nevoa;
-    this.cena.background = area.nevoa.color;
-    this.luzJogador.intensity = area.luzJogador;
+    this.atmosfera.mudarArea(area, transicao);
   }
 
   reporInimigos() {
@@ -480,7 +479,7 @@ export class Jogo {
 
   atravessar(area, { x, z, yaw }, nome) {
     const j = this.jogador;
-    this.ativarArea(area);
+    this.ativarArea(area, true);
     j.pos.set(x, 0, z);
     j.vel.set(0, 0, 0);
     j.yaw = yaw;
@@ -589,6 +588,7 @@ export class Jogo {
       return;
     }
     if (this.estado === 'pausado') { this.desenharPartida(0); return; }
+    this.atmosfera.atualizar(dt);
 
     if (this.tDescanso > 0) {
       this.tDescanso = Math.max(0, this.tDescanso - dt);

@@ -48,6 +48,21 @@ As peças em `src/entidades/formas.js` usam os pivôs das animações atuais. O
 PS1 conserva a leitura facetada; o HD usa os mapas de lã, couro e aço.
 Guarde a criação de NPCs e o contrato de falas para S4.
 
+## Quarto incremento
+
+- **Vilarejo e estrada.** No vilarejo, luar violeta e bruma baixa entre as
+  casas. Na estrada, névoa azul-esverdeada mais veloz e céu frio. A lua com
+  rosto continua visível nos dois exteriores.
+- **Catedral e taverna.** Os vitrais ganharam desenho de losangos e faixas
+  de luz translúcidas no Relicário e no Santuário. O salão da taverna ganhou
+  esquadrias de madeira nas janelas, luz quente e fagulhas da lareira.
+- **Portais.** Luz ambiente, cenário e luz do jogador usam o destino ao
+  entrar. Névoa e fundo mudam em 0,6 s. Entre áreas externas, o céu muda
+  com a mesma curva. Ao renascer, aplica-se o perfil de imediato.
+
+Os valores ficam em `CONFIG.areas`. Feixes e fagulhas são procedurais.
+O som ambiente específico de cada área permanece na fila de S5.
+
 ## Teste de jogo para Gabriel e Heitor
 
 1. Abra o [jogo publicado](https://heitoranicio15-glitch.github.io/pugna/) e anote
@@ -58,6 +73,8 @@ Guarde a criação de NPCs e o contrato de falas para S4.
    taverna. Dentro, compare o assoalho, o tapete e os barris perto da lareira.
    Compare também a rosácea do adro, a água de cima da ponte e as guarnições
    da taverna ao se aproximar. O interior tem arco e cornija na lareira.
+   Ao sair pelo Portão Sul, veja o céu mudar para o tom da estrada. Na
+   catedral, olhe para os vitrais a partir do corredor do Relicário.
 3. Troque de modo em pausa e recarregue. Confira que a resolução e o estilo
    foram lembrados. Use a lanterna da taverna na estrada e verifique o
    renascimento após recarregar. Dentro, confira a fala do taverneiro e o bilhete.

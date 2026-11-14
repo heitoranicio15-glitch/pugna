@@ -49,6 +49,13 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Quarto incremento gráfico:** em cima de `4470b28`, o vilarejo tem bruma
+  violeta, a estrada tem névoa azul-esverdeada mais baixa, a catedral ganhou
+  feixes de vitral e a taverna ganhou luz mais quente e fagulhas. Os perfis em
+  `CONFIG.areas` funcionam em PS1 e HD. Névoa e fundo interpolam por 0,6 s em
+  portais, com transição do céu entre exteriores. Este incremento cobre a parte
+  visual de S5. As camadas de som ambiente da spec 04 seguem na fila.
+
 - **Primeira pessoa opcional** a pedido de Gabriel. A câmera fica nos olhos e
   acompanha a altura do marcador na mira travada. Espada e pistola têm poses em
   uma cena de sobreposição. Sem trava, a direção do ataque segue o olhar
@@ -188,7 +195,8 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 - [x] **4. S3: estrada e taverna** (spec 01) — estrada, fachada, taverna por dentro, taverneiro e bilhete; PR 23
 - [ ] **5. D: golpe pelas costas e pulo contra rasteira** (sem spec ainda; Opus)
 - [ ] **6. S4: personagens e NPCs** (spec 03)
-- [ ] **7. S5: atmosfera por área** (spec 04)
+- [ ] **7. S5: atmosfera por área** (spec 04) — parte visual entregue no
+  quarto incremento. Falta o som ambiente por área com transições.
 - [ ] **8. E: ajuste fino com os amigos**
 - [ ] **9. S6: primeira área nova** (castelo, floresta ou caverna; spec 05; o Heitor escolhe)
 - [x] **10. S7: bolsa cobrindo a barra de vida em telas estreitas** — com a luta rolando, a tela da bolsa reserva 140 px embaixo (`.tela.ao-vivo` no `estilo.css`) e o painel rola por dentro; PR 24
@@ -201,6 +209,8 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
   com materiais HD de personagem e avisos de golpe preservados.
 - [x] **Câmera em primeira pessoa** — opção de desktop com espada, pistola
   e mira travada nos dois modos gráficos.
+- [x] **Gráficos, incremento 4** — luz, céu e bruma por área, feixes na
+  catedral, fagulhas na taverna e transições de atmosfera nos portais.
 - [ ] **Gráficos, próximo incremento** — testar o percurso real e medir o custo
   do HD com GPU. Usar o guia gráfico para comparar o primeiro piloto de
   Blender com a fachada procedural. Alinhar iluminação com S5 e os modelos

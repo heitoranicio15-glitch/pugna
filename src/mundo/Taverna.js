@@ -14,7 +14,8 @@ import { Colisores } from './Colisores.js';
 import { retro } from '../render/retro.js';
 import { texturas } from '../render/texturas.js';
 import { materiais, caixa, animarTochas, planoDeChao, barril, arcoOgival } from './pecas.js';
-import { sombrasDeContato } from './efeitosCenario.js';
+import { fagulhasDaLareira, sombrasDeContato } from './efeitosCenario.js';
+import { montarAtmosfera } from './Atmosfera.js';
 import { caixa as cx, corpoFacetado, materialDePersonagem, parte } from '../entidades/formas.js';
 
 const C = CONFIG.areas.taverna;
@@ -23,7 +24,6 @@ export class Taverna {
   constructor(cena) {
     this.id = 'taverna';
     this.nome = 'Taverna da Estrada';
-    this.luzJogador = C.luzJogador;
     this.usaCeu = false;
     this.limites = { ...C.limites };
     this.grupo = new THREE.Group();
@@ -31,15 +31,14 @@ export class Taverna {
     this.tochas = [];   // chamas que tremulam (lareira e velas): animarTochas cuida delas
     this.objetos = [];
     this.indiceFala = 0;
-    this.nevoa = new THREE.FogExp2(C.nevoa.cor, C.nevoa.densidade);
-    this.grupo.add(new THREE.HemisphereLight(0xffb98a, 0x3a2418, 0.9));
+    montarAtmosfera(this, C);
     cena.add(this.grupo);
 
     const m = materiais();
     const H = C.altura;
     const { minX, maxX, minZ, maxZ } = this.limites;
     const preto = retro(new THREE.MeshBasicMaterial({ color: 0x140a06 }));
-    const noite = retro(new THREE.MeshBasicMaterial({ color: 0x24407f }));
+    const noite = retro(new THREE.MeshBasicMaterial({ color: 0x314e62 }));
     const colocar = (o, x, y, z) => { o.position.set(x, y, z); this.grupo.add(o); return o; };
     // Caixa decorativa e, se `topo` for dado, com colisão.
     const bloco = (x, y, z, l, a, p, mat, topo = null, ladrilho = 1.6) => {
@@ -74,7 +73,11 @@ export class Taverna {
     // Janelas escuras, de luar frio, contra o laranja da lareira.
     for (const [x, z] of [[maxX - 0.02, 3], [minX + 0.02, -3.6]]) {
       bloco(x, 1.95, z, 0.1, 1.2, 1.3, m.madeiraEscura, null, 1);
-      colocar(new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.9, 1.0), noite), x + (x > 0 ? -0.06 : 0.06), 1.95, z);
+      const dentro = x - Math.sign(x) * 0.06;
+      colocar(new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.9, 1.0), noite), dentro, 1.95, z);
+      const moldura = dentro - Math.sign(x) * 0.045;
+      bloco(moldura, 1.95, z, 0.05, 0.94, 0.075, m.madeiraEscura);
+      bloco(moldura, 1.95, z, 0.05, 0.075, 1.05, m.madeiraEscura);
     }
 
     // ---------- balcão, prateleiras e garrafas (norte) ----------
@@ -154,6 +157,8 @@ export class Taverna {
     luzFogo.position.set(4.9, 0.9, -0.5);
     this.grupo.add(luzFogo);
     this.tochas.push({ chama: fogo, halo: haloFogo, luz: luzFogo, fase: 1.3, base: C.lareira.intensidade });
+    this.animarFagulhas = fagulhasDaLareira(this.grupo, 4.92, -0.5);
+    this.animarFagulhas(0);
 
     // ---------- lampião no teto ----------
     colocar(caixa(0.04, 0.8, 0.04, m.metal, 1), 0, H - 0.4, 0.4);
@@ -248,6 +253,7 @@ export class Taverna {
 
   atualizar(dt, tempo) {
     animarTochas(this.tochas, tempo);
+    this.animarFagulhas(tempo);
     // O taverneiro respira, poli a caneca e olha de lado de vez em quando.
     this.corpoTaverneiro.rotation.x = Math.sin(tempo * 1.4) * 0.015;
     this.bracoEsquerdo.rotation.set(-1.15 + Math.sin(tempo * 1.9) * 0.1, 0, 0.1);

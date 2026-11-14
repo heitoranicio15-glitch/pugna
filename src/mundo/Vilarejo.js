@@ -14,12 +14,14 @@ import { montarExploracaoVilarejo } from './ExploracaoVilarejo.js';
 import { texturas, criarSorteio } from '../render/texturas.js';
 import { materiais, caixa, piramide, casa, torre, igreja, tocha, animarTochas, arvoreSeca, muralha, planoDeChao } from './pecas.js';
 import { sombrasDeContato } from './efeitosCenario.js';
+import { montarAtmosfera } from './Atmosfera.js';
+
+const C = CONFIG.areas.vilarejo;
 
 export class Vilarejo {
   constructor(cena, direcaoLua) {
     this.id = 'vilarejo';
     this.nome = 'Vilarejo';
-    this.luzJogador = CONFIG.areas.vilarejo.luzJogador;
     this.usaCeu = true; // mostra e atualiza o céu e a lua
     this.limites = { minX: -47, maxX: 47, minZ: -99, maxZ: 56 };
     this.grupo = new THREE.Group();
@@ -29,16 +31,11 @@ export class Vilarejo {
     this.nevoas = [];
     cena.add(this.grupo);
 
-    const p = CONFIG.paleta;
     const m = materiais();
     const sorteio = criarSorteio(1234); // mesma semente = vilarejo sempre igual
 
     // ---------- névoa e luzes gerais ----------
-    this.nevoa = new THREE.FogExp2(p.nevoa, CONFIG.nevoa.densidade);
-    this.grupo.add(new THREE.HemisphereLight(p.luzAmbiente, 0x1a0f3a, 1.5));
-    const lua = new THREE.DirectionalLight(p.luzLua, 1.1);
-    lua.position.copy(direcaoLua).multiplyScalar(100);
-    this.grupo.add(lua);
+    montarAtmosfera(this, C, direcaoLua);
 
     // ---------- chão e ruas ----------
     // IMPORTANTE: o chão e as ruas são superfícies enormes e quase coladas. Com a
@@ -201,16 +198,17 @@ export class Vilarejo {
     this.grupo.add(castelo);
 
     // ---------- bancos de névoa rasteira ----------
+    const bruma = C.bruma;
     const matNevoa = new THREE.SpriteMaterial({
-      map: texturas().nevoa, color: 0x5a7fe0, transparent: true, opacity: 0.16, depthWrite: false,
+      map: texturas().nevoa, color: bruma.cor, transparent: true, opacity: bruma.opacidade, depthWrite: false,
     });
     for (let i = 0; i < 46; i++) {
       const s = new THREE.Sprite(matNevoa);
       const esc = 9 + sorteio() * 12;
       s.scale.set(esc * 1.8, esc * 0.5, 1);
-      s.position.set((sorteio() - 0.5) * 110, 0.7 + sorteio() * 1.6, -100 + sorteio() * 160);
+      s.position.set((sorteio() - 0.5) * 110, bruma.altura + sorteio() * bruma.variacao, -100 + sorteio() * 160);
       this.grupo.add(s);
-      this.nevoas.push({ sprite: s, vel: 0.25 + sorteio() * 0.5 });
+      this.nevoas.push({ sprite: s, vel: (0.25 + sorteio() * 0.5) * bruma.velocidade });
     }
 
     // ---------- pontos de descanso (lanternas) ----------

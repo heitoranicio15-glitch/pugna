@@ -48,24 +48,43 @@ export const CONFIG = {
     lua: 0x4a3fd8,           // corpo da lua: anil
     luaBorda: 0x2f58ff,      // aro e halo azul em volta dela
     luaOlho: 0xff4a1a,       // olhos da lua: brasa (como na ref04)
-    nevoa: 0x143f78,
-    luzAmbiente: 0x3a3ad0,
-    luzLua: 0x7f9cff,
     fogo: 0xff8a2a,
     magia: 0x7dff2e,         // verde-ácido: olhos e magia
   },
-  nevoa: { densidade: 0.0145 },
-
   // ---- Áreas ----
   // luzJogador: força da luz fraca que acompanha o caçador em cada área.
   areas: {
-    vilarejo: { luzJogador: 5 },
-    catedral: { luzJogador: 8 },
+    vilarejo: {
+      luzJogador: 5, corLuzJogador: 0x8a8eff,
+      nevoa: { cor: 0x242346, densidade: 0.0155 },
+      fundo: 0x16162b,
+      luzAmbiente: { ceu: 0x777bc7, chao: 0x2b1d39, intensidade: 1.15 },
+      luar: { cor: 0xa1adf7, intensidade: 0.8 },
+      paletaDoCeu: { zenite: 0x0c0921, meio: 0x232047, horizonte: 0x242346, nuvem: 0x665587 },
+      bruma: { cor: 0x706893, opacidade: 0.16, altura: 0.4, variacao: 1.2, velocidade: 1 },
+    },
+    catedral: {
+      luzJogador: 8, corLuzJogador: 0xa39dff,
+      nevoa: { cor: 0x211d36, densidade: 0.032 },
+      fundo: 0x0d0b19,
+      luzAmbiente: { ceu: 0xb8a7d6, chao: 0x3d294a, intensidade: 1.06 },
+      feixes: [
+        { origem: [21.37, 4.85, -10], destino: [13.1, 0.08, -7.65], largura: 1.35, cor: 0x8e98ff, opacidade: 0.115 },
+        { origem: [21.37, 4.85, -5], destino: [12.4, 0.08, -3.1], largura: 1.25, cor: 0xa2bfff, opacidade: 0.125 },
+        { origem: [21.37, 4.85, 0], destino: [14.05, 0.08, 1.1], largura: 1.1, cor: 0xab8ee8, opacidade: 0.095 },
+        { origem: [0, 4.55, -32.29], destino: [0, 0.08, -24.7], largura: 2.5, cor: 0xb391ee, opacidade: 0.08 },
+      ],
+    },
     // Estrada ao sul do vilarejo (120 x 30 m, corre de norte a sul; o vilarejo fica no norte).
     estrada: {
-      luzJogador: 5,
+      luzJogador: 5, corLuzJogador: 0x9dadff,
+      nevoa: { cor: 0x253a47, densidade: 0.019 },
+      fundo: 0x122027,
+      luzAmbiente: { ceu: 0x607d9c, chao: 0x1a2a29, intensidade: 1.3 },
+      luar: { cor: 0x9cbdd8, intensidade: 0.79 },
+      paletaDoCeu: { zenite: 0x0b172b, meio: 0x21384d, horizonte: 0x253a47, nuvem: 0x547085 },
+      bruma: { cor: 0x6d9da4, opacidade: 0.24, altura: 0.28, variacao: 0.9, velocidade: 1.5 },
       limites: { minX: -18, maxX: 12, minZ: -60, maxZ: 60 },
-      nevoaDensidade: 0.013,   // um pouco mais rala que a do vilarejo: dá para ver a estrada longe
       larguraDaPista: 8,       // terra batida, centrada em x = 0
       portaoNorte: { z: -60 }, // o Portão Sul do vilarejo visto de fora (portal para o vilarejo)
       ponte: { z: 22, comprimento: 8, riacho: 6 },
@@ -76,9 +95,11 @@ export const CONFIG = {
     },
     // Interior da taverna (12 x 9 m). Sem inimigos.
     taverna: {
-      luzJogador: 3,           // o salão já é iluminado pela lareira
+      luzJogador: 3, corLuzJogador: 0xc49f8a,
       limites: { minX: -6, maxX: 6, minZ: -4.5, maxZ: 4.5 },
-      nevoa: { cor: 0x2b1a12, densidade: 0.03 },   // fraca e quente
+      nevoa: { cor: 0x412819, densidade: 0.032 },
+      fundo: 0x1a100c,
+      luzAmbiente: { ceu: 0xf2bc9a, chao: 0x533428, intensidade: 0.93 },
       altura: 3.5,
       lareira: { intensidade: 38, alcance: 14 },    // luz laranja que tremula
       lampiao: { intensidade: 12, alcance: 12 },    // vela no teto, bem fraca
