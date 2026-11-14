@@ -49,6 +49,13 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **S4: NPCs parados com falas (pronto, só a Parte B da spec 03).** `src/entidades/Npc.js` (regras puras `proximaFala`, `olharParaJogador`, `validarNpc`, `criarNpcs`) e `CONFIG.npc`. O contrato de área ganhou o campo opcional `npcs: [{ id, nome, modelo, x, z, olhar, falas }]`, validado em `areas.js` (recusa NPC sem `id`, sem posição, sem falas, fala vazia ou com mais de 90 letras, id repetido). O NPC respira, vira a cabeça e o corpo devagar para o jogador a 6 m, tem colisor pequeno e não pode ser ferido. **E** mostra a próxima fala (4 s, via `hud.avisar`) e no fim repete a última; o jogo não pausa e nada é salvo.
+  - **Taverneiro** agora é um `Npc` (mesmas 4 falas, mesmo prompt `E — falar com o taverneiro`, mesma posição atrás do balcão); o rodízio de falas acabou (agora avança e repete a última) e ele passa a virar para o jogador.
+  - **Viajante** novo na Estrada do Sul, na margem norte do riacho ao lado do embarcadouro (-6,2; 17,2), 2,2 m fora da pista, a mais de 8 m de patrulhas e longe da lanterna. Usa o modelo do taverneiro (`scary-doctor`) com tinta fria e postura curvada. 3 falas sobre o Véu, a lua e os sinos da catedral.
+  - **Fora desta entrega:** a Parte A (variações `aparencia` do `Boneco`) foi dispensada porque os personagens agora são modelos GLB animados; o coveiro de teste no cemitério também ficou de fora.
+  - **Decidido pela IA (o Heitor revisa):** o viajante reaproveita o modelo do taverneiro, porque os outros GLBs são de inimigos ou do jogador e confundiriam quem é hostil; o NPC declara `modelo` em vez de `personagem` e `pose`; não há faixa de texto nova (a fala usa o aviso do HUD); as falas são minhas e sombrias de propósito.
+  - Save, IDs e `Toque.js` não mudaram; sem assets. `npm test` (89) e `npm run build` passam; o teste de navegador não foi rodado (ver o NPC no jogo real fica para o Gabriel testar pelo link).
+
 - **E1: equilíbrio por simulação (pronto; o resto da Etapa E precisa de gente jogando).** Simulador em `tests/equilibrio.mjs` (`node tests/equilibrio.mjs`, uns 3 s; usa Jogador e Inimigos de verdade, passo de 1/60 s, sementes 1 a 60, 60 lutas por cenário) e teste rápido `tests/equilibrio.test.js` (8 lutas). Três jogadores simulados: **spam** (só o leve a cada 0,08 s, sem frasco), **hábil** (reação de 0,15 a 0,25 s, apara no meio da janela com erro de 0,045 s, pula a rasteira, quickstep no inaparável, visceral depois do parry) e **esquiva** (quickstep em todo golpe e bate). Só números em `src/config.js`:
   - `combate.leve.custo` 14 → 18; `combate.rally.porDano` 0,35 → 0,25; `inimigos.penitente.dano` 19 → 24; `inimigos.cacador.dano` 13 → 16; `inimigos.cacador.vida` 62 → 70. Guardião, janelas do parry, fichas e firmeza não mudaram. 2 rodadas de 3.
   - **Spam vence (antes → depois):** Guardião 70% → 7%; 2 cavaleiros 73% → 15%; 3 cavaleiros 32% → 0%; 3 mistos 70% → 13%. (Conferido com 200 lutas: 14%, 16%, 1%, 14%; a meta era no máximo 20% e 25%.) **Hábil:** 100%, 98%, 95%, 100% (era 100%, 98%, 95%, 98%). **Esquiva:** 100%, 100%, 97%, 95%.
@@ -247,7 +254,7 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 - [x] **3. S2: botão de gráfico PS1 / HD** (spec 02) — PS1 padrão, HD com troca na hora
 - [x] **4. S3: estrada e taverna** (spec 01) — estrada, fachada, taverna por dentro, taverneiro e bilhete; PR 23
 - [x] **5. D: golpe pelas costas e pulo contra rasteira** (spec 09; Opus) — Z agacha, percepção por cone e barulho, alerta dos vizinhos, golpe pelas costas, pisada
-- [ ] **6. S4: personagens e NPCs** (spec 03)
+- [x] **6. S4: personagens e NPCs** (spec 03) — NPCs parados com falas (taverneiro e viajante); a Parte A (variações do boneco) foi dispensada pelos modelos GLB
 - [ ] **7. S5: atmosfera por área** (spec 04) — parte visual entregue no
   quarto incremento. Falta o som ambiente por área com transições.
 - [ ] **8. E: ajuste fino com os amigos** (E1 por simulação feito; falta o ajuste jogando)

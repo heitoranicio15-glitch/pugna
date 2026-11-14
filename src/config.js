@@ -51,6 +51,21 @@ export const CONFIG = {
     fogo: 0xff8a2a,
     magia: 0x7dff2e,         // verde-ácido: olhos e magia
   },
+  // ---- NPCs parados (src/entidades/Npc.js) ----
+  // Pessoas que só falam: não lutam, não levam dano e ocupam um colisor pequeno.
+  npc: {
+    distanciaOlhar: 6,        // metros: até aqui o NPC vira a cabeça e o corpo para o caçador
+    limiteCorpo: 0.9,         // radianos: o quanto o corpo gira em relação ao olhar de origem
+    limiteCabeca: 0.9,        // radianos: o quanto a cabeça gira além do corpo
+    rapidezDoGiro: 2.2,       // quanto maior, mais rápido ele vira (bem devagar de propósito)
+    colisor: { lado: 0.5, topo: 1.2 },
+    alcance: 3.2,             // metros para o "E — falar"
+    segundosDaFala: 4,
+    maxLetras: 90,            // tamanho máximo de cada fala
+    respiracao: { amplitude: 0.015, velocidade: 1.4 },
+    balanco: { amplitude: 0.3, velocidade: 0.35 },   // a cabeça olha de lado de vez em quando
+  },
+
   // ---- Áreas ----
   // luzJogador: força da luz fraca que acompanha o caçador em cada área.
   areas: {
@@ -90,6 +105,17 @@ export const CONFIG = {
       taverna: { x: -12.5, z: -15, largura: 14, profundidade: 10, altura: 6 },   // fachada voltada para a pista
       fumaca: { particulas: 5, subida: 3.2, tempo: 4.5 },
       lanterna: { x: -5.4, z: -10.6 },  // 'taverna-da-estrada', perto da porta
+      // O viajante (decidido pela IA): parado na margem norte, ao lado do embarcadouro,
+      // fora da pista e a mais de 8 m de qualquer patrulha. Mesmo modelo do taverneiro, com tinta fria.
+      viajante: {
+        x: -6.2, z: 17.2, olhar: 0.6,
+        modelo: 'scary-doctor', tinta: 0x8ea0ad,
+        falas: [
+          '— O Véu não cai de uma vez. Sobe pelos ralos, como a maré.',
+          '— Não encare a lua por muito tempo. Ela aprendeu a olhar de volta.',
+          '— Na catedral os sinos tocam sem corda. Quem sobe não repete o nome.',
+        ],
+      },
     },
     // Interior da taverna (12 x 9 m). Sem inimigos.
     taverna: {
@@ -101,7 +127,7 @@ export const CONFIG = {
       altura: 3.5,
       lareira: { intensidade: 38, alcance: 14 },    // luz laranja que tremula
       lampiao: { intensidade: 12, alcance: 12 },    // vela no teto, bem fraca
-      // O taverneiro (decidido pela IA): fala em rodízio, tom seco, sem explicar mecânica.
+      // O taverneiro (decidido pela IA): uma fala por E, no fim repete a última; tom seco, sem explicar mecânica.
       taverneiro: {
         alcance: 3.2,
         falas: [
@@ -110,7 +136,6 @@ export const CONFIG = {
           '— Alguém deixou um bilhete na mesa. Não é meu.',
           '— Não pergunto de onde vem o sangue. Só onde pinga.',
         ],
-        segundosDaFala: 4,
       },
     },
   },

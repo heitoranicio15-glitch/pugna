@@ -32,6 +32,7 @@ import { Arma } from '../entidades/Arma.js';
 import { Inimigo } from '../entidades/Inimigo.js';
 import { Fichas } from '../entidades/Fichas.js';
 import { Lanterna } from '../entidades/Lanterna.js';
+import { criarNpcs } from '../entidades/Npc.js';
 import { Som } from '../audio/Som.js';
 import { Trilha } from '../audio/Trilha.js';
 import { Hud } from '../interface/Hud.js';
@@ -77,6 +78,7 @@ export class Jogo {
       area.fichas = new Fichas();   // limite de inimigos atacando juntos (CONFIG.combate.grupo)
       area.entidades = area.inimigos.map((i) => new Inimigo(this, area, i));
       area.lanternas = area.pontosDeDescanso.map((p) => new Lanterna(area, p));
+      area.personagens = criarNpcs(area);   // NPCs parados da área (campo opcional `npcs`)
       area.navegacao = new Navegacao(area.colisores, area.limites);
     }
     this.materiaisHd = new MateriaisHd([...areas, this.boneco, { grupo: this.arma.cena }]);
@@ -624,6 +626,7 @@ export class Jogo {
       }
     }
     this.mundo.atualizar(dt, this.tempo);
+    for (const npc of this.mundo.personagens) npc.atualizar(dt, this.tempo, this.jogador.pos);
     if (this.mundo.usaCeu) this.ceu.atualizar(dt, this.tempo, this.camera, this.jogador.pos);
     this.boneco.atualizar(dt, this.jogador);
     // A luz fraca acompanha o caçador (não a câmera), para ele nunca sumir no escuro.

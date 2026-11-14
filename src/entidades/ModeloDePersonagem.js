@@ -54,7 +54,7 @@ function equipar(osso, modelo, objeto, rotacao, deslocamento) {
   encaixe.add(objeto);
 }
 
-export function modeloDePersonagem(grupo, id, { reserva, armas = [], emissao } = {}) {
+export function modeloDePersonagem(grupo, id, { reserva = [], armas = [], emissao, tinta } = {}) {
   const suporte = new THREE.Group();
   suporte.name = `Personagem: ${id}`;
   grupo.add(suporte);
@@ -80,6 +80,7 @@ export function modeloDePersonagem(grupo, id, { reserva, armas = [], emissao } =
         if (!materiais.has(original)) {
           const mat = retro(original.clone());
           mat.color.multiply(new THREE.Color(perfil.cor));
+          if (tinta !== undefined) mat.color.multiply(new THREE.Color(tinta));
           if (!mat.roughnessMap) mat.roughness = 0.88;
           mat.emissive.copy(mat.color).multiplyScalar(perfil.brilho);
           mat.emissiveMap = mat.map;
