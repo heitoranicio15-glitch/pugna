@@ -208,6 +208,10 @@ export class Estrada {
     this.pontosDeDescanso = [
       { id: 'taverna-da-estrada', nome: 'Taverna da Estrada', x: C.lanterna.x, z: C.lanterna.z, olhar: Math.PI / 2 },
     ];
+    // O viajante: NPC parado na margem norte, ao lado do embarcadouro (fora da pista).
+    this.npcs = [
+      { id: 'viajante', nome: 'o viajante', fase: 1.7, postura: { tronco: 0.08, cabeca: 0.12 }, ...C.viajante },
+    ];
     this.inimigos = [
       { tipo: 'cacador', rota: [[2, -40], [-2, -28]] },
       { tipo: 'cavaleiro', rota: [[-1, 4], [3, 14]] },

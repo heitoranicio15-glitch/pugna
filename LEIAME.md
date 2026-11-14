@@ -295,8 +295,9 @@ onde você volta ao morrer ou reabrir o jogo.
 - **História:** leia o aviso da triagem, as contas do mercado, as lápides e os
   registros para descobrir o que aconteceu na noite do segundo toque. As
   anotações ficam na bolsa.
-- **Taverna:** o bilhete na mesa é uma anotação (vai para a bolsa); o taverneiro responde
-  a **E — falar**.
+- **Taverna e estrada:** o bilhete na mesa é uma anotação (vai para a bolsa); o taverneiro
+  e o viajante (parado na margem norte do riacho, junto ao embarcadouro da estrada) respondem
+  a **E — falar**, uma fala por vez; no fim repetem a última. O jogo não pausa e nada é salvo.
 - Chegue perto do objeto, virado para ele, e pressione **E** quando aparecer a ação. Use
   **I** para abrir a bolsa e reler anotações (o jogo não pausa). Um frasco recupera até 42 pontos
   de vida e pode ser usado pela bolsa ou com **R** durante a partida. A cura leva um
@@ -321,7 +322,7 @@ porta, **E — entrar na taverna**.
 
 Dentro (12 × 9 m, sem inimigos) há balcão, três mesas, barris, uma escada que não leva a
 lugar nenhum e uma lareira de luz laranja que tremula. No balcão, o **taverneiro**:
-**E — falar** mostra uma fala curta por vez, em rodízio (ele não vende nada por enquanto).
+**E — falar** mostra uma fala curta por vez e, no fim, repete a última (ele não vende nada por enquanto).
 Numa das mesas há um **bilhete**, que se lê com **E** como as outras anotações e fica na bolsa.
 Para sair, **E** na porta ao sul. Os tamanhos, a névoa, a luz da lareira e as falas
 ficam em `CONFIG.areas.estrada` e `CONFIG.areas.taverna` (`src/config.js`).
@@ -417,7 +418,8 @@ pugna/
    │  ├─ Inimigo.js        aparência, patrulha e combate dos inimigos
    │  ├─ Ataques.js        fases e tipos de ataque (a máquina única dos inimigos)
    │  ├─ Fichas.js         quantos inimigos atacam ao mesmo tempo (fichas de ataque)
-   │  └─ Lanterna.js       ponto de descanso
+   │  ├─ Lanterna.js       ponto de descanso
+   │  └─ Npc.js            NPC parado com falas curtas (taverneiro e viajante)
    ├─ audio/Som.js         sons sintetizados
    └─ interface/
       ├─ Hud.js            barras, avisos, telas
@@ -451,7 +453,7 @@ pugna/
 - **mudar a aparência ou as poses do caçador:** `src/entidades/Boneco.js`
 - **mudar o mapa** (mover casa, pôr tocha, pôr inimigo): `src/mundo/Vilarejo.js`
   (a estrada e a taverna ficam em `Estrada.js` e `Taverna.js`; o que o taverneiro diz,
-  em `CONFIG.areas.taverna.taverneiro.falas`)
+  em `CONFIG.areas.taverna.taverneiro.falas`, e o viajante, em `CONFIG.areas.estrada.viajante`)
 - **mudar o título do jogo:** `titulo` em `src/config.js`
 - **mudar o rosto da lua:** função `relevoLua` em `src/mundo/Lua.js`
 - **criar um inimigo novo:** um bloco novo em `CONFIG.inimigos` + aparência em
@@ -488,6 +490,10 @@ pugna/
   caçador (valor em `CONFIG.areas`) e `usaCeu` diz se a área mostra o céu e a lua.
   O registro confere tudo ao iniciar e avisa se algo estiver errado. Cada portal
   aponta para o ID da área de destino, que declara a posição de chegada.
+  **NPCs:** o campo opcional `npcs: [{ id, nome, modelo, x, z, olhar, falas: [...] }]` põe pessoas
+  paradas na área (`modelo` é um personagem GLB já integrado; `olhar` 0 olha para +Z). `validarArea`
+  recusa NPC sem `id` ou sem `falas` (cada fala com até 90 letras, tom sombrio, sem tutorial).
+  O `Jogo.js` os cria com `criarNpcs` (`src/entidades/Npc.js`); números em `CONFIG.npc`.
   A estrada e a taverna foram acrescentadas só com duas classes e duas linhas no
   registro (o portal do Portão Sul no vilarejo é um portal comum).
   Os checkpoints usam IDs únicos. Eventos persistentes usam `area:evento`,
@@ -553,7 +559,8 @@ pugna/
   a firmeza dos inimigos, o rally, o frasco interrompido, a mira travada, a câmera em terceira pessoa, colisões, navegação,
   interação com objetos, inventário, Osso de Retorno e migração de saves. O
   `tests/areas.test.js` também monta as quatro áreas de verdade (sem navegador) e confere
-  o contrato, os portais e chegadas, a estrada aberta até a carroça, a lanterna e o bilhete.
+  o contrato, os portais e chegadas, a estrada aberta até a carroça, a lanterna, o bilhete e os NPCs
+  (o `tests/npc.test.js` cobre as falas e o olhar).
 - `node tests/equilibrio.mjs` roda o simulador de equilíbrio (60 lutas por cenário, lento para o `npm test`):
   quem só aperta o leve contra quem apara e esquiva. Premissas e números na spec 08, seção E1.
 - `npx playwright-core install chromium` instala o navegador de teste.

@@ -4,8 +4,8 @@
 //  Sem inimigos: é um lugar de respiro. A porta fica ao sul (+Z); o balcão e o
 //  taverneiro ficam ao norte, e a lareira na parede leste.
 //
-//  O taverneiro é provisório (decidido pela IA): um boneco parado atrás do balcão que
-//  fala em rodízio com E. Quando o sistema de NPCs (spec 03) existir, ele troca de lugar.
+//  O taverneiro é um NPC parado (src/entidades/Npc.js, declarado em `npcs`): fica atrás do
+//  balcão, fala com E (uma fala por vez; no fim repete a última) e olha para quem chega.
 //  Valores (tamanho, luz, névoa, falas) em CONFIG.areas.taverna.
 // =============================================================================
 import * as THREE from 'three';
@@ -18,7 +18,6 @@ import { fagulhasDaLareira, sombrasDeContato } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
 import { modeloPronto } from '../render/modelos.js';
 import { caixa as cx, corpoFacetado, materialDePersonagem, parte } from '../entidades/formas.js';
-import { modeloDePersonagem } from '../entidades/ModeloDePersonagem.js';
 import { decorar } from './Decoracao.js';
 
 const C = CONFIG.areas.taverna;
@@ -33,7 +32,7 @@ export class Taverna {
     this.colisores = new Colisores();
     this.tochas = [];   // chamas que tremulam (lareira e velas): animarTochas cuida delas
     this.objetos = [];
-    this.indiceFala = 0;
+    this.npcs = [];     // declarações lidas pelo Jogo.js (criarNpcs)
     montarAtmosfera(this, C);
     cena.add(this.grupo);
 
@@ -207,7 +206,7 @@ export class Taverna {
     this.inimigos = [];
   }
 
-  /** Taverneiro provisório: boneco parado atrás do balcão, polindo uma caneca. */
+  /** Taverneiro: peças provisórias (caixas, avental, barba) que somem quando o modelo carrega. */
   montarTaverneiro() {
     const t = texturas();
     const T = C.taverneiro;
@@ -216,13 +215,11 @@ export class Taverna {
     const camisa = tecido(0x8a6a58), avental = tecido(0xb5a692), calca = tecido(0x4a3a34);
     const pelo = materialDePersonagem(null, 0x332521);
     const couro = materialDePersonagem(t.madeira, 0x826653, { asset: 'fabric_leather_01' });
-    const g = new THREE.Group();
-    g.position.set(-2, 0, -3.7);              // olha para +Z, de frente para o salão
+    const g = new THREE.Group();            // o Npc o põe em (-2, -3.7), olhando para +Z (o salão)
     g.add(cx(0.2, 0.8, 0.22, calca, 0.13, 0.4, 0), cx(0.2, 0.8, 0.22, calca, -0.13, 0.4, 0));
-    this.corpoTaverneiro = new THREE.Group();
-    this.corpoTaverneiro.position.y = 0.8;
-    g.add(this.corpoTaverneiro);
-    const corpo = this.corpoTaverneiro;
+    const corpo = new THREE.Group();
+    corpo.position.y = 0.8;
+    g.add(corpo);
     corpo.add(
       parte(corpoFacetado([[0, 0.43, 0.3], [0.21, 0.55, 0.36], [0.55, 0.56, 0.33], [0.69, 0.28, 0.27]]), camisa),
       cx(0.5, 0.08, 0.33, couro, 0, 0.06, 0),
@@ -235,18 +232,18 @@ export class Taverna {
       tira.rotation.set(-0.28, 0, lado * 0.17);
       corpo.add(tira);
     }
-    this.cabecaTaverneiro = new THREE.Group();
-    this.cabecaTaverneiro.position.y = 0.83;
-    this.cabecaTaverneiro.add(
+    const cabeca = new THREE.Group();
+    cabeca.position.y = 0.83;
+    cabeca.add(
       parte(corpoFacetado([[-0.16, 0.15, 0.17], [-0.09, 0.23, 0.23], [0.055, 0.275, 0.26], [0.15, 0.21, 0.22], [0.18, 0.04, 0.04]]), pele),
       parte(corpoFacetado([[-0.23, 0.075, 0.085, 0.11], [-0.13, 0.2, 0.15, 0.107], [-0.057, 0.236, 0.13, 0.094]]), pelo),
       parte(corpoFacetado([[0.095, 0.272, 0.268, -0.014], [0.15, 0.245, 0.243, -0.019], [0.186, 0.12, 0.09, -0.02], [0.19, 0.02, 0.02]]), pelo),
       cx(0.059, 0.063, 0.07, pele, 0, 0.006, 0.13),
     );
     for (const lado of [-1, 1]) {
-      this.cabecaTaverneiro.add(cx(0.033, 0.014, 0.015, pelo, lado * 0.061, 0.043, 0.119));
+      cabeca.add(cx(0.033, 0.014, 0.015, pelo, lado * 0.061, 0.043, 0.119));
     }
-    corpo.add(this.cabecaTaverneiro);
+    corpo.add(cabeca);
     const braco = (x) => {
       const b = new THREE.Group();
       b.position.set(x, 0.6, 0);
@@ -257,44 +254,33 @@ export class Taverna {
       corpo.add(b);
       return b;
     };
-    this.bracoDireito = braco(-0.33);
-    this.bracoEsquerdo = braco(0.33);
+    const bracoDireito = braco(-0.33);
+    const bracoEsquerdo = braco(0.33);
     const caneca = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.065, 0.15, 6), retro(new THREE.MeshLambertMaterial({ color: 0xb08a5a, emissive: 0x30200e })));
     caneca.position.set(0, -0.66, 0.05);
-    this.bracoEsquerdo.add(caneca);
-    this.bracoDireito.add(cx(0.2, 0.02, 0.14, avental, 0, -0.62, 0.06));   // o pano
-    this.grupo.add(g);
-    this.modeloTaverneiro = modeloDePersonagem(g, 'scary-doctor', {
-      reserva: [...g.children],
-      armas: [['maoE', caneca, [0, 0, 0]]],
-    });
+    bracoEsquerdo.add(caneca);
+    bracoDireito.add(cx(0.2, 0.02, 0.14, avental, 0, -0.62, 0.06));   // o pano
 
-    // E — falar: cada vez mostra a fala seguinte (o Jogo.js trata acao 'falar').
-    this.objetos.push({
-      x: -2, y: 1.4, z: -3.7, alcance: T.alcance, nome: 'o taverneiro', acao: 'falar',
-      falar: () => {
-        const fala = T.falas[this.indiceFala % T.falas.length];
-        this.indiceFala += 1;
-        return fala;
+    // O Npc cuida da respiração, do olhar e da fala; aqui só entra o gesto de polir a caneca.
+    this.npcs.push({
+      id: 'taverneiro', nome: 'o taverneiro', modelo: 'scary-doctor',
+      x: -2, z: -3.7, olhar: 0, falas: T.falas, alcance: T.alcance,
+      corpo: g, armas: [['maoE', caneca, [0, 0, 0]]],
+      aoAnimar: (npc, tempo, rig) => {
+        corpo.rotation.x = npc.respiracao;
+        cabeca.rotation.y = npc.cabeca;
+        bracoEsquerdo.rotation.set(-1.15 + Math.sin(tempo * 1.9) * 0.1, 0, 0.1);
+        bracoDireito.rotation.set(-1.0 + Math.sin(tempo * 1.9 + 1.2) * 0.14, 0, -0.1);
+        if (rig) {
+          rig.bracoE(-0.38 + Math.sin(tempo * 1.9) * 0.10, 0, -0.13);
+          rig.bracoD(-0.15 + Math.sin(tempo * 1.9 + 1.2) * 0.10, 0, 0.11);
+        }
       },
-      segundos: T.segundosDaFala,
     });
   }
 
   atualizar(dt, tempo) {
     animarTochas(this.tochas, tempo);
     this.animarFagulhas(tempo);
-    // O taverneiro respira, poli a caneca e olha de lado de vez em quando.
-    this.corpoTaverneiro.rotation.x = Math.sin(tempo * 1.4) * 0.015;
-    this.bracoEsquerdo.rotation.set(-1.15 + Math.sin(tempo * 1.9) * 0.1, 0, 0.1);
-    this.bracoDireito.rotation.set(-1.0 + Math.sin(tempo * 1.9 + 1.2) * 0.14, 0, -0.1);
-    this.cabecaTaverneiro.rotation.y = Math.sin(tempo * 0.35) * 0.3;
-    const rig = this.modeloTaverneiro.userData.pose;
-    if (rig) {
-      rig.tronco(this.corpoTaverneiro.rotation.x, 0, 0);
-      rig.cabeca(0.05, this.cabecaTaverneiro.rotation.y, 0);
-      rig.bracoE(-0.38 + Math.sin(tempo * 1.9) * 0.10, 0, -0.13);
-      rig.bracoD(-0.15 + Math.sin(tempo * 1.9 + 1.2) * 0.10, 0, 0.11);
-    }
   }
 }

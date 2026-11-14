@@ -9,6 +9,7 @@ import { Atmosfera } from '../src/mundo/Atmosfera.js';
 import { Ceu } from '../src/mundo/Ceu.js';
 import { Navegacao } from '../src/mundo/Navegacao.js';
 import { alvoProximo } from '../src/mundo/Interacoes.js';
+import { criarNpcs } from '../src/entidades/Npc.js';
 
 // Área "de mentira": objeto simples que segue o contrato.
 function areaFalsa(id, outra, pontos) {
@@ -307,13 +308,64 @@ test('o bilhete da mesa é uma anotação persistente no formato area:evento', (
   assert.deepEqual(normalizarProgresso({ eventos: [bilhete.evento] }).eventos, [bilhete.evento]);
 });
 
-test('o taverneiro reveza 3 ou 4 falas curtas, em rodízio', () => {
+test('o taverneiro é um NPC: uma fala por E, e no fim repete a última', () => {
   const { porId } = montarAsAreasReais();
-  const taverneiro = porId.get('taverna').objetos.find((o) => o.acao === 'falar');
+  const taverna = porId.get('taverna');
+  const [declaracao] = taverna.npcs;
+  assert.equal(declaracao.id, 'taverneiro');
+  const [taverneiro] = criarNpcs(taverna);
   const falas = CONFIG.areas.taverna.taverneiro.falas;
   assert.ok(falas.length >= 3 && falas.length <= 4);
-  assert.ok(falas.every((f) => f.length <= 80), 'falas curtas');
-  assert.equal(taverneiro.nome, 'o taverneiro');
-  const lidas = Array.from({ length: falas.length * 2 }, () => taverneiro.falar());
-  assert.deepEqual(lidas, [...falas, ...falas]);
+  assert.ok(falas.every((f) => f.length <= CONFIG.npc.maxLetras), 'falas curtas');
+  const objeto = taverna.objetos.find((o) => o.acao === 'falar');
+  assert.equal(objeto, taverneiro.objeto);
+  assert.equal(objeto.nome, 'o taverneiro');   // prompt: "E — falar com o taverneiro"
+  assert.deepEqual([objeto.x, objeto.z], [-2, -3.7]);   // atrás do balcão
+  const lidas = Array.from({ length: falas.length + 2 }, () => objeto.falar());
+  assert.deepEqual(lidas, [...falas, falas.at(-1), falas.at(-1)]);
+});
+
+test('o viajante da estrada fica fora da pista, dos colisores, das patrulhas e da lanterna', () => {
+  const { porId } = montarAsAreasReais();
+  const estrada = porId.get('estrada');
+  const viajante = estrada.npcs.find((n) => n.id === 'viajante');
+  assert.ok(viajante, 'a estrada declara o viajante');
+  assert.deepEqual(validarArea(estrada), []);
+  assert.ok(viajante.falas.length === 3 && viajante.falas.every((f) => f.length <= CONFIG.npc.maxLetras));
+  const { minX, maxX, minZ, maxZ } = estrada.limites;
+  assert.ok(viajante.x > minX + 1 && viajante.x < maxX - 1 && viajante.z > minZ + 1 && viajante.z < maxZ - 1, 'dentro dos limites');
+  // Fora da pista de terra batida (centrada em x = 0) e longe de qualquer obstáculo.
+  assert.ok(Math.abs(viajante.x) > CONFIG.areas.estrada.larguraDaPista / 2 + 1, 'fora da pista');
+  const ponto = { x: viajante.x, z: viajante.z };
+  estrada.colisores.resolver(ponto, 0.6, 0, 0.4);
+  assert.ok(Math.hypot(ponto.x - viajante.x, ponto.z - viajante.z) < 0.01, 'não está dentro de um colisor');
+  for (const { rota } of estrada.inimigos) {
+    for (const [x, z] of rota) assert.ok(Math.hypot(x - viajante.x, z - viajante.z) > 8, 'longe das patrulhas');
+  }
+  for (const p of estrada.pontosDeDescanso) assert.ok(Math.hypot(p.x - viajante.x, p.z - viajante.z) > 8, 'longe da lanterna');
+  // Com o colisor do NPC criado, dá para falar com ele chegando pela beira da pista.
+  const [npc] = criarNpcs(estrada);
+  const jogador = { pos: { x: -4.2, y: 0, z: 15.6 }, alturaOlhos: 1.7, yaw: Math.atan2(npc.x + 4.2, -(npc.z - 15.6)) + Math.PI, rumo: 0 };
+  jogador.yaw = Math.atan2(-(npc.x - jogador.pos.x), -(npc.z - jogador.pos.z));
+  jogador.rumo = jogador.yaw;
+  assert.equal(alvoProximo(estrada.objetos, jogador, estrada.colisores), npc.objeto);
+  // O colisor do NPC barra o caçador, mas só um pouco.
+  const empurrado = { x: npc.x + 0.1, z: npc.z };
+  estrada.colisores.resolver(empurrado, 0.4, 0, 0.4);
+  assert.ok(Math.hypot(empurrado.x - npc.x, empurrado.z - npc.z) >= 0.4);
+});
+
+test('validarArea aceita `npcs` ausente e recusa NPC sem id, sem falas ou repetido', () => {
+  const area = areaFalsa('a', 'b', []);
+  assert.deepEqual(validarArea(area), []);
+  const ok = { id: 'coveiro', nome: 'o coveiro', modelo: 'scary-doctor', x: 1, z: 2, olhar: 0, falas: ['Cave fundo.'] };
+  assert.deepEqual(validarArea({ ...area, npcs: [ok] }), []);
+  assert.ok(validarArea({ ...area, npcs: [{ ...ok, id: undefined }] }).some((p) => p.includes('id')));
+  assert.ok(validarArea({ ...area, npcs: [{ ...ok, falas: [] }] }).some((p) => p.includes('falas')));
+  assert.ok(validarArea({ ...area, npcs: [{ ...ok, falas: undefined }] }).some((p) => p.includes('falas')));
+  assert.ok(validarArea({ ...area, npcs: [ok, ok] }).some((p) => p.includes('repetido')));
+  assert.ok(validarArea({ ...area, npcs: 'x' }).some((p) => p.includes('npcs')));
+  assert.throws(() => montarAreas([{ ...areaFalsa('a', 'b', []), npcs: [{ ...ok, falas: [] }] }, areaFalsa('b', 'a', [])]), /falas/);
+  const outra = { ...areaFalsa('b', 'a', []), npcs: [ok] };
+  assert.throws(() => montarAreas([{ ...areaFalsa('a', 'b', []), npcs: [ok] }, outra]), /NPC repetido/);
 });

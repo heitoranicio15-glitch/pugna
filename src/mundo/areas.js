@@ -8,6 +8,7 @@ import { Vilarejo } from './Vilarejo.js';
 import { Catedral } from './Catedral.js';
 import { Estrada } from './Estrada.js';
 import { Taverna } from './Taverna.js';
+import { validarNpc } from '../entidades/Npc.js';
 
 export const REGISTRO = [
   { id: 'vilarejo', criar: (cena, ceu) => new Vilarejo(cena, ceu.direcaoLua) },
@@ -41,6 +42,18 @@ export function validarArea(area) {
   for (const p of area.pontosDeDescanso || []) {
     if (!p || typeof p.id !== 'string' || !p.id) problemas.push(`${nome}: ponto de descanso sem \`id\``);
   }
+  // `npcs` é opcional: NPCs parados com falas (src/entidades/Npc.js).
+  if (area.npcs !== undefined) {
+    if (!Array.isArray(area.npcs)) problemas.push(`${nome}: \`npcs\` precisa ser uma lista`);
+    else {
+      const vistos = new Set();
+      for (const npc of area.npcs) {
+        problemas.push(...validarNpc(npc).map((p) => `${nome}: ${p}`));
+        if (npc?.id && vistos.has(npc.id)) problemas.push(`${nome}: NPC repetido: "${npc.id}"`);
+        vistos.add(npc?.id);
+      }
+    }
+  }
   return problemas;
 }
 
@@ -59,6 +72,13 @@ export function montarAreas(lista) {
     for (const ponto of area.pontosDeDescanso) {
       if (checkpoints.has(ponto.id)) throw new Error(`ID de ponto de descanso repetido: "${ponto.id}"`);
       checkpoints.set(ponto.id, { area, ponto });
+    }
+  }
+  const npcs = new Set();
+  for (const area of lista) {
+    for (const npc of area.npcs || []) {
+      if (npcs.has(npc.id)) throw new Error(`ID de NPC repetido: "${npc.id}"`);
+      npcs.add(npc.id);
     }
   }
   for (const area of lista) {
