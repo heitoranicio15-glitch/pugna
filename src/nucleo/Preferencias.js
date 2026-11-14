@@ -4,6 +4,7 @@ const CHAVE = 'pugna-preferencias-v1';
 const PADRAO = {
   musica: 55, efeitos: 80, sensibilidade: 100, brilho: 100,
   resolucao: CONFIG.render.alturaInterna, tremor: true,
+  estiloGrafico: CONFIG.render.estiloPadrao,
 };
 
 function faixa(valor, minimo, maximo, padrao) {
@@ -20,6 +21,9 @@ export function carregarPreferencias() {
     brilho: faixa(salvo?.brilho, 70, 160, PADRAO.brilho),
     resolucao: [180, 270, 360].includes(salvo?.resolucao) ? salvo.resolucao : PADRAO.resolucao,
     tremor: typeof salvo?.tremor === 'boolean' ? salvo.tremor : PADRAO.tremor,
+    // Preferência antiga (sem o campo) ou valor desconhecido: fica no PS1.
+    estiloGrafico: Object.hasOwn(CONFIG.render.estilos, salvo?.estiloGrafico ?? '')
+      ? salvo.estiloGrafico : PADRAO.estiloGrafico,
   };
 }
 

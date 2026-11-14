@@ -101,7 +101,20 @@ continuam guardados no código (`src/interface/Toque.js`) para voltar depois.
 
 **Configurações** está disponível na tela inicial e no menu de pausa. É possível
 ajustar o volume da música e dos efeitos separadamente, a sensibilidade do mouse,
-o brilho, a pixelização e o tremor dos vértices.
+o brilho, o gráfico, a pixelização e o tremor dos vértices.
+
+**Gráfico** escolhe o estilo de imagem e troca na hora, sem recarregar:
+
+- **PS1 (retrô)**, o padrão: o visual de sempre, pixelado, com pontilhado, poucas
+  cores e tremida dos vértices. Quem nunca mexeu nas configurações vê este.
+- **HD**: a mesma cena, menos pixelada (até 720 linhas), sem pontilhado, com
+  texturas suavizadas e um pouco mais de cor e contraste. Nesse modo a pixelização
+  e o tremor dos vértices ficam cinza e não valem; os valores escolhidos para o PS1
+  ficam guardados e voltam ao trocar de novo.
+
+Os números de cada estilo ficam em `CONFIG.render.estilos` (`src/config.js`). A
+escolha fica salva com as outras preferências. A primeira pessoa não faz parte
+deste botão: a câmera continua em terceira pessoa (só muda se o Heitor aprovar).
 
 O salvamento é no estilo Souls: **o jogo salva sozinho** a cada coisa que
 acontece (descansar, recolher, abrir, usar um item, derrotar o Guardião). Não
@@ -270,7 +283,8 @@ onde você volta ao morrer ou reabrir o jogo.
   sorriso aberto com dentes tortos à mostra, vira o rosto e as pupilas na direção do
   jogador, e quando é encarada por alguns segundos os olhos acendem e a boca abre mais.
 - Filtro PS1: baixa resolução ampliada sem suavização, texturas "nearest", tremida
-  de vértices, dithering e redução de cores.
+  de vértices, dithering e redução de cores. Em Configurações dá para trocar pelo
+  gráfico HD (mais linhas, texturas suavizadas, mais cor).
 - Movimento em terceira pessoa com colisão; dá para subir em caixotes e degraus.
   A câmera gira em volta do caçador e encurta ao encostar em paredes.
 - Boneco simples do caçador (chapéu, capa, espada e pistola), animado no código.
@@ -313,9 +327,9 @@ pugna/
    │  ├─ Eventos.js        "quadro de avisos" entre as partes do jogo
    │  └─ Salvamento.js     salva o progresso (hoje no navegador; depois Supabase)
    ├─ render/
-   │  ├─ RenderizadorRetro.js  baixa resolução + dithering
+   │  ├─ RenderizadorRetro.js  baixa resolução + dithering; definirEstilo('ps1'|'hd')
    │  ├─ retro.js          tremida de vértices PS1
-   │  └─ texturas.js       texturas pixeladas feitas no código
+   │  └─ texturas.js       texturas pixeladas feitas no código (filtro troca no HD)
    ├─ mundo/
    │  ├─ Vilarejo.js       ★ o MAPA: onde fica cada casa, tocha, inimigo, lanterna
    │  ├─ areas.js          registro das áreas: uma linha por área nova

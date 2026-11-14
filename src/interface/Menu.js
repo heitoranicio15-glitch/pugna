@@ -32,7 +32,8 @@ export class Menu {
     this.form.addEventListener('submit', (evento) => evento.preventDefault());
     this.form.addEventListener('input', (evento) => {
       const campo = evento.target;
-      jogo.preferencias[campo.name] = campo.type === 'checkbox' ? campo.checked : Number(campo.value);
+      jogo.preferencias[campo.name] = campo.type === 'checkbox' ? campo.checked
+        : campo.name === 'estiloGrafico' ? campo.value : Number(campo.value);
       this.exibirPreferencias();
       jogo.aplicarPreferencias();
     });
@@ -53,6 +54,9 @@ export class Menu {
       const saida = campo.parentElement.querySelector('output');
       if (saida) saida.value = `${valor}%`;
     }
+    // No HD a pixelização e o tremor não valem: ficam cinza, guardando o valor do PS1.
+    const hd = this.jogo.preferencias.estiloGrafico === 'hd';
+    for (const nome of ['resolucao', 'tremor']) this.form.elements[nome].disabled = hd;
   }
 
   atualizarProgresso(progresso, nome) {

@@ -7,7 +7,7 @@ import { CONFIG } from '../config.js';
 // Valores compartilhados por todos os materiais (atualizados pelo renderizador).
 export const uniformesRetro = {
   uRetroRes: { value: new THREE.Vector2(480, 270) },
-  uTremor: { value: CONFIG.render.tremor },
+  uTremor: { value: CONFIG.render.estilos.ps1.tremor },
 };
 
 const TRECHO = /* glsl */ `

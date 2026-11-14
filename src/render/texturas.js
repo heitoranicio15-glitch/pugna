@@ -203,6 +203,39 @@ function nevoa() {
   });
 }
 
+// ---- Filtro das texturas (PS1 = pixelado, HD = suavizado) ----
+// Cada textura registrada guarda o filtro original (o do PS1). No HD ela passa a
+// suavizar; ao voltar para o PS1, recebe de novo o filtro original.
+const registradas = new Set();
+let filtroAtual = 'nearest';
+
+function aplicarFiltro(tex) {
+  const original = tex.userData.filtroPs1;
+  const linear = filtroAtual === 'linear';
+  const mag = linear ? THREE.LinearFilter : original.mag;
+  const min = !linear ? original.min
+    : tex.generateMipmaps ? THREE.LinearMipmapLinearFilter : THREE.LinearFilter;
+  if (tex.magFilter === mag && tex.minFilter === min) return;
+  tex.magFilter = mag;
+  tex.minFilter = min;
+  tex.needsUpdate = true;
+}
+
+/** Registra uma textura já pronta para seguir o filtro do estilo de imagem. */
+export function registrarTextura(tex) {
+  // Uma cópia (clone) já traz o filtro original da textura de onde saiu.
+  tex.userData.filtroPs1 ??= { mag: tex.magFilter, min: tex.minFilter };
+  registradas.add(tex);
+  aplicarFiltro(tex);
+  return tex;
+}
+
+/** Troca o filtro de todas as texturas registradas: 'nearest' (PS1) ou 'linear' (HD). */
+export function definirFiltroTexturas(filtro) {
+  filtroAtual = filtro === 'linear' ? 'linear' : 'nearest';
+  for (const tex of registradas) aplicarFiltro(tex);
+}
+
 let cache = null;
 /** Devolve todas as texturas do jogo (criadas uma vez só). */
 export function texturas() {
@@ -218,6 +251,7 @@ export function texturas() {
       cache[n].wrapS = cache[n].wrapT = THREE.ClampToEdgeWrapping;
       cache[n].magFilter = cache[n].minFilter = THREE.LinearFilter; // manchas suaves
     }
+    for (const tex of Object.values(cache)) registrarTextura(tex);
   }
   return cache;
 }

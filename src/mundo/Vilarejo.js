@@ -11,7 +11,7 @@ import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { Colisores } from './Colisores.js';
 import { montarExploracaoVilarejo } from './ExploracaoVilarejo.js';
-import { texturas, criarSorteio } from '../render/texturas.js';
+import { texturas, criarSorteio, registrarTextura } from '../render/texturas.js';
 import { materiais, caixa, piramide, casa, torre, igreja, tocha, animarTochas, arvoreSeca, muralha } from './pecas.js';
 
 export class Vilarejo {
@@ -45,7 +45,7 @@ export class Vilarejo {
     // elas são desenhadas primeiro, em ordem fixa (renderOrder), sem gravar profundidade.
     // Como nada fica abaixo do chão, tudo o mais é desenhado por cima sem conflito.
     const chao = new THREE.Mesh(new THREE.PlaneGeometry(700, 700), m.terra.clone());
-    chao.material.map = texturas().terra.clone();
+    chao.material.map = registrarTextura(texturas().terra.clone());
     chao.material.map.repeat.set(100, 100);
     chao.material.map.needsUpdate = true;
     chao.material.onBeforeCompile = m.terra.onBeforeCompile;

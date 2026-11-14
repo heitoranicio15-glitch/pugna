@@ -9,11 +9,31 @@ export const CONFIG = {
 
   // ---- Filtro retrô (estilo PS1) ----
   render: {
-    alturaInterna: 270,   // linhas de pixels da imagem interna (menor = mais pixelado)
-    niveisDeCor: 32,      // tons por canal de cor (PS1 usava 32). Menor = mais "faixas"
-    forcaDither: 1.0,     // intensidade do pontilhado (0 desliga)
-    tremor: 1.0,          // tremida dos vértices (0 desliga, 2 = bem forte)
+    alturaInterna: 270,   // linhas de pixels da imagem interna no PS1 (menor = mais pixelado)
     campoDeVisao: 72,     // abertura da câmera, em graus
+    // Estilos de imagem escolhidos em Configurações (preferência estiloGrafico).
+    estiloPadrao: 'ps1',
+    estilos: {
+      // PS1 (padrão): o visual de sempre. As linhas vêm da opção "Pixelização".
+      ps1: {
+        niveisDeCor: 32,      // tons por canal de cor (PS1 usava 32). Menor = mais "faixas"
+        dithering: 1.0,       // intensidade do pontilhado (0 desliga)
+        tremor: 1.0,          // tremida dos vértices (0 desliga, 2 = bem forte)
+        saturacao: 1,         // 1 = cores como estão
+        contraste: 1,         // 1 = contraste como está
+        filtroTextura: 'nearest', // texturas pixeladas
+      },
+      // HD "fantasia sombria": menos pixelado, sem pontilhado e com mais cor.
+      hd: {
+        linhas: 720,          // linhas da imagem interna (fixo; ignora "Pixelização")
+        niveisDeCor: 0,       // 0 = sem redução de cores
+        dithering: 0,
+        tremor: 0,            // sem tremida (ignora "Tremor dos vértices")
+        saturacao: 1.15,
+        contraste: 1.08,
+        filtroTextura: 'linear', // texturas suavizadas
+      },
+    },
   },
 
   // ---- Cores do mundo (em hexadecimal) ----
