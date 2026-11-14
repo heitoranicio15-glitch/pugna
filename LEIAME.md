@@ -554,6 +554,8 @@ pugna/
   interação com objetos, inventário, Osso de Retorno e migração de saves. O
   `tests/areas.test.js` também monta as quatro áreas de verdade (sem navegador) e confere
   o contrato, os portais e chegadas, a estrada aberta até a carroça, a lanterna e o bilhete.
+- `node tests/equilibrio.mjs` roda o simulador de equilíbrio (60 lutas por cenário, lento para o `npm test`):
+  quem só aperta o leve contra quem apara e esquiva. Premissas e números na spec 08, seção E1.
 - `npx playwright-core install chromium` instala o navegador de teste.
   Em seguida, `npm run test:browser` inicia o jogo e percorre a catedral,
   incluindo transições, checkpoint, morte, recarga e derrota do Guardião.
