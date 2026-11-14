@@ -91,7 +91,11 @@ export const CONFIG = {
     tempoMaximoCarga: 1.4,
     filaAtaque: 0.22,
     filaEsquiva: 0.17,
-    esquiva: { custo: 22, duracao: 0.36, invencivel: 0.26, velocidade: 9.5, espera: 0.25 },
+    esquiva: { custo: 22, duracao: 0.36, invencivel: 0.22, velocidade: 9.5, espera: 0.25 },
+    // Quickstep: com a mira travada a esquiva vira um passo curto na direção
+    // apertada (parado: para trás), sem rolar. Mais barato e com recuperação
+    // curta, mas com menos invencibilidade que o rolamento.
+    quickstep: { custo: 14, duracao: 0.2, invencivel: 0.13, velocidade: 11, espera: 0.12 },
     // Pistola (mão secundária): o único parry do jogo. Um tiro no fim do aviso do
     // inimigo ou no comecinho do golpe dele o desequilibra (o próximo golpe é
     // crítico). Fora dessa janela o tiro só arranha. Toda bala gasta conta,

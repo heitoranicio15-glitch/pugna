@@ -90,7 +90,7 @@ continuam guardados no código (`src/interface/Toque.js`) para voltar depois.
 | Atirar com a pistola (parry) | Clique direito ou C |
 | Travar / soltar a mira | Tab ou botão do meio do mouse |
 | Trocar de alvo (mira travada) | Mover o mouse rápido para o lado |
-| Esquivar | Ctrl, Alt ou Q (com uma direção, rola; parado, salta para trás) |
+| Esquivar | Ctrl, Alt ou Q (com uma direção, rola; parado, salta para trás; com a mira travada, dá um passo curto, o quickstep) |
 | Interagir (portas, selos e lanternas) | E |
 | Abrir e fechar a bolsa (o jogo **não** pausa) | I |
 | Beber um frasco de cura (leva um instante) | R |
@@ -155,8 +155,12 @@ ou **Alt** para esquivar.
   tiro no tempo certo, a esquiva ou o pulo (contra a rasteira).
 - Tudo gasta **estamina** (barra verde): correr, pular, atacar e esquivar. Sem
   estamina você não ataca nem corre.
-- A esquiva te deixa **invencível por um instante**. Você pode apertar **Q**
+- A esquiva te deixa **invencível por um instante** (0,22 s no rolamento). Você pode apertar **Q**
   pouco antes de terminar a recuperação da espada para encaixar a esquiva.
+- **Quickstep:** com a mira travada, a esquiva não rola: vira um passo curto e
+  rápido na direção apertada (parado, para trás), sem tirar os olhos do inimigo.
+  Gasta menos estamina (14 em vez de 22) e volta mais rápido, mas a invencibilidade
+  é menor (0,13 s). Sem mira, continua o rolamento.
 - Toque e solte para um ataque leve. Ao carregar um ataque forte, o caçador
   ergue a espada e um som sinaliza a carga. O golpe acompanha a passagem da lâmina e
   é interrompido se atingir pedra antes do alvo.
@@ -250,7 +254,7 @@ onde você volta ao morrer ou reabrir o jogo.
 - Movimento em terceira pessoa com colisão; dá para subir em caixotes e degraus.
   A câmera gira em volta do caçador e encurta ao encostar em paredes.
 - Boneco simples do caçador (chapéu, capa, espada e pistola), animado no código.
-- Combate com ataque leve, forte, esquiva com rolamento, estamina, mira travada,
+- Combate com ataque leve, forte, esquiva com rolamento (quickstep com a mira travada), estamina, mira travada,
   pistola com parry, balas limitadas, golpe crítico, visceral, execução e
   ataque forte que cresce com a carga.
 - Regras contra o spam: apanhar interrompe o ataque, inimigos com firmeza,
@@ -321,6 +325,9 @@ pugna/
   tipo de golpe é multiplicada por `janelaAparar` em `combate.ataquesInimigos`.
   A regra que prende a janela à fase do golpe é `naJanelaDeAparo` em
   `src/entidades/Ataques.js`
+- **mudar a esquiva ou o quickstep** (custo, duração, invencibilidade,
+  velocidade, espera): blocos `combate.esquiva` e `combate.quickstep` em
+  `src/config.js`
 - **mudar o visceral, a execução ou a carga do forte:** blocos
   `combate.visceral`, `combate.execucao` e `combate.carga` em `src/config.js`
   (o crítico comum fica em `combate.critico`)
@@ -377,7 +384,7 @@ pugna/
       com tempo e bolsa sem pausa
 - [x] Pistola como parry, com balas (o broquel saiu do combate)
 - [x] Golpe visceral, execução e ataque forte carregado
-- [ ] Quickstep (esquiva curta com a mira travada)
+- [x] Quickstep (esquiva curta com a mira travada)
 - [ ] Combate menos genérico: golpe pelas costas, sequências de ataques, armas
       com ritmos diferentes
 - [x] Interior da catedral
@@ -410,7 +417,7 @@ pugna/
 
 ## Testes
 
-- `npm test` verifica a janela de acerto, o custo da esquiva, o tiro de pistola
+- `npm test` verifica a janela de acerto, o custo da esquiva, o quickstep com a mira, o tiro de pistola
   (janela do parry, balas, parede, alcance), o golpe crítico, o visceral, a execução e a carga do forte, as fases e os tipos de ataque dos inimigos, a interrupção ao apanhar,
   a firmeza dos inimigos, o rally, o frasco interrompido, a mira travada, a câmera em terceira pessoa, colisões, navegação,
   interação com objetos, inventário, Osso de Retorno e migração de saves.

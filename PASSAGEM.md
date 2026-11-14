@@ -40,15 +40,15 @@ Cada resposta do jogador precisa ser a melhor contra algum tipo de ataque. Se n�
 | Alto (normal) | Parry com a pistola (tiro durante o golpe do inimigo) ou esquiva | Parry: inimigo desequilibrado e golpe visceral |
 | Pesado | Parry com a pistola, com janela menor | Execução (ainda mais dano, pausa, tremor de tela) |
 | Rasteira (larga) | Pulo | Contra-ataque pisando no inimigo; a rasteira não pode ser aparada |
-| Qualquer um | Esquiva (rolamento, ou quickstep com a mira) | Nenhuma: é segura, mas não recompensa |
+| Qualquer um | Esquiva (rolamento; com a mira travada, quickstep) | Nenhuma: é segura, mas não recompensa |
 | Antes da luta | Golpe pelas costas (agachado, sem ser visto) | Execução silenciosa |
 | Acabou de apanhar | Revidar logo (rally) | Recupera parte da vida perdida |
 
-O parry com a pistola (PR B1), o visceral e a execução (PR B2) já funcionam. O quickstep vem no PR B3.
+O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (PR B3) já funcionam.
 
 ## Estado atual
 
-- **Pronto e no ar:** vilarejo, Catedral do Véu (nave, Ossário, Relicário, Santuário, selos), inimigos cavaleiro, caçador e Penitente, miniboss Guardião do Véu, bolsa e frascos de cura, lápides, atalhos, menu de configurações, trilha sonora, terceira pessoa, mira travada, parry com a pistola, crítico, visceral, execução, ataque forte carregado e rolamento.
+- **Pronto e no ar:** vilarejo, Catedral do Véu (nave, Ossário, Relicário, Santuário, selos), inimigos cavaleiro, caçador e Penitente, miniboss Guardião do Véu, bolsa e frascos de cura, lápides, atalhos, menu de configurações, trilha sonora, terceira pessoa, mira travada, parry com a pistola, crítico, visceral, execução, ataque forte carregado, rolamento e quickstep.
 - **Salvamento estilo Souls (item 1, pronto):** o jogo grava sozinho a cada acontecimento e não há salvar manual. O **Osso de Retorno** é usado pela bolsa, é único e de uso ilimitado. Hoje não há penalidade ao usar.
 - **Base dos ataques (item 2, pronto):** todos os inimigos usam a mesma máquina de golpes (`src/entidades/Ataques.js`), com 3 fases (preparo, golpe ativo, recuperação) e 3 tipos, cada um com pose, cor e som próprios: **alto**, **pesado** (vermelho, sino grave) e **rasteira** (agachado, amarelo). As sequências de cada inimigo ficam em `CONFIG.inimigos` (`ataques`) e os números de cada tipo em `CONFIG.combate.ataquesInimigos`. A rasteira é larga, não pode ser aparada nem bloqueada e passa por baixo de quem está no ar.
 - **Celular congelado (item 0, pronto):** aviso na tela inicial e ao começar em aparelho de toque, teste do celular fora dos obrigatórios, código de toque guardado.
@@ -74,8 +74,13 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) já funcionam. 
   - **Ataque forte carregado:** o dano cresce com a carga, de 1× (soltar logo que vira forte) até 1,6× (carga máxima). Carga completa (95% ou mais) acertando **pelas costas** desequilibra o inimigo (`Inimigo.desequilibrar()`, extraído do `serAparado`, sem execução) e abre o visceral, que então vale por trás.
   - Código: `Jogador.alvoDoVisceral`, `iniciarVisceral` e `golpeVisceral` (ação `'visceral'`), `Inimigo.receberVisceral` (emite `golpe:visceral { execucao }`) e `Inimigo.desequilibrar`. Pose de estocada no `Boneco.js`. Save não mudou; `Toque.js` não mudou.
   - **Decidido pela IA (o Heitor revisa):** o visceral exige o inimigo num cone de 60° à frente do caçador e o caçador num cone de 60° à frente do inimigo (`visceral.abertura`); aberto pelas costas, vale o mesmo cone atrás dele; o caçador desliza até 1,15 m do inimigo durante o golpe (`visceral.encosta`); o empurrão do visceral é 7 (`visceral.empurrao`); o forte carregado num inimigo que já estava desequilibrado é só o crítico (não reabre o desequilíbrio, para não virar ciclo infinito); "carga completa" e "pelas costas" ficaram em `carga.completa` e `carga.costas`; o empurrão do forte pelas costas joga o inimigo para longe, então é preciso dar um passo para o visceral.
+- **Etapa B, PR B3: quickstep (pronto).** Números em `CONFIG.combate.quickstep` (custo 14, duração 0,2 s, invencível 0,13 s, velocidade 11, espera 0,12 s):
+  - Com a mira travada, a esquiva vira um **passo curto** na direção apertada (parado: para trás), sem rolar e sem virar o corpo: o caçador continua encarando o alvo. Pose de passo baixo no `Boneco.js` e zunido mais curto. O evento é `jogador:esquiva { quickstep: true }` (o rolamento manda `{ quickstep: false }`).
+  - Sem mira, continua o rolamento, agora com invencibilidade de 0,22 s (era 0,26).
+  - Código: `Jogador.quickstep` (escolhe o bloco `quickstep` ou `esquiva`). Save não mudou; `Toque.js` não mudou.
+  - **Decidido pela IA (o Heitor revisa):** o quickstep não vira o corpo para a direção do passo (fica de frente para o alvo); o "parado: para trás" é para trás do corpo (que já encara o alvo); a duração do zunido do quickstep é a própria `quickstep.duracao`; a esquiva que já estava na fila usa o bloco da hora em que sai (com ou sem mira naquele instante).
 - **Ganchos deixados:** `inimigo.abertoParaExecucao` (já usado pela execução do B2) e `inimigo.desequilibrar()` (abre o visceral sem execução; serve ao golpe pelas costas da Etapa D). O aviso `jogador:pulou-golpe` sai quando o jogador pula uma rasteira (Etapa D). `jogador.recuperarComGolpe(dano)` é o ponto de entrada do rally (`Infinity` = rally cheio, usado pelo visceral). `Jogador.receberDano` recebe os dados do golpe (`aparavel`, `bloqueavel`, `evitaPulando`...).
-- **Ainda não existe:** quickstep (PR B3), contra-ataque pisando e dano extra ao pular contra golpe alto.
+- **Ainda não existe:** contra-ataque pisando e dano extra ao pular contra golpe alto.
 - **Infra:** `jogar.bat` com atualização automática, `atualizar.bat`, e regra de integração automática no `AGENTS.md` com o `CLAUDE.md` apontando para ele.
 - **Specs (pronto):** `docs/specs/` tem uma página por tarefa futura (00 a 08), com objetivo, arquivos, critérios de aceite e modelo de IA recomendado. A ordem está na "Fila do Gabriel".
 - **Contrato de área (pronto):** `src/mundo/areas.js` tem o registro das áreas, e cada área declara `luzJogador` e `usaCeu`. Área nova não exige mexer no `Jogo.js`.
@@ -94,7 +99,7 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) já funcionam. 
   - Frasco com tempo: uns 0,6 s de animação, andando devagar, e a cura é interrompida se o caçador apanhar.
   - Abrir a bolsa não pausa mais o jogo. Só o Esc pausa.
   - Inimigos param de recuar sozinhos só porque estão apanhando.
-- [ ] **B. Pistola, visceral e quickstep** (B1 e B2 feitos; falta B3 quickstep):
+- [x] **B. Pistola, visceral e quickstep** (B1, B2 e B3 feitos):
   - Tiro instantâneo de curto alcance, sem bala voando. Conta como parry se acertar o inimigo num trecho do aviso dele ou no começo do golpe. Usar a máquina de golpes de `Ataques.js` para saber a fase: a janela fica presa à animação do inimigo, como no Bloodborne. A rasteira não pode ser aparada. O parry e o bloqueio do broquel saem aqui.
   - Munição limitada (balas), recuperada ao descansar na lanterna. Ideia do Bloodborne a considerar: gastar vida para fazer balas. Tiro errado gasta bala, e esse é o anti-spam. O tiro tem recuperação curta.
   - Valores iniciais sugeridos: janela de uns 0,13 s no golpe alto e 0,08 s no pesado, sem preparo antes da janela. Tudo ajustável no `config.js`.
@@ -112,7 +117,7 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 
 - [x] **0. Specs 00 a 08 escritas** (`docs/specs/`)
 - [x] **0b. Contrato de área aplicado** (spec 00: `src/mundo/areas.js`)
-- [ ] **1. B: pistola, parry, visceral e quickstep** (spec 07; Opus ou Fable) — em andamento: B1 e B2 feitos (pistola, parry, balas, broquel fora; visceral, execução, forte carregado); falta B3 quickstep
+- [x] **1. B: pistola, parry, visceral e quickstep** (spec 07; Opus ou Fable) — B1, B2 e B3 feitos (pistola, parry, balas, broquel fora; visceral, execução, forte carregado; quickstep)
 - [ ] **2. C: chefe e imprevisibilidade** (spec 08; Opus ou Fable)
 - [ ] **3. S2: botão de gráfico PS1 / HD** (spec 02)
 - [ ] **4. S3: estrada e taverna** (spec 01)

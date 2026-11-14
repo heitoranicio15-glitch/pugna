@@ -1,3 +1,4 @@
+import { CONFIG } from '../config.js';
 // =============================================================================
 //  SONS
 //  Efeitos sintetizados em tempo real (ruído, filtros e osciladores).
@@ -13,7 +14,8 @@ export class Som {
     eventos.em('jogador:pouso', () => this.passo(0.7, 0.7));
     eventos.em('jogador:pulo', () => this.passo(0.25, 1.3));
     eventos.em('jogador:golpe', (d) => this.zunido(d.forte ? 0.5 : 0.35, d.forte ? 0.32 : 0.2, d.forte ? 500 : 900));
-    eventos.em('jogador:esquiva', () => this.zunido(0.25, 0.25, 350));
+    // O quickstep tem um zunido mais curto (dura o mesmo que o passo).
+    eventos.em('jogador:esquiva', (d) => this.zunido(0.25, d?.quickstep ? CONFIG.combate.quickstep.duracao : 0.25, 350));
     eventos.em('jogador:carregando', () => this.sino(294, 0.33, 0.11));
     eventos.em('jogador:sem-estamina', () => this.tom({ volume: 0.13, duracao: 0.12, de: 95, ate: 57 }));
     eventos.em('golpe:acertou', (d) => {
