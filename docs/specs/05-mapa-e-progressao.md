@@ -42,3 +42,12 @@ Definir como as áreas se ligam. O PASSAGEM decidiu: **semi-linear**, com atalho
 - Áreas atuais continuam funcionando e o save antigo carrega.
 - O teste de grafo passa com as áreas atuais e falha com um portal quebrado de exemplo.
 - `npm test`, `npm run build`, `npm run test:browser` passam.
+
+## S6 entregue: a floresta (decidido pela IA, o Heitor revisa)
+
+- **Escolha:** a primeira área nova é a **floresta**, como a recomendação do grafo (continuação natural da estrada). Castelo e caverna seguem na fila. Código em `src/mundo/Floresta.js`, bloco `CONFIG.areas.floresta`, uma linha em `areas.js`.
+- **Ligação:** a ponta sul da estrada não é mais fechada. O portal `E — seguir pela trilha da floresta` (estrada, 0; 57,4) leva à chegada da floresta (0; -38,5), e `E — voltar à estrada` (floresta, 0; -42,4) leva à chegada nova da estrada (0; 52,4, olhando para o norte). A carroça virou cenário ao lado da pista e a placa "Em obras" saiu, no lugar da placa "Trilha da floresta". Nenhuma chegada, lanterna, ID ou patrulha antiga mudou (o teste compara os números).
+- **Área:** 40 × 90 m (x de -20 a 20, z de -45 a 45), `usaCeu: true`, `luzJogador` 5, névoa verde-azulada escura e densa (0,027). Lanterna `floresta-clareira` ("Clareira da Floresta") a 6 m da chegada; 3 patrulhas (caçador, cavaleiro, Penitente, valores de `CONFIG.inimigos` sem ajuste) a mais de 18 m da chegada e da lanterna. A trilha acaba numa barricada de troncos sem saída; o Castelo entra ali depois.
+- **Som e trilha:** tipo novo `floresta` (vento, coruja, galhos) em `src/audio/regras.js` e `Ambiente.js`, com os valores de `CONFIG.areas.floresta.som` escolhidos só no código (**ninguém ouviu: ouvir e ajustar**). Trilha: a faixa `vilarejo`, para a música seguir sem reiniciar desde a estrada (só há duas faixas de área).
+- **Progressão:** nada novo no save. Entrar na floresta não grava evento; o formato do save não mudou e saves antigos carregam como antes. O portal trancado (`requer`) e o `docs/mapa.md` seguem pendentes.
+- **Os limites não prendem o jogador:** a floresta usa colisores nas bordas (como a estrada com as cercas).

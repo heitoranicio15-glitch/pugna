@@ -78,7 +78,7 @@ export const CONFIG = {
       paletaDoCeu: { zenite: 0x0c0921, meio: 0x232047, horizonte: 0x242346, nuvem: 0x665587 },
       bruma: { cor: 0x706893, opacidade: 0.16, altura: 0.4, variacao: 1.2, velocidade: 1 },
       // Som ambiente (0 a 1 em cada camada; `base` = vento e zumbido de sempre) e faixa da trilha.
-      // Tipos: vila | pedra | taverna | estrada (veja src/audio/regras.js). Trilha decidida pela IA.
+      // Tipos: vila | pedra | taverna | estrada | floresta (veja src/audio/regras.js). Trilha decidida pela IA.
       som: { tipo: 'vila', base: 1, vento: 0.45, grilo: 0.4, sino: 0.3 },
       trilha: 'vilarejo',
     },
@@ -109,7 +109,8 @@ export const CONFIG = {
       larguraDaPista: 8,       // terra batida, centrada em x = 0
       portaoNorte: { z: -60 }, // o Portão Sul do vilarejo visto de fora (portal para o vilarejo)
       ponte: { z: 22, comprimento: 8, riacho: 6 },
-      carroca: { z: 57 },      // carroça tombada: fecha a ponta sul (áreas novas virão depois)
+      carroca: { z: 57 },      // carroça tombada, agora só cenário ao lado da trilha (S6 abriu a ponta sul)
+      trilhaSul: { z: 57.4 },  // portal da ponta sul (`E — seguir pela trilha da floresta`); a chegada fica 5 m antes
       taverna: { x: -12.5, z: -15, largura: 14, profundidade: 10, altura: 6 },   // fachada voltada para a pista
       fumaca: { particulas: 5, subida: 3.2, tempo: 4.5 },
       lanterna: { x: -5.4, z: -10.6 },  // 'taverna-da-estrada', perto da porta
@@ -124,6 +125,28 @@ export const CONFIG = {
           '— Na catedral os sinos tocam sem corda. Quem sobe não repete o nome.',
         ],
       },
+    },
+    // Floresta ao sul da estrada (40 x 90 m, corre de norte a sul; a estrada fica no norte, em z = -45).
+    // Primeira área nova (S6, escolha da IA; o Heitor revisa). Sem tochas: a única luz fixa é a lanterna.
+    floresta: {
+      luzJogador: 5, corLuzJogador: 0x9fd6c8,
+      nevoa: { cor: 0x16302f, densidade: 0.027 },
+      fundo: 0x0a1514,
+      luzAmbiente: { ceu: 0x4f827f, chao: 0x14231e, intensidade: 1.2 },
+      luar: { cor: 0x8fc4c4, intensidade: 0.62 },
+      paletaDoCeu: { zenite: 0x07121c, meio: 0x14303a, horizonte: 0x16302f, nuvem: 0x3c5e64 },
+      bruma: { cor: 0x4f8a80, opacidade: 0.22, altura: 0.3, variacao: 1, velocidade: 0.8 },
+      som: { tipo: 'floresta', base: 1, vento: 0.55, coruja: 0.4, galhos: 0.45 },
+      // Trilha decidida pela IA: a mesma do vilarejo (continuidade com a estrada; só há 2 faixas de área).
+      trilha: 'vilarejo',
+      limites: { minX: -20, maxX: 20, minZ: -45, maxZ: 45 },
+      larguraDoCaminho: 4.5,
+      // Eixo da trilha: de [z inicial, z final, x]. Só desenha o chão; a clareira inteira é andável.
+      caminho: [[-45, -28, 0], [-28, -8, 2.5], [-8, 10, -2.5], [10, 28, 2], [28, 41, -1]],
+      portaNorte: { z: -42.4 },       // portal de volta à estrada
+      barricadaSul: { z: 41.8 },      // a trilha acaba aqui (o Castelo virá depois)
+      lanterna: { x: -4.4, z: -33.5 },   // 'floresta-clareira', perto da chegada
+      vagalumes: { quantidade: 26 },
     },
     // Interior da taverna (12 x 9 m). Sem inimigos.
     taverna: {

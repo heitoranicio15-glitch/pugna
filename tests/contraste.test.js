@@ -30,8 +30,8 @@ function fundos(area) {
   return f;
 }
 
-test('os 4 cenários existem e os avisos de golpe são cores distintas', () => {
-  for (const id of ['vilarejo', 'catedral', 'estrada', 'taverna']) assert.ok(CONFIG.areas[id].nevoa && CONFIG.areas[id].fundo, id);
+test('os 5 cenários existem e os avisos de golpe são cores distintas', () => {
+  for (const id of ['vilarejo', 'catedral', 'estrada', 'taverna', 'floresta']) assert.ok(CONFIG.areas[id].nevoa && CONFIG.areas[id].fundo, id);
   assert.equal(new Set([ataques.pesado.aviso, ataques.rasteira.aviso, CONFIG.combate.avisosInimigos.inaparavel]).size, 3);
 });
 
@@ -48,7 +48,7 @@ test('todo aviso de golpe tem contraste de pelo menos 3:1 contra névoa, fundo e
       }
     }
   }
-  assert.ok(linhas.length >= 4 * 2 * 4);
+  assert.ok(linhas.length >= 5 * 2 * 4);
   console.log(`menor contraste: ${menor.razao.toFixed(2)}:1 (${menor.id}, ${menor.aviso} contra ${menor.fundo})`);
 });
 

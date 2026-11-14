@@ -188,6 +188,26 @@ const CONSTRUTORES = {
       cena.tom(t, { freq: f, ate: f * ALEATORIO(0.9, 1.15), volume: 0.1, duracao, forma: 'sawtooth', destino: filtro, ataque: duracao * 0.3 });
     };
   },
+
+  // Floresta: vento grave por entre os troncos, uma coruja distante e galhos que estalam.
+  floresta(cena, som) {
+    const vento = som.vento ?? 0;
+    const copa = cena.ruido({ tipo: 'lowpass', freq: 360, q: 0.6, ganho: 0.14 * vento });
+    cena.lfo(0.08, 120, copa.filtro.frequency);
+    cena.lfo(0.05, 0.06 * vento, copa.ganho.gain);
+    const folhas = cena.ruido({ freq: 2200, q: 0.8, ganho: 0.018 * vento });
+    cena.lfo(0.17, 0.012 * vento, folhas.ganho.gain);
+    cena.vozes.coruja = (t) => {
+      // dois "hu" graves, o segundo mais baixo
+      const f = ALEATORIO(300, 360);
+      cena.tom(t, { freq: f, ate: f * 0.94, volume: 0.05, duracao: 0.45, ataque: 0.12 });
+      cena.tom(t + 0.62, { freq: f * 0.9, ate: f * 0.82, volume: 0.045, duracao: 0.7, ataque: 0.15 });
+    };
+    cena.vozes.galho = (t) => {
+      cena.estouro(t, { tipo: 'bandpass', freq: ALEATORIO(900, 1800), q: 3, volume: ALEATORIO(0.05, 0.1), duracao: 0.05 });
+      if (Math.random() < 0.4) cena.estouro(t + 0.09, { tipo: 'bandpass', freq: ALEATORIO(700, 1400), q: 3, volume: 0.04, duracao: 0.04 });
+    };
+  },
 };
 
 export class Ambiente {

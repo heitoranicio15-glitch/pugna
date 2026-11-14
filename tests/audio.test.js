@@ -36,7 +36,9 @@ test('cada tipo de som é usado por alguma área e cada área soa diferente', ()
 
 test('validarSom recusa tipo desconhecido, chave de outro tipo e número fora de 0..1', () => {
   assert.ok(validarSom(null).length);
-  assert.ok(validarSom({ tipo: 'floresta' })[0].includes('desconhecido'));
+  assert.ok(validarSom({ tipo: 'deserto' })[0].includes('desconhecido'));
+  assert.deepEqual(validarSom({ tipo: 'floresta', vento: 0.5, coruja: 0.3, galhos: 1, base: 1 }), []);
+  assert.ok(validarSom({ tipo: 'floresta', agua: 0.5 }).length, 'agua é da estrada');
   assert.ok(validarSom({ tipo: 'vila', gotas: 0.5 }).length);
   assert.ok(validarSom({ tipo: 'vila', vento: 1.5 }).length);
   assert.deepEqual(validarSom({ tipo: 'vila', vento: 0.5, grilo: 1, base: 0.3 }), []);

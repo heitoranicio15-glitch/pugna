@@ -24,6 +24,7 @@ export const TIPOS_DE_SOM = {
   pedra: { vento: {}, gotas: { evento: 'gotas' }, eco: {} },
   taverna: { fogo: { evento: 'estalo' }, murmurio: {} },
   estrada: { vento: {}, madeira: { evento: 'madeira' }, agua: {} },
+  floresta: { vento: {}, coruja: { evento: 'coruja' }, galhos: { evento: 'galho' } },
 };
 
 /** Taxa máxima (eventos por minuto) e intervalo mínimo (s) entre dois eventos do mesmo tipo. */
@@ -33,6 +34,8 @@ export const TAXAS = {
   gotas: { porMinuto: 18, minimo: 0.8 },
   estalo: { porMinuto: 100, minimo: 0.05 },
   madeira: { porMinuto: 5, minimo: 4 },
+  coruja: { porMinuto: 3, minimo: 12 },
+  galho: { porMinuto: 6, minimo: 4 },
 };
 
 const entre01 = (v) => Math.min(1, Math.max(0, Number.isFinite(v) ? v : 0));
