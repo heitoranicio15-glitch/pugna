@@ -190,6 +190,26 @@ export const CONFIG = {
     },
   },
 
+  // ---- Plano do vilarejo (docs/mapa.md; src/mundo/QuadrasVilarejo.js) ----
+  vila: {
+    // Larguras de rua em metros. Nenhuma passagem fica mais estreita que o beco,
+    // a não ser os gargalos marcados (o arco da triagem).
+    ruas: { principal: 6.5, secundaria: 5.5, beco: 3.2 },
+    // O quickstep anda 2,2 m (11 m/s × 0,2 s); somado ao corpo do caçador (2 × 0,4 m),
+    // 3 m é o mínimo para desviar de lado numa passagem.
+    corredorMinimo: 3,
+    recuo: 0.6,               // da beira da rua até a fachada
+    // Três tipos de casa; a variação é só por tipo (nada sorteado).
+    tipos: {
+      pequena: { l: 7, p: 6.5, a: 3.8 },    // térrea
+      media: { l: 8.5, p: 7.5, a: 6 },      // sobrado
+      grande: { l: 10.5, p: 9, a: 7.2 },    // sobrado alto
+    },
+    // Ritmo das fileiras: a sequência se repete ao longo de cada rua.
+    ritmo: ['media', 'pequena', 'media', 'grande', 'pequena', 'media'],
+    folga: 1.6,               // distância mínima da casa a rotas de patrulha, lanternas, portais e objetos
+  },
+
   // ---- Áudio: transições entre áreas (o som de cada área fica em CONFIG.areas.<área>.som) ----
   audio: {
     crossfadeAmbiente: 0.6,   // s: o ambiente antigo some e o novo entra (o mesmo tempo da névoa)

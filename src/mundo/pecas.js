@@ -235,6 +235,13 @@ export function juntarPorMaterial() {
     },
     /** Geometria pronta (já posicionada) com o material dado. */
     geometria(geometry, material) { guardar(material, geometry); },
+    /** Passa tudo para outro kit, aplicando a matriz (posição e giro da peça). */
+    transferir(destino, matriz) {
+      for (const [material, geometrias] of porMaterial) {
+        for (const geo of geometrias) destino.geometria(geo.applyMatrix4(matriz), material);
+      }
+      porMaterial.clear();
+    },
     montar(grupo, nome) {
       for (const [material, geometrias] of porMaterial) {
         const malha = new THREE.Mesh(mergeGeometries(geometrias), material);
@@ -245,6 +252,32 @@ export function juntarPorMaterial() {
       porMaterial.clear();
     },
   };
+}
+
+/**
+ * Junta muitas peças (casas, ruínas) em poucas malhas, separadas por setor do mapa.
+ * Cada setor de `tamanho` metros vira uma malha por material: poucas chamadas de
+ * desenho, e o setor que está fora da tela continua sendo descartado.
+ */
+export class LoteDeCenario {
+  constructor(grupo, nome, tamanho = 40) {
+    this.grupo = grupo; this.nome = nome; this.tamanho = tamanho;
+    this.setores = new Map();
+  }
+  kit(x, z) {
+    const chave = `${Math.floor(x / this.tamanho)}:${Math.floor(z / this.tamanho)}`;
+    if (!this.setores.has(chave)) this.setores.set(chave, juntarPorMaterial());
+    return this.setores.get(chave);
+  }
+  /** Coloca o conteúdo de `origem` (coordenadas da peça) em (x, z) com giro `ry`. */
+  adicionar(origem, x, z, ry = 0) {
+    const matriz = new THREE.Matrix4().makeRotationY(ry).setPosition(x, 0, z);
+    origem.transferir(this.kit(x, z), matriz);
+  }
+  montar() {
+    for (const kit of this.setores.values()) kit.montar(this.grupo, this.nome);
+    this.setores.clear();
+  }
 }
 
 /** Telhado de duas águas com cumeeira no eixo X, beiral nos quatro lados e empenas
@@ -295,12 +328,17 @@ const estavel = (x, z, i) => {
  */
 export function casa(mundo, {
   x, z, l = 7, p = 8, a = 5, frente = 'S', acesa = false,
+  tipo = null,              // 'pequena' | 'media' | 'grande' (CONFIG.vila.tipos): manda em l, p e a
+  fundo = null,             // profundidade maior que a do tipo, para a casa encostar num muro atrás
+  lote = null,              // LoteDeCenario: junta a casa às vizinhas em poucas malhas
   todasAcesas = false,      // todas as janelas acesas (a taverna)
   xPorta: xPortaFixo = null, // posição da porta na fachada (padrão: centro)
   chamine: posChamine = null, // { x, z } da chaminé (padrão: perto da empena direita)
 }) {
   const m = materiais();
   const K = CONFIG.arte.casa;
+  if (tipo) ({ l, p, a } = CONFIG.vila.tipos[tipo]);
+  if (fundo) p = fundo;
   const g = new THREE.Group();
   g.name = 'Casa';
   const kit = juntarPorMaterial();
@@ -379,16 +417,15 @@ export function casa(mundo, {
   janela(0, sobrado ? ySobrado : yTerreo, 2);
   janela(0, sobrado ? ySobrado : yTerreo, 3);
   janela(colunas[0], yTerreo, 1);
+  const deLado = frente === 'L' || frente === 'O';
+  mundo.colisores.adicionar(x, z, deLado ? p : l, deLado ? l : p);
+  if (lote) { lote.adicionar(kit, x, z, ROTACAO[frente]); return null; }
   kit.montar(g, 'Casa');
-
   g.position.set(x, 0, z);
   g.rotation.y = ROTACAO[frente];
   mundo.grupo.add(g);
-  const deLado = frente === 'L' || frente === 'O';
-  mundo.colisores.adicionar(x, z, deLado ? p : l, deLado ? l : p);
   return g;
 }
-
 /** Torre quadrada. tipo: 'ameias' (topo de castelo) ou 'ponta' (telhado pontudo). */
 export function torre(mundo, { x, z, lado = 5, a = 16, tipo = 'ameias', colide = true }) {
   const m = materiais();

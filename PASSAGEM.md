@@ -49,6 +49,13 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Direção de arte, Fase 2: plano da vila (pronto).** Plano em metros em `docs/mapa.md`; regras em `CONFIG.vila` e testadas em `tests/vila.test.js`.
+  - **Casas em fileira:** `src/mundo/QuadrasVilarejo.js` põe casas dos dois lados de cada rua principal ou secundária, a 0,6 m da beira, porta para a rua, ritmo fixo de três tipos (pequena 7 × 6,5 m térrea, média 8,5 × 7,5 m sobrado, grande 10,5 × 9 m). Casas da mesma fileira se encostam; quando o lote está ocupado (torre, abrigo, rota, lanterna, placa), abre-se um vão de pelo menos um beco. Muro logo atrás: a casa fica mais funda e encosta. Eram 33 casas soltas; agora são 78.
+  - **Ruas:** principal 6,5 m, secundária 5,5 m, beco 3,2 m (o arco da triagem é o gargalo marcado). Corredor mínimo de 3 m (quickstep de 2,2 m + corpo). A rua oeste e a rua do mercado agora vão até os bairros; novo **Bairro do Portão Leste** (z 48,6 e x 50,7) fecha o quadrante sudeste vazio.
+  - **Oclusores:** 7 arcos de pedra atravessam as ruas compridas; ruínas de muro e árvores secas enchem os miolos de quarteirão (a cada 7 m, longe de ruas, rotas e pontos). Casas, arcos e ruínas são juntados por setor de 40 m (`LoteDeCenario` em `pecas.js`): o vilarejo ficou com uns 61 mil triângulos, contra uns 230 mil dos modelos importados antes.
+  - **Testes novos:** só três tipos e três larguras; nenhuma casa invade rua; nenhuma fresta entre casas; todo vão alcançável entre paredes tem 3 m ou mais; do Portão Sul se chega às lanternas, portais e a cada ponto das patrulhas; cada rua comprida tem arco. O teste dos adereços agora também acusa adereço no meio da rua.
+  - **Decidido pela IA (o Heitor revisa):** gerar as casas por regra em vez de posicionar uma a uma; o ritmo de tipos, as medidas dos tipos, o recuo e as larguras; os arcos de bairro; o Bairro do Portão Leste; tirar 2 árvores, 3 entulhos e 6 adereços que as fileiras engoliram ou que ficaram no meio da rua. Lanternas, portais, nascimento, rotas, placas, abrigos e IDs não mudaram de lugar. `npm test` (125) e `npm run build` passam; **ninguém viu ainda**.
+
 - **Direção de arte, Fase 1: limpeza (pronto).** Relatório em `docs/auditoria-visual.md`. As casas importadas tinham buracos de verdade: `House_3` e `House_4` são ruínas sem telhado, e o muro `TallWallBricks` só tem a face da frente (nos lados sul e leste da muralha o verso ficava para dentro da vila). Todas eram esticadas numa proporção diferente.
   - **Kit modular próprio** em `src/mundo/pecas.js`: `casa()` monta paredes de pedra fechadas, rodapé escuro, cantos e vigas de madeira queimada, telhado de ardósia com beiral e empenas de pedra; porta, janela, pé-direito, beiral e caimento iguais para todas (`CONFIG.arte.casa`), sem sorteio. `torre()`, `muralha()`, as paredes da catedral, das alas e dos Bairros também usam só peças do jogo. Cada casa é desenhada com 6 a 8 malhas (uma por material).
   - **Textura do mesmo tamanho em tudo** (`CONFIG.arte.ladrilho`, por família de material): pedra 2 m, madeira 1,4, telhado 2, calçamento 4, lajes 4, assoalho 1,6. Os modelos importados com pedra/madeira/telhado no HD têm UV projetado em metros, já com a escala do encaixe (`src/render/modelos.js`).
@@ -280,7 +287,7 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 - [x] **7. S5: atmosfera por área** (spec 04) — parte visual no quarto
   incremento; som ambiente por área e crossfade de trilha entregues.
 - [ ] **8. E: ajuste fino com os amigos** (E1 por simulação feito; falta o ajuste jogando)
-- [x] **9. S6: primeira área nova** (floresta ligada pela estrada; spec 05; o Heitor revisa a escolha) — faltam `requer` do portal e `docs/mapa.md`
+- [x] **9. S6: primeira área nova** (floresta ligada pela estrada; spec 05; o Heitor revisa a escolha) — falta o `requer` do portal (o `docs/mapa.md` existe desde a direção de arte)
 - [x] **10. S7: bolsa cobrindo a barra de vida em telas estreitas** — com a luta rolando, a tela da bolsa reserva 140 px embaixo (`.tela.ao-vivo` no `estilo.css`) e o painel rola por dentro; PR 24
 - [ ] **11. S8: Supabase** (spec 06; precisa do Heitor para criar o projeto)
 - [x] **Gráficos, incremento 1** — materiais PBR nas quatro áreas, barris,
@@ -302,7 +309,7 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
   taverna e Catedral e embarcadouro na estrada.
 - [x] **Gráficos, seleção de fantasia sombria** — Witch Hunter, Scary
   Doctor, mulher encapuzada, Alma das Cinzas e Cavaleiro Negro do Sketchfab.
-- [ ] **Direção de arte (prompt 7)** — Fase 1 limpeza feita (kit modular, textura por metro, teste de adereços); Fase 2 plano da vila e Fase 3 atmosfera na fila
+- [ ] **Direção de arte (prompt 7)** — Fase 1 limpeza e Fase 2 plano da vila feitas (kit modular, textura por metro, casas em fileira, `docs/mapa.md`); Fase 3 atmosfera na fila
 - [ ] **Gráficos, próximo incremento** — testar o percurso real e medir o custo
   do HD com GPU. Usar o guia gráfico para comparar o primeiro piloto de
   Blender com a fachada procedural. Alinhar iluminação com S5 e os modelos
