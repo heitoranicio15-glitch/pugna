@@ -255,6 +255,7 @@ pugna/
 ├─ LEIAME.md               este arquivo
 ├─ CREDITOS.md             origem de bibliotecas e assets
 ├─ referencias/            imagens-guia de estilo (não fazem parte do jogo)
+├─ docs/specs/             uma página por tarefa futura (ver a Fila no PASSAGEM.md)
 ├─ public/assets/trilha/   faixas do vilarejo, da catedral e do Guardião
 └─ src/
    ├─ main.js              ponto de entrada
