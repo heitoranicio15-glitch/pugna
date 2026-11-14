@@ -51,7 +51,8 @@ export class Som {
       const perto = this.perto(i), g = i.golpe;
       if (g?.tipo === 'pesado') {            // sino grave e um ronco que cresce
         this.sino(98, 0.9, 0.24 * perto);
-        this.ruido({ volume: 0.26 * perto, duracao: Math.min(0.9, g.preparo), tipo: 'lowpass', de: 90, ate: 420, ataque: 0.3 });
+        // o ronco dura só a subida da arma: o som não entrega o golpe atrasado
+        this.ruido({ volume: 0.26 * perto, duracao: Math.min(0.9, g.subida ?? g.preparo), tipo: 'lowpass', de: 90, ate: 420, ataque: 0.3 });
       } else if (g?.tipo === 'rasteira') {   // aço raspando no chão e dois estalos agudos
         this.ruido({ volume: 0.3 * perto, duracao: 0.36, tipo: 'highpass', de: 2200, ate: 5200, ataque: 0.12 });
         this.tom({ volume: 0.11 * perto, duracao: 0.08, de: 1500, ate: 1900, forma: 'triangle' });

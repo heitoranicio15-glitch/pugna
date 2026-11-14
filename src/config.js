@@ -205,6 +205,15 @@ export const CONFIG = {
     // Como um golpe se liga ao seguinte numa sequência: quanto espera na
     // recuperação e que fração do preparo do próximo golpe já começa cumprida.
     emendaInimigos: { espera: 0.16, adiantar: 0.35 },
+    // ---- Imprevisibilidade (Etapa C, PR C1): ninguém bate como um metrônomo ----
+    //   variacaoPreparo  o aviso de cada golpe dura de -12% a +12% do normal,
+    //                    sorteado a cada golpe (nunca abaixo do preparoMin)
+    // Golpe atrasado: numa sequência de CONFIG.inimigos, um golpe escrito como
+    // { tipo: 'pesado', atraso: 0.35 } segura a pose final do aviso por 0,35 s
+    // antes de bater. A janela do parry acompanha (fica no fim do aviso).
+    imprevisibilidade: {
+      variacaoPreparo: 0.12,
+    },
     pausaImpacto: 0.07,      // "hit stop": o jogo congela um instante ao acertar (dá peso)
   },
 
@@ -222,7 +231,9 @@ export const CONFIG = {
       ataques: [
         { golpes: ['alto'], peso: 3 },
         { golpes: ['pesado'], peso: 2 },
-        { golpes: ['rasteira'], peso: 2 },
+        { golpes: ['rasteira'], peso: 3 },
+        // alto e, em seguida, um pesado que segura a pose antes de bater
+        { golpes: ['alto', { tipo: 'pesado', atraso: 0.35 }], peso: 2 },
       ],
     },
     cacador: {
@@ -236,7 +247,8 @@ export const CONFIG = {
       escala: 1.0, raio: 0.45, recua: true,
       ataques: [
         { golpes: ['alto', 'alto'], peso: 3 },
-        { golpes: ['rasteira'], peso: 1 },
+        { golpes: ['rasteira'], peso: 1.5 },
+        { golpes: ['alto', 'alto', 'rasteira'], peso: 2 },
       ],
     },
     penitente: {
@@ -247,8 +259,10 @@ export const CONFIG = {
       escala: 1.05, raio: 0.44, recua: false,
       ataques: [
         { golpes: ['alto', 'alto'], peso: 3 },
-        { golpes: ['rasteira'], peso: 1 },
+        { golpes: ['rasteira'], peso: 1.5 },
         { golpes: ['pesado'], peso: 1 },
+        // o segundo alto segura a pose antes de bater
+        { golpes: ['alto', { tipo: 'alto', atraso: 0.35 }, 'pesado'], peso: 2 },
       ],
     },
     guardiao: {
@@ -261,7 +275,7 @@ export const CONFIG = {
       ataques: [
         { golpes: ['alto'], peso: 3 },
         { golpes: ['pesado'], peso: 2 },
-        { golpes: ['rasteira'], peso: 1 },
+        { golpes: ['rasteira'], peso: 1.5 },
       ],
       faseFinal: {
         velPerseguir: 2.9, dano: 25, preparo: 0.73, recuperacao: 1.1,

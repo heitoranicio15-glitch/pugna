@@ -431,8 +431,8 @@ test('todo golpe passa por preparo, ativo e recuperação, e a sequência emenda
 });
 
 test('cada tipo de ataque tem números próprios e todo inimigo só usa tipos conhecidos', () => {
-  const cav = CONFIG.inimigos.cavaleiro;
-  const alto = montarGolpe(cav, 'alto'), pesado = montarGolpe(cav, 'pesado'), rasteira = montarGolpe(cav, 'rasteira');
+  const cav = CONFIG.inimigos.cavaleiro, meio = () => 0.5;   // sorteio no meio = sem variação
+  const alto = montarGolpe(cav, 'alto', meio), pesado = montarGolpe(cav, 'pesado', meio), rasteira = montarGolpe(cav, 'rasteira', meio);
   assert.deepEqual([alto.dano, alto.preparo, alto.alcance], [cav.dano, cav.preparo, cav.alcance]);
   assert.ok(pesado.dano > alto.dano && pesado.preparo > alto.preparo && pesado.janelaAparar < 1 && pesado.abreExecucao);
   assert.ok(!rasteira.aparavel && !rasteira.bloqueavel && rasteira.evitaPulando);
@@ -458,6 +458,100 @@ test('o sorteio respeita os pesos e não repete a sequência especial', () => {
   assert.equal(sortearSequencia(lista, null, () => 0.999), lista.at(-1));
   assert.notEqual(sortearSequencia(lista, lista.at(-1), () => 0.999), lista.at(-1));
   assert.equal(sortearSequencia(lista, lista[0], () => 0), lista[0]);
+});
+
+test('imprevisibilidade: o aviso varia de -12% a +12% conforme o sorteio, sem passar do preparoMin', () => {
+  const v = CONFIG.combate.imprevisibilidade.variacaoPreparo;
+  assert.equal(v, 0.12);
+  const cav = CONFIG.inimigos.cavaleiro;
+  const perto = (a, b) => Math.abs(a - b) < 1e-9;
+  for (const [sorteio, fator] of [[0, 1 - v], [0.5, 1], [1, 1 + v]]) {
+    const g = montarGolpe(cav, 'alto', () => sorteio);
+    assert.ok(perto(g.preparo, cav.preparo * fator), `sorteio ${sorteio}`);
+    assert.equal(g.atraso, 0);
+  }
+  // O caçador é rápido: a rasteira dele cai no mínimo mesmo com o sorteio mais curto.
+  const t = CONFIG.combate.ataquesInimigos;
+  for (const inimigo of Object.values(CONFIG.inimigos)) {
+    for (const tipo of Object.keys(t)) {
+      assert.ok(montarGolpe(inimigo, tipo, () => 0).preparo >= t[tipo].preparoMin, tipo);
+    }
+  }
+  assert.equal(montarGolpe(CONFIG.inimigos.cacador, 'rasteira', () => 0).preparo, t.rasteira.preparoMin);
+  // Critério de aceite: nenhum golpe tem sempre o mesmo aviso (no mínimo a variação aparece em algum inimigo).
+  for (const tipo of Object.keys(t)) {
+    const tempos = new Set(Object.values(CONFIG.inimigos).flatMap((i) => [0, 1].map((s) => montarGolpe(i, tipo, () => s).preparo)));
+    assert.ok(tempos.size > Object.keys(CONFIG.inimigos).length, tipo);
+  }
+});
+
+test('golpe atrasado: segura a pose e só fica ativo depois de preparo + atraso; a janela do tiro acompanha', () => {
+  const cav = CONFIG.inimigos.cavaleiro, P = CONFIG.combate.pistola, meio = () => 0.5;
+  const normal = montarGolpe(cav, 'pesado', meio);
+  const atrasado = montarGolpe(cav, { tipo: 'pesado', atraso: 0.35 }, meio);
+  assert.ok(Math.abs(atrasado.preparo - (normal.preparo + 0.35)) < 1e-9);
+  assert.equal(atrasado.subida, normal.preparo);
+  const m = new MaquinaDeAtaque();
+  m.iniciar(cav, [{ tipo: 'pesado', atraso: 0.35 }], meio);
+  // No fim do aviso normal ele ainda está segurando: nada de golpe nem de janela.
+  m.atualizar(normal.preparo + 0.01);
+  assert.equal(m.fase, 'preparo');
+  assert.equal(m.naJanelaDeAparo(P), false);
+  // A janela do tiro fica no fim do aviso inteiro (preparo + atraso).
+  m.t = atrasado.preparo - P.janelaNoAviso * atrasado.janelaAparar * 0.5;
+  assert.equal(m.naJanelaDeAparo(P), true);
+  assert.equal(m.atualizar(atrasado.preparo - m.t - 0.001), null);
+  assert.equal(m.atualizar(0.002), 'ativo');
+  // Na sequência, o adiantamento da emenda nunca come o atraso.
+  m.iniciar(cav, ['alto', { tipo: 'alto', atraso: 0.35 }], meio);
+  while (m.indice === 0 && m.ativa) m.atualizar(0.01);
+  assert.ok(m.golpe.preparo - m.t >= 0.35);
+});
+
+test('golpe atrasado no inimigo: a pose trava no fim da subida e o aviso sonoro toca no começo', () => {
+  const { eventos, inimigo } = duelo('penitente');
+  const avisos = [];
+  eventos.em('inimigo:preparo', () => avisos.push(inimigo.ataque.t));
+  inimigo.sorteio = () => 0.5;
+  inimigo.mudar('perseguir');
+  inimigo.atacar([{ tipo: 'alto', atraso: 0.35 }]);
+  assert.deepEqual(avisos, [0]);
+  const g = inimigo.golpe;
+  // A arma chega ao alto no tempo da subida (como num golpe sem atraso) e fica lá.
+  while (inimigo.ataque.t < g.subida) inimigo.atualizar(0.02);
+  const braco = inimigo.bracoD.rotation.x;
+  while (inimigo.ataque.t < g.subida + 0.3) inimigo.atualizar(0.02);
+  assert.equal(inimigo.estado, 'preparo');
+  assert.ok(braco < -2.5, `braço em ${braco}`);
+  assert.ok(Math.abs(inimigo.bracoD.rotation.x - braco) < 0.15);
+  while (inimigo.estado === 'preparo') inimigo.atualizar(0.02);
+  assert.equal(inimigo.estado, 'ativo');
+  assert.ok(inimigo.tEstado >= 0 && avisos.length === 1);
+});
+
+test('nenhuma sequência sai três vezes seguidas', () => {
+  for (const inimigo of Object.values(CONFIG.inimigos)) {
+    for (const lista of [inimigo.ataques, inimigo.faseFinal?.ataques ?? []]) {
+      if (lista.length < 2) continue;
+      // sorteio forçado: sempre a primeira (a mais comum) ...
+      assert.notEqual(sortearSequencia(lista, lista[0], () => 0, lista[0]), lista[0]);
+      // ... e em uma luta longa nunca aparecem três iguais seguidas
+      let a = null, b = null, semente = 7;
+      const sorteio = () => ((semente = (semente * 16807) % 2147483647) / 2147483647);
+      for (let i = 0; i < 500; i++) {
+        const s = sortearSequencia(lista, a, sorteio, b);
+        assert.ok(!(s === a && a === b));
+        b = a; a = s;
+      }
+    }
+  }
+  // No inimigo de verdade: com o sorteio preso no zero, a terceira sequência muda.
+  const { inimigo } = duelo('cavaleiro');
+  inimigo.sorteio = () => 0;
+  const saidas = [];
+  for (let i = 0; i < 3; i++) { inimigo.atacar(); saidas.push(inimigo.ultimaSequencia); inimigo.ataque.encerrar(); }
+  assert.equal(saidas[0], saidas[1]);
+  assert.notEqual(saidas[2], saidas[0]);
 });
 
 test('regra de ouro: a rasteira pede pulo; o tiro não a apara, gasta bala e avisa', () => {
