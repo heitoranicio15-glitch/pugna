@@ -63,6 +63,7 @@ O parry com a pistola entra na Etapa B. Até lá, o jogo ainda usa o aparo antig
 - **Ganchos deixados:** `inimigo.abertoParaExecucao` fica ligado enquanto dura o desequilíbrio de um pesado aparado (para a execução, Etapa B). O aviso `jogador:pulou-golpe` sai quando o jogador pula uma rasteira (Etapa D). `jogador.recuperarComGolpe(dano)` é o ponto de entrada do rally (o visceral da Etapa B dá "rally cheio" por ele). `Jogador.receberDano` recebe os dados do golpe (`aparavel`, `bloqueavel`, `evitaPulando`...).
 - **Ainda não existe:** pistola, visceral, execução, quickstep, dano que cresce com a carga do ataque forte, contra-ataque pisando e dano extra ao pular contra golpe alto. O bloqueio do broquel continua forte (segura 85% do dano) até a Etapa B tirá-lo.
 - **Infra:** `jogar.bat` com atualização automática, `atualizar.bat`, e regra de integração automática no `AGENTS.md` com o `CLAUDE.md` apontando para ele.
+- **Specs (pronto):** `docs/specs/` tem uma página por tarefa futura (00 a 08), com objetivo, arquivos, critérios de aceite e modelo de IA recomendado. A ordem está na "Fila do Gabriel".
 - **A conferir:** origem das 4 músicas (o repositório é público). Os números da Etapa A são um primeiro chute e precisam ser sentidos jogando. O painel da bolsa cobre um pedaço da barra de vida em telas estreitas.
 - **Pendente para o Heitor decidir:** a penalidade ao morrer (como as almas e os ecos de sangue; ela casa com o rally) e a penalidade do Osso de Retorno. Até lá, morrer e usar o osso não custam nada.
 
@@ -89,6 +90,26 @@ O parry com a pistola entra na Etapa B. Até lá, o jogo ainda usa o aparo antig
 - [ ] **D. Golpe pelas costas e pulo contra rasteira:** agachar (anda devagar, menos barulho), cone de visão, execução silenciosa por trás, alerta dos vizinhos se o jogador for visto (sem botão de toque). No ar durante o golpe ativo da rasteira, não leva dano; cair perto abre o contra-ataque pisando; pular contra ataque alto leva dano extra.
 - [ ] **E. Ajuste fino com os amigos.**
 - [ ] **Depois:** broquel como item ou mão secundária alternativa (bloqueio), celular de volta se fizer sentido, golpes em sequência, armas com ritmos diferentes, interior de mais casas, sons gravados, Supabase (login e progresso), multiplayer para uns 5 amigos, mapa maior (floresta, castelo, caverna), modelos e animações de verdade.
+
+## Fila do Gabriel (uma por vez, cada uma num chat novo)
+
+As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página em [`docs/specs/`](docs/specs/README.md). As letras B a E são as mesmas etapas do Plano acima; os "S" são tarefas de mundo e sistema. Quem terminar um item marca aqui **e** no Plano.
+
+- [x] **0. Specs 00 a 08 escritas** (`docs/specs/`)
+- [ ] **0b. Contrato de área aplicado** (spec 00: `src/mundo/areas.js`)
+- [ ] **1. B: pistola, parry, visceral e quickstep** (spec 07; Opus ou Fable)
+- [ ] **2. C: chefe e imprevisibilidade** (spec 08; Opus ou Fable)
+- [ ] **3. S2: botão de gráfico PS1 / HD** (spec 02)
+- [ ] **4. S3: estrada e taverna** (spec 01)
+- [ ] **5. D: golpe pelas costas e pulo contra rasteira** (sem spec ainda; Opus)
+- [ ] **6. S4: personagens e NPCs** (spec 03)
+- [ ] **7. S5: atmosfera por área** (spec 04)
+- [ ] **8. E: ajuste fino com os amigos**
+- [ ] **9. S6: primeira área nova** (castelo, floresta ou caverna; spec 05; o Heitor escolhe)
+- [ ] **10. S7: bolsa cobrindo a barra de vida em telas estreitas**
+- [ ] **11. S8: Supabase** (spec 06; precisa do Heitor para criar o projeto)
+
+**Decidido pela IA, o Heitor revisa** (detalhes nas specs): clique direito e C atiram; 8 balas, repostas na lanterna e não gravadas no save; visceral não gasta estamina; golpe comum de lado em inimigo desequilibrado continua crítico de 2,6×; golpes que não podem ser aparados avisam em branco-violeta; no máximo 2 inimigos comuns atacando juntos; NPCs não podem ser feridos; taverna sem loja; login por link mágico; a floresta como primeira área nova.
 
 ## Banco de ideias (guardadas, não fazer agora)
 
