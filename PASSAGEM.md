@@ -49,6 +49,13 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **S5: som ambiente por área e crossfade de trilha (pronto; a parte visual já estava).** Spec 04. Código em `src/audio/Ambiente.js` (camadas no WebAudio) e `src/audio/regras.js` (regras puras: taxas dos eventos, ganhos do crossfade); `Trilha.js` foi reescrita com dois players; `ativarArea` agora emite `area:entrou { id, som, trilha, transicao }`. Tempos em `CONFIG.audio` (`crossfadeAmbiente` 0,6 s, `crossfadeTrilha` 1,5 s). Tudo sintetizado, sem arquivo novo e sem mudança em `CREDITOS.md`. O ambiente obedece ao volume de efeitos, à pausa e ao silenciar, e só começa depois do primeiro gesto.
+  - **Camadas** (`CONFIG.areas.<area>.som`, números de 0 a 1): vilarejo `vila` (vento 0,45, grilo 0,4, sino distante 0,3); estrada (vento 0,7, riacho 0,45, madeira rangendo 0,5); taverna (fogo 0,6, murmúrio 0,5, base 0,3); catedral `pedra` (ar 0,25, gotas 0,5, eco 0,7, base 0,6).
+  - **Trilha** (`CONFIG.areas.<area>.trilha`): vilarejo, estrada e taverna usam a faixa `vilarejo` (a música segue sem reiniciar entre elas); a catedral usa `catedral`; a troca do Guardião mantém a regra de antes, agora com crossfade de 1,5 s.
+  - **Contraste dos avisos de combate** (WCAG, contra névoa, fundo e céu das 4 áreas): o menor par é o pesado vermelho contra a névoa da estrada, 3,16:1 (o mínimo era 3:1); rasteira 6,6 a 10,8, inaparável 7,7 a 12,7, alto 9,1 a 15,1. Nenhum ajuste foi preciso. A tabela está na spec 04 e protegida por `tests/contraste.test.js`.
+  - **Decidido pela IA (o Heitor revisa):** estrada e taverna não têm música própria (só há 4 faixas e 2 são do chefe), então o "mais quente" da taverna vem do som; os volumes e as taxas foram escolhidos só no código, **ninguém ouviu ainda: ouvir e ajustar os números**; o primeiro ambiente após o clique entra em 1,2 s, as trocas por portal em 0,6 s.
+  - Save, IDs e `Toque.js` não mudaram. `npm test` (110) e `npm run build` passam; o teste de navegador não foi rodado.
+
 - **S4: NPCs parados com falas (pronto, só a Parte B da spec 03).** `src/entidades/Npc.js` (regras puras `proximaFala`, `olharParaJogador`, `validarNpc`, `criarNpcs`) e `CONFIG.npc`. O contrato de área ganhou o campo opcional `npcs: [{ id, nome, modelo, x, z, olhar, falas }]`, validado em `areas.js` (recusa NPC sem `id`, sem posição, sem falas, fala vazia ou com mais de 90 letras, id repetido). O NPC respira, vira a cabeça e o corpo devagar para o jogador a 6 m, tem colisor pequeno e não pode ser ferido. **E** mostra a próxima fala (4 s, via `hud.avisar`) e no fim repete a última; o jogo não pausa e nada é salvo.
   - **Taverneiro** agora é um `Npc` (mesmas 4 falas, mesmo prompt `E — falar com o taverneiro`, mesma posição atrás do balcão); o rodízio de falas acabou (agora avança e repete a última) e ele passa a virar para o jogador.
   - **Viajante** novo na Estrada do Sul, na margem norte do riacho ao lado do embarcadouro (-6,2; 17,2), 2,2 m fora da pista, a mais de 8 m de patrulhas e longe da lanterna. Usa o modelo do taverneiro (`scary-doctor`) com tinta fria e postura curvada. 3 falas sobre o Véu, a lua e os sinos da catedral.
@@ -255,8 +262,8 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 - [x] **4. S3: estrada e taverna** (spec 01) — estrada, fachada, taverna por dentro, taverneiro e bilhete; PR 23
 - [x] **5. D: golpe pelas costas e pulo contra rasteira** (spec 09; Opus) — Z agacha, percepção por cone e barulho, alerta dos vizinhos, golpe pelas costas, pisada
 - [x] **6. S4: personagens e NPCs** (spec 03) — NPCs parados com falas (taverneiro e viajante); a Parte A (variações do boneco) foi dispensada pelos modelos GLB
-- [ ] **7. S5: atmosfera por área** (spec 04) — parte visual entregue no
-  quarto incremento. Falta o som ambiente por área com transições.
+- [x] **7. S5: atmosfera por área** (spec 04) — parte visual no quarto
+  incremento; som ambiente por área e crossfade de trilha entregues.
 - [ ] **8. E: ajuste fino com os amigos** (E1 por simulação feito; falta o ajuste jogando)
 - [ ] **9. S6: primeira área nova** (castelo, floresta ou caverna; spec 05; o Heitor escolhe)
 - [x] **10. S7: bolsa cobrindo a barra de vida em telas estreitas** — com a luta rolando, a tela da bolsa reserva 140 px embaixo (`.tela.ao-vivo` no `estilo.css`) e o painel rola por dentro; PR 24
