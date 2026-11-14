@@ -1,4 +1,5 @@
 import { CONFIG } from '../config.js';
+import { Ambiente } from './Ambiente.js';
 // =============================================================================
 //  SONS
 //  Efeitos sintetizados em tempo real (ruído, filtros e osciladores).
@@ -9,6 +10,14 @@ export class Som {
     this.jogo = jogo;
     this.volume = 0.8;
     this.pausado = false;
+    this.ambiente = null;
+    this.somDaArea = jogo?.mundo?.som ?? null;   // ambiente da área onde o jogo começa
+    // Cada área traz o seu ambiente (`CONFIG.areas.<area>.som`): o antigo some e o novo entra.
+    eventos.em('area:entrou', (d) => {
+      this.somDaArea = d?.som ?? null;
+      this.mudarBase(d?.som?.base);
+      this.ambiente?.entrar(this.somDaArea, CONFIG.audio.crossfadeAmbiente);
+    });
     // Liga cada aviso do jogo ao seu som.
     eventos.em('jogador:passo', (d) => this.passo(d?.correndo ? 0.5 : d?.agachado ? 0.14 : 0.32));
     eventos.em('jogador:pouso', () => this.passo(0.7, 0.7));
@@ -112,8 +121,19 @@ export class Som {
     this.chiado = this.ctx.createBuffer(1, n, this.ctx.sampleRate);
     const dados = this.chiado.getChannelData(0);
     for (let i = 0; i < n; i++) dados[i] = Math.random() * 2 - 1;
+    // Vento e zumbido de sempre passam por um ganho próprio, que cada área ajusta (`som.base`).
+    this.base = this.ctx.createGain();
+    this.base.gain.value = this.somDaArea?.base ?? 1;
+    this.base.connect(this.saida);
     this.vento();
     this.zumbido();
+    this.ambiente = new Ambiente(this.ctx, this.chiado, this.saida, { ativo: () => !this.pausado && this.volume > 0.001 });
+    this.ambiente.entrar(this.somDaArea, CONFIG.audio.crossfadeAmbiente * 2);   // a primeira entrada é mais lenta
+  }
+
+  /** Nível do vento e do zumbido de base (1 = o de sempre), com transição suave. */
+  mudarBase(nivel = 1) {
+    if (this.base) this.base.gain.setTargetAtTime(nivel, this.ctx.currentTime, CONFIG.audio.crossfadeAmbiente / 3);
   }
 
   definirVolume(volume, pausado) {
@@ -193,14 +213,14 @@ export class Som {
     const lfoG = c.createGain(); lfoG.gain.value = 190; lfo.connect(lfoG).connect(filtro.frequency);
     const lfo2 = c.createOscillator(); lfo2.frequency.value = 0.15;
     const lfo2G = c.createGain(); lfo2G.gain.value = 0.055; lfo2.connect(lfo2G).connect(g.gain);
-    fonte.connect(filtro).connect(g).connect(this.saida);
+    fonte.connect(filtro).connect(g).connect(this.base);
     fonte.start(); lfo.start(); lfo2.start();
   }
 
   /** Um zumbido grave e distante: a presença da lua. */
   zumbido() {
     const c = this.ctx;
-    const g = c.createGain(); g.gain.value = 0.035; g.connect(this.saida);
+    const g = c.createGain(); g.gain.value = 0.035; g.connect(this.base);
     for (const f of [55, 55.7, 82.4]) { const o = c.createOscillator(); o.frequency.value = f; o.connect(g); o.start(); }
   }
 }

@@ -420,7 +420,7 @@ pugna/
    │  ├─ Fichas.js         quantos inimigos atacam ao mesmo tempo (fichas de ataque)
    │  ├─ Lanterna.js       ponto de descanso
    │  └─ Npc.js            NPC parado com falas curtas (taverneiro e viajante)
-   ├─ audio/Som.js         sons sintetizados
+   ├─ audio/Som.js         sons sintetizados (Ambiente.js: som ambiente por área; regras.js: regras puras)
    └─ interface/
       ├─ Hud.js            barras, avisos, telas
       └─ estilo.css        aparência da interface
@@ -430,6 +430,13 @@ pugna/
 - **mudar dano, velocidade, vida, cores e nível de pixelado:** `src/config.js`
 - **mudar a atmosfera de uma área:** `CONFIG.areas` em `src/config.js`
   reúne a névoa, a cor de fundo, a luz ambiente e a paleta de céu dos exteriores.
+- **mudar o som ambiente de uma área:** `som` em `CONFIG.areas.<área>` (`tipo`:
+  `vila`, `pedra`, `taverna` ou `estrada`; cada camada vai de 0 a 1). Os tipos e as
+  taxas dos eventos esparsos (grilo, sino, gota...) ficam em `src/audio/regras.js`.
+- **mudar a música de uma área:** `trilha` em `CONFIG.areas.<área>` (`vilarejo` ou
+  `catedral`). Faixa diferente na área nova troca com crossfade; igual continua.
+- **mudar os tempos do crossfade ao atravessar portais:** `CONFIG.audio`
+  (`crossfadeAmbiente` e `crossfadeTrilha`, em segundos).
 - **mudar a distância da câmera ou o alcance da mira:** blocos `camera` e `mira`
   em `src/config.js`
 - **mudar a pistola** (balas, dano, alcance, janela do parry, tempo de

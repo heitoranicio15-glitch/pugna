@@ -8,6 +8,8 @@ export function montarAtmosfera(area, config, direcaoLua) {
   area.paletaDoCeu = paletaDoCeu;
   area.luzJogador = config.luzJogador;
   area.corLuzJogador = config.corLuzJogador;
+  area.som = config.som;        // ambiente sintetizado (src/audio/Ambiente.js)
+  area.trilha = config.trilha;  // faixa da trilha (src/audio/regras.js: FAIXAS)
   area.grupo.add(new THREE.HemisphereLight(luzAmbiente.ceu, luzAmbiente.chao, luzAmbiente.intensidade));
   if (luar) {
     const luz = new THREE.DirectionalLight(luar.cor, luar.intensidade);
