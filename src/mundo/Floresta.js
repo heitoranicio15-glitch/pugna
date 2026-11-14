@@ -15,7 +15,7 @@ import { Colisores } from './Colisores.js';
 import { criarSorteio, texturas } from '../render/texturas.js';
 import { retro } from '../render/retro.js';
 import { placa } from './Aderecos.js';
-import { materiais, caixa, arvoreSeca, planoDeChao } from './pecas.js';
+import { materiais, caixa, arvoreSeca, planoDeChao, silhuetasColossais } from './pecas.js';
 import { sombrasDeContato } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
 import { decorar } from './Decoracao.js';
@@ -54,6 +54,7 @@ export class Floresta {
 
     // ---------- névoa e luzes gerais ----------
     montarAtmosfera(this, C, direcaoLua);
+    silhuetasColossais(this.grupo, direcaoLua);   // as mesmas torres colossais no horizonte
 
     // ---------- pontos e rotas (decididos antes, para as árvores saberem o que evitar) ----------
     this.portais = [

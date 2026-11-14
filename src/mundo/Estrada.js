@@ -14,7 +14,7 @@ import { Colisores } from './Colisores.js';
 import { criarSorteio, texturas } from '../render/texturas.js';
 import { retro } from '../render/retro.js';
 import { placa } from './Aderecos.js';
-import { materiais, caixa, casa, torre, tocha, animarTochas, arvoreSeca, muralha, planoDeChao, barril } from './pecas.js';
+import { materiais, caixa, casa, torre, tocha, animarTochas, arvoreSeca, muralha, planoDeChao, barril, silhuetasColossais } from './pecas.js';
 import { sombrasDeContato } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
 import { decorar } from './Decoracao.js';
@@ -42,6 +42,7 @@ export class Estrada {
 
     // ---------- névoa e luzes gerais ----------
     montarAtmosfera(this, C, direcaoLua);
+    silhuetasColossais(this.grupo, direcaoLua);   // as mesmas torres colossais no horizonte
 
     // ---------- chão: terra, pista de terra batida, sulcos de carroça e riacho ----------
     // Chão e pista não gravam profundidade e têm ordem fixa (veja o comentário em Vilarejo.js).

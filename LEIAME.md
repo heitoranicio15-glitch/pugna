@@ -378,6 +378,12 @@ trilha é a mesma do vilarejo.
 - Nas duas versões, as casas têm guarnições de madeira e ferragens visíveis
   de perto, a rosácea da catedral tem nervuras, o riacho tem ondas e a lareira
   tem arco e cornija. O HD também usa ardósia escaneada nos telhados e nas lajes.
+- **Clima de medo** (nos dois modos): breu índigo, névoa densa que esconde o fim do
+  mapa, névoa baixa que engole a base das casas (em degraus no PS1, suave no HD), lua
+  grande e baixa com uma agulha colossal recortada nela, fogo e lanternas furando a
+  névoa, contorno frio nos personagens, corvos, tochas que falham e silêncio antes
+  do inimigo (`src/mundo/Pressagios.js`, `CONFIG.medo`). Explorando, o caçador anda
+  12% mais devagar; em combate, a velocidade é a de sempre.
 - Cada área tem uma paleta própria nos dois modos. O vilarejo tem bruma violeta,
   a estrada puxa para o azul-esverdeado, os vitrais da catedral projetam feixes
   e a taverna tem luz quente e fagulhas na lareira.

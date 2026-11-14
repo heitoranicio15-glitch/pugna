@@ -47,8 +47,8 @@ const FRAG = /* glsl */ `
     // Estrelas (só no alto).
     vec2 ce = d.xz / (d.y + 0.4) * 46.0;
     vec2 cel = floor(ce);
-    float est = step(0.965, hash(cel)) * step(length(fract(ce) - 0.5), 0.22);
-    est *= smoothstep(0.12, 0.5, h) * (0.5 + 0.5 * sin(uTempo * 1.5 + hash(cel) * 40.0));
+    float est = step(0.94, hash(cel)) * step(length(fract(ce) - 0.5), 0.2);   // estrelas densas (antes 0,965)
+    est *= smoothstep(0.06, 0.45, h) * (0.5 + 0.5 * sin(uTempo * 1.5 + hash(cel) * 40.0));
 
     // Nuvens em faixas, andando devagar.
     vec2 cn = d.xz / (d.y + 0.22);
@@ -58,7 +58,8 @@ const FRAG = /* glsl */ `
     // Halo azul em volta da lua.
     float ang = acos(clamp(dot(d, normalize(uLuaDir)), -1.0, 1.0));
     float fora = max(ang - uLuaRaio, 0.0);
-    float halo = exp(-fora * 26.0) * 0.9 + exp(-fora * 4.0) * 0.22;
+    // Halo azul largo: a lua é a luz que guia o jogador.
+    float halo = exp(-fora * 26.0) * 0.9 + exp(-fora * 4.0) * 0.3 + exp(-fora * 1.4) * 0.1;
 
     cor += vec3(0.8, 0.85, 1.0) * est * (1.0 - nuv);
     vec3 corNuvem = mix(uMeio * 0.5, uNuvem, n) * (0.55 + halo * 1.2);

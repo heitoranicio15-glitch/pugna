@@ -19,7 +19,8 @@ export class Som {
       this.ambiente?.entrar(this.somDaArea, CONFIG.audio.crossfadeAmbiente);
     });
     // Liga cada aviso do jogo ao seu som.
-    eventos.em('jogador:passo', (d) => this.passo(d?.correndo ? 0.5 : d?.agachado ? 0.14 : 0.32));
+    // Passos pesados (direção de arte): mais graves e um pouco mais longos.
+    eventos.em('jogador:passo', (d) => this.passo(d?.correndo ? 0.5 : d?.agachado ? 0.14 : 0.32, 0.8, 0.14));
     eventos.em('jogador:pouso', () => this.passo(0.7, 0.7));
     eventos.em('jogador:pulo', () => this.passo(0.25, 1.3));
     eventos.em('jogador:golpe', (d) => this.zunido(d.forte ? 0.5 : 0.35, d.forte ? 0.32 : 0.2, d.forte ? 500 : 900));
@@ -87,7 +88,12 @@ export class Som {
       this.rosnado(0.55 * perto, 55);
       setTimeout(() => this.rosnado(0.45 * perto, 42), 260);
     });
-    eventos.em('inimigo:alerta', (i) => this.rosnado(0.3 * this.perto(i), i.tipo === 'cavaleiro' ? 70 : 120));
+    eventos.em('inimigo:alerta', (i) => {
+      this.abafarAmbiente();   // o mundo se cala por um instante...
+      this.rosnado(0.3 * this.perto(i), i.tipo === 'cavaleiro' ? 70 : 120);   // ...e ele rosna
+    });
+    // Rajada que sussurra (presságio): chiado que sobe e desce devagar.
+    eventos.em('medo:rajada', () => this.ruido({ volume: 0.08, duracao: 2.6, de: 260, ate: 900, q: 3, ataque: 1.1 }));
     eventos.em('inimigo:morreu', (i) => {   // morto pelas costas: cai sem grito
       if (!i.silencioso) this.rosnado(0.35 * this.perto(i), 50);
       this.passo((i.silencioso ? 0.3 : 0.6) * this.perto(i), 0.5, 0.45);
@@ -122,13 +128,25 @@ export class Som {
     const dados = this.chiado.getChannelData(0);
     for (let i = 0; i < n; i++) dados[i] = Math.random() * 2 - 1;
     // Vento e zumbido de sempre passam por um ganho próprio, que cada área ajusta (`som.base`).
+    // Vento, zumbido e ambiente da área passam pelo abafador: o silêncio antes do inimigo.
+    this.abafador = this.ctx.createGain();
+    this.abafador.connect(this.saida);
     this.base = this.ctx.createGain();
     this.base.gain.value = this.somDaArea?.base ?? 1;
-    this.base.connect(this.saida);
+    this.base.connect(this.abafador);
     this.vento();
     this.zumbido();
-    this.ambiente = new Ambiente(this.ctx, this.chiado, this.saida, { ativo: () => !this.pausado && this.volume > 0.001 });
+    this.ambiente = new Ambiente(this.ctx, this.chiado, this.abafador, { ativo: () => !this.pausado && this.volume > 0.001 });
     this.ambiente.entrar(this.somDaArea, CONFIG.audio.crossfadeAmbiente * 2);   // a primeira entrada é mais lenta
+  }
+
+  /** Cala vento e ambiente por um instante e volta devagar (CONFIG.medo.silencio). */
+  abafarAmbiente() {
+    if (!this.abafador) return;
+    const S = CONFIG.medo.silencio, g = this.abafador.gain, t = this.ctx.currentTime;
+    g.cancelScheduledValues(t);
+    g.setTargetAtTime(S.abafar, t, 0.08);
+    g.setTargetAtTime(1, t + S.segura, S.volta / 3);
   }
 
   /** Nível do vento e do zumbido de base (1 = o de sempre), com transição suave. */

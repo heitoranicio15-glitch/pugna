@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { retro } from './retro.js';
 
 const porMaterial = new WeakMap();
 const mapasPorAsset = new Map();
@@ -45,7 +46,8 @@ async function criarVariante(material, { asset, intensidade, metalness, preserva
   });
   // Avisos e clarões dos personagens animam o mesmo objeto Color nos dois modos.
   if (preservarEmissao) variante.emissive = material.emissive;
-  return variante;
+  // A névoa baixa vale também no HD (a tremida fica desligada pelo próprio renderizador).
+  return retro(variante);
 }
 
 export class MateriaisHd {

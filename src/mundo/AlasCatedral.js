@@ -13,7 +13,7 @@ export function montarAlasCatedral(mundo) {
     bloco(grupo, m.pedraEscura, x, 5.4, -5, 13.55, 0.48, 14.55);
     for (const [px, z, l, p] of [[lado * 35, -5, 0.65, 14], [x,-12,13,0.65], [x,2,13,0.65]]) {
       bloco(grupo, m.pedra, px, 2.62, z, l, 5.24, p);
-      bloco(grupo, m.pedraEscura, px, 0.3, z, l + 0.12, 0.6, p + 0.12);   // rodapé, como na nave
+      bloco(grupo, m.pedraMusgo, px, 0.3, z, l + 0.12, 0.6, p + 0.12);   // rodapé úmido, como na nave
       colisores.adicionar(px, z, l, p);
     }
     for (const z of [-9.05, -0.95]) {

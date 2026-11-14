@@ -12,7 +12,7 @@ import { CONFIG } from '../config.js';
 import { Colisores } from './Colisores.js';
 import { montarExploracaoVilarejo } from './ExploracaoVilarejo.js';
 import { texturas, criarSorteio } from '../render/texturas.js';
-import { materiais, caixa, piramide, torre, igreja, tocha, animarTochas, arvoreSeca, muralha, planoDeChao, ladrilhoDe } from './pecas.js';
+import { materiais, caixa, piramide, torre, igreja, tocha, animarTochas, arvoreSeca, muralha, planoDeChao, ladrilhoDe, silhuetasColossais } from './pecas.js';
 import { sombrasDeContato } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
 import { montarBairrosVilarejo } from './BairrosVilarejo.js';
@@ -191,6 +191,7 @@ export class Vilarejo {
     castelo.position.set(-190, -6, -300);
     castelo.rotation.y = 0.5;
     this.grupo.add(castelo);
+    silhuetasColossais(this.grupo, direcaoLua, { x: 0, z: -36 });
 
     // ---------- bancos de névoa rasteira ----------
     const bruma = C.bruma;

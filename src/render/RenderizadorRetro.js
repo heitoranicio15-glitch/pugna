@@ -22,7 +22,14 @@ const FRAG = /* glsl */ `
   uniform float uContraste; // 1 = contraste como está
   uniform float uEscurecer; // 0 = normal, 1 = preto (usado em transições)
   uniform float uBrilho;
+  uniform vec3 uTomSombra;   // cor da névoa baixa da área: as sombras puxam para ela
+  uniform float uForcaTom;
+  uniform float uGrao;       // HD: grão de filme
+  uniform float uHalo;       // HD: brilho leve em volta das luzes fortes
+  uniform float uTempo;
   varying vec2 vUv;
+
+  float ruido(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 
   // Matriz de Bayer 4x4: o padrão clássico de pontilhado.
   float bayer(vec2 p) {
@@ -43,6 +50,18 @@ const FRAG = /* glsl */ `
     vec2 px = floor(vUv * uRes);
     vec3 cor = texture2D(tCena, (px + 0.5) / uRes).rgb;
 
+    // Halo barato: 8 amostras em anel só do que passa de 0,6 (fogo, janelas, cristais).
+    if (uHalo > 0.0) {
+      vec3 soma = vec3(0.0);
+      vec2 passo = 3.0 / uRes;
+      for (int i = 0; i < 8; i++) {
+        float a = float(i) * 0.785398;
+        vec3 v = texture2D(tCena, vUv + vec2(cos(a), sin(a)) * passo * (1.0 + float(i / 4) * 1.6)).rgb;
+        soma += max(v - 0.6, 0.0);
+      }
+      cor += soma / 8.0 * uHalo;
+    }
+
     // Vinheta suave: escurece os cantos e puxa o olhar para o centro.
     vec2 c = vUv - 0.5;
     cor *= 1.0 - dot(c, c) * 0.85;
@@ -61,6 +80,12 @@ const FRAG = /* glsl */ `
     }
     cor = pow(cor, vec3(1.0 / 2.2));
     cor = mix(cor, cor * cor * (3.0 - 2.0 * cor), 0.35);
+
+    // Paleta presa: as sombras viram o índigo (ou o verde-azulado) da área, o fogo continua quente.
+    float lum = dot(cor, vec3(0.299, 0.587, 0.114));
+    vec3 tom = uTomSombra * (0.35 + lum * 2.4);
+    cor = mix(cor, tom, uForcaTom * (1.0 - smoothstep(0.03, 0.42, lum)));
+    if (uGrao > 0.0) cor += (ruido(px + fract(uTempo * 7.3) * 91.0) - 0.5) * uGrao;
 
     // Estilo HD: mais cor e contraste (no PS1 os dois valem 1 e nada muda).
     if (uSaturacao != 1.0 || uContraste != 1.0) {
@@ -109,6 +134,11 @@ export class RenderizadorRetro {
       uContraste: { value: CONFIG.render.estilos.ps1.contraste },
       uEscurecer: { value: 0 },
       uBrilho: { value: 1 },
+      uTomSombra: { value: new THREE.Color(0x26306a) },
+      uForcaTom: { value: CONFIG.render.estilos.ps1.tomDasSombras },
+      uGrao: { value: 0 },
+      uHalo: { value: 0 },
+      uTempo: uniformesRetro.uTempo,
     };
     this.cenaFinal = new THREE.Scene();
     this.cameraFinal = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -169,6 +199,10 @@ export class RenderizadorRetro {
     this.uniformes.uContraste.value = e.contraste;
     // No PS1 valem a pixelização e o tremor escolhidos; no HD eles ficam guardados.
     uniformesRetro.uTremor.value = this.estilo === 'ps1' && !this.tremorPs1 ? 0 : e.tremor;
+    uniformesRetro.uBrumaBandas.value = e.bandasDeNevoa ?? 0;
+    this.uniformes.uForcaTom.value = e.tomDasSombras ?? 0;
+    this.uniformes.uGrao.value = e.grao ?? 0;
+    this.uniformes.uHalo.value = e.halo ?? 0;
     definirFiltroTexturas(e.filtroTextura);
     const altura = this.estilo === 'hd' ? this.resolucaoHd : this.resolucaoPs1;
     this.canvas.style.imageRendering = this.estilo === 'hd' ? 'auto' : 'pixelated';
@@ -180,6 +214,7 @@ export class RenderizadorRetro {
   /** Desenha a cena do mundo e, se houver, uma segunda cena por cima (sobreposição). */
   desenhar(cena, camera, cenaArma, cameraArma) {
     const r = this.renderer;
+    this.uniformes.uTomSombra.value.copy(uniformesRetro.uBrumaCor.value);   // segue a área
     r.setRenderTarget(this.alvo);
     r.autoClear = true;
     r.render(cena, camera);

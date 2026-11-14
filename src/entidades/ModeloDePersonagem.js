@@ -78,7 +78,7 @@ export function modeloDePersonagem(grupo, id, { reserva = [], armas = [], emissa
       if (!malha.isMesh) return;
       const adaptar = original => {
         if (!materiais.has(original)) {
-          const mat = retro(original.clone());
+          const mat = retro(original.clone(), { contorno: true });   // borda fria de luar
           mat.color.multiply(new THREE.Color(perfil.cor));
           if (tinta !== undefined) mat.color.multiply(new THREE.Color(tinta));
           if (!mat.roughnessMap) mat.roughness = 0.88;

@@ -123,10 +123,11 @@ export class Lua {
   /** uniformes = os uniformes do shader do céu (a lua acrescenta os dela). */
   constructor(uniformes, cores) {
     this.u = uniformes;
-    this.direcao = new THREE.Vector3(0.4, 0.5, -0.77).normalize(); // nordeste, ao lado das torres da catedral
+    // Nordeste, ao lado das torres da catedral; mais baixa (antes y 0,5): a base some na névoa do horizonte.
+    this.direcao = new THREE.Vector3(0.42, 0.34, -0.84).normalize();
     Object.assign(uniformes, {
       uLuaDir: { value: this.direcao },
-      uLuaRaio: { value: 0.31 },                 // ~18 graus: quase metade da altura da tela
+      uLuaRaio: { value: 0.37 },                 // ~21 graus (antes 18): maior que as torres da igreja
       uLuaVirar: { value: new THREE.Vector2() },
       uLuaPupila: { value: new THREE.Vector2() },
       uLuaAtencao: { value: 0 },
