@@ -48,7 +48,7 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
-- **Pronto e no ar:** vilarejo, Catedral do Véu (nave, Ossário, Relicário, Santuário, selos), inimigos cavaleiro, caçador e Penitente, miniboss Guardião do Véu, bolsa e frascos de cura, lápides, atalhos, menu de configurações, trilha sonora, terceira pessoa, mira travada, parry com a pistola, crítico, visceral, execução, ataque forte carregado, rolamento e quickstep. Estado mais recente: **S3 pronto** (estrada e taverna). Antes dele, S2 (botão de gráfico PS1 / HD em Configurações). Antes dele, a Etapa C ficou completa com o PR C3.
+- **Pronto e no ar:** vilarejo, Catedral do Véu (nave, Ossário, Relicário, Santuário, selos), inimigos cavaleiro, caçador e Penitente, miniboss Guardião do Véu, bolsa e frascos de cura, lápides, atalhos, menu de configurações, trilha sonora, terceira pessoa, mira travada, parry com a pistola, crítico, visceral, execução, ataque forte carregado, rolamento e quickstep. Estado mais recente: **S7 pronto** (a bolsa aberta durante a luta deixa livre o canto das barras; só CSS). Antes: S3 (estrada e taverna). Antes dele, S2 (botão de gráfico PS1 / HD em Configurações). Antes dele, a Etapa C ficou completa com o PR C3.
 - **Salvamento estilo Souls (item 1, pronto):** o jogo grava sozinho a cada acontecimento e não há salvar manual. O **Osso de Retorno** é usado pela bolsa, é único e de uso ilimitado. Hoje não há penalidade ao usar.
 - **Base dos ataques (item 2, pronto):** todos os inimigos usam a mesma máquina de golpes (`src/entidades/Ataques.js`), com 3 fases (preparo, golpe ativo, recuperação) e 3 tipos, cada um com pose, cor e som próprios: **alto**, **pesado** (vermelho, sino grave) e **rasteira** (agachado, amarelo). As sequências de cada inimigo ficam em `CONFIG.inimigos` (`ataques`) e os números de cada tipo em `CONFIG.combate.ataquesInimigos`. A rasteira é larga, não pode ser aparada nem bloqueada e passa por baixo de quem está no ar.
 - **Celular congelado (item 0, pronto):** aviso na tela inicial e ao começar em aparelho de toque, teste do celular fora dos obrigatórios, código de toque guardado.
@@ -121,7 +121,7 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 - **Infra:** `jogar.bat` com atualização automática, `atualizar.bat`, e regra de integração automática no `AGENTS.md` com o `CLAUDE.md` apontando para ele.
 - **Specs (pronto):** `docs/specs/` tem uma página por tarefa futura (00 a 08), com objetivo, arquivos, critérios de aceite e modelo de IA recomendado. A ordem está na "Fila do Gabriel".
 - **Contrato de área (pronto):** `src/mundo/areas.js` tem o registro das áreas, e cada área declara `luzJogador` e `usaCeu`. Área nova não exige mexer no `Jogo.js`.
-- **A conferir:** origem das 4 músicas (o repositório é público). Os números da Etapa A são um primeiro chute e precisam ser sentidos jogando. O painel da bolsa cobre um pedaço da barra de vida em telas estreitas.
+- **A conferir:** origem das 4 músicas (o repositório é público). Os números da Etapa A são um primeiro chute e precisam ser sentidos jogando.
 - **Pendente para o Heitor decidir:** a penalidade ao morrer (como as almas e os ecos de sangue; ela casa com o rally) e a penalidade do Osso de Retorno. Até lá, morrer e usar o osso não custam nada.
 
 ## Plano (fazer um por vez, cada um num chat novo)
@@ -163,7 +163,7 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 - [ ] **7. S5: atmosfera por área** (spec 04)
 - [ ] **8. E: ajuste fino com os amigos**
 - [ ] **9. S6: primeira área nova** (castelo, floresta ou caverna; spec 05; o Heitor escolhe)
-- [ ] **10. S7: bolsa cobrindo a barra de vida em telas estreitas**
+- [x] **10. S7: bolsa cobrindo a barra de vida em telas estreitas** — com a luta rolando, a tela da bolsa reserva 140 px embaixo (`.tela.ao-vivo` no `estilo.css`) e o painel rola por dentro; PR 24
 - [ ] **11. S8: Supabase** (spec 06; precisa do Heitor para criar o projeto)
 
 **Decidido pela IA, o Heitor revisa** (detalhes nas specs): clique direito e C atiram; 8 balas, repostas na lanterna e não gravadas no save; visceral não gasta estamina; golpe comum de lado em inimigo desequilibrado continua crítico de 2,6×; golpes que não podem ser aparados avisam em branco-violeta; no máximo 2 inimigos comuns atacando juntos; NPCs não podem ser feridos; taverna sem loja; login por link mágico; a floresta como primeira área nova.

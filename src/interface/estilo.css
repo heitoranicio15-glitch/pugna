@@ -55,6 +55,10 @@ html, body {
 }
 /* Bolsa aberta sem pausar: fundo mais claro, para ver a luta que continua. */
 .tela.ao-vivo { background: rgba(4, 3, 14, 0.38); }
+/* Com a luta rolando, o painel deixa livre o canto de baixo (vida, estamina, frascos e balas),
+   que fica por cima da bolsa em telas estreitas ou baixas. */
+.tela.ao-vivo { padding-bottom: 140px; }
+.tela.ao-vivo .painel-bolsa { max-height: 100%; overflow-y: auto; }
 /* Celular congelado: o aviso só aparece em aparelhos de toque. */
 .aviso-celular { display: none; max-width: 40ch; margin: 10px auto; padding: 8px 12px; color: #ffd9a0; border: 1px solid #b4601a; background: #2a1408cc; }
 .modo-toque .aviso-celular { display: block; }
