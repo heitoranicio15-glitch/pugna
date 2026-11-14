@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { texturas } from '../render/texturas.js';
 import { caixa as cx, corpoFacetado, lamina, manto, materialDePersonagem, parte } from './formas.js';
+import { modeloPronto } from '../render/modelos.js';
 
 const CB = CONFIG.combate;
 const ALTURA_MIOLO = 0.95;   // centro do corpo: é em volta dele que o boneco rola
@@ -107,6 +108,9 @@ export class Boneco {
       cx(0.26, 0.045, 0.05, latao, 0, 0, 0.1),
       cx(0.04, 0.04, 0.2, couro, 0, 0, -0.02),
     );
+    modeloPronto(this.espada, 'Sword', { pos: [0,-0.031,0.43], tamanho: [0.26,0.062,1.2],
+      orientacao: [Math.PI / 2,0,0], reserva: [...this.espada.children],
+      material: m => m.name === 'Metal' ? aco : m.name === 'Gold' ? latao : couro });
     this.bracoD.add(this.espada);
 
     // Pistola na mão esquerda (o parry do jogo). O cano segue o braço: abaixado,

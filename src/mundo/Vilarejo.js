@@ -16,6 +16,7 @@ import { materiais, caixa, piramide, casa, torre, igreja, tocha, animarTochas, a
 import { sombrasDeContato } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
 import { montarBairrosVilarejo } from './BairrosVilarejo.js';
+import { modeloPronto } from '../render/modelos.js';
 
 const C = CONFIG.areas.vilarejo;
 
@@ -24,7 +25,7 @@ export class Vilarejo {
     this.id = 'vilarejo';
     this.nome = 'Vilarejo';
     this.usaCeu = true; // mostra e atualiza o céu e a lua
-    this.limites = { minX: -47, maxX: 47, minZ: -99, maxZ: 56 };
+    this.limites = { minX: -66, maxX: 66, minZ: -128, maxZ: 56 };
     this.grupo = new THREE.Group();
     this.colisores = new Colisores();
     this.tochas = [];
@@ -100,7 +101,26 @@ export class Vilarejo {
       { x: -8.6, z: -27, l: 8, p: 6.5, a: 5.4, frente: 'L' },
       { x: 8.6, z: -28, l: 8, p: 6.5, a: 6.6, frente: 'O' },
     ];
-    for (const c of casas) casa(this, { ...c, sorteio });
+    casas.push(
+      { x: -42, z: 34, l: 12, p: 10, a: 6.2, frente: 'L', modelo: 'Stable' },
+      { x: -53.5, z: 37, l: 9, p: 7, a: 5, frente: 'N' },
+      { x: -55, z: 21, l: 9, p: 8, a: 5.6, frente: 'L', modelo: 'Blacksmith', acesa: true },
+      { x: -39, z: 17.5, l: 8, p: 7, a: 5, frente: 'O' },
+      { x: -42.4, z: -27, l: 9, p: 7, a: 6, frente: 'L' },
+      { x: -54.5, z: -27.4, l: 8, p: 7, a: 4.5, frente: 'L' },
+      { x: -51, z: -45, l: 11, p: 9, a: 8.5, frente: 'L', modelo: 'Bell_Tower' },
+      { x: -41.4, z: -56.1, l: 10, p: 8, a: 5.5, frente: 'S' },
+      { x: -25.5, z: -60, l: 8, p: 7, a: 5, frente: 'S' },
+      { x: 48, z: 17, l: 10, p: 8, a: 5.3, frente: 'N', modelo: 'Stable' },
+      { x: 56, z: 8, l: 9, p: 8, a: 6.2, frente: 'O', acesa: true },
+      { x: 55, z: -9, l: 10, p: 8, a: 5.5, frente: 'O' },
+      { x: 55, z: -33.5, l: 10, p: 8, a: 6.7, frente: 'O' },
+      { x: 55.5, z: -48, l: 10, p: 8, a: 5.4, frente: 'O' },
+      { x: 32.8, z: -111.5, l: 10, p: 9, a: 6.5, frente: 'O' },
+      { x: -26, z: -111.5, l: 10, p: 9, a: 6, frente: 'L' },
+    );
+    const variantes = ['House_1', 'House_3', 'House_2', 'House_4'];
+    for (const [i, c] of casas.entries()) casa(this, { ...c, sorteio, modelo: c.modelo ?? variantes[i % variantes.length] });
     sombrasDeContato(this.grupo, casas.map(({ x, z, l = 7, p = 8, frente }) => {
       const deLado = frente === 'L' || frente === 'O';
       return [x, z, (deLado ? p : l) * 1.5, (deLado ? l : p) * 1.5];
@@ -112,7 +132,7 @@ export class Vilarejo {
     torre(this, { x: 39, z: 21, lado: 4.5, a: 12, tipo: 'ponta' });
 
     // ---------- muralha em volta (impede sair do mapa) ----------
-    const LX = 48, ZN = -100, ZS = 57;
+    const LX = 67, ZN = -129, ZS = 57;
     muralha(this, -LX, ZN, LX, ZN, 6);
     muralha(this, -LX, ZN, -LX, ZS, 6);
     muralha(this, LX, ZN, LX, ZS, 6);
@@ -127,14 +147,17 @@ export class Vilarejo {
     this.colisores.adicionar(0, ZS, 8, 1.5);
 
     // ---------- poço da praça ----------
+    const poçoOriginal = new THREE.Group();
+    this.grupo.add(poçoOriginal);
     const poco = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.4, 0.9, 8), m.pedraEscura);
-    poco.position.set(0, 0.45, 0); this.grupo.add(poco);
+    poco.position.set(0, 0.45, 0); poçoOriginal.add(poco);
     const agua = new THREE.Mesh(new THREE.CircleGeometry(1.05, 8), new THREE.MeshBasicMaterial({ color: 0x06142e }));
-    agua.rotation.x = -Math.PI / 2; agua.position.y = 0.8; this.grupo.add(agua);
+    agua.rotation.x = -Math.PI / 2; agua.position.y = 0.8; poçoOriginal.add(agua);
     for (const lado of [-1, 1]) {
-      const haste = caixa(0.16, 2.6, 0.16, m.madeira, 1); haste.position.set(lado * 1.2, 1.3, 0); this.grupo.add(haste);
+      const haste = caixa(0.16, 2.6, 0.16, m.madeira, 1); haste.position.set(lado * 1.2, 1.3, 0); poçoOriginal.add(haste);
     }
-    const cobertura = piramide(3.2, 1.2, m.telhado); cobertura.position.y = 3.1; this.grupo.add(cobertura);
+    const cobertura = piramide(3.2, 1.2, m.telhado); cobertura.position.y = 3.1; poçoOriginal.add(cobertura);
+    modeloPronto(this.grupo, 'Well', { tamanho: [2.72, 3.55, 2.72], reserva: [poçoOriginal] });
     this.colisores.adicionar(0, 0, 2.5, 2.5, 0.9);
 
     // ---------- tochas (as luzes laranja) ----------
@@ -157,6 +180,11 @@ export class Vilarejo {
     }
     const cerca = (x, z, l, pf) => {
       const c = caixa(l, 1.1, pf, m.madeira, 0.9); c.position.set(x, 0.55, z); this.grupo.add(c);
+      const lateral = pf > l;
+      modeloPronto(this.grupo, 'Fence', {
+        pos: [x, 0, z], rotacao: lateral ? Math.PI / 2 : 0,
+        tamanho: [lateral ? pf : l, 1.1, 0.18], reserva: [c],
+      });
       this.colisores.adicionar(x, z, l, pf, 1.1);
     };
     cerca(16, -44, 10, 0.14);
@@ -169,6 +197,7 @@ export class Vilarejo {
     for (const [x, z, t] of [[4.6, 30, 1], [5.2, 31.2, 0.8], [-12.6, 8, 1], [11.5, -3.5, 0.9], [-21, -3.8, 1], [20, 4.2, 1.1], [-5, -36, 1]]) {
       const cx = caixa(t, t, t, m.madeira, 1); cx.position.set(x, t / 2, z); cx.rotation.y = sorteio() * 0.2;
       this.grupo.add(cx); this.colisores.adicionar(x, z, t, t, t);
+      modeloPronto(this.grupo, 'Crate', { pos: [x, 0, z], tamanho: [t, t, t], reserva: [cx] });
     }
 
     // ---------- árvores secas ----------
@@ -231,6 +260,9 @@ export class Vilarejo {
       { tipo: 'cacador', rota: [[-14, -0.5], [-42, 0.5]] },
       { tipo: 'cavaleiro', rota: [[-4, -38], [4, -38]] },
       { tipo: 'cacador', rota: [[14, -40], [31, -42], [22, -66]] },
+      { tipo: 'cavaleiro', rota: [[-48, 31], [-47, 12], [-44, -4]] },
+      { tipo: 'cacador', rota: [[50, 2], [46, -15], [44, -41]] },
+      { tipo: 'cavaleiro', rota: [[-29, -102], [-7, -114], [22, -110]] },
     ];
   }
 

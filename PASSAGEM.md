@@ -49,6 +49,14 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Expansão do vilarejo e da Catedral:** o mapa da vila passou de 94 ×
+  155 m para 132 × 184 m, com o Bairro dos Estábulos, Largo da Romaria e
+  Caminho das Urnas fechando o percurso lateral. A Catedral passou de
+  44 × 42 m para 70 × 42 m, com duas entradas para cada ala nova. Modelos
+  importados substituem boa parte da arquitetura e dos adereços. A
+  Capela do Último Nome e o Arquivo das Vigílias são opcionais e a
+  progressão publicada continua usando os mesmos checkpoints e selos.
+
 - **Vilarejo e Catedral redesenhados:** em cima de `66edae4`, o caminho sul
   passa pelo arco de triagem e bifurca entre a rua do poço e o mercado. A
   Catedral ganhou um circuito a oeste pela Galeria dos Nomes, bancos
@@ -221,6 +229,9 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
   catedral, fagulhas na taverna e transições de atmosfera nos portais.
 - [x] **Gráficos, incremento 5** — redistribuição do vilarejo e interior da
   Catedral, com novos percursos e cinco registros da história do Véu.
+- [x] **Gráficos, expansão dos mapas e primeira troca em escala de modelos**
+  — 42 GLBs CC0, novas alas e bairros. A substituição de corpos animados
+  completos, lanterna, pistola e fachada da Catedral segue em aberto.
 - [ ] **Gráficos, próximo incremento** — testar o percurso real e medir o custo
   do HD com GPU. Usar o guia gráfico para comparar o primeiro piloto de
   Blender com a fachada procedural. Alinhar iluminação com S5 e os modelos

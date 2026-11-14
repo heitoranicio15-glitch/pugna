@@ -54,33 +54,40 @@ export class MateriaisHd {
     this.variantes = new Map();
     this.hd = false;
     for (const { grupo } of areas) {
-      grupo.traverse((malha) => {
-        if (!malha.isMesh) return;
-        const original = malha.material;
-        const materiais = Array.isArray(original) ? original : [original];
-        if (materiais.some((material) => porMaterial.has(material))) {
-          this.malhas.push({ malha, original });
-        }
+      this.registrar(grupo);
+      grupo.traverse(objeto => {
+        const pronto = objeto.userData.pronto;
+        if (pronto) pronto.then(carregado => { if (carregado) this.registrar(objeto); });
       });
     }
+  }
+
+  registrar(grupo) {
+    grupo.traverse(malha => {
+      if (!malha.isMesh) return;
+      const original = malha.material;
+      if (![original].flat().some(material => porMaterial.has(material))) return;
+      const entrada = { malha, original };
+      this.malhas.push(entrada);
+      this.aplicar(entrada);
+    });
   }
 
   definirEstilo(estilo) {
     const hd = estilo === 'hd';
     if (this.hd === hd) return;
     this.hd = hd;
-    for (const entrada of this.malhas) {
-      if (!hd) {
-        entrada.malha.material = entrada.original;
-        continue;
-      } else if (entrada.variante) {
-        entrada.malha.material = entrada.variante;
-      } else {
-        entrada.carregamento ??= this.carregar(entrada.original).then((material) => {
-          entrada.variante = material;
-          if (this.hd) entrada.malha.material = material;
-        });
-      }
+    for (const entrada of this.malhas) this.aplicar(entrada);
+  }
+
+  aplicar(entrada) {
+    if (!this.hd) entrada.malha.material = entrada.original;
+    else if (entrada.variante) entrada.malha.material = entrada.variante;
+    else {
+      entrada.carregamento ??= this.carregar(entrada.original).then(material => {
+        entrada.variante = material;
+        if (this.hd) entrada.malha.material = material;
+      });
     }
   }
 

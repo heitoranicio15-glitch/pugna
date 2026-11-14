@@ -69,9 +69,7 @@ export const CONFIG = {
       fundo: 0x0d0b19,
       luzAmbiente: { ceu: 0xb8a7d6, chao: 0x3d294a, intensidade: 1.06 },
       feixes: [
-        { origem: [21.37, 4.85, -10], destino: [13.1, 0.08, -7.65], largura: 1.35, cor: 0x8e98ff, opacidade: 0.115 },
         { origem: [21.37, 4.85, -5], destino: [12.4, 0.08, -3.1], largura: 1.25, cor: 0xa2bfff, opacidade: 0.125 },
-        { origem: [21.37, 4.85, 0], destino: [14.05, 0.08, 1.1], largura: 1.1, cor: 0xab8ee8, opacidade: 0.095 },
         { origem: [0, 4.55, -32.29], destino: [0, 0.08, -24.7], largura: 2.5, cor: 0xb391ee, opacidade: 0.08 },
       ],
     },

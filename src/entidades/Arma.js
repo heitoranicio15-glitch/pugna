@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { texturas } from '../render/texturas.js';
 import { CONFIG } from '../config.js';
 import { caixa, materialDePersonagem, parte } from './formas.js';
+import { modeloPronto } from '../render/modelos.js';
 
 // Poses: posição [x, y, z] e rotação [x, y, z] da espada em relação à câmera.
 const POSES = {
@@ -54,11 +55,13 @@ export class Arma {
     braco.rotation.x = Math.PI / 2;
     braco.position.set(0, -0.038, 0.265);
     this.espada.add(lamina, ponta, guarda, cabo, pomo, mao, braco);
+    const reservaEspada = [lamina, ponta, guarda, cabo, pomo];
     for (const lado of [-1, 1]) {
       const quilon = new THREE.Mesh(new THREE.ConeGeometry(0.029, 0.11, 4), escuro);
       quilon.position.set(lado * 0.132, 0.13, 0);
       quilon.rotation.z = -lado * 1.18;
       this.espada.add(quilon);
+      reservaEspada.push(quilon);
     }
     for (let i = 0; i < 4; i++) {
       const dedo = new THREE.Mesh(new THREE.BoxGeometry(0.049, 0.023, 0.046), couro);
@@ -67,6 +70,9 @@ export class Arma {
       this.espada.add(dedo);
     }
     this.espada.scale.setScalar(0.66);
+    modeloPronto(this.espada, 'Sword', { pos: [0,-0.13,0], tamanho: [0.24,1.32,0.067],
+      material: m => m.name === 'Metal' ? aco : m.name === 'Gold' ? escuro : couro,
+      reserva: reservaEspada });
     this.cena.add(this.espada);
 
     this.pistola = new THREE.Group();

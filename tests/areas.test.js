@@ -190,6 +190,26 @@ test('a Galeria dos Nomes fecha um circuito com o Ossário sem abrir a grade dos
   assert.equal(navega.encontrar({ x: 0, z: -11 }, { x: 0, z: -21 }, raio).length, 0);
 });
 
+test('a expansão liga os bairros pelos fundos e dá duas entradas a cada ala nova da Catedral', () => {
+  const { porId } = montarAsAreasReais();
+  const raio = CONFIG.jogador.raio;
+  const vila = porId.get('vilarejo');
+  const navegaVila = new Navegacao(vila.colisores, vila.limites);
+  const pontos = [[-48,32],[-47,3],[-36,-51],[-31,-84],[-28,-105],[27,-105],[43,-92],[43,-53],[48,-27],[47,4]];
+  const pos = ([x,z]) => ({ x,z });
+  for (let i = 1; i < pontos.length; i++) {
+    assert.ok(navegaVila.encontrar(pos(pontos[i-1]), pos(pontos[i]), raio).length, pontos[i].join(', '));
+  }
+  const catedral = porId.get('catedral');
+  const navegaCatedral = new Navegacao(catedral.colisores, catedral.limites);
+  for (const lado of [-1, 1]) {
+    for (const z of [-9.05, -0.95]) {
+      assert.ok(navegaCatedral.livre({ x: lado * 21.1, z }, { x: lado * 24, z }, raio), `${lado}, ${z}`);
+    }
+    assert.ok(navegaCatedral.encontrar({ x: lado * 24, z: -9.05 }, { x: lado * 24, z: -0.95 }, raio).length);
+  }
+});
+
 test('as novas anotações podem ser lidas de pontos acessíveis dos dois mapas', () => {
   const { porId } = montarAsAreasReais();
   const leituras = [

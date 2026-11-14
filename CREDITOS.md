@@ -8,6 +8,20 @@ Arte e efeitos produzidos no código do projeto:
 - **Efeitos sonoros**: sintetizados em tempo real em `src/audio/Som.js`.
 - **Lua e céu**: desenhados por shaders em `src/mundo/Lua.js` e `src/mundo/Ceu.js`.
 
+## Modelos 3D distribuídos
+
+Os GLBs estão em `public/assets/modelos/`. Os encaixes, rotações, tons e
+materiais de algumas superfícies são aplicados pelo jogo.
+
+| Arquivos | Origem | Licença |
+|---|---|---|
+| `rgs-*.glb` | Raphael Gonçalves (RGS Dev), [Sketchfab](https://sketchfab.com/3d-models/free-modular-low-poly-dungeon-pack-31f2e88017574702bb2c1c1e286dc747). Seis peças convertidas do FBX que o autor publicou no [OpenGameArt](https://opengameart.org/content/free-modular-low-poly-dungeon-pack). | CC0 |
+| `House_*`, `Inn`, `Stable`, `Blacksmith`, `Bell_Tower`, `Well`, `MarketStand_*`, `Bench_1`, `Barrel`, `Crate`, `Fence`, `Cart` | Quaternius, [Medieval Village Pack](https://quaternius.com/packs/medievalvillage.html). | CC0 |
+| `PointyTower`, `SmallSquareTowerBricks`, `TallWallBricks` | Quaternius, [Modular Medieval Building Pack](https://quaternius.com/packs/modularmedievalbuildings.html). | CC0 |
+| `CommonTree_Dead_*` | Quaternius, [Ultimate Nature Pack](https://quaternius.com/packs/ultimatenature.html). | CC0 |
+| `Sword`, `Helmet*`, `Hammer_Double` | Quaternius, [Animated Knight Pack](https://quaternius.com/packs/knightcharacter.html) e [Modular Weapons Pack](https://quaternius.com/packs/medievalweapons.html). Os GLBs do Quaternius vieram da conversão [quaternius-showcase](https://github.com/trebeljahr/quaternius-showcase/tree/0128ca5/public/glb). | CC0 |
+| `pillar_decorated`, `table_medium`, `table_long_tablecloth`, `torch`, `torch_mounted`, `banner_thin_red`, `wall_arched`, `rubble_half`, `shelf_large`, `key` | Kay Lousberg, [KayKit Dungeon Remastered](https://github.com/KayKit-Game-Assets/KayKit-Dungeon-Remastered-1.0/tree/b0ca9bd). | CC0 |
+
 ## Materiais HD de cenário
 
 O jogo distribui mapas de cor, normal OpenGL e rugosidade de 1K, convertidos

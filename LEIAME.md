@@ -246,6 +246,8 @@ lanterna à direita da entrada. Explore o **Ossário**, a oeste, e o **Relicári
 a leste. Recolha com **E** o selo de cada ala para abrir a grade do **Santuário**.
 A **Galeria dos Nomes** liga o lado oeste da entrada ao fundo do Ossário e
 permite voltar à nave por outra arcada. No Santuário, dois degraus levam ao altar.
+O Ossário e o Relicário têm, cada um, duas passagens na parede externa.
+As de oeste levam à **Capela do Último Nome** e as de leste ao **Arquivo das Vigílias**.
 O **Guardião do Véu** usa golpes altos, pesados e rasteiras. Quando perde
 metade da vida, ruge, fica invencível por 1 segundo e se afasta um passo. Na
 **fase final** ele não pode ser vencido só com parry: a maior parte dos golpes
@@ -266,6 +268,9 @@ onde você volta ao morrer ou reabrir o jogo.
   de triagem à direita. Depois do arco, a travessa a leste passa pelas bancas
   do mercado e volta à praça. A oeste ficam o baú da Casa da Sineira e a
   chave na Oficina do Poço. No adro, procure a abertura na cerca do cemitério.
+  Da rua dos fundos, siga para oeste até o **Bairro dos Estábulos** ou
+  para leste até o **Largo da Romaria**. O **Caminho das Urnas**, atrás da
+  Catedral, permite dar a volta entre os lados da vila.
 - **Catedral:** procure as inscrições no Ossário e no Relicário. A chave da
   oficina abre a porta ao sul do Relicário. Dentro da sacristia há uma inscrição,
   um frasco e uma alavanca que abre a grade de serviço para a lanterna da nave.

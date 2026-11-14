@@ -10,6 +10,26 @@ export const FRASCOS = Object.freeze({
 });
 
 export const ANOTACOES = Object.freeze({
+  'vilarejo:livro-dos-estabulos': {
+    nome: 'Livro dos estábulos',
+    texto: 'Quatro arreios para a romaria. Voltaram cinco cavalos. O quinto trazia uma fita do coro na crina e nenhum vestígio de cavaleiro.',
+  },
+  'vilarejo:ordem-dos-romeeiros': {
+    nome: 'Ordem dos romeiros',
+    texto: 'Pelo largo, em pares, até o adro. Um diz o nome do outro ao passar. Quem ouvir o nome antes de falar fica para trás e espera a luz.',
+  },
+  'vilarejo:lista-das-urnas': {
+    nome: 'Lista das urnas',
+    texto: 'Contadas vinte e duas atrás da catedral. A vigésima terceira já estava no altar quando chegamos. O selo ainda estava quente.',
+  },
+  'catedral:capela-ultimo-nome': {
+    nome: 'Capela do Último Nome',
+    texto: 'Aqui vieram dizer os nomes que já não cabiam nas lápides. Ao quarto dia, o leitor fechou o livro. Alguém continuou a ler do outro lado da parede.',
+  },
+  'catedral:arquivo-das-vigilias': {
+    nome: 'Arquivo das Vigílias',
+    texto: 'Retiveram os livros dos vivos no Relicário. Na manhã seguinte, havia páginas novas na caligrafia dos mortos. Reconheci o traço de minha mãe; ela nunca soube escrever.',
+  },
   'vilarejo:edital-triagem': {
     nome: 'Aviso de triagem',
     texto: 'Internação ao primeiro toque. Tragam o nome de batismo e uma pessoa que o possa repetir. Quem chegar só aguarda no mercado. Por ordem do Guardião: se o bronze tocar de novo sem que a corda mexa, fechem o portão.',

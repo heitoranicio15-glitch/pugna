@@ -16,6 +16,7 @@ import { texturas } from '../render/texturas.js';
 import { materiais, caixa, animarTochas, planoDeChao, barril, arcoOgival } from './pecas.js';
 import { fagulhasDaLareira, sombrasDeContato } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
+import { modeloPronto } from '../render/modelos.js';
 import { caixa as cx, corpoFacetado, materialDePersonagem, parte } from '../entidades/formas.js';
 
 const C = CONFIG.areas.taverna;
@@ -111,11 +112,16 @@ export class Taverna {
     this.mesas = [[-3.2, 0.4], [1.4, 1.8], [2.6, -0.3]];
     sombrasDeContato(this.grupo, this.mesas.map(([x, z]) => [x, z, 2.7, 2.05]));
     for (const [x, z] of this.mesas) {
+      const inicio = this.grupo.children.length;
       bloco(x, 0.88, z, 1.6, 0.1, 1.1, m.madeira, null, 1);
       for (const [dx, dz] of [[-0.7, -0.45], [0.7, -0.45], [-0.7, 0.45], [0.7, 0.45]]) bloco(x + dx, 0.42, z + dz, 0.12, 0.84, 0.12, m.madeiraEscura);
       this.colisores.adicionar(x, z, 1.6, 1.1, 0.93);
+      modeloPronto(this.grupo, 'table_medium', {
+        pos: [x, 0, z], tamanho: [1.6, 0.93, 1.1], reserva: this.grupo.children.slice(inicio),
+      });
       for (const dz of [-0.85, 0.85]) {
-        bloco(x, 0.24, z + dz, 1.2, 0.48, 0.4, m.madeiraEscura, 0.48, 1);
+        const pupitre = bloco(x, 0.24, z + dz, 1.2, 0.48, 0.4, m.madeiraEscura, 0.48, 1);
+        modeloPronto(this.grupo, 'Bench_1', { pos: [x,0,z + dz], tamanho: [1.2,0.48,0.4], reserva: [pupitre] });
       }
       // vela: chama que tremula
       const vela = colocar(new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.16, 5), retro(new THREE.MeshBasicMaterial({ color: 0xe8dcb8 }))), x + 0.45, 1.01, z - 0.2);

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { bloco, chave, frasco, placa } from './Aderecos.js';
 import { materiais, telhado, tocha, barril } from './pecas.js';
 import { CHAVE_SACRISTIA } from '../nucleo/Inventario.js';
+import { modeloPronto } from '../render/modelos.js';
 
 export function montarExploracaoVilarejo(mundo) {
   const m = materiais(), grupo = mundo.grupo, col = mundo.colisores;
@@ -94,6 +95,7 @@ export function montarExploracaoVilarejo(mundo) {
     carroca.add(roda);
   }
   col.adicionar(12.6, 9, 2.06, 2.5, 1.2);
+  modeloPronto(carroca, 'Cart', { tamanho: [2.06, 1.2, 2.5], reserva: [...carroca.children] });
 
   for (const [x, z, texto] of [[-5.55, 5.1, '← Casa da sineira'], [-5.6, -5.55, '← Oficina do poço'], [10.3, -43.65, 'Cemitério →']]) {
     bloco(grupo, m.madeira, x, 0.82, z, 0.16, 1.64, 0.16);

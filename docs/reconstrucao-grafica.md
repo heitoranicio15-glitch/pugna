@@ -81,6 +81,33 @@ contados por documentos de quem viveu o fechamento. A lista fica em
 de leitura e salvamento. A chave, a alavanca, os selos e os checkpoints
 mantêm os IDs publicados.
 
+## Expansão e modelos importados
+
+- A vila vai de 94 × 155 m a 132 × 184 m nos limites do jogador, cerca de
+  67% a mais. Os bairros laterais se encontram atrás da Catedral, com
+  três patrulhas novas e documentos nos pontos de referência. São 33
+  edifícios no conjunto de casas externas, além da igreja e das torres.
+- A área delimitada da Catedral foi de 44 × 42 m a 70 × 42 m. O piso que
+  cresceu fica nas duas alas laterais, cerca de 364 m² novos no total.
+  Cada ala abre por duas arcadas. O Santuário continua separado pelos
+  dois selos. Há cinco registros novos entre vila e Catedral.
+- Os 42 GLBs do RGS Dev, Quaternius e KayKit substituem casas, torres,
+  muralhas, paredes, pilares, bancas, árvores, cercas, poço, móveis,
+  barris, caixas, caveiras, elmos, espadas e o martelo do Guardião.
+  Paisagem, vitrais, efeitos e corpos animados continuam a usar peças do
+  projeto. Os modelos usam o mesmo encaixe de colisores em ambos os modos.
+  O HD usa mapas de superfície do PUGNA nas peças sem textura; algumas
+  peças do KayKit mantêm seu atlas original. A emissão das armas do inimigo
+  acompanha os avisos pelos mesmos materiais que o código de combate atualiza.
+  A listagem de autoria está em [CREDITOS.md](../CREDITOS.md).
+- A coleção [Quixel Megascans na Fab](https://www.fab.com/sellers/Quixel%20Megascans)
+  é referência para uma revisão futura das superfícies. O
+  [Modular Stone Wall](https://www.fab.com/listings/16754e4c-74dd-4bc7-8833-025ef47df632)
+  e as ruínas de igreja servem de referência para os muros e vãos. A
+  [licença padrão da Fab](https://www.fab.com/eula) restringe redistribuição
+  avulsa. Os GLBs na pasta pública podem ser baixados diretamente pelo
+  navegador, então a build pública usa os modelos CC0 descritos acima.
+
 ## Teste de jogo para Gabriel e Heitor
 
 1. Abra o [jogo publicado](https://heitoranicio15-glitch.github.io/pugna/) e anote
@@ -91,6 +118,9 @@ mantêm os IDs publicados.
    taverna. Dentro, compare o assoalho, o tapete e os barris perto da lareira.
    Faça o desvio do mercado e complete o circuito nave–Galeria–Ossário.
    Leia uma inscrição em cada área e tente alcançar a arena antes dos selos.
+   Faça a volta entre Estábulos e Romaria pelo norte da vila. Dentro da
+   Catedral, entre na Capela do Último Nome e no Arquivo das Vigílias por
+   uma arcada e retorne pela outra.
    Compare também a rosácea do adro, a água de cima da ponte e as guarnições
    da taverna ao se aproximar. O interior tem arco e cornija na lareira.
    Ao sair pelo Portão Sul, veja o céu mudar para o tom da estrada. Na

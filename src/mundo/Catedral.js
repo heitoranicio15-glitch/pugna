@@ -8,6 +8,8 @@ import { montarSacristia } from './Sacristia.js';
 import { feixeDeLuz, sombrasDeContato } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
 import { montarClaustro } from './Claustro.js';
+import { montarAlasCatedral } from './AlasCatedral.js';
+import { modeloPronto } from '../render/modelos.js';
 
 const C = CONFIG.areas.catedral;
 
@@ -16,7 +18,7 @@ export class Catedral {
     this.id = 'catedral';
     this.nome = 'Catedral do Véu';
     this.usaCeu = false;
-    this.limites = { minX: -22, maxX: 22, minZ: -33, maxZ: 9 };
+    this.limites = { minX: -35, maxX: 35, minZ: -33, maxZ: 9 };
     this.grupo = new THREE.Group();
     this.colisores = new Colisores();
     this.tochas = [];
@@ -44,7 +46,22 @@ export class Catedral {
       return malha;
     };
     const parede = (x, z, l, p, a = 7, mat = m.pedra) => {
-      bloc(x, a / 2, z, l, a, p, mat);
+      const base = bloc(x, a / 2, z, l, a, p, mat);
+      const lateral = p > l;
+      const comprimento = lateral ? p : l;
+      const paineis = Math.ceil(comprimento / 5);
+      const modulos = [];
+      for (let i = 0; i < paineis; i++) {
+        const d = comprimento / paineis * (i + 0.5) - comprimento / 2;
+        modulos.push(modeloPronto(this.grupo, 'rgs-muro', {
+          pos: [x + (lateral ? 0 : d), 0, z + (lateral ? d : 0)],
+          tamanho: [comprimento / paineis, a, lateral ? l : p], rotacao: lateral ? Math.PI / 2 : 0,
+          tinta: 0xb7aec0,
+        }));
+      }
+      Promise.all(modulos.map(o => o.userData.pronto)).then(prontos => {
+        if (prontos.every(Boolean)) base.visible = false;
+      });
       return this.colisores.adicionar(x, z, l, p);
     };
     const movel = (x, z, l, a, p, mat) => {
@@ -87,7 +104,8 @@ export class Catedral {
       for (const x of [10.8, 19.2]) parede(lado * x, 2, 5.6, 0.65);
       if (lado < 0) bloc(-15, 5.24, 2, 2.84, 3.52, 0.65, m.pedra);
       parede(lado * 15, -12, 14, 0.65);
-      parede(lado * 22, -5, 0.65, 14);
+      for (const [z, p] of [[-11.3,1.4],[-5,5.5],[1.3,1.4]]) parede(lado * 22, z, 0.65, p);
+      for (const z of [-9.05, -0.95]) bloc(lado * 22, 5.31, z, 0.65, 3.38, 3.03, m.pedra);
       parede(lado * 11, -23, 0.7, 20, 12);
       parede(lado * 6.65, -13, 8.7, 0.7, 12);
     }
@@ -105,6 +123,9 @@ export class Catedral {
         const coluna = colunaFacetada(5.42, 0.44, m.pedra, m.pedraEscura);
         coluna.position.set(lado * 6.8, 0, z);
         this.grupo.add(coluna);
+        modeloPronto(this.grupo, 'pillar_decorated', {
+          pos: [lado * 6.8, 0, z], tamanho: [0.98, 5.42, 0.98], reserva: [coluna],
+        });
         this.colisores.adicionar(lado * 6.8, z, 0.98, 0.98);
         sombrasNave.push([lado * 6.8, z, 2.65, 2.65]);
       }
@@ -118,10 +139,13 @@ export class Catedral {
     for (const z of [2.8, 0.55, -7.7, -10.1]) {
       for (const lado of [-1, 1]) {
         const x = lado * 4.2;
+        const inicio = this.grupo.children.length;
         movel(x, z, 2.8, 0.48, 0.5, m.madeira);
         bloc(x, 0.7, z + 0.23, 2.8, 0.45, 0.12, m.madeira);
         for (const ponta of [-1, 1]) bloc(x + ponta * 1.38, 0.39, z, 0.12, 0.78, 0.56, m.madeiraEscura);
         sombrasNave.push([x, z, 3.7, 1.75]);
+        modeloPronto(this.grupo, 'Bench_1', { pos: [x,0,z], tamanho: [2.8,0.82,0.57],
+          reserva: this.grupo.children.slice(inicio) });
       }
     }
     sombrasDeContato(this.grupo, sombrasNave);
@@ -161,18 +185,21 @@ export class Catedral {
     });
 
     // Ossário a oeste. As fileiras de nichos conduzem ao pedestal.
-    for (const [indice, z] of [-10, -7.5, -2.5, 0].entries()) {
+    for (const [indice, z] of [-10.75, -7.5, -2.5, 0.55].entries()) {
       movel(-20.76, z, 1.5, 0.83, 1.6, m.pedraEscura);
       bloc(-21.61, 1.65, z, 0.12, 1.75, 1.66, escuro);
       gotico(-21.46, 2.47, z, 1.61, 0.96, 0.21, 0.45, Math.PI / 2);
       placa(this.grupo, `Vigília ${indice + 1}`, -21.35, 1.63, z, 0.96, Math.PI / 2);
       for (const dz of [-0.45, 0, 0.45]) {
+        const inicio = this.grupo.children.length;
         const cranio = new THREE.Mesh(new THREE.IcosahedronGeometry(0.19, 0), osso);
         cranio.position.set(-20.6, 1.05, z + dz);
         cranio.scale.set(0.86, 1.08, 0.9);
         this.grupo.add(cranio);
         bloc(-20.48, 0.94, z + dz, 0.16, 0.13, 0.18, osso);
         for (const olho of [-0.055, 0.055]) bloc(-20.434, 1.07, z + dz + olho, 0.045, 0.055, 0.055, escuro);
+        modeloPronto(this.grupo, 'rgs-caveira', { pos: [-20.61, 0.85, z + dz], tamanho: [0.37,0.4,0.32],
+          rotacao: Math.PI / 2, reserva: this.grupo.children.slice(inicio) });
       }
     }
     for (const z of [-9.9, 0.4]) tocha(this, { x: -14.2, z });
@@ -181,10 +208,9 @@ export class Catedral {
     });
 
     // Relicário a leste. Vitrais frios iluminam os relicários e o selo.
-    for (const z of [-10, -5, 0]) {
-      bloc(21.61, 4, z, 0.15, 3.7, 1.8, m.vitral);
-      gotico(21.45, 5.83, z, 1.8, 1.35, 0.2, 0.24, Math.PI / 2);
-    }
+    bloc(21.61, 4, -5, 0.15, 3.7, 1.8, m.vitral);
+    gotico(21.45, 5.83, -5, 1.8, 1.35, 0.2, 0.24, Math.PI / 2);
+    modeloPronto(this.grupo, 'wall_arched', { pos: [34.52,0.03,-5], tamanho: [4.8,4.84,0.28], rotacao: -Math.PI / 2 });
     for (const z of [-9.4, -0.5]) {
       movel(18.5, z, 2, 0.8, 1.2, m.pedraEscura);
       bloc(18.5, 1.01, z, 1.35, 0.42, 0.72, metalDourado);
@@ -199,6 +225,7 @@ export class Catedral {
     luz(16.5, 3.6, -5, 0x668eff, 46, 16);
     montarClaustro(this);
     montarSacristia(this);
+    montarAlasCatedral(this);
 
     this.selos = [
       { id: 'ossario', x: -20, z: -5, nome: 'Selo do Ossário', material: brasa, cor: 0xff824a },
@@ -220,8 +247,11 @@ export class Catedral {
         const coluna = colunaFacetada(7.8, 0.56, m.pedra, m.pedraEscura);
         coluna.position.set(lado * 8.6, 0, z);
         this.grupo.add(coluna);
+        modeloPronto(this.grupo, 'rgs-pilar', { pos: [lado * 8.6,0,z], tamanho: [1.2,7.8,1.2], reserva: [coluna] });
         this.colisores.adicionar(lado * 8.6, z, 1.2, 1.2);
-        bloc(lado * 8, 4.2, z, 0.13, 3.1, 1.12, pano);
+        const faixa = bloc(lado * 8, 4.2, z, 0.13, 3.1, 1.12, pano);
+        modeloPronto(this.grupo, 'banner_thin_red', { pos: [lado * 8, 2.65, z], tamanho: [1.12,3.1,0.22],
+          rotacao: lado * -Math.PI / 2, reserva: [faixa] });
       }
       tocha(this, { x: lado * 6, z: -29.5 });
     }

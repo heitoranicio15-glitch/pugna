@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { caixa, materiais } from './pecas.js';
 import { retro } from '../render/retro.js';
 import { registrarTextura } from '../render/texturas.js';
+import { modeloPronto } from '../render/modelos.js';
 
 export function bloco(grupo, mat, x, y, z, l, a, p) {
   const malha = caixa(l, a, p, mat, 1.25);
@@ -56,6 +57,8 @@ export function chave(grupo, x, y, z) {
   g.add(aro);
   bloco(g, ouro, 0.056, 0, 0, 0.16, 0.036, 0.035);
   bloco(g, ouro, 0.12, -0.045, 0, 0.04, 0.075, 0.035);
+  modeloPronto(g, 'key', { pos: [0, -0.055, 0], tamanho: [0.32,0.15,0.07], material: () => ouro,
+    reserva: [...g.children] });
   g.position.set(x, y, z);
   g.rotation.z = 0.33;
   grupo.add(g);

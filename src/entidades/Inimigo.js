@@ -27,6 +27,7 @@ import { retro } from '../render/retro.js';
 import { texturas } from '../render/texturas.js';
 import { MaquinaDeAtaque, ehFaseDeAtaque, golpeAlcanca, sortearSequencia } from './Ataques.js';
 import { caixa as cx, corpoFacetado, lamina, manto, materialDePersonagem, parte as facetado } from './formas.js';
+import { modeloPronto } from '../render/modelos.js';
 
 const v2 = new THREE.Vector3();
 
@@ -54,11 +55,15 @@ function montarCorpo(tipo) {
   ]), armadura));
   corpo.add(facetado(corpoFacetado([[0.72, larg * 0.82, 0.33], [0.94, larg * 0.78, 0.35]]), pano));
   const larguraElmo = guardiao ? 0.49 : 0.395;
-  corpo.add(facetado(corpoFacetado([
+  const elmo = facetado(corpoFacetado([
     [1.58, larguraElmo * 0.73, 0.31], [1.67, larguraElmo, 0.37],
     [1.85, larguraElmo, 0.42], [1.97, larguraElmo * 0.78, 0.32],
     [2.015, 0.06, 0.06],
-  ]), armadura));
+  ]), armadura);
+  corpo.add(elmo);
+  modeloPronto(corpo, guardiao ? 'Helmet3' : penitente ? 'Helmet2' : 'Helmet1', {
+    pos: [0, 1.58, -0.015], tamanho: [larguraElmo, 0.435, 0.39], reserva: [elmo], material: () => armadura,
+  });
   corpo.add(cx(larguraElmo * 0.74, 0.084, 0.045, sombraElmo, 0, 1.805, 0.192));
   for (const lado of [-1, 1]) {
     corpo.add(cx(larguraElmo * 0.26, 0.031, 0.012, olho, lado * larguraElmo * 0.188, 1.811, 0.217));
@@ -130,9 +135,15 @@ function montarCorpo(tipo) {
       ponta.rotation.z = angulo;
       arma.add(ponta);
     }
+    modeloPronto(arma, 'Hammer_Double', { pos: [0,-0.28,0.76], tamanho: [0.48,0.56,1.6],
+      orientacao: [Math.PI / 2,0,0], material: m => /wood/i.test(m.name) ? armadura : aco,
+      reserva: [...arma.children] });
   } else {
     arma.add(lamina(aco, cavaleiro ? 0.135 : 0.075, comp));
     arma.add(cx(0.3, 0.05, 0.05, armadura, 0, 0, 0.1));
+    modeloPronto(arma, 'Sword', { pos: [0, -0.032, comp * 0.43], tamanho: [0.29,0.064,comp + 0.19],
+      orientacao: [Math.PI / 2,0,0], material: m => m.name === 'Metal' ? aco : armadura,
+      reserva: [...arma.children] });
   }
   bracoD.add(arma);
   if (cavaleiro) {

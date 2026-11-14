@@ -9,6 +9,7 @@ import { CONFIG } from '../config.js';
 import { retro } from '../render/retro.js';
 import { texturas } from '../render/texturas.js';
 import { registrarMaterialHd } from '../render/materiaisHd.js';
+import { modeloPronto } from '../render/modelos.js';
 
 let M = null;
 /** Materiais compartilhados (criados uma vez). */
@@ -95,14 +96,17 @@ const cinta = new THREE.CylinderGeometry(0.94, 0.97, 0.055, 8, 1, true);
 export function barril(raio, altura) {
   const m = materiais();
   const grupo = new THREE.Group();
-  grupo.scale.set(raio, altura, raio);
-  grupo.add(new THREE.Mesh(aduelas, m.madeira));
+  const original = new THREE.Group();
+  original.scale.set(raio, altura, raio);
+  original.add(new THREE.Mesh(aduelas, m.madeira));
   for (const lado of [-1, 1]) {
     const aro = new THREE.Mesh(cinta, m.metal);
     aro.position.y = lado * 0.255;
     aro.rotation.z = lado === -1 ? Math.PI : 0;
-    grupo.add(aro);
+    original.add(aro);
   }
+  grupo.add(original);
+  modeloPronto(grupo, 'Barrel', { pos: [0, -altura / 2, 0], tamanho: [raio * 2, altura, raio * 2], reserva: [original] });
   return grupo;
 }
 
@@ -230,6 +234,7 @@ export function casa(mundo, {
   todasAcesas = false,      // todas as janelas acesas (a taverna)
   xPorta: xPortaFixo = null, // posição da porta na fachada (padrão: sorteada)
   chamine: posChamine = null, // { x, z } da chaminé (padrão: sorteada)
+  modelo = 'House_1',
 }) {
   const m = materiais();
   const g = new THREE.Group();
@@ -285,6 +290,9 @@ export function casa(mundo, {
   janela(-l / 2 - 0.02, doisAndares ? a - 1.4 : 1.75, 0.6, true);
   janela(l / 2 + 0.02, 1.75, -0.8, true);
   guarnicao.montar();
+  modeloPronto(g, todasAcesas ? 'Inn' : modelo, {
+    tamanho: [l - 0.04, a + altTelhado, p - 0.04], aceso: acesa || todasAcesas, reserva: [...g.children],
+  });
 
   g.position.set(x, 0, z);
   g.rotation.y = ROTACAO[frente];
@@ -314,6 +322,10 @@ export function torre(mundo, { x, z, lado = 5, a = 16, tipo = 'ameias', colide =
   for (const [jx, jz, r] of [[0, lado / 2 + 0.02, 0], [lado / 2 + 0.02, 0, Math.PI / 2]]) {
     const j = caixa(0.6, 1.5, 0.1, m.janelaApagada, 1.5); j.position.set(jx, a * 0.7, jz); j.rotation.y = r; g.add(j);
   }
+  modeloPronto(g, tipo === 'ameias' ? 'SmallSquareTowerBricks' : 'PointyTower', {
+    tamanho: [lado + 0.16, tipo === 'ameias' ? a + 0.9 : a + lado * 1.5, lado + 0.16],
+    reserva: [...g.children],
+  });
   g.position.set(x, 0, z);
   mundo.grupo.add(g);
   if (colide) mundo.colisores.adicionar(x, z, lado, lado);
@@ -469,6 +481,7 @@ export function tocha(mundo, { x, z, altura = 2.3, luz = true }) {
   const g = new THREE.Group();
   const poste = caixa(0.14, altura, 0.14, m.madeira, 1); poste.position.y = altura / 2; g.add(poste);
   const copo = caixa(0.3, 0.2, 0.3, m.metal, 1); copo.position.y = altura; g.add(copo);
+  modeloPronto(g, 'torch', { pos: [0, altura * 0.62, 0], tamanho: [0.29, altura * 0.43, 0.29], reserva: [copo] });
   const chama = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.5, 4), m.chama);
   chama.position.y = altura + 0.35; g.add(chama);
   const halo = new THREE.Sprite(new THREE.SpriteMaterial({
@@ -514,6 +527,10 @@ export function arvoreSeca(mundo, { x, z, altura = 6, sorteio = Math.random, col
     g.add(galho);
   }
   g.position.set(x, 0, z);
+  modeloPronto(g, x < 0 ? 'CommonTree_Dead_1' : 'CommonTree_Dead_3', {
+    tamanho: [altura * 0.63, altura, altura * 0.61],
+    rotacao: (x + z) * 0.13, reserva: [...g.children],
+  });
   mundo.grupo.add(g);
   if (colide) mundo.colisores.adicionar(x, z, 0.6, 0.6);
   return g;
@@ -526,5 +543,20 @@ export function muralha(mundo, x1, z1, x2, z2, altura = 5, espessura = 1.4) {
   const muro = caixa(l, altura, p, m.pedraEscura); muro.position.set((x1 + x2) / 2, altura / 2, (z1 + z2) / 2);
   const topo = caixa(l + 0.4, 0.4, p + 0.4, m.pedra); topo.position.set((x1 + x2) / 2, altura + 0.2, (z1 + z2) / 2);
   mundo.grupo.add(muro, topo);
+  const lateral = p > l;
+  const extensao = lateral ? p : l;
+  const paineis = Math.ceil(extensao / 10);
+  const tamanho = extensao / paineis;
+  const modelos = [];
+  for (let i = 0; i < paineis; i++) {
+    const trecho = -extensao / 2 + (i + 0.5) * tamanho;
+    modelos.push(modeloPronto(mundo.grupo, 'TallWallBricks', {
+      pos: [muro.position.x + (lateral ? 0 : trecho), 0, muro.position.z + (lateral ? trecho : 0)],
+      rotacao: lateral ? Math.PI / 2 : 0, tamanho: [tamanho, altura + 0.38, espessura],
+    }));
+  }
+  Promise.all(modelos.map(o => o.userData.pronto)).then(prontos => {
+    if (prontos.every(Boolean)) muro.visible = topo.visible = false;
+  });
   mundo.colisores.adicionar((x1 + x2) / 2, (z1 + z2) / 2, l, p);
 }
