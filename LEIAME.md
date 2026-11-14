@@ -86,8 +86,7 @@ continuam guardados no código (`src/interface/Toque.js`) para voltar depois.
 | Pular | Espaço |
 | Ataque leve | Clique esquerdo |
 | Ataque forte | Segurar o clique esquerdo e soltar |
-| Bloquear | Segurar o clique direito |
-| Aparar (parry) | C |
+| Atirar com a pistola (parry) | Clique direito ou C |
 | Travar / soltar a mira | Tab ou botão do meio do mouse |
 | Trocar de alvo (mira travada) | Mover o mouse rápido para o lado |
 | Esquivar | Ctrl, Alt ou Q (com uma direção, rola; parado, salta para trás) |
@@ -128,15 +127,24 @@ ou **Alt** para esquivar.
   passa a andar de lado em volta dele. A trava pula para o próximo inimigo
   quando o alvo cai e se solta se ele ficar longe ou atrás de uma parede.
   Sem inimigo por perto, o botão só recentraliza a câmera atrás do caçador.
-- **Aparar:** aperte **C** um instante antes de o golpe inimigo chegar. Se
-  acertar o tempo, você não leva dano e o inimigo fica **desequilibrado** (o
+- **Pistola (o parry do jogo):** o clique direito (ou **C**) dá um tiro na
+  hora, de curto alcance (uns 9 metros), sem bala voando. Ele vai no inimigo da
+  mira travada ou, sem trava, no mais próximo à frente; parede no meio segura o
+  tiro. Se o tiro pegar o inimigo **no fim do aviso dele ou no comecinho do
+  golpe**, é um **parry**: o golpe não entra e ele fica **desequilibrado** (o
   marcador da mira fica vermelho). O próximo golpe nele é **crítico** e causa
-  2,6 vezes o dano. Se errar o tempo, o golpe entra inteiro: aparar não bloqueia.
-  Só vale para golpes que chegam de frente. O Guardião se recompõe mais rápido.
-- Tudo gasta **estamina** (barra verde): correr, pular, atacar, esquivar e aguentar
-  golpes no bloqueio. Sem estamina você não ataca nem corre.
-- Bloquear só funciona com o corpo **de frente** para o inimigo. Se a estamina acabar no bloqueio,
-  a guarda quebra e você fica atordoado.
+  2,6 vezes o dano. A janela dura uns 0,13 s no golpe alto e uns 0,08 s no
+  pesado. Fora dela o tiro só arranha (pouco dano, não faz cambalear) e o golpe
+  entra normalmente. O Guardião se recompõe mais rápido.
+- **Balas:** são 8 (contador acima dos frascos). Todo tiro gasta uma, acertando
+  ou não: atirar sem parar não compensa. Elas só voltam ao **descansar** na
+  lanterna, ao morrer ou com o Osso de Retorno. Sem bala, a pistola só dá um
+  clique seco. Atirar não gasta estamina e tem uma recuperação curta (a esquiva
+  corta o fim dela).
+- **Não existe bloqueio.** O broquel saiu: contra um golpe, as respostas são o
+  tiro no tempo certo, a esquiva ou o pulo (contra a rasteira).
+- Tudo gasta **estamina** (barra verde): correr, pular, atacar e esquivar. Sem
+  estamina você não ataca nem corre.
 - A esquiva te deixa **invencível por um instante**. Você pode apertar **Q**
   pouco antes de terminar a recuperação da espada para encaixar a esquiva.
 - Toque e solte para um ataque leve. Ao carregar um ataque forte, o caçador
@@ -155,7 +163,7 @@ ou **Alt** para esquivar.
 - **Rally (revide):** quando você apanha, parte da vida perdida fica **laranja**
   na barra por uns 4 segundos. Cada golpe que você acerta nesse tempo devolve
   um pedaço dela (o forte devolve mais). Se o tempo acabar, a parte laranja
-  some. Dano segurado no bloqueio não entra no rally.
+  some.
 - **Frasco de cura:** beber leva um instante. O caçador anda devagar, não ataca
   e, se apanhar antes de terminar, a cura é interrompida (o frasco não é gasto).
   Afaste-se antes de beber.
@@ -173,14 +181,15 @@ avisa de um jeito e pede uma resposta diferente:
 
 | Tipo | Como reconhecer | Melhor resposta |
 |---|---|---|
-| **Alto** | Ergue a arma acima da cabeça; tinido de metal | Aparar (**C**), bloquear ou esquivar |
-| **Pesado** | Arma atrás da cabeça, corpo arqueado; arma e olhos **vermelhos**; sino grave | Aparar, com a janela mais curta, ou esquivar. Bloquear gasta quase toda a estamina |
-| **Rasteira** | Agacha com a arma de lado; arma e olhos **amarelos**; aço raspando e dois estalos | **Pular** (**Espaço**). É larga e pega quem está de lado. Aparar e bloquear não funcionam |
+| **Alto** | Ergue a arma acima da cabeça; tinido de metal | Tiro de pistola no fim do aviso (parry) ou esquivar |
+| **Pesado** | Arma atrás da cabeça, corpo arqueado; arma e olhos **vermelhos**; sino grave | Tiro de pistola com a janela mais curta, ou esquivar |
+| **Rasteira** | Agacha com a arma de lado; arma e olhos **amarelos**; aço raspando e dois estalos | **Pular** (**Espaço**). É larga e pega quem está de lado. O tiro não apara (só arranha e gasta a bala) |
 
 A esquiva serve contra os três, mas não dá recompensa. Aparar um golpe pesado
-dá, por enquanto, o mesmo golpe crítico de um aparo comum.
+dá, por enquanto, o mesmo golpe crítico de um aparo comum (a execução vem no
+próximo passo da Etapa B).
 - Ao morrer você volta à última **lanterna** em que descansou. Descansar recupera
-  vida e estamina e faz os inimigos comuns reaparecerem.
+  vida, estamina e balas e faz os inimigos comuns reaparecerem.
 
 ## Catedral do Véu
 
@@ -227,9 +236,9 @@ onde você volta ao morrer ou reabrir o jogo.
   de vértices, dithering e redução de cores.
 - Movimento em terceira pessoa com colisão; dá para subir em caixotes e degraus.
   A câmera gira em volta do caçador e encurta ao encostar em paredes.
-- Boneco simples do caçador (chapéu, capa, espada e broquel), animado no código.
-- Combate com ataque leve, forte, bloqueio, esquiva com rolamento, estamina,
-  mira travada, aparo e golpe crítico.
+- Boneco simples do caçador (chapéu, capa, espada e pistola), animado no código.
+- Combate com ataque leve, forte, esquiva com rolamento, estamina, mira travada,
+  pistola com parry, balas limitadas e golpe crítico.
 - Regras contra o spam: apanhar interrompe o ataque, inimigos com firmeza,
   rally (recuperar vida revidando), frasco com tempo e bolsa que não pausa.
 - Cavaleiro, caçador, penitente e Guardião do Véu, com patrulha e combate.
@@ -291,8 +300,13 @@ pugna/
 
 ### Onde mexer para…
 - **mudar dano, velocidade, vida, cores, névoa, nível de pixelado:** `src/config.js`
-- **mudar a distância da câmera, o alcance da mira ou a janela do aparo:**
-  blocos `camera`, `mira` e `combate.aparar` em `src/config.js`
+- **mudar a distância da câmera ou o alcance da mira:** blocos `camera` e `mira`
+  em `src/config.js`
+- **mudar a pistola** (balas, dano, alcance, janela do parry, tempo de
+  desequilíbrio): bloco `combate.pistola` em `src/config.js`. A janela de cada
+  tipo de golpe é multiplicada por `janelaAparar` em `combate.ataquesInimigos`.
+  A regra que prende a janela à fase do golpe é `naJanelaDeAparo` em
+  `src/entidades/Ataques.js`
 - **mudar a aparência ou as poses do caçador:** `src/entidades/Boneco.js`
 - **mudar o mapa** (mover casa, pôr tocha, pôr inimigo): `src/mundo/Vilarejo.js`
 - **mudar o título do jogo:** `titulo` em `src/config.js`
@@ -344,7 +358,8 @@ pugna/
 - [x] Base dos ataques: fases e tipos (alto, pesado, rasteira) com avisos próprios
 - [x] Contra o spam: interrupção ao apanhar, firmeza dos inimigos, rally, frasco
       com tempo e bolsa sem pausa
-- [ ] Pistola como parry, golpe visceral e quickstep (o broquel sai do combate)
+- [x] Pistola como parry, com balas (o broquel saiu do combate)
+- [ ] Golpe visceral, execução e quickstep
 - [ ] Combate menos genérico: golpe pelas costas, sequências de ataques, armas
       com ritmos diferentes
 - [x] Interior da catedral
@@ -377,16 +392,19 @@ pugna/
 
 ## Testes
 
-- `npm test` verifica a janela de acerto, o custo da esquiva, o aparo e o golpe
-  crítico, as fases e os tipos de ataque dos inimigos, a interrupção ao apanhar,
+- `npm test` verifica a janela de acerto, o custo da esquiva, o tiro de pistola
+  (janela do parry, balas, parede, alcance) e o golpe crítico, as fases e os tipos de ataque dos inimigos, a interrupção ao apanhar,
   a firmeza dos inimigos, o rally, o frasco interrompido, a mira travada, a câmera em terceira pessoa, colisões, navegação,
   interação com objetos, inventário, Osso de Retorno e migração de saves.
 - `npx playwright-core install chromium` instala o navegador de teste.
   Em seguida, `npm run test:browser` inicia o jogo e percorre a catedral,
   incluindo transições, checkpoint, morte, recarga e derrota do Guardião.
   Também testa o percurso da vila até a sacristia, o frasco com tempo, o rally,
-  a bolsa sem pausa, o Osso de Retorno e o atalho após recarregar.
+  a bolsa sem pausa, o Osso de Retorno, o contador de balas (atirar baixa,
+  descansar repõe) e o atalho após recarregar.
   O cenário de celular está congelado e saiu dos testes obrigatórios. Para
   conferi-lo mesmo assim, rode `npm run test:celular`.
   Para usar um Chrome instalado, aponte `PUGNA_CHROME` para o executável.
+  O `npm run test:celular` hoje falha porque ainda espera o bloqueio, que saiu
+  na Etapa B (o celular está congelado; o teste fica como está).
   Para testar outro endereço, use `npm run test:browser -- <URL>`.

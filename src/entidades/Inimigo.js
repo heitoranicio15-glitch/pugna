@@ -363,7 +363,7 @@ export class Inimigo {
       }
       case 'desequilibrado': {   // golpe aparado: braço jogado para trás, guarda aberta
         inclinar = -0.5; bracoAlvo = -3.5; bracoLateral = -0.5; rapidezBraco = 16;
-        if (this.tEstado >= (c.desequilibrio ?? CONFIG.combate.aparar.desequilibrio)) this.mudar('perseguir');
+        if (this.tEstado >= (c.desequilibrio ?? CONFIG.combate.pistola.desequilibrio)) this.mudar('perseguir');
         break;
       }
     }
@@ -442,7 +442,8 @@ export class Inimigo {
 
   /**
    * Durante a fase ativa, confere se a arma alcança o jogador. Cada golpe só
-   * é resolvido uma vez: acertou, foi bloqueado, aparado, esquivado ou pulado.
+   * é resolvido uma vez: acertou, foi esquivado ou pulado. (O golpe aparado
+   * pelo tiro já chega resolvido e nem passa por aqui.)
    */
   golpear(dist, anguloJogador) {
     const g = this.ataque.golpe, jog = this.jogo.jogador;
@@ -450,14 +451,14 @@ export class Inimigo {
     if (!golpeAlcanca(g, dist, Math.cos(anguloJogador - this.angulo), jog.pos.y - this.pos.y)) return;
     if (this.mundo.colisores.bloqueiaTrecho(this.pos, jog.pos, 1.35)) return;
     this.ataque.resolvido = true;
-    const r = jog.receberDano(g.dano, this.pos, this, g);
-    if (r === 'bloqueou') { this.empurrao.set(-Math.sin(this.angulo) * 3, 0, -Math.cos(this.angulo) * 3); }
+    jog.receberDano(g.dano, this.pos, this, g);
   }
 
   /**
-   * O jogador aparou o golpe: perde a sequência e fica aberto a um crítico.
+   * O jogador aparou o golpe com um tiro: perde a sequência e fica aberto a um
+   * crítico por CONFIG.combate.pistola.desequilibrio (ou o "desequilibrio" do inimigo).
    * Gancho da execução: se o golpe aparado era pesado, abertoParaExecucao fica
-   * ligado enquanto durar o desequilíbrio (o item 3 do plano usa essa marca).
+   * ligado enquanto durar o desequilíbrio (o PR B2 usa essa marca).
    */
   serAparado(golpe = this.ataque.golpe) {
     if (this.morto) return;
@@ -480,20 +481,9 @@ export class Inimigo {
     const AT = CONFIG.combate.atordoamentoInimigo;
     const critico = this.estado === 'desequilibrado';
     if (critico) dano *= CONFIG.combate.critico.multiplicador;
-    this.vida -= dano;
-    this.piscar = critico ? 0.16 : 0.09;
-    this.barra.visible = this.tipo !== 'guardiao';
-    this.jogo.eventos.emitir('inimigo:ferido', this);
-    if (this.vida <= 0) {
+    if (this.tirarVida(dano, critico ? 0.16 : 0.09)) {
       this.empurrao.set(direcao.x * forca, 0, direcao.z * forca);
-      this.vida = 0; this.morto = true; this.mudar('morto'); this.barra.visible = false;
-      this.jogo.eventos.emitir('inimigo:morreu', this);
       return critico ? 'critico' : undefined;
-    }
-    if (this.base.faseFinal && this.cfg === this.base && this.vida <= this.base.vida / 2) {
-      this.cfg = { ...this.base, ...this.base.faseFinal };
-      this.corOlho = 0xff416c;
-      this.jogo.eventos.emitir('guardiao:fase-final');
     }
     // O golpe tem força para abalar? E o inimigo está em condição de ser abalado?
     const abala = dano >= this.cfg.firmeza || (forte && !this.base.faseFinal);
@@ -509,5 +499,34 @@ export class Inimigo {
       if (this.estado === 'patrulha') this.mudar('perseguir');
     }
     return critico ? 'critico' : undefined;
+  }
+
+  /**
+   * Tiro de pistola fora da janela do parry: só um arranhão. Não faz cambalear
+   * e não gasta o desequilíbrio (não é crítico), mas acorda quem patrulhava.
+   */
+  levarTiro(dano) {
+    if (this.morto) return;
+    if (this.tirarVida(dano, 0.09)) return;
+    if (this.estado === 'patrulha') this.mudar('perseguir');
+  }
+
+  /** Tira vida, pisca e cuida da morte e da fase final. Devolve true se morreu. */
+  tirarVida(dano, piscar) {
+    this.vida -= dano;
+    this.piscar = piscar;
+    this.barra.visible = this.tipo !== 'guardiao';
+    this.jogo.eventos.emitir('inimigo:ferido', this);
+    if (this.vida <= 0) {
+      this.vida = 0; this.morto = true; this.mudar('morto'); this.barra.visible = false;
+      this.jogo.eventos.emitir('inimigo:morreu', this);
+      return true;
+    }
+    if (this.base.faseFinal && this.cfg === this.base && this.vida <= this.base.vida / 2) {
+      this.cfg = { ...this.base, ...this.base.faseFinal };
+      this.corOlho = 0xff416c;
+      this.jogo.eventos.emitir('guardiao:fase-final');
+    }
+    return false;
   }
 }

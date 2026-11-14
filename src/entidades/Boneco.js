@@ -4,7 +4,7 @@
 //  Este arquivo só ANIMA: quem decide o que acontece é o Jogador.js.
 //
 //  O modelo "olha" para +Z. O braço da espada fica em -X (a direita dele) e o
-//  braço do broquel em +X. Para trocar por um modelo de verdade no futuro,
+//  braço da pistola em +X. Para trocar por um modelo de verdade no futuro,
 //  basta manter o método atualizar(dt, jogador).
 // =============================================================================
 import * as THREE from 'three';
@@ -16,7 +16,7 @@ const CB = CONFIG.combate;
 const ALTURA_MIOLO = 0.95;   // centro do corpo: é em volta dele que o boneco rola
 const ALTURA_CINTURA = 0.9;  // o tronco inclina e torce a partir daqui
 
-// Pose de descanso. bd = braço direito (espada), be = braço esquerdo (broquel),
+// Pose de descanso. bd = braço direito (espada), be = braço esquerdo (pistola),
 // es = punho da espada, c = tronco. x = para a frente/trás, z = para os lados,
 // y = torção.
 const REPOUSO = { bdx: -0.3, bdz: 0, esx: -0.9, bex: 0.1, bez: 0, cx: 0, cy: 0 };
@@ -101,14 +101,16 @@ export class Boneco {
     );
     this.bracoD.add(this.espada);
 
-    // Broquel no braço esquerdo: é com ele que o caçador bloqueia e apara.
-    const broquel = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.05, 6), escuro);
-    broquel.rotation.z = Math.PI / 2;
-    broquel.position.set(0.11, -0.5, 0.03);
-    const bossa = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.1, 5), aco);
-    bossa.rotation.z = -Math.PI / 2;
-    bossa.position.set(0.18, -0.5, 0.03);
-    this.bracoE.add(broquel, bossa);
+    // Pistola na mão esquerda (o parry do jogo). O cano segue o braço: abaixado,
+    // aponta para o chão; com o braço esticado à frente, aponta para o inimigo.
+    this.pistola = new THREE.Group();
+    this.pistola.position.set(0, -0.66, 0.03);
+    this.pistola.add(
+      cx(0.05, 0.36, 0.05, escuro, 0, -0.16, 0.03),   // cano
+      cx(0.07, 0.12, 0.08, aco, 0, 0.0, 0.03),         // corpo do mecanismo
+      cx(0.06, 0.09, 0.2, couro, 0, 0.03, -0.1),       // coronha
+    );
+    this.bracoE.add(this.pistola);
 
     this.pose = { ...REPOUSO };
     this.rumo = 0;
@@ -153,11 +155,10 @@ export class Boneco {
       } else if (j.acao === 'curando') {
         // Bebendo o frasco: leva a mão esquerda à boca e inclina a cabeça para trás.
         alvo.bex = -2.3; alvo.bez = -0.35; alvo.cx = -0.14;
-      } else if (j.acao === 'aparar') {
-        // O broquel varre de fora para dentro, na frente do corpo.
-        const ap = CB.aparar;
-        const p = Math.min(1, j.tAcao / (ap.preparo + ap.janela));
-        alvo.bex = -1.5; alvo.bez = 0.8 - 1.7 * p; alvo.cy = 0.45 - 0.95 * p; alvo.bdx = -0.1;
+      } else if (j.acao === 'tiro') {
+        // Tiro: o braço esquerdo estica à frente e o coice joga a pistola para cima.
+        const coice = Math.max(0, 1 - j.tAcao / (CB.pistola.recuperacao * 0.4));
+        alvo.bex = -1.55 - 0.5 * coice; alvo.bez = 0; alvo.cy = -0.4; alvo.cx = -0.05 * coice; alvo.bdx = -0.2;
         direto = true;
       } else if (golpe && j.ataque === 'forte') {
         // Golpe forte: de cima para baixo.
@@ -179,8 +180,6 @@ export class Boneco {
         } else { alvo.cy = s * 0.7; k = dt > 0 ? 1 - Math.exp(-dt * 7) : 1; }
       } else if (j.carregando && j.tCarga > 0.12) {
         alvo.bdx = -2.7 + (j.avisouCarga ? (Math.random() - 0.5) * 0.08 : 0); alvo.esx = 0; alvo.cx = -0.1;
-      } else if (j.bloqueando) {
-        alvo.bex = -1.4; alvo.bez = -0.55; alvo.bdx = -0.5; alvo.cx = 0.1;
       }
     }
 

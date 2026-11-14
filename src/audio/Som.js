@@ -24,8 +24,8 @@ export class Som {
       this.metal(0.42, 0.22);
       this.ruido({ volume: 0.27, duracao: 0.13, tipo: 'bandpass', de: 1250, ate: 370 });
     });
-    eventos.em('jogador:bloqueou', (d) => this.metal(d.quebrou ? 0.8 : 0.55));
-    eventos.em('jogador:aparar', () => this.zunido(0.22, 0.14, 1300));
+    eventos.em('jogador:tiro', () => this.tiro());
+    eventos.em('jogador:sem-bala', () => this.ruido({ volume: 0.16, duracao: 0.04, tipo: 'highpass', de: 2600 }));   // clique seco
     eventos.em('jogador:aparou', () => { this.metal(0.75, 0.6); this.sino(880, 0.5, 0.16); });
     eventos.em('mira:travou', () => this.tom({ volume: 0.08, duracao: 0.07, de: 620, ate: 880 }));
     eventos.em('jogador:ferido', () => { this.impacto(0.8); this.gemido(); });
@@ -134,6 +134,12 @@ export class Som {
   metal(volume = 0.5, duracao = 0.45) {
     for (const f of [523, 1187, 1723, 2917]) this.tom({ volume: volume * 0.22, duracao: duracao * (0.6 + Math.random() * 0.6), de: f * (0.97 + Math.random() * 0.06), forma: 'square' });
     this.ruido({ volume: volume * 0.5, duracao: 0.07, tipo: 'highpass', de: 3000 });
+  }
+  /** Estampido seco da pistola, com um eco curto e abafado logo depois. */
+  tiro() {
+    this.ruido({ volume: 0.9, duracao: 0.16, tipo: 'lowpass', de: 5200, ate: 260, ataque: 0.002 });
+    this.tom({ volume: 0.45, duracao: 0.12, de: 170, ate: 42 });
+    setTimeout(() => this.ruido({ volume: 0.22, duracao: 0.3, tipo: 'lowpass', de: 1400, ate: 180 }), 110);
   }
   gemido() { this.tom({ volume: 0.22, duracao: 0.28, de: 190, ate: 95, forma: 'sawtooth' }); }
   rosnado(volume, freq) { this.tom({ volume, duracao: 0.6, de: freq, ate: freq * 0.6, forma: 'sawtooth' }); this.ruido({ volume: volume * 0.5, duracao: 0.5, tipo: 'lowpass', de: 500, ate: 150 }); }

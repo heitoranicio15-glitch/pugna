@@ -5,9 +5,9 @@
 //  Cada golpe passa por 3 FASES:
 //    preparo (o aviso) → ativo (a arma pode acertar) → recuperacao (ele fica aberto)
 //  e tem um TIPO, que decide a melhor resposta do jogador:
-//    alto      → aparar ou esquivar
-//    pesado    → aparar com janela menor (abre a execução) ou esquivar
-//    rasteira  → pular (é larga, não pode ser aparada nem bloqueada)
+//    alto      → tiro de pistola no tempo certo (parry) ou esquivar
+//    pesado    → parry com janela menor (abre a execução) ou esquivar
+//    rasteira  → pular (é larga, não pode ser aparada)
 //
 //  Os números de cada tipo ficam em CONFIG.combate.ataquesInimigos e multiplicam
 //  os números do inimigo (CONFIG.inimigos). Este arquivo só tem REGRAS: não
@@ -90,6 +90,21 @@ export class MaquinaDeAtaque {
 
   /** Pula direto para uma fase do golpe atual. */
   irPara(fase) { this.fase = fase; this.t = 0; }
+
+  /**
+   * O tiro de pistola agora seria um parry? A janela fica presa à fase do golpe:
+   * os últimos instantes do preparo (o aviso) e os primeiros do golpe ativo,
+   * ambos encolhidos pelo janelaAparar do tipo (o pesado tem janela menor).
+   * Golpes que não podem ser aparados (rasteira) nunca entram na janela.
+   */
+  naJanelaDeAparo(cfgPistola) {
+    const g = this.golpe;
+    if (!g || !g.aparavel || this.resolvido) return false;
+    const m = g.janelaAparar ?? 1;
+    if (this.fase === 'preparo') return g.preparo - this.t <= cfgPistola.janelaNoAviso * m;
+    if (this.fase === 'ativo') return this.t <= cfgPistola.janelaNoGolpe * m;
+    return false;
+  }
 
   encerrar() {
     this.fila = []; this.indice = -1;

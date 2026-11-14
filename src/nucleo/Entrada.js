@@ -43,7 +43,7 @@ export class Entrada {
       if (Math.abs(e.movementX) > 400 || Math.abs(e.movementY) > 400) return;
       this.mouseDX += e.movementX; this.mouseDY += e.movementY;
     });
-    addEventListener('contextmenu', (e) => e.preventDefault()); // clique direito = bloquear
+    addEventListener('contextmenu', (e) => e.preventDefault()); // clique direito = atirar
     document.addEventListener('pointerlockchange', () => {
       this.travado = document.pointerLockElement === this.elemento;
       if (!this.travado) this.soltarTudo();

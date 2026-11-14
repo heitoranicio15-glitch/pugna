@@ -13,7 +13,7 @@
 
 ## Visão
 
-Ação e exploração num mundo medieval gótico, vazio e triste, à noite, no estilo de Bloodborne, Dark Souls e Berserk. O jogador é um caçador de chapéu, capa, espada e pistola (até a Etapa B do Plano, o boneco ainda carrega o broquel). Seres cósmicos distorcem o mundo, mas nunca lutam. A presença deles aparece numa **lua enorme e medonha, com rosto, sempre olhando para o jogador**, e nas cores estranhas do céu. O clima é contemplativo e sombrio, mas bonito. Explorar é o prazer principal, e o combate tem peso.
+Ação e exploração num mundo medieval gótico, vazio e triste, à noite, no estilo de Bloodborne, Dark Souls e Berserk. O jogador é um caçador de chapéu, capa, espada e pistola. Seres cósmicos distorcem o mundo, mas nunca lutam. A presença deles aparece numa **lua enorme e medonha, com rosto, sempre olhando para o jogador**, e nas cores estranhas do céu. O clima é contemplativo e sombrio, mas bonito. Explorar é o prazer principal, e o combate tem peso.
 
 **A alma do combate é a do Bloodborne:** agressivo e visceral. Recompensa ler o inimigo e punir. Ficar na defesa ou apertar o ataque sem pensar tem que ser a pior escolha.
 
@@ -25,8 +25,8 @@ Ação e exploração num mundo medieval gótico, vazio e triste, à noite, no e
 - **Sem o gigante encapuzado:** ele foi excluído. A lua é a presença no céu.
 - **Salvamento estilo Souls:** o jogo salva sozinho o tempo todo. Ao morrer, o jogador renasce na última lanterna em que descansou, e os inimigos comuns voltam. Não existe salvar manualmente. O "voltar ao checkpoint" vira o Osso de Retorno: item único, de uso ilimitado. A penalidade por usar (como perder as almas nos Souls) será decidida mais para a frente.
 - **Escopo:** semi-linear (vilarejo, catedral, depois áreas ligadas por atalhos). Nada de mundo aberto. Os inimigos são humanos de armadura, que reaproveitam o mesmo esqueleto e as mesmas animações.
-- **Pistola é a mão secundária padrão** (não é mais "fase 2"). Ela é o parry do jogo, como no Bloodborne: um tiro durante o golpe do inimigo. O parry do broquel sai. Entra na Etapa B do Plano.
-- **Broquel fora do combate por enquanto.** No futuro ele pode voltar como item ou como mão secundária alternativa, para bloquear (está em "Depois" no Plano). As ideias dele ficam guardadas: parry colado no inimigo, bloqueio que gasta estamina, guarda que quebra. Até a Etapa B entrar, o bloqueio e o aparo com **C** continuam funcionando no jogo.
+- **Pistola é a mão secundária padrão** (não é mais "fase 2"). Ela é o parry do jogo, como no Bloodborne: um tiro durante o golpe do inimigo. O parry do broquel saiu (PR B1).
+- **Broquel fora do combate por enquanto.** No futuro ele pode voltar como item ou como mão secundária alternativa, para bloquear (está em "Depois" no Plano). As ideias dele ficam guardadas: parry colado no inimigo, bloqueio que gasta estamina, guarda que quebra. O bloqueio e o aparo com **C** já saíram do jogo (PR B1); os campos `bloqueavel`/`custoBloqueio` dos golpes ficaram em `config.js` para quando ele voltar.
 - **Celular congelado, não apagado.** Não adicionar botões de toque para mecânicas novas. O teste do celular saiu dos testes obrigatórios (virou `npm run test:celular`, opcional). O jogo mostra um aviso de que o celular não é suportado por enquanto. O código de toque (`src/interface/Toque.js`, o bloco `controles-toque` do `index.html`, `tests/mobile.mjs`) fica onde está, para voltar depois.
 - **Só o Esc pausa.** Abrir a bolsa ou ler uma anotação no meio da partida não para o jogo, como nos souls.
 - **O que a pesquisa sobre parry mostrou** (guia para a Etapa B): no Bloodborne o parry é um tiro no meio do ataque do inimigo, o ritmo muda por inimigo e a munição limitada impede o spam. No Sekiro a janela é de uns 0,2 s, começa no instante do aperto e errar vira bloqueio; apertar sem parar encolhe a janela. A fluidez não vem do tamanho da janela: vem de o gesto ser instantâneo, de o erro não travar o jogador, de existir uma penalidade para o spam e de a recompensa emendar na hora.
@@ -44,11 +44,11 @@ Cada resposta do jogador precisa ser a melhor contra algum tipo de ataque. Se n�
 | Antes da luta | Golpe pelas costas (agachado, sem ser visto) | Execução silenciosa |
 | Acabou de apanhar | Revidar logo (rally) | Recupera parte da vida perdida |
 
-O parry com a pistola entra na Etapa B. Até lá, o jogo ainda usa o aparo antigo do broquel (tecla **C**).
+O parry com a pistola já funciona (PR B1). O visceral, a execução e o quickstep vêm nos PRs B2 e B3.
 
 ## Estado atual
 
-- **Pronto e no ar:** vilarejo, Catedral do Véu (nave, Ossário, Relicário, Santuário, selos), inimigos cavaleiro, caçador e Penitente, miniboss Guardião do Véu, bolsa e frascos de cura, lápides, atalhos, menu de configurações, trilha sonora, terceira pessoa, mira travada, aparo com crítico (ainda o do broquel, tecla C) e rolamento.
+- **Pronto e no ar:** vilarejo, Catedral do Véu (nave, Ossário, Relicário, Santuário, selos), inimigos cavaleiro, caçador e Penitente, miniboss Guardião do Véu, bolsa e frascos de cura, lápides, atalhos, menu de configurações, trilha sonora, terceira pessoa, mira travada, parry com a pistola e crítico, e rolamento.
 - **Salvamento estilo Souls (item 1, pronto):** o jogo grava sozinho a cada acontecimento e não há salvar manual. O **Osso de Retorno** é usado pela bolsa, é único e de uso ilimitado. Hoje não há penalidade ao usar.
 - **Base dos ataques (item 2, pronto):** todos os inimigos usam a mesma máquina de golpes (`src/entidades/Ataques.js`), com 3 fases (preparo, golpe ativo, recuperação) e 3 tipos, cada um com pose, cor e som próprios: **alto**, **pesado** (vermelho, sino grave) e **rasteira** (agachado, amarelo). As sequências de cada inimigo ficam em `CONFIG.inimigos` (`ataques`) e os números de cada tipo em `CONFIG.combate.ataquesInimigos`. A rasteira é larga, não pode ser aparada nem bloqueada e passa por baixo de quem está no ar.
 - **Celular congelado (item 0, pronto):** aviso na tela inicial e ao começar em aparelho de toque, teste do celular fora dos obrigatórios, código de toque guardado.
@@ -60,8 +60,15 @@ O parry com a pistola entra na Etapa B. Até lá, o jogo ainda usa o aparo antig
   - **Frasco com tempo** (`frasco`): 0,6 s bebendo, andando a 35% da velocidade, sem atacar nem pular. Se apanhar antes do fim, a cura é interrompida e o frasco não é gasto (dá para mudar em `perdeAoSerInterrompido`).
   - **A bolsa não pausa mais:** só o Esc pausa. Com a bolsa ou uma anotação aberta durante a partida, o mundo continua, o caçador fica parado e as barras continuam na tela. I ou "Voltar" retomam a luta; Esc leva à pausa. Pelo menu de pausa, a bolsa continua abrindo com o jogo parado.
   - **O que a simulação mostrou (um jogador que só aperta o ataque leve):** os inimigos agora revidam e interrompem. Contra os inimigos comuns o spam ainda vence, mas apanhando. Contra o Guardião ele perde por volta de metade da vida e às vezes morre. Fechar essa conta depende de ajuste de números (Etapa E) e do chefe novo (Etapa C).
+- **Etapa B, PR B1: pistola, parry e balas (pronto).** Números em `CONFIG.combate.pistola`, com comentários:
+  - **Clique direito ou C atiram.** O tiro sai na hora, de curto alcance (9 m), sem bala voando: vai no alvo da mira travada ou, sem trava, no inimigo mais próximo à frente. Parede no meio segura o tiro. Não gasta estamina; tem 0,3 s de recuperação (a esquiva corta depois de 0,1 s). Dá para atirar no ar.
+  - **Parry:** o tiro conta se pegar o inimigo nos últimos 0,09 s do aviso ou nos primeiros 0,04 s do golpe, multiplicados pelo `janelaAparar` do tipo: uns 0,13 s no alto e 0,08 s no pesado (`janelaAparar` do pesado foi de 0,55 para 0,6). A regra fica em `MaquinaDeAtaque.naJanelaDeAparo` (`Ataques.js`), presa à fase do golpe do inimigo. Aparou: o golpe não entra, o inimigo fica desequilibrado 1,9 s (o Guardião, 1,15 s) e o próximo golpe é crítico. Fora da janela o tiro só arranha (6 de dano, não faz cambalear nem gasta o desequilíbrio). A rasteira nunca é aparada: o tiro gasta a bala e o jogo avisa "pule".
+  - **Balas:** 8. Todo tiro gasta uma, acertando ou errando (é o anti-spam). Voltam ao descansar na lanterna, ao renascer e com o Osso. Não vão para o save (recarregar a página já renasce na lanterna com as balas cheias); o formato do save não mudou. Contador discreto acima dos frascos.
+  - **Saíram:** o bloqueio (clique direito segurado), o aparo com C e o broquel do boneco, que agora carrega uma pistola de caixas e estica o braço com coice ao atirar. Sons novos sintetizados: estampido com eco e clique seco sem bala.
+  - **Celular:** `Toque.js` e os botões de toque não mudaram. O `npm run test:celular` (opcional) agora falha porque ainda espera o bloqueio com o botão "Bloquear"; ficou registrado e não foi consertado. Os botões "Aparar" (C) e "Bloquear" (clique direito) do celular passam a atirar.
+  - **Decidido pela IA (o Heitor revisa):** a proteção depois do parry (0,25 s) virou `pistola.invencivel` no config; o tiro na rasteira só dá o aviso "pule" durante o aviso e o golpe dela (não na recuperação); o tiro escolhe só inimigos visíveis, a até 1,6 m de desnível; quem patrulha e leva tiro passa a perseguir; apanhar durante a recuperação do tiro não faz cambalear (como quando está livre); o contador de balas some no modo de toque; o contador fica acima dos frascos, sempre visível, e fica apagado com 0 balas.
 - **Ganchos deixados:** `inimigo.abertoParaExecucao` fica ligado enquanto dura o desequilíbrio de um pesado aparado (para a execução, Etapa B). O aviso `jogador:pulou-golpe` sai quando o jogador pula uma rasteira (Etapa D). `jogador.recuperarComGolpe(dano)` é o ponto de entrada do rally (o visceral da Etapa B dá "rally cheio" por ele). `Jogador.receberDano` recebe os dados do golpe (`aparavel`, `bloqueavel`, `evitaPulando`...).
-- **Ainda não existe:** pistola, visceral, execução, quickstep, dano que cresce com a carga do ataque forte, contra-ataque pisando e dano extra ao pular contra golpe alto. O bloqueio do broquel continua forte (segura 85% do dano) até a Etapa B tirá-lo.
+- **Ainda não existe:** visceral, execução, quickstep (PRs B2 e B3), dano que cresce com a carga do ataque forte, contra-ataque pisando e dano extra ao pular contra golpe alto.
 - **Infra:** `jogar.bat` com atualização automática, `atualizar.bat`, e regra de integração automática no `AGENTS.md` com o `CLAUDE.md` apontando para ele.
 - **Specs (pronto):** `docs/specs/` tem uma página por tarefa futura (00 a 08), com objetivo, arquivos, critérios de aceite e modelo de IA recomendado. A ordem está na "Fila do Gabriel".
 - **Contrato de área (pronto):** `src/mundo/areas.js` tem o registro das áreas, e cada área declara `luzJogador` e `usaCeu`. Área nova não exige mexer no `Jogo.js`.
@@ -80,7 +87,7 @@ O parry com a pistola entra na Etapa B. Até lá, o jogo ainda usa o aparo antig
   - Frasco com tempo: uns 0,6 s de animação, andando devagar, e a cura é interrompida se o caçador apanhar.
   - Abrir a bolsa não pausa mais o jogo. Só o Esc pausa.
   - Inimigos param de recuar sozinhos só porque estão apanhando.
-- [ ] **B. Pistola, visceral e quickstep:**
+- [ ] **B. Pistola, visceral e quickstep** (B1 feito; falta B2 visceral e B3 quickstep):
   - Tiro instantâneo de curto alcance, sem bala voando. Conta como parry se acertar o inimigo num trecho do aviso dele ou no começo do golpe. Usar a máquina de golpes de `Ataques.js` para saber a fase: a janela fica presa à animação do inimigo, como no Bloodborne. A rasteira não pode ser aparada. O parry e o bloqueio do broquel saem aqui.
   - Munição limitada (balas), recuperada ao descansar na lanterna. Ideia do Bloodborne a considerar: gastar vida para fazer balas. Tiro errado gasta bala, e esse é o anti-spam. O tiro tem recuperação curta.
   - Valores iniciais sugeridos: janela de uns 0,13 s no golpe alto e 0,08 s no pesado, sem preparo antes da janela. Tudo ajustável no `config.js`.
@@ -98,7 +105,7 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 
 - [x] **0. Specs 00 a 08 escritas** (`docs/specs/`)
 - [x] **0b. Contrato de área aplicado** (spec 00: `src/mundo/areas.js`)
-- [ ] **1. B: pistola, parry, visceral e quickstep** (spec 07; Opus ou Fable)
+- [ ] **1. B: pistola, parry, visceral e quickstep** (spec 07; Opus ou Fable) — em andamento: B1 feito (pistola, parry, balas, broquel fora); faltam B2 e B3
 - [ ] **2. C: chefe e imprevisibilidade** (spec 08; Opus ou Fable)
 - [ ] **3. S2: botão de gráfico PS1 / HD** (spec 02)
 - [ ] **4. S3: estrada e taverna** (spec 01)
@@ -120,3 +127,6 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 - Amigos vendo uns aos outros como presenças no mapa, e marcas ou mensagens deixadas para os outros
 - Criaturas maiores (yeti acorrentado, rei-mariposa), bruxa como chefe
 - Versão para PC ou Steam (Electron ou Tauri)
+- Gastar vida para fazer balas (ideia do Bloodborne)
+- Balas como item encontrado no mapa
+- Penalidade por morrer (como as almas e os ecos de sangue)
