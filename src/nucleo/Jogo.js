@@ -146,13 +146,12 @@ export class Jogo {
     this.eventos.em('jogador:ferido', () => this.hud.piscarDano());
     this.eventos.em('golpe:acertou', () => this.hud.mostrarContato('inimigo'));
     this.eventos.em('golpe:parede', () => this.hud.mostrarContato('parede'));
-    this.eventos.em('jogador:bloqueou', ({ quebrou }) => this.hud.mostrarContato(quebrou ? 'inimigo' : 'bloqueio'));
+    this.eventos.em('jogador:tiro', ({ acertou }) => { if (acertou) this.hud.mostrarContato('inimigo'); });
     this.eventos.em('jogador:aparou', () => this.hud.destacar('aparou'));
     this.eventos.em('golpe:acertou', ({ critico }) => { if (critico) this.hud.destacar('critico'); });
     this.eventos.em('jogador:pulou-golpe', () => this.hud.destacar('pulou'));
     // Ensina a regra de ouro: a resposta que não serve para aquele tipo de golpe.
-    this.eventos.em('jogador:resposta-errada', ({ resposta }) => this.hud.avisar(
-      resposta === 'aparar' ? 'A rasteira não pode ser aparada. Pule.' : 'A rasteira passa por baixo da guarda. Pule.'));
+    this.eventos.em('jogador:resposta-errada', () => this.hud.avisar('A rasteira não pode ser aparada. Pule.'));
     // Contra o spam: avisa quando a cura é cortada e conclui o gole do frasco.
     this.eventos.em('jogador:curou', () => this.concluirCura());
     this.eventos.em('jogador:interrompido', ({ cura }) => { if (cura) this.interromperCura(); });
@@ -228,8 +227,7 @@ export class Jogo {
     const j = this.jogador;
     j.carregando = false;
     j.avisouCarga = false;
-    j.bloqueando = false;
-    j.apararNaFila = 0;
+    j.tiroNaFila = 0;
     j.ataqueNaFila = 0;
     j.esquivaNaFila = 0;
   }
@@ -446,6 +444,7 @@ export class Jogo {
     const l = this.descanso;
     this.ativarArea(this.checkpoints.get(l.id).area);
     this.jogador.reiniciar(l.x - Math.sin(l.olhar) * 1.2, l.z - Math.cos(l.olhar) * 1.2 + 0.001, l.olhar === Math.PI ? 0 : l.olhar);
+    this.jogador.balas = CONFIG.combate.pistola.balasMax;   // renascer (ou o Osso) repõe as balas
     this.jogador.atualizarCamera(0, 0);
     this.boneco.atualizar(0, this.jogador);
     this.congelado = 0;
@@ -540,7 +539,7 @@ export class Jogo {
 
   podeInteragir() {
     const j = this.jogador;
-    return !j.morto && j.noChao && j.acao === 'livre' && !j.bloqueando && !j.carregando && j.tEsquiva <= 0;
+    return !j.morto && j.noChao && j.acao === 'livre' && !j.carregando && j.tEsquiva <= 0;
   }
 
   pausaDeImpacto(segundos) { this.congelado = Math.max(this.congelado, segundos); }
@@ -581,6 +580,7 @@ export class Jogo {
         this.jogador.vida = CONFIG.jogador.vidaMax;
         this.jogador.estamina = CONFIG.jogador.estaminaMax;
         this.jogador.exausto = false;
+        this.jogador.balas = CONFIG.combate.pistola.balasMax;   // a lanterna repõe as balas
         this.reporInimigos();
         this.hud.fecharVeu(false);
         this.hud.avisar('você descansou');

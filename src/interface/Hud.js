@@ -69,6 +69,14 @@ export class Hud {
     this.destaque.classList.add('visivel');
   }
 
+  /** Contador de balas da pistola, ao lado dos frascos. Só mexe no HTML quando o número muda. */
+  mostrarBalas(n) {
+    if (n === this.balas) return;
+    this.balas = n;
+    el('total-balas').textContent = n;
+    el('balas-hud').classList.toggle('vazio', n === 0);
+  }
+
   mostrarFrascos(total) {
     el('total-frascos').textContent = total;
     el('frascos-hud').classList.toggle('oculto', total === 0);
@@ -92,6 +100,7 @@ export class Hud {
     this.rally.style.width = (100 * Math.min(maxVida, jogador.vida + (jogador.recuperavel || 0)) / maxVida) + '%';
     this.estamina.style.width = (100 * jogador.estamina / maxEstamina) + '%';
     this.estamina.style.opacity = jogador.exausto ? 0.45 : 1;
+    this.mostrarBalas(jogador.balas);
     if (this.tAviso > 0) {
       this.tAviso -= dt;
       if (this.tAviso <= 0) { this.aviso.textContent = this.avisoFixo; this.aviso.classList.toggle('visivel', !!this.avisoFixo); }

@@ -163,6 +163,14 @@ dialog.painel-menu::backdrop { background: #04030bd9; }
 }
 #frascos-hud kbd { font-size: 0.85em; }
 #total-frascos { margin-left: 5px; font-variant-numeric: tabular-nums; }
+/* Balas da pistola: discreto, logo acima dos frascos. Fica apagado quando acaba. */
+#balas-hud {
+  position: absolute; left: 28px; bottom: 108px; padding: 2px 8px;
+  font-size: 0.9em; color: #d8c9e8; background: #100a19a8;
+}
+#balas-hud kbd { font-size: 0.8em; }
+#total-balas { margin-left: 5px; font-variant-numeric: tabular-nums; }
+#balas-hud.vazio { color: #8a7a98; }
 .painel-bolsa { width: min(650px, 100%); }
 .bolsa-conteudo {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
@@ -193,6 +201,7 @@ dialog.painel-menu::backdrop { background: #04030bd9; }
 }
 .dica-toque { display: none; }
 .modo-toque .dica-teclado, .modo-toque #frascos-hud kbd { display: none; }
+.modo-toque #balas-hud { display: none; }   /* celular congelado: sem botão de tiro */
 .modo-toque .dica-toque { display: block; max-width: 40ch; }
 .modo-toque #tela-pausa .acoes-menu { width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .modo-toque .tela {

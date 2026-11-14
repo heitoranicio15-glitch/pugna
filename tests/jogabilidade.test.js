@@ -179,44 +179,118 @@ test('saves antigos migram, eventos novos sobrevivem e o reset remove apenas o p
   }
 });
 
-test('aparar na janela anula o dano e desequilibra o atacante; fora dela o golpe entra', () => {
-  const { jogador, entrada, eventos, alvo } = arena();
-  let aparados = 0;
-  alvo.serAparado = () => aparados++;
-  let sinais = 0;
-  eventos.em('jogador:aparou', () => sinais++);
-  entrada.apertou = (codigo) => codigo === 'KeyC';
-  jogador.atualizar(0.01);
-  entrada.apertou = () => false;
-  assert.equal(jogador.acao, 'aparar');
-  assert.equal(jogador.estamina, 100 - CONFIG.combate.aparar.custo);
-  jogador.atualizar(0.1);
-  assert.equal(jogador.receberDano(34, alvo.pos, alvo), 'aparou');
-  assert.deepEqual([jogador.vida, aparados, sinais, jogador.acao], [100, 1, 1, 'livre']);
-
-  // Cedo demais: o gesto termina antes do golpe e o dano entra inteiro.
-  jogador.invencivel = 0;
-  entrada.apertou = (codigo) => codigo === 'KeyC';
-  jogador.atualizar(0.01);
-  entrada.apertou = () => false;
-  for (let i = 0; i < 6; i++) jogador.atualizar(0.05);
-  assert.equal(jogador.acao, 'aparar');
-  assert.equal(jogador.receberDano(34, alvo.pos, alvo), 'ferido');
-  assert.deepEqual([jogador.vida, aparados], [66, 1]);
+test('naJanelaDeAparo: a janela fica presa ao fim do aviso e ao começo do golpe', () => {
+  const P = CONFIG.combate.pistola;
+  const cav = CONFIG.inimigos.cavaleiro;
+  const m = new MaquinaDeAtaque();
+  const eps = 1e-6;
+  assert.equal(m.naJanelaDeAparo(P), false);   // sem golpe
+  for (const tipo of ['alto', 'pesado']) {
+    m.iniciar(cav, [tipo]);
+    const g = m.golpe, k = g.janelaAparar;
+    m.t = g.preparo - P.janelaNoAviso * k - 0.001; assert.equal(m.naJanelaDeAparo(P), false, tipo);
+    m.t = g.preparo - P.janelaNoAviso * k + eps;   assert.equal(m.naJanelaDeAparo(P), true, tipo);
+    m.irPara('ativo');                               assert.equal(m.naJanelaDeAparo(P), true, tipo);
+    m.t = P.janelaNoGolpe * k - eps;                 assert.equal(m.naJanelaDeAparo(P), true, tipo);
+    m.t = P.janelaNoGolpe * k + 0.001;               assert.equal(m.naJanelaDeAparo(P), false, tipo);
+    m.t = 0; m.resolvido = true;                     assert.equal(m.naJanelaDeAparo(P), false, tipo);
+    m.irPara('recuperacao'); m.resolvido = false;    assert.equal(m.naJanelaDeAparo(P), false, tipo);
+  }
+  // Janela total: uns 0,13 s no alto e 0,08 s no pesado.
+  const total = (tipo) => (P.janelaNoAviso + P.janelaNoGolpe) * CONFIG.combate.ataquesInimigos[tipo].janelaAparar;
+  assert.ok(Math.abs(total('alto') - 0.13) < 1e-9);
+  assert.ok(Math.abs(total('pesado') - 0.08) < 0.003);
+  // A rasteira nunca entra na janela.
+  m.iniciar(cav, ['rasteira']);
+  m.t = m.golpe.preparo - 0.01; assert.equal(m.naJanelaDeAparo(P), false);
+  m.irPara('ativo');            assert.equal(m.naJanelaDeAparo(P), false);
 });
 
-test('aparar só vale de frente e o golpe em inimigo desequilibrado é crítico', () => {
+test('o tiro sai com clique direito ou C, gasta bala acertando ou errando e sem bala só dá clique seco', () => {
   const { jogador, entrada, eventos, alvo } = arena();
+  const P = CONFIG.combate.pistola;
+  alvo.ataque = new MaquinaDeAtaque();
+  alvo.levarTiro = function (dano) { this.vida -= dano; };
+  const tiros = [];
+  let secos = 0;
+  eventos.em('jogador:tiro', (t) => tiros.push(t.acertou));
+  eventos.em('jogador:sem-bala', () => secos++);
+  assert.equal(jogador.balas, P.balasMax);
+
+  // Clique direito: acerta o inimigo à frente, sem gastar estamina.
+  entrada.botoesApertados[2] = true;
+  jogador.atualizar(0.01);
+  entrada.botoesApertados[2] = false;
+  assert.deepEqual([jogador.acao, jogador.balas, alvo.vida, jogador.estamina], ['tiro', P.balasMax - 1, 100 - P.dano, 100]);
+  // C perto do fim da recuperação fica na fila e sai assim que ele se libera.
+  jogador.tAcao = P.recuperacao - 0.05;
   entrada.apertou = (codigo) => codigo === 'KeyC';
   jogador.atualizar(0.01);
   entrada.apertou = () => false;
-  jogador.atualizar(0.1);
-  assert.equal(jogador.receberDano(10, { x: 0, z: 3 }), 'ferido');
+  assert.equal(jogador.balas, P.balasMax - 1);
+  for (let i = 0; i < 5; i++) jogador.atualizar(0.02);
+  assert.deepEqual([jogador.balas, alvo.vida], [P.balasMax - 2, 100 - 2 * P.dano]);
 
+  // Errar também gasta bala: é o anti-spam.
+  for (let i = 0; i < 20; i++) jogador.atualizar(0.02);
+  alvo.pos.set(0, 0, 5);
+  assert.deepEqual(jogador.atirar(), { acertou: false, aparou: false });
+  assert.equal(jogador.balas, P.balasMax - 3);
+  assert.deepEqual(tiros, [true, true, false]);
+
+  // Sem bala: só o clique seco, e o caçador continua livre.
+  jogador.acao = 'livre';
+  jogador.balas = 0;
+  assert.equal(jogador.atirar(), null);
+  assert.deepEqual([secos, tiros.length, jogador.acao], [1, 3, 'livre']);
+  // Renascer (lanterna, morte ou Osso) começa com as balas cheias.
+  jogador.reiniciar(0, 0, 0);
+  assert.equal(jogador.balas, P.balasMax);
+});
+
+test('a parede no caminho bloqueia o tiro, e o tiro tem alcance curto', () => {
+  const { colisores, jogador, alvo } = arena();
+  const P = CONFIG.combate.pistola;
+  alvo.ataque = new MaquinaDeAtaque();
+  alvo.levarTiro = function (dano) { this.vida -= dano; };
+  const parede = colisores.adicionar(0, -1, 6, 0.25);
+  assert.deepEqual(jogador.atirar(), { acertou: false, aparou: false });
+  // Mesmo com a mira travada.
+  jogador.acao = 'livre';
+  jogador.alvo = alvo;
+  assert.deepEqual(jogador.atirar(), { acertou: false, aparou: false });
+  assert.deepEqual([alvo.vida, jogador.balas], [100, P.balasMax - 2]);
+  // Sem parede, mas longe demais.
+  parede.ativa = false;
+  jogador.acao = 'livre';
+  jogador.alvo = null;
+  alvo.pos.set(0, 0, -(P.alcance + 1));
+  assert.deepEqual(jogador.atirar(), { acertou: false, aparou: false });
+  jogador.acao = 'livre';
+  alvo.pos.set(0, 0, -(P.alcance - 1));
+  assert.deepEqual(jogador.atirar(), { acertou: true, aparou: false });
+});
+
+test('não existe mais bloqueio: segurar o clique direito não reduz o dano', () => {
+  const { jogador, entrada, alvo } = arena();
+  alvo.ataque = new MaquinaDeAtaque();
+  alvo.levarTiro = () => {};
+  entrada.botoes[2] = true;
+  for (let i = 0; i < 10; i++) jogador.atualizar(0.05);
+  assert.equal(jogador.bloqueando, false);
+  const alto = montarGolpe(CONFIG.inimigos.cavaleiro, 'alto');
+  assert.equal(jogador.receberDano(alto.dano, alvo.pos, alvo, alto), 'ferido');
+  assert.equal(jogador.vida, 100 - alto.dano);
+  assert.equal(jogador.exportarEstado().bloqueando, false);
+  assert.equal('bloqueio' in CONFIG.combate, false);
+  assert.equal('aparar' in CONFIG.combate, false);
+});
+
+test('o golpe em inimigo desequilibrado é crítico', () => {
+  const { jogador, eventos, alvo } = arena();
   const golpes = [];
   eventos.em('golpe:acertou', (g) => golpes.push(g.critico));
   alvo.receberDano = () => 'critico';
-  jogador.acao = 'livre';
   jogador.iniciarAtaque('leve');
   for (let i = 0; i < 10; i++) jogador.atualizar(0.02);
   assert.deepEqual(golpes, [true]);
@@ -332,71 +406,49 @@ test('o sorteio respeita os pesos e não repete a sequência especial', () => {
   assert.equal(sortearSequencia(lista, lista[0], () => 0), lista[0]);
 });
 
-test('regra de ouro: a rasteira pede pulo; aparar e bloquear não servem contra ela', () => {
-  const { jogador, entrada, eventos, alvo } = arena();
-  const rasteira = montarGolpe(CONFIG.inimigos.cavaleiro, 'rasteira');
+test('regra de ouro: a rasteira pede pulo; o tiro não a apara, gasta bala e avisa', () => {
+  const { jogador, eventos, inimigo, rodar } = duelo();
   const erros = [];
-  eventos.em('jogador:resposta-errada', (e) => erros.push(e.resposta));
+  eventos.em('jogador:resposta-errada', (e) => erros.push([e.resposta, e.tipo]));
   let pulos = 0;
   eventos.em('jogador:pulou-golpe', () => pulos++);
-  alvo.serAparado = () => assert.fail('a rasteira não pode ser aparada');
-
-  // No ar, acima da lâmina: nenhum dano.
-  jogador.noChao = false; jogador.pos.y = 0.5;
-  assert.equal(jogador.receberDano(rasteira.dano, alvo.pos, alvo, rasteira), 'pulou');
-  assert.deepEqual([jogador.vida, pulos], [100, 1]);
-  // Um golpe alto acerta quem está no ar do mesmo jeito.
-  assert.equal(jogador.receberDano(10, alvo.pos, alvo, montarGolpe(CONFIG.inimigos.cavaleiro, 'alto')), 'ferido');
-  jogador.noChao = true; jogador.pos.y = 0; jogador.vel.set(0, 0, 0); jogador.vida = 100;
-
-  // Aparar no tempo certo não adianta.
-  entrada.apertou = (codigo) => codigo === 'KeyC';
-  jogador.atualizar(0.01);
-  entrada.apertou = () => false;
-  jogador.atualizar(0.1);
-  assert.equal(jogador.receberDano(rasteira.dano, alvo.pos, alvo, rasteira), 'ferido');
+  inimigo.mudar('perseguir');
+  inimigo.atacar(['rasteira']);
+  const rasteira = inimigo.golpe;
+  inimigo.ataque.t = rasteira.preparo - 0.03;   // onde um golpe alto seria aparado
+  assert.deepEqual(jogador.atirar(), { acertou: true, aparou: false });
+  assert.equal(jogador.balas, CONFIG.combate.pistola.balasMax - 1);
+  assert.notEqual(inimigo.estado, 'desequilibrado');
+  assert.deepEqual(erros, [['aparar', 'rasteira']]);
+  rodar(() => inimigo.estado === 'recuperacao');
   assert.equal(jogador.vida, 100 - rasteira.dano);
 
-  // Bloquear também não: o dano entra inteiro e a estamina não é gasta.
-  jogador.acao = 'livre'; jogador.bloqueando = true; jogador.vida = 100;
-  const estamina = jogador.estamina;
-  assert.equal(jogador.receberDano(rasteira.dano, alvo.pos, alvo, rasteira), 'ferido');
-  assert.deepEqual([jogador.vida, jogador.estamina], [100 - rasteira.dano, estamina]);
-  assert.deepEqual(erros, ['aparar', 'bloquear']);
+  // No ar, acima da lâmina: nenhum dano. Pular continua valendo.
+  jogador.vida = 100; jogador.noChao = false; jogador.pos.y = 0.5;
+  assert.equal(jogador.receberDano(rasteira.dano, inimigo.pos, inimigo, rasteira), 'pulou');
+  assert.deepEqual([jogador.vida, pulos], [100, 1]);
+  // Um golpe alto acerta quem está no ar do mesmo jeito.
+  assert.equal(jogador.receberDano(10, inimigo.pos, inimigo, montarGolpe(CONFIG.inimigos.cavaleiro, 'alto')), 'ferido');
 });
 
-test('regra de ouro: o golpe pesado tem janela de aparo menor e pesa mais no bloqueio', () => {
-  const { jogador, entrada, alvo } = arena();
-  const pesado = montarGolpe(CONFIG.inimigos.cavaleiro, 'pesado');
-  const alto = montarGolpe(CONFIG.inimigos.cavaleiro, 'alto');
-  const recebidos = [];
-  alvo.serAparado = (g) => recebidos.push(g.tipo);
-  const aparar = (espera) => {
+test('regra de ouro: a janela do parry do pesado é menor que a do alto', () => {
+  const { jogador, inimigo } = duelo();
+  const P = CONFIG.combate.pistola;
+  const atirarFaltando = (tipo, falta) => {
     jogador.reiniciar(0, 0, 0);
-    entrada.apertou = (codigo) => codigo === 'KeyC';
-    jogador.atualizar(0.01);
-    entrada.apertou = () => false;
-    jogador.atualizar(espera);
+    inimigo.reiniciar(); inimigo.angulo = 0;
+    inimigo.mudar('perseguir');
+    inimigo.atacar([tipo]);
+    inimigo.ataque.t = inimigo.golpe.preparo - falta;
+    return jogador.atirar();
   };
-  const ap = CONFIG.combate.aparar;
-  // No fim da janela comum: o alto é aparado, o pesado entra.
-  const tarde = ap.preparo + ap.janela * 0.9;
-  aparar(tarde);
-  assert.equal(jogador.receberDano(alto.dano, alvo.pos, alvo, alto), 'aparou');
-  aparar(tarde);
-  assert.equal(jogador.receberDano(pesado.dano, alvo.pos, alvo, pesado), 'ferido');
-  // No começo da janela o pesado também é aparado.
-  aparar(ap.preparo + ap.janela * pesado.janelaAparar * 0.5);
-  assert.equal(jogador.receberDano(pesado.dano, alvo.pos, alvo, pesado), 'aparou');
-  assert.deepEqual(recebidos, ['alto', 'pesado']);
-
-  jogador.reiniciar(0, 0, 0);
-  jogador.bloqueando = true;
-  assert.equal(jogador.receberDano(alto.dano, alvo.pos, alvo, alto), 'bloqueou');
-  const gastoAlto = 100 - jogador.estamina;
-  jogador.estamina = 100;
-  assert.equal(jogador.receberDano(pesado.dano, alvo.pos, alvo, pesado), 'bloqueou');
-  assert.ok(100 - jogador.estamina > gastoAlto * 2);
+  // Um instante que vale para o alto e não para o pesado.
+  const falta = P.janelaNoAviso * 0.8;
+  assert.ok(falta > P.janelaNoAviso * CONFIG.combate.ataquesInimigos.pesado.janelaAparar);
+  assert.deepEqual(atirarFaltando('alto', falta), { acertou: true, aparou: true });
+  assert.deepEqual(atirarFaltando('pesado', falta), { acertou: true, aparou: false });
+  // Mais perto do golpe, o pesado também é aparado.
+  assert.deepEqual(atirarFaltando('pesado', P.janelaNoAviso * 0.3), { acertou: true, aparou: true });
 });
 
 // Tela de mentira: fora do navegador, as texturas do inimigo só precisam existir.
@@ -470,31 +522,69 @@ test('o aviso visual muda com o tipo e o golpe é resolvido uma única vez', () 
   assert.equal(inimigo.olho.color.getHex(), CONFIG.paleta.magia);
 });
 
-test('aparar mantém o desequilíbrio e o crítico; o pesado aparado deixa o gancho da execução', () => {
-  const { jogador, entrada, inimigo, rodar } = duelo();
-  const aparar = (tipo) => {
+test('tiro na janela desequilibra sem dano; antes e depois só arranha e o golpe entra', () => {
+  const { jogador, eventos, inimigo, rodar } = duelo();
+  const P = CONFIG.combate.pistola;
+  let aparos = 0;
+  eventos.em('jogador:aparou', () => aparos++);
+  const preparar = (tipo) => {
     jogador.reiniciar(0, 0, 0);
+    inimigo.reiniciar(); inimigo.angulo = 0;
     inimigo.mudar('perseguir');
     inimigo.atacar([tipo]);
-    const ap = CONFIG.combate.aparar;
-    rodar(() => inimigo.golpe.preparo - inimigo.ataque.t <= ap.preparo + 0.03);
-    entrada.apertou = (codigo) => codigo === 'KeyC';
-    jogador.atualizar(0.01);
-    entrada.apertou = () => false;
-    for (let i = 0; i < 12 && inimigo.estado !== 'desequilibrado'; i++) { jogador.atualizar(0.01); inimigo.atualizar(0.01); }
+    return inimigo.golpe;
   };
-  aparar('alto');
-  assert.deepEqual([inimigo.estado, inimigo.abertoParaExecucao, jogador.vida], ['desequilibrado', false, 100]);
-  const vida = inimigo.vida;
-  assert.equal(inimigo.receberDano(10, { x: 0, z: -1 }, 0, false), 'critico');
-  assert.equal(inimigo.vida, vida - 10 * CONFIG.combate.critico.multiplicador);
 
-  inimigo.reiniciar();
-  inimigo.angulo = 0;
-  aparar('pesado');
+  // Na janela: o inimigo fica desequilibrado, não perde vida e o golpe não entra.
+  let g = preparar('alto');
+  inimigo.ataque.t = g.preparo - P.janelaNoAviso * 0.5;
+  assert.deepEqual(jogador.atirar(), { acertou: true, aparou: true });
+  assert.deepEqual([inimigo.estado, inimigo.abertoParaExecucao, inimigo.vida, aparos], ['desequilibrado', false, inimigo.cfg.vida, 1]);
+  assert.ok(jogador.invencivel > 0);
+  for (let i = 0; i < 30; i++) { jogador.atualizar(0.02); inimigo.atualizar(0.02); }
+  assert.deepEqual([jogador.vida, inimigo.estado], [100, 'desequilibrado']);
+  // O golpe seguinte é crítico.
+  assert.equal(inimigo.receberDano(10, { x: 0, z: -1 }, 0, false), 'critico');
+  assert.equal(inimigo.vida, inimigo.cfg.vida - 10 * CONFIG.combate.critico.multiplicador);
+
+  // Cedo demais: só arranha, ele não cambaleia e o golpe entra.
+  g = preparar('alto');
+  inimigo.ataque.t = g.preparo - P.janelaNoAviso - 0.1;
+  assert.deepEqual(jogador.atirar(), { acertou: true, aparou: false });
+  assert.deepEqual([inimigo.vida, inimigo.estado], [inimigo.cfg.vida - P.dano, 'preparo']);
+  rodar(() => inimigo.estado === 'recuperacao');
+  assert.equal(jogador.vida, 100 - g.dano);
+
+  // Tarde demais (passou o começo do golpe): o golpe entra do mesmo jeito.
+  g = preparar('alto');
+  inimigo.ataque.irPara('ativo'); inimigo.estado = 'ativo';
+  inimigo.ataque.t = P.janelaNoGolpe + 0.01;
+  assert.deepEqual(jogador.atirar(), { acertou: true, aparou: false });
+  rodar(() => inimigo.estado === 'recuperacao');
+  assert.equal(jogador.vida, 100 - g.dano);
+
+  // O pesado aparado liga o gancho da execução, que some com o desequilíbrio.
+  g = preparar('pesado');
+  inimigo.ataque.t = g.preparo - P.janelaNoAviso * g.janelaAparar * 0.5;
+  assert.deepEqual(jogador.atirar(), { acertou: true, aparou: true });
   assert.deepEqual([inimigo.estado, inimigo.abertoParaExecucao, jogador.vida], ['desequilibrado', true, 100]);
   rodar(() => inimigo.estado !== 'desequilibrado');
   assert.equal(inimigo.abertoParaExecucao, false);
+});
+
+test('o tiro fora da janela não faz cambalear, não gasta o desequilíbrio e acorda quem patrulha', () => {
+  const { jogador, inimigo } = duelo();
+  const P = CONFIG.combate.pistola;
+  const vida = inimigo.cfg.vida;
+  assert.equal(inimigo.estado, 'patrulha');
+  jogador.atirar();
+  assert.deepEqual([inimigo.estado, inimigo.vida], ['perseguir', vida - P.dano]);
+  // Desequilibrado: o tiro não é crítico e o desequilíbrio continua.
+  inimigo.serAparado();
+  jogador.acao = 'livre';
+  jogador.atirar();
+  assert.deepEqual([inimigo.estado, inimigo.vida], ['desequilibrado', vida - 2 * P.dano]);
+  assert.equal(inimigo.receberDano(10, { x: 0, z: -1 }, 0, false), 'critico');
 });
 
 // -----------------------------------------------------------------------------
@@ -618,13 +708,8 @@ test('rally: parte do dano fica recuperável por um tempo e cada acerto devolve 
   for (let i = 0; i < 10; i++) jogador.atualizar(0.02);
   assert.equal(jogador.vida, vida);
 
-  // Dano bloqueado não vira rally; a vida nunca passa do máximo; a morte zera.
+  // A vida nunca passa do máximo; a morte zera.
   jogador.reiniciar(0, 0, 0);
-  jogador.bloqueando = true;
-  assert.equal(jogador.receberDano(20, alvo.pos, alvo), 'bloqueou');
-  assert.equal(jogador.recuperavel, 0);
-  jogador.bloqueando = false;
-  jogador.vida = 100;
   jogador.receberDano(4, alvo.pos, alvo);
   assert.equal(jogador.recuperarComGolpe(999), 4 * R.parte);
   assert.ok(jogador.vida <= CONFIG.jogador.vidaMax);

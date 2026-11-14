@@ -43,19 +43,20 @@ export class Jogador {
     this.exausto = false;
     this.esperaEstamina = 0;
     // combate
-    this.acao = 'livre';        // livre | preparo | ativo | recuperacao | aparar | curando | atordoado
+    this.acao = 'livre';        // livre | preparo | ativo | recuperacao | tiro | curando | atordoado
     this.tAcao = 0;             // tempo dentro da ação atual
-    this.tAtordoado = CB.guardaQuebrada;   // quanto dura o atordoamento atual
+    this.tAtordoado = CB.interrupcao.cambaleio;   // quanto dura o atordoamento atual
     // Rally: vida que ainda dá para recuperar batendo, e o tempo que resta para isso.
     this.recuperavel = 0; this.tRally = 0;
     this.ataque = null;         // 'leve' ou 'forte'
     this.golpeAlternado = false;
     this.carregando = false; this.tCarga = 0; this.avisouCarga = false;
-    this.bloqueando = false;
+    this.bloqueando = false;    // sempre false: o bloqueio saiu com o broquel (fica para quem lê o campo)
+    this.balas = CB.pistola.balasMax;   // munição da pistola (não vai para o save)
     this.tEsquiva = 0; this.esperaEsquiva = 0; this.invencivel = 0;
     this.dirEsquiva = new THREE.Vector2();
     this.rolando = false;       // esquiva com direção (rola) ou parado (salta para trás)
-    this.apararNaFila = 0;
+    this.tiroNaFila = 0;
     this.ataqueNaFila = 0;
     this.tipoNaFila = null;
     this.esquivaNaFila = 0;
@@ -108,7 +109,9 @@ export class Jogador {
     this.esperaEsquiva -= dt; this.invencivel -= dt;
     this.esquivaNaFila -= dt;
     if (querEsquivar) this.esquivaNaFila = CB.filaEsquiva;
-    const podeCancelar = this.acao === 'recuperacao' && this.tAcao + dt >= CB[this.ataque].liberarEsquiva;
+    // A esquiva corta o fim de um golpe ou do tiro, depois de "liberarEsquiva".
+    const podeCancelar = (this.acao === 'recuperacao' && this.tAcao + dt >= CB[this.ataque].liberarEsquiva) ||
+      (this.acao === 'tiro' && this.tAcao + dt >= CB.pistola.liberarEsquiva);
     if (this.esquivaNaFila > 0 && this.tEsquiva <= 0 && this.esperaEsquiva <= 0 && this.noChao &&
         !this.exausto && this.estamina >= CB.esquiva.custo && (this.acao === 'livre' || podeCancelar)) {
       this.gastar(CB.esquiva.custo);
@@ -119,7 +122,7 @@ export class Jogador {
         this.dirEsquiva.set(dx, dz).normalize();
         this.rumo = Math.atan2(-dx, -dz);
       } else this.dirEsquiva.set(Math.sin(this.rumo), Math.cos(this.rumo));   // parado: salta para trás
-      this.acao = 'livre'; this.ataque = null; this.carregando = false; this.bloqueando = false;
+      this.acao = 'livre'; this.ataque = null; this.carregando = false;
       this.ataqueNaFila = 0;
       this.esquivaNaFila = 0;
       this.jogo.eventos.emitir('jogador:esquiva');
@@ -128,20 +131,18 @@ export class Jogador {
 
     // ---------- velocidade ----------
     const correndo = (e.segurando('ShiftLeft') || e.corridaToque) && comp > 0.3 &&
-      !this.exausto && !this.bloqueando && !this.carregando && this.acao === 'livre';
+      !this.exausto && !this.carregando && this.acao === 'livre';
 
     // ---------- para onde o corpo vira ----------
     // Com a mira travada ele encara o alvo (menos correndo ou rolando);
     // sem trava, vira para onde anda.
-    if (this.tEsquiva <= 0 && (this.acao === 'livre' || this.acao === 'aparar' || this.acao === 'curando')) {
+    if (this.tEsquiva <= 0 && (this.acao === 'livre' || this.acao === 'curando')) {
       const desejado = this.alvo && !correndo ? anguloPara(this.pos, this.alvo.pos) : this.entradaDir;
       if (desejado !== null) this.rumo += THREE.MathUtils.clamp(difAngulo(desejado, this.rumo), -C.giro * dt, C.giro * dt);
     }
     let alvo = correndo ? C.velCorrer : C.velAndar;
-    if (this.bloqueando) alvo *= CB.bloqueio.velocidade;
     if (this.carregando || this.acao === 'preparo' || this.acao === 'ativo') alvo *= 0.45;
     if (this.acao === 'recuperacao') alvo *= 0.65;
-    if (this.acao === 'aparar') alvo *= 0.4;
     if (this.acao === 'curando') alvo *= CB.frasco.velocidade;   // bebendo o frasco: anda devagar
     if (this.acao === 'atordoado') alvo = 0;
     if (correndo && comp > 0 && this.noChao) this.gastar(C.custoCorrer * dt);
@@ -186,7 +187,7 @@ export class Jogador {
     // ---------- estamina volta com o tempo ----------
     this.esperaEstamina -= dt;
     if (this.esperaEstamina <= 0 && !this.carregando) {
-      this.estamina = Math.min(C.estaminaMax, this.estamina + C.estaminaRegen * (this.bloqueando ? 0.35 : 1) * dt);
+      this.estamina = Math.min(C.estaminaMax, this.estamina + C.estaminaRegen * dt);
     }
     if (this.exausto && this.estamina > 25) this.exausto = false;
 
@@ -322,26 +323,19 @@ export class Jogador {
       this.tRally -= dt;
       if (this.tRally <= 0) this.recuperavel = Math.max(0, this.recuperavel - CB.rally.escoa * dt);
     }
-    const ap = CB.aparar;
-    if (this.acao === 'aparar' && this.tAcao >= ap.preparo + ap.janela + ap.recuperacao) this.acao = 'livre';
+    if (this.acao === 'tiro' && this.tAcao >= CB.pistola.recuperacao) this.acao = 'livre';
 
-    // ---------- aparar (parry) ----------
-    this.apararNaFila -= dt;
-    if (e.apertou('KeyC')) this.apararNaFila = 0.15;
-    if (this.apararNaFila > 0 && this.acao === 'livre' && this.tEsquiva <= 0 && this.noChao) {
-      this.apararNaFila = 0;
-      if (this.exausto || this.estamina < ap.custo) this.jogo.eventos.emitir('jogador:sem-estamina');
-      else {
-        this.gastar(ap.custo);
-        this.acao = 'aparar'; this.tAcao = 0;
-        this.carregando = false; this.ataqueNaFila = 0;
-        this.orientarParaGolpe();
-        this.jogo.eventos.emitir('jogador:aparar');
-      }
+    // ---------- pistola (o parry) ----------
+    // Clique direito ou C. Se o caçador estiver ocupado, o aperto espera um pouco.
+    this.tiroNaFila -= dt;
+    if (e.botoesApertados[2] || e.apertou('KeyC')) this.tiroNaFila = CB.pistola.fila;
+    if (this.tiroNaFila > 0 && this.acao === 'livre' && this.tEsquiva <= 0) {
+      this.tiroNaFila = 0;
+      this.atirar();
     }
 
     const livre = this.acao === 'livre' && this.tEsquiva <= 0;
-    if (e.botoesApertados[0] && this.tEsquiva <= 0 && this.acao !== 'atordoado' && this.acao !== 'aparar' && this.acao !== 'curando') {
+    if (e.botoesApertados[0] && this.tEsquiva <= 0 && this.acao !== 'atordoado' && this.acao !== 'curando') {
       this.carregando = true;
       this.tCarga = 0;
       this.avisouCarga = false;
@@ -362,7 +356,70 @@ export class Jogador {
       this.ataqueNaFila = 0;
       this.iniciarAtaque(this.tipoNaFila);
     }
-    this.bloqueando = e.botoes[2] && this.acao === 'livre' && !this.carregando && this.tEsquiva <= 0;
+  }
+
+  /**
+   * Tiro de pistola: instantâneo, de curto alcance, sem bala voando. Toda bala
+   * é gasta, acertando ou não (é o anti-spam). Se o inimigo estiver na janela
+   * do golpe dele (veja MaquinaDeAtaque.naJanelaDeAparo), é um parry: ele fica
+   * desequilibrado e o golpe não entra. Fora da janela, o tiro só arranha.
+   * Devolve { acertou, aparou }, ou null se não deu para atirar.
+   */
+  atirar() {
+    const P = CB.pistola;
+    if (this.morto || this.acao !== 'livre' || this.tEsquiva > 0) return null;
+    if (this.balas <= 0) { this.jogo.eventos.emitir('jogador:sem-bala'); return null; }
+    this.balas--;
+    this.carregando = false; this.avisouCarga = false; this.ataqueNaFila = 0;
+    this.orientarParaGolpe();
+    this.acao = 'tiro'; this.tAcao = 0;
+    const alvo = this.alvoDoTiro();
+    let aparou = false;
+    if (alvo) {
+      const golpe = alvo.ataque?.golpe;
+      if (alvo.ataque?.naJanelaDeAparo(P)) {
+        alvo.ataque.resolvido = true;   // o golpe aparado não entra mais
+        alvo.serAparado(golpe);
+        this.jogo.pausaDeImpacto(P.pausa);
+        this.tremor = Math.max(this.tremor, P.tremor);
+        this.invencivel = Math.max(this.invencivel, P.invencivel);
+        this.jogo.eventos.emitir('jogador:aparou', alvo);
+        aparou = true;
+      } else {
+        alvo.levarTiro(P.dano);
+        if (golpe?.aparavel === false && alvo.ataque.fase !== 'recuperacao') {   // rasteira: a resposta é pular
+          this.jogo.eventos.emitir('jogador:resposta-errada', { resposta: 'aparar', tipo: golpe.tipo });
+        }
+      }
+    }
+    const resultado = { acertou: !!alvo, aparou };
+    this.jogo.eventos.emitir('jogador:tiro', resultado);
+    return resultado;
+  }
+
+  /**
+   * Quem o tiro acerta: o alvo da mira travada, se estiver no alcance; senão o
+   * inimigo vivo mais próximo no cone à frente. Parede no meio bloqueia.
+   */
+  alvoDoTiro() {
+    const P = CB.pistola;
+    const col = this.jogo.mundo.colisores;
+    const altura = this.pos.y + 1.22;
+    const f = this.frente();
+    const alcanca = (i) => !i.morto && i.grupo?.visible !== false && Math.abs(i.pos.y - this.pos.y) <= 1.6 &&
+      Math.hypot(i.pos.x - this.pos.x, i.pos.z - this.pos.z) <= P.alcance;
+    if (this.alvo && alcanca(this.alvo)) {
+      return col.bloqueiaTrecho(this.pos, this.alvo.pos, altura) ? null : this.alvo;
+    }
+    let melhor = null, menor = Infinity;
+    for (const i of this.jogo.inimigos) {
+      if (!alcanca(i)) continue;
+      const dx = i.pos.x - this.pos.x, dz = i.pos.z - this.pos.z, d = Math.hypot(dx, dz) || 1e-4;
+      if ((dx * f.x + dz * f.z) / d < P.abertura || d >= menor) continue;
+      if (col.bloqueiaTrecho(this.pos, i.pos, altura)) continue;
+      menor = d; melhor = i;
+    }
+    return melhor;
   }
 
   iniciarAtaque(tipo) {
@@ -427,8 +484,8 @@ export class Jogador {
   /** Começa a beber um frasco. A cura vem no fim (CONFIG.combate.frasco.tempo), se ele não apanhar antes. */
   comecarCura() {
     this.acao = 'curando'; this.tAcao = 0;
-    this.carregando = false; this.avisouCarga = false; this.bloqueando = false;
-    this.ataqueNaFila = 0; this.apararNaFila = 0;
+    this.carregando = false; this.avisouCarga = false;
+    this.ataqueNaFila = 0; this.tiroNaFila = 0;
     this.jogo.eventos.emitir('jogador:bebendo');
   }
 
@@ -463,7 +520,7 @@ export class Jogador {
       if (firme) { this.jogo.eventos.emitir('jogador:aguentou'); return false; }
     }
     this.acao = 'atordoado'; this.tAcao = 0; this.tAtordoado = I.cambaleio;
-    this.ataque = null; this.ataqueNaFila = 0; this.apararNaFila = 0;
+    this.ataque = null; this.ataqueNaFila = 0; this.tiroNaFila = 0;
     this.jogo.eventos.emitir('jogador:interrompido', { cura: curando });
     return true;
   }
@@ -471,8 +528,8 @@ export class Jogador {
   /**
    * Chamado pelos inimigos. origem = posição de quem bateu. golpe = dados do
    * ataque (veja Ataques.js); sem ele, vale como um golpe alto comum.
-   * Devolve o que aconteceu: 'esquivou', 'pulou', 'aparou', 'bloqueou',
-   * 'guarda-quebrada' ou 'ferido'.
+   * Devolve o que aconteceu: 'ignorado', 'esquivou', 'pulou' ou 'ferido'.
+   * (O parry acontece antes, no tiro: o golpe aparado já chega resolvido.)
    */
   receberDano(dano, origem, atacante = null, golpe = null) {
     if (this.morto) return 'ignorado';
@@ -484,51 +541,18 @@ export class Jogador {
       return 'pulou';
     }
     const dx = origem.x - this.pos.x, dz = origem.z - this.pos.z, d = Math.hypot(dx, dz) || 1;
-    const f = this.frente();
-    const deFrente = (dx * f.x + dz * f.z) / d > 0.2;
-    // Aparo: o golpe chegou de frente, dentro da janela. Nenhum dano, e o
-    // atacante fica desequilibrado e aberto a um golpe crítico.
-    // Golpes pesados encurtam a janela; os que não podem ser aparados entram inteiros.
-    const ap = CB.aparar;
-    const janela = ap.janela * (golpe?.janelaAparar ?? 1);
-    const tentouAparar = this.acao === 'aparar' && deFrente && this.tAcao >= ap.preparo && this.tAcao <= ap.preparo + ap.janela;
-    if (tentouAparar && golpe?.aparavel === false) this.jogo.eventos.emitir('jogador:resposta-errada', { resposta: 'aparar', tipo: golpe.tipo });
-    if (tentouAparar && golpe?.aparavel !== false && this.tAcao <= ap.preparo + janela) {
-      this.acao = 'livre'; this.tAcao = 0;
-      this.invencivel = Math.max(this.invencivel, 0.25);
-      this.tremor = Math.max(this.tremor, 0.045);
-      this.jogo.pausaDeImpacto(0.12);
-      atacante?.serAparado?.(golpe);
-      this.jogo.eventos.emitir('jogador:aparou', atacante);
-      return 'aparou';
-    }
-    let resultado = 'ferido';
-    if (this.bloqueando && deFrente && golpe?.bloqueavel === false) {
-      this.jogo.eventos.emitir('jogador:resposta-errada', { resposta: 'bloquear', tipo: golpe.tipo });
-    } else if (this.bloqueando && deFrente) {
-      const custo = dano * CB.bloqueio.custoPorDano * (golpe?.custoBloqueio ?? 1);
-      const aguentou = this.estamina >= custo * 0.6;
-      this.gastar(custo);
-      if (aguentou) { dano *= 1 - CB.bloqueio.reducao; resultado = 'bloqueou'; }
-      else { dano *= 0.5; resultado = 'guarda-quebrada'; this.acao = 'atordoado'; this.tAcao = 0; this.tAtordoado = CB.guardaQuebrada; this.ataque = null; }
-      this.jogo.eventos.emitir('jogador:bloqueou', { quebrou: !aguentou });
-    }
     this.vida -= dano;
-    this.tremor = Math.max(this.tremor, resultado === 'bloqueou' ? 0.03 : 0.07);
-    this.vel.x -= dx / d * (resultado === 'bloqueou' ? 2.5 : 5); this.vel.z -= dz / d * (resultado === 'bloqueou' ? 2.5 : 5);
-    if (resultado !== 'bloqueou') {
-      this.carregando = false;
-      this.avisouCarga = false;
-      this.jogo.eventos.emitir('jogador:ferido', { dano });
-    }
-    if (resultado === 'ferido') {
-      // Rally: parte do dano fica recuperável por alguns segundos (nunca mais do que falta de vida).
-      this.recuperavel = Math.min(this.recuperavel + dano * CB.rally.parte, C.vidaMax - Math.max(0, this.vida));
-      this.tRally = CB.rally.duracao;
-      this.interromper(dano);
-    }
-    if (this.vida <= 0) { this.recuperavel = 0; this.vida = 0; this.morto = true; this.bloqueando = false; this.carregando = false; this.jogo.eventos.emitir('jogador:morreu'); }
-    return resultado;
+    this.tremor = Math.max(this.tremor, 0.07);
+    this.vel.x -= dx / d * 5; this.vel.z -= dz / d * 5;
+    this.carregando = false;
+    this.avisouCarga = false;
+    this.jogo.eventos.emitir('jogador:ferido', { dano });
+    // Rally: parte do dano fica recuperável por alguns segundos (nunca mais do que falta de vida).
+    this.recuperavel = Math.min(this.recuperavel + dano * CB.rally.parte, C.vidaMax - Math.max(0, this.vida));
+    this.tRally = CB.rally.duracao;
+    this.interromper(dano);
+    if (this.vida <= 0) { this.recuperavel = 0; this.vida = 0; this.morto = true; this.carregando = false; this.jogo.eventos.emitir('jogador:morreu'); }
+    return 'ferido';
   }
 
   // ---------------------------------------------------------------------------
@@ -566,6 +590,6 @@ export class Jogador {
 
   /** Dados que precisariam ir para um servidor/salvamento no futuro. */
   exportarEstado() {
-    return { x: this.pos.x, y: this.pos.y, z: this.pos.z, yaw: this.yaw, rumo: this.rumo, vida: this.vida, recuperavel: this.recuperavel, acao: this.acao, bloqueando: this.bloqueando };
+    return { x: this.pos.x, y: this.pos.y, z: this.pos.z, yaw: this.yaw, rumo: this.rumo, vida: this.vida, recuperavel: this.recuperavel, acao: this.acao, bloqueando: false };
   }
 }

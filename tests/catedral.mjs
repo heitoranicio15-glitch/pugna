@@ -378,8 +378,20 @@ try {
   assert.equal((await estado()).grade, false);
 
   await posicionar(4, 6.4);
+  // Pistola: o clique direito e o C atiram e baixam o contador; descansar na lanterna repõe.
+  const balasMax = await page.evaluate(() => jogo.jogador.balas);
+  const contador = () => page.evaluate(() => [jogo.jogador.balas, document.getElementById('total-balas').textContent]);
+  await page.mouse.down({ button: 'right' });
+  await passos();
+  await page.mouse.up({ button: 'right' });
+  await passos(8);
+  await tecla('c');
+  await passos(8);
+  assert.deepEqual(await contador(), [balasMax - 2, String(balasMax - 2)]);
+  assert.equal(await page.evaluate(() => jogo.jogador.bloqueando), false);
   await tecla('e');
   await passos(23);
+  assert.deepEqual(await contador(), [balasMax, String(balasMax)]);
   assert.equal((await estado()).progresso.descanso, 'nave-do-veu');
   assert.equal(await page.evaluate(() => jogo.jogador.vida), 100);
   assert.equal(await page.evaluate(() => jogo.inimigos.filter((i) => !i.morto).length), 4);

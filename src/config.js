@@ -91,11 +91,27 @@ export const CONFIG = {
     tempoMaximoCarga: 1.4,
     filaAtaque: 0.22,
     filaEsquiva: 0.17,
-    bloqueio: { reducao: 0.85, custoPorDano: 0.9, velocidade: 0.5 },
     esquiva: { custo: 22, duracao: 0.36, invencivel: 0.26, velocidade: 9.5, espera: 0.25 },
-    // Aparar (parry): um gesto curto e arriscado. Se o golpe inimigo chegar dentro
-    // da janela, o inimigo fica desequilibrado e o próximo golpe é crítico.
-    aparar: { custo: 12, preparo: 0.05, janela: 0.2, recuperacao: 0.4, desequilibrio: 1.9 },
+    // Pistola (mão secundária): o único parry do jogo. Um tiro no fim do aviso do
+    // inimigo ou no comecinho do golpe dele o desequilibra (o próximo golpe é
+    // crítico). Fora dessa janela o tiro só arranha. Toda bala gasta conta,
+    // acertando ou errando: é isso que impede o spam.
+    // A janela total de cada golpe é (janelaNoAviso + janelaNoGolpe) × janelaAparar
+    // do tipo: alto 0,13 s, pesado 0,08 s. A rasteira não pode ser aparada.
+    pistola: {
+      balasMax: 8,            // recarrega ao descansar na lanterna, renascer ou usar o Osso
+      dano: 6,                // tiro fora da janela: arranhão, não faz cambalear
+      alcance: 9,             // metros; "curto alcance", sem bala voando
+      abertura: 0.8,          // cosseno do cone à frente (sem mira travada)
+      recuperacao: 0.3,       // tempo sem poder atacar depois do tiro
+      liberarEsquiva: 0.1,    // a esquiva pode cortar a recuperação a partir daqui
+      fila: 0.15,             // aperto guardado se o caçador estiver ocupado
+      janelaNoAviso: 0.09,    // últimos segundos do preparo do inimigo
+      janelaNoGolpe: 0.04,    // primeiros segundos do golpe ativo (se ainda não resolveu)
+      desequilibrio: 1.9,     // segundos que o inimigo fica aberto (cada inimigo pode ter o seu)
+      invencivel: 0.25,       // proteção depois do parry: o golpe aparado não entra
+      pausa: 0.12, tremor: 0.045,
+    },
     critico: { multiplicador: 2.6, pausa: 0.14 },
 
     // ---- Contra o spam (Etapa A do plano) ----
@@ -106,7 +122,6 @@ export const CONFIG = {
     //                 metade em diante, até o fim da passagem da lâmina) e
     //                 "danoMax" é o maior dano que ele aguenta sem perder o golpe
     interrupcao: { cambaleio: 0.4, armaduraForte: { aPartirDe: 0.5, danoMax: 20 } },
-    guardaQuebrada: 0.7,     // segundos atordoado quando a guarda quebra no bloqueio
     // Firmeza dos inimigos: depois de cambalear, o inimigo ganha um "fôlego" em
     // que não cambaleia de novo (só um golpe crítico passa por cima). É isso que
     // impede travar um inimigo até a morte só apertando o ataque.
@@ -119,7 +134,7 @@ export const CONFIG = {
     // Rally: parte do dano que o caçador leva fica "recuperável" por alguns
     // segundos (aparece em laranja na barra de vida). Cada golpe acertado
     // devolve vida dessa parte. Apanhou? Revide logo.
-    //   parte     fração do dano que fica recuperável (golpe bloqueado não conta)
+    //   parte     fração do dano que fica recuperável
     //   duracao   segundos para revidar; apanhar de novo reinicia a contagem
     //   porDano   vida devolvida por ponto de dano causado (0.35: o leve devolve quase 8 e o forte, 20)
     //   escoa     pontos por segundo que somem quando o tempo acaba
@@ -137,10 +152,10 @@ export const CONFIG = {
     //   abertura      quão de lado o golpe ainda pega (1 = só bem na frente,
     //                 0 = até os lados, negativo = pega um pouco atrás)
     //   preparoMin    tempo mínimo de aviso, em segundos
-    //   janelaAparar  multiplica a janela do aparo (menor = mais difícil)
-    //   custoBloqueio multiplica a estamina gasta ao bloquear
+    //   janelaAparar  multiplica a janela do parry com a pistola (menor = mais difícil)
+    //   bloqueavel / custoBloqueio  sem uso hoje: guardados para o broquel voltar
     //   evitaPulando  estar no ar (acima de alturaPulo) evita o golpe
-    //   abreExecucao  aparar este golpe abre a execução (Etapa B do plano)
+    //   abreExecucao  aparar este golpe abre a execução (PR B2)
     //   aguentaLeve   durante o aviso e o golpe, o ataque leve do caçador não
     //                 interrompe: o inimigo aguenta e revida
     //   aviso         cor que acende na arma e nos olhos durante o preparo
@@ -152,7 +167,7 @@ export const CONFIG = {
       },
       pesado: {
         dano: 1.5, preparo: 1.45, preparoMin: 0.7, ativo: 1.1, recuperacao: 1.3, alcance: 1.05, abertura: 0.45,
-        aparavel: true, janelaAparar: 0.55, bloqueavel: true, custoBloqueio: 1.8,
+        aparavel: true, janelaAparar: 0.6, bloqueavel: true, custoBloqueio: 1.8,
         evitaPulando: false, alturaPulo: 0, abreExecucao: true, aguentaLeve: true, aviso: 0xff2a1e,
       },
       rasteira: {
