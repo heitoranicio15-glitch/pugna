@@ -219,6 +219,20 @@ export const CONFIG = {
     imprevisibilidade: {
       variacaoPreparo: 0.12,
     },
+    // ---- Pressão em grupo (Etapa C, PR C3) ----
+    // Fichas de ataque: só "atacantesSimultaneos" inimigos comuns podem partir
+    // para cima do caçador ao mesmo tempo. Quem chega a "distanciaDeEspera"
+    // pede uma ficha; sem ficha, fica rondando nessa distância (anda de lado,
+    // encarando) e espera a vez. A ficha volta quando a sequência termina, ou
+    // quando ele cambaleia, é aparado ou morre. Chefes (chefe: true) não usam ficha.
+    //   folga  quem ronda só volta a correr atrás do caçador quando ele se
+    //          afasta mais que distanciaDeEspera + folga (metros)
+    grupo: { atacantesSimultaneos: 2, distanciaDeEspera: 4.5, folga: 1 },
+    // Punir o frasco: quando o caçador começa a beber, cada inimigo em combate,
+    // livre e a até "distancia" metros, com chance "chance", espera "reacao"
+    // segundos, avança e começa a sequência mais rápida que tem (respeitando
+    // as fichas). Um inimigo pode trocar a chance com punirFrasco: { chance }.
+    punirFrasco: { distancia: 7, chance: 0.8, reacao: 0.15 },
     pausaImpacto: 0.07,      // "hit stop": o jogo congela um instante ao acertar (dá peso)
   },
 
@@ -276,6 +290,8 @@ export const CONFIG = {
       dano: 32, alcance: 2.9, preparo: 1.05, ativo: 0.2, recuperacao: 1.35,
       visao: 20, firmeza: 60,
       escala: 1.65, raio: 0.78, recua: false,
+      chefe: true,                     // não usa ficha de ataque (combate.grupo)
+      punirFrasco: { chance: 1 },      // sempre pune quem bebe o frasco perto dele
       desequilibrio: 1.15,   // chefes se recompõem mais rápido de um aparo
       ataques: [
         { golpes: ['alto'], peso: 3 },

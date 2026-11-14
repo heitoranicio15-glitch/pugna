@@ -12,6 +12,11 @@
 //  que aguenta os golpes sem cambalear de novo e quase sem sair do lugar. Os
 //  números ficam em CONFIG.combate.atordoamentoInimigo.
 //
+//  Pressão em grupo (CONFIG.combate.grupo): perto do caçador, o inimigo comum
+//  pede uma ficha (Fichas.js) para atacar; sem ficha, ronda de lado, encarando.
+//  Punir o frasco (CONFIG.combate.punirFrasco): ao ver o caçador beber, quem
+//  está livre e perto avança com a sequência mais rápida que tem.
+//
 //  As três fases do golpe (preparo, ativo, recuperacao) e os tipos de ataque
 //  (alto, pesado, rasteira) vêm da máquina única em Ataques.js. Aqui ficam a
 //  escolha do ataque, as poses e os avisos de cada tipo.
@@ -144,6 +149,7 @@ export class Inimigo {
     this.grupo.scale.setScalar(this.cfg.escala);
     this.grupo.rotation.order = 'YXZ'; // assim ele cai "para trás" seja qual for o lado em que olha
     mundo.grupo.add(this.grupo);
+    jogo.eventos.em('jogador:bebendo', () => this.ouvirFrasco());
 
     // Barrinha de vida (só aparece depois de apanhar).
     this.barra = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xd2343f, fog: false }));
@@ -160,6 +166,10 @@ export class Inimigo {
     this.corOlho = this.tipo === 'guardiao' ? 0xffad67 : CONFIG.paleta.magia;
     this.olho.color.setHex(this.corOlho);
     this.ataque.encerrar();
+    this.mundo.fichas?.devolver(this);
+    this.punindo = false;       // a sequência atual é a punição do frasco (avança no aviso)
+    this.reacaoFrasco = null;   // segundos até reagir ao frasco (null = nada pendente)
+    this.ladoRonda = Math.random() < 0.5 ? -1 : 1;   // para que lado anda quando ronda sem ficha
     this.ultimaSequencia = null;
     this.penultimaSequencia = null;
     this.abertoParaExecucao = false;
@@ -194,7 +204,12 @@ export class Inimigo {
   /** Troca o estado do cérebro. Sair de uma fase de ataque encerra a sequência. */
   mudar(estado) {
     this.estado = estado; this.tEstado = 0;
-    if (!ehFaseDeAtaque(estado)) this.ataque.encerrar();
+    if (!ehFaseDeAtaque(estado)) {
+      // fim da sequência, cambaleio, aparo, morte...: a ficha de ataque volta
+      this.ataque.encerrar();
+      this.mundo.fichas?.devolver(this);
+      this.punindo = false;
+    }
     else {
       if (!this.ataque.ativa) this.ataque.iniciar(this.cfg, ['alto'], this.sorteio);
       this.ataque.irPara(estado);
@@ -221,6 +236,40 @@ export class Inimigo {
     this.ataque.iniciar(this.cfg, golpes, this.sorteio);
     this.estado = 'preparo'; this.tEstado = 0;
     this.jogo.eventos.emitir('inimigo:preparo', this);
+  }
+
+  /**
+   * O caçador começou a beber um frasco. Se este inimigo está em combate,
+   * livre e perto, sorteia se vai punir; a reação vem depois de um instante.
+   */
+  ouvirFrasco() {
+    const P = CONFIG.combate.punirFrasco, jog = this.jogo.jogador;
+    if (this.morto || !jog || jog.morto || !this.jogo.inimigos?.includes(this)) return;
+    if (!this.livreEmCombate) return;
+    if (Math.hypot(jog.pos.x - this.pos.x, jog.pos.z - this.pos.z) > P.distancia) return;
+    if (this.sorteio() >= (this.cfg.punirFrasco?.chance ?? P.chance)) return;
+    this.reacaoFrasco = P.reacao;
+  }
+
+  /** Em combate e sem estar golpeando, cambaleando ou aberto. */
+  get livreEmCombate() { return this.estado === 'perseguir' || this.estado === 'recuar'; }
+
+  /** A sequência com o primeiro aviso mais curto (empate: a primeira da lista). */
+  sequenciaMaisRapida() {
+    const aviso = (s) => {
+      const g = typeof s.golpes[0] === 'string' ? { tipo: s.golpes[0] } : s.golpes[0];
+      const t = CONFIG.combate.ataquesInimigos[g.tipo];
+      return Math.max(t.preparoMin, this.cfg.preparo * t.preparo) + (g.atraso ?? 0);
+    };
+    return this.cfg.ataques.reduce((melhor, s) => (aviso(s) < aviso(melhor) ? s : melhor));
+  }
+
+  /** Hora de punir o frasco: avança com a sequência mais rápida, se tiver ficha. */
+  punirFrasco() {
+    if (!this.livreEmCombate || this.jogo.jogador.morto) return;
+    if (this.mundo.fichas && !this.mundo.fichas.pedir(this)) return;
+    this.atacar(this.sequenciaMaisRapida().golpes);
+    this.punindo = true;
   }
 
   proximoPasso(alvo, dt) {
@@ -267,12 +316,17 @@ export class Inimigo {
 
     this.folego -= dt;
     this.invencivel -= dt;
+    if (this.reacaoFrasco !== null) {
+      this.reacaoFrasco -= dt;
+      if (this.reacaoFrasco <= 0) { this.reacaoFrasco = null; this.punirFrasco(); }
+    }
     const dx = jog.pos.x - this.pos.x, dz = jog.pos.z - this.pos.z;
     const dist = Math.hypot(dx, dz);
     const anguloJogador = Math.atan2(dx, dz);
     const visivel = !jog.morto && jog.pos.z <= this.limiteZ && Math.abs(jog.pos.y - this.pos.y) < 3 &&
       dist < c.visao * 1.9 && !col.bloqueiaTrecho(this.pos, jog.pos, 1.45);
     let andar = 0, alvoAngulo = this.angulo, giro = 6;   // giro = quão rápido vira (rad/s)
+    let lateral = 0;   // andar de lado (rondando sem ficha), positivo = para a direita dele
     let destino = null;
     let bracoAlvo = -0.25, bracoLateral = 0, torcer = 0, inclinar = 0, rapidezBraco = 8;
     let agachar = 0, aviso = null, forcaAviso = 0;
@@ -301,6 +355,15 @@ export class Inimigo {
         if (!visivel) { this.mudar(this.ultimaVista ? 'procurar' : 'patrulha'); break; }
         this.ultimaVista = { x: jog.pos.x, z: jog.pos.z };
         alvoAngulo = anguloJogador;
+        // Fichas de ataque: perto do caçador, só ataca quem tem ficha; quem não
+        // tem ronda em distanciaDeEspera, de lado, encarando, até chegar a vez.
+        const G = CONFIG.combate.grupo, fichas = this.mundo.fichas;
+        if (fichas && dist > G.distanciaDeEspera + G.folga) fichas.devolver(this);
+        else if (fichas && (dist <= G.distanciaDeEspera || fichas.fila.includes(this)) && !fichas.pedir(this)) {
+          andar = THREE.MathUtils.clamp(dist - G.distanciaDeEspera, -1, 1) * c.velPatrulha;
+          lateral = this.ladoRonda * c.velPatrulha;
+          break;
+        }
         if (dist > c.alcance * 0.82) { destino = this.ultimaVista; andar = c.velPerseguir; }
         else if (Math.cos(anguloJogador - this.angulo) > 0.8) {
           this.atacar();
@@ -336,6 +399,8 @@ export class Inimigo {
           bracoAlvo = -2.95; inclinar = -0.12;
         }
         if (c.recua && visivel && dist > c.alcance * 0.7) andar = c.velPerseguir * 0.6;
+        // punindo o frasco: avança durante o aviso para chegar ao alcance
+        if (this.punindo && visivel && dist > c.alcance * 0.7) andar = c.velPerseguir;
         break;
       }
       case 'ativo': {        // a arma passa: é aqui que o golpe pode acertar
@@ -410,6 +475,10 @@ export class Inimigo {
       if (destino) andar *= Math.max(0, Math.cos(alvoAngulo - this.angulo));
       this.pos.x += Math.sin(this.angulo) * andar * dt;
       this.pos.z += Math.cos(this.angulo) * andar * dt;
+    }
+    if (lateral !== 0) {
+      this.pos.x -= Math.cos(this.angulo) * lateral * dt;
+      this.pos.z += Math.sin(this.angulo) * lateral * dt;
     }
     this.pos.x += this.empurrao.x * dt; this.pos.z += this.empurrao.z * dt;
     this.empurrao.multiplyScalar(Math.exp(-dt * 7));
