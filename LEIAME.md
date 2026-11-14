@@ -187,9 +187,12 @@ ou **Alt** para esquivar.
   Afaste-se antes de beber.
 - **A bolsa não pausa o jogo.** Com ela aberta, o mundo continua e o caçador
   fica parado. Só o **Esc** pausa.
-- **Cavaleiro:** lento e forte. Usa os três tipos de ataque. Esquive ou saia de lado e puna.
-- **Caçador:** rápido, dá dois golpes seguidos e pula para trás, e às vezes solta uma rasteira.
-- **Penitente:** dois golpes seguidos, rasteira e, de vez em quando, um golpe pesado.
+- **Cavaleiro:** lento e forte. Usa os três tipos de ataque e às vezes emenda um
+  golpe alto com um pesado **atrasado**. Esquive ou saia de lado e puna.
+- **Caçador:** rápido, dá dois golpes seguidos e pula para trás, solta rasteiras
+  e às vezes fecha os dois golpes com uma rasteira.
+- **Penitente:** dois golpes seguidos, rasteira, um golpe pesado e às vezes três
+  golpes seguidos (alto, alto **atrasado** e pesado).
 
 ### Os tipos de ataque dos inimigos
 
@@ -205,6 +208,12 @@ avisa de um jeito e pede uma resposta diferente:
 
 A esquiva serve contra os três, mas não dá recompensa. Aparar o golpe alto abre
 o **visceral**; aparar o pesado abre a **execução**, que causa ainda mais dano.
+
+**Ninguém bate como um metrônomo.** O aviso de cada golpe dura um pouco mais ou
+um pouco menos a cada vez (até 12%). Alguns golpes são **atrasados**: o inimigo
+ergue a arma e **segura** a pose antes de bater. O som toca no começo, como
+sempre, então quem atira no ritmo decorado erra o parry: espere a arma descer.
+A mesma sequência de golpes nunca sai três vezes seguidas.
 - Ao morrer você volta à última **lanterna** em que descansou. Descansar recupera
   vida, estamina e balas e faz os inimigos comuns reaparecerem.
 
@@ -341,6 +350,9 @@ pugna/
   `CONFIG.inimigos` (cada item é uma sequência de golpes com um `peso`)
 - **mudar dano, tempo de aviso ou largura de um tipo de ataque:** bloco
   `combate.ataquesInimigos` em `src/config.js`
+- **mudar a variação do aviso:** `combate.imprevisibilidade.variacaoPreparo`;
+  **golpe atrasado:** escreva o golpe da sequência como
+  `{ tipo: 'pesado', atraso: 0.35 }` em `CONFIG.inimigos`
 - **mudar as regras contra o spam:** blocos `combate.interrupcao` (apanhar corta
   o ataque), `combate.atordoamentoInimigo` (firmeza), `combate.rally` e
   `combate.frasco` em `src/config.js`

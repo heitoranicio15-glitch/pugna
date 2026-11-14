@@ -161,6 +161,7 @@ export class Inimigo {
     this.olho.color.setHex(this.corOlho);
     this.ataque.encerrar();
     this.ultimaSequencia = null;
+    this.penultimaSequencia = null;
     this.abertoParaExecucao = false;
     this.visceralPelasCostas = false;   // desequilibrado por um forte carregado pelas costas
     this.folego = 0;            // segundos em que ele não cambaleia de novo
@@ -194,7 +195,7 @@ export class Inimigo {
     this.estado = estado; this.tEstado = 0;
     if (!ehFaseDeAtaque(estado)) this.ataque.encerrar();
     else {
-      if (!this.ataque.ativa) this.ataque.iniciar(this.cfg, ['alto']);
+      if (!this.ataque.ativa) this.ataque.iniciar(this.cfg, ['alto'], this.sorteio);
       this.ataque.irPara(estado);
     }
     if (estado !== 'desequilibrado') { this.abertoParaExecucao = false; this.visceralPelasCostas = false; }
@@ -211,10 +212,12 @@ export class Inimigo {
    */
   atacar(golpes = null) {
     if (!golpes) {
-      this.ultimaSequencia = sortearSequencia(this.cfg.ataques, this.ultimaSequencia, this.sorteio);
+      const anterior = this.ultimaSequencia;
+      this.ultimaSequencia = sortearSequencia(this.cfg.ataques, anterior, this.sorteio, this.penultimaSequencia);
+      this.penultimaSequencia = anterior;
       golpes = this.ultimaSequencia.golpes;
     }
-    this.ataque.iniciar(this.cfg, golpes);
+    this.ataque.iniciar(this.cfg, golpes, this.sorteio);
     this.estado = 'preparo'; this.tEstado = 0;
     this.jogo.eventos.emitir('inimigo:preparo', this);
   }
@@ -314,10 +317,11 @@ export class Inimigo {
       // ---- As três fases do golpe (iguais para todos; a pose muda com o tipo) ----
       case 'preparo': {      // o AVISO: a pose, a cor e o som dizem que tipo de golpe vem
         alvoAngulo = visivel ? anguloJogador : this.angulo; giro = c.recua ? 5 : 1.6;
-        rapidezBraco = 3.2 / golpe.preparo;
+        // a pose sobe no tempo da subida e TRAVA no fim dela durante o atraso
+        rapidezBraco = 3.2 / golpe.subida;
         aviso = golpe.aviso;
-        // a cor pulsa cada vez mais rápido até o golpe sair
-        const avanco = this.ataque.t / golpe.preparo;
+        // a cor pulsa cada vez mais rápido até a pose chegar ao fim
+        const avanco = Math.min(1, this.ataque.t / golpe.subida);
         forcaAviso = 0.45 + 0.55 * Math.abs(Math.sin(avanco * avanco * 14));
         if (golpe.tipo === 'rasteira') {        // agacha e leva a arma para o lado, rente ao chão
           agachar = 0.3; inclinar = 0.34;

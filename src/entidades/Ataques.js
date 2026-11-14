@@ -20,16 +20,25 @@ export const ehFaseDeAtaque = (estado) => FASES.includes(estado);
 
 /**
  * Junta os números do inimigo com os do tipo de ataque.
- * entrada: 'alto' | 'pesado' | 'rasteira', ou { tipo, lado } para um golpe lateral.
+ * entrada: 'alto' | 'pesado' | 'rasteira', ou { tipo, lado, atraso } para um
+ * golpe lateral ou atrasado.
+ * Imprevisibilidade: o aviso (subida) varia um pouco a cada golpe, sorteado por
+ * `sorteio` (0 = o mais curto, 1 = o mais longo), sem passar abaixo do preparoMin.
+ * O atraso é o tempo que o inimigo SEGURA a pose final do aviso antes de bater;
+ * ele soma ao preparo, então a janela do parry (presa ao fim do preparo) acompanha.
  */
-export function montarGolpe(cfg, entrada) {
-  const { tipo, lado = 0 } = typeof entrada === 'string' ? { tipo: entrada } : entrada;
+export function montarGolpe(cfg, entrada, sorteio = Math.random) {
+  const { tipo, lado = 0, atraso = 0 } = typeof entrada === 'string' ? { tipo: entrada } : entrada;
   const t = CONFIG.combate.ataquesInimigos[tipo];
   if (!t) throw new Error(`Tipo de ataque desconhecido: ${tipo}`);
+  const variacao = 1 + (sorteio() * 2 - 1) * CONFIG.combate.imprevisibilidade.variacaoPreparo;
+  const subida = Math.max(t.preparoMin, cfg.preparo * t.preparo * variacao);
   return {
     tipo, lado,
     dano: Math.round(cfg.dano * t.dano),
-    preparo: Math.max(t.preparoMin, cfg.preparo * t.preparo),
+    subida,                    // tempo erguendo a arma (a pose do aviso)
+    atraso,                    // tempo segurando a pose antes de bater
+    preparo: subida + atraso,  // o aviso inteiro
     ativo: cfg.ativo * t.ativo,
     recuperacao: cfg.recuperacao * t.recuperacao,
     alcance: cfg.alcance * t.alcance,
@@ -48,10 +57,12 @@ export function montarGolpe(cfg, entrada) {
 
 /**
  * Escolhe uma das sequências do inimigo, respeitando os pesos. Uma sequência
- * especial (que não é a primeira da lista) não sai duas vezes seguidas.
+ * especial (que não é a primeira da lista) não sai duas vezes seguidas, e
+ * nenhuma sai três vezes seguidas (penultima = a sequência antes da anterior).
  */
-export function sortearSequencia(lista, anterior = null, sorteio = Math.random) {
-  const opcoes = lista.filter((s, i) => i === 0 || s !== anterior);
+export function sortearSequencia(lista, anterior = null, sorteio = Math.random, penultima = null) {
+  const livres = lista.filter((s, i) => s !== anterior || (i === 0 && s !== penultima));
+  const opcoes = livres.length ? livres : lista;
   let ponto = sorteio() * opcoes.reduce((soma, s) => soma + (s.peso ?? 1), 0);
   for (const s of opcoes) {
     ponto -= s.peso ?? 1;
@@ -73,8 +84,8 @@ export class MaquinaDeAtaque {
   get restantes() { return this.ativa ? this.fila.length - this.indice - 1 : 0; }
 
   /** Começa uma sequência de golpes. emenda = como um golpe se liga ao seguinte. */
-  iniciar(cfg, golpes) {
-    this.fila = golpes.map((g) => montarGolpe(cfg, g));
+  iniciar(cfg, golpes, sorteio = Math.random) {
+    this.fila = golpes.map((g) => montarGolpe(cfg, g, sorteio));
     this.emenda = { ...CONFIG.combate.emendaInimigos, ...cfg.emenda };
     this.indice = -1;
     this.proximo(0);
@@ -84,7 +95,7 @@ export class MaquinaDeAtaque {
     this.indice++;
     this.golpe = this.fila[this.indice];
     this.fase = 'preparo';
-    this.t = this.golpe.preparo * adiantar;
+    this.t = this.golpe.subida * adiantar;   // o atraso nunca é adiantado
     this.resolvido = false;   // o golpe ativo só acerta (ou é evitado) uma vez
   }
 
