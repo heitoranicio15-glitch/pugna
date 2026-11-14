@@ -2,8 +2,7 @@
 //  TEXTURAS PIXELADAS FEITAS NO CÓDIGO
 //  Em vez de baixar imagens, cada textura é "pintada" pixel a pixel aqui.
 //  São pequenas (32x32) e usam filtro "nearest" para ficarem serrilhadas.
-//  Para trocar por imagens de verdade no futuro: carregue um PNG de
-//  public/assets com THREE.TextureLoader e aplique os mesmos filtros de prepararTextura.
+//  As variantes PBR de cenário ficam em materiaisHd.js.
 // =============================================================================
 import * as THREE from 'three';
 
@@ -121,6 +120,19 @@ function mosaico() {
     const desgaste = r() < 0.06 ? 0.58 : 1;
     const junta = x % 4 === 0 || y % 4 === 0 ? 0.64 : 1;
     return mult(cor, junta * desgaste * (0.88 + r() * 0.24));
+  });
+}
+
+function tapete() {
+  const r = criarSorteio(149);
+  return pintarTextura(128, (x, y) => {
+    const borda = Math.min(x, 127 - x, y, 127 - y);
+    const losango = Math.abs(x - 63.5) + Math.abs(y - 63.5);
+    const friso = borda === 4 || borda === 11 || (borda > 6 && borda < 9 && ((x + y) % 8 < 4));
+    const medalhao = (losango > 22 && losango < 25) || losango < 7;
+    const cor = friso || medalhao ? [166, 108, 64] : borda < 14 ? [48, 23, 36] : [103, 38, 52];
+    const trama = (x + y) % 2 ? 0.87 : 1;
+    return mult(cor, trama * (0.79 + r() * 0.31));
   });
 }
 
@@ -242,7 +254,7 @@ export function texturas() {
   if (!cache) {
     cache = {
       pedra: pedra(), calcamento: prepararPiso(calcamento()), lajes: prepararPiso(lajes()),
-      mosaico: prepararPiso(mosaico()), telhado: telhado(), madeira: madeira(),
+      mosaico: prepararPiso(mosaico()), tapete: prepararPiso(tapete()), telhado: telhado(), madeira: madeira(),
       terra: prepararPiso(terra()), metal: metal(), tecido: tecido(),
       janelaAcesa: janela(true), janelaApagada: janela(false), vitral: vitral(),
       brilho: brilho(), nevoa: nevoa(),

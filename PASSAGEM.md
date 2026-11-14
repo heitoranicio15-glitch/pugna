@@ -48,6 +48,13 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Primeiro incremento da reconstrução gráfica:** após S7 (`2d87986`), o HD
+  ganhou materiais PBR de pedra, terra, calçamento e madeira nas quatro áreas.
+  O PS1 e o HD ganharam barris remodelados e o tapete ornamentado da taverna.
+  A resolução HD tem presets de 720p a 2160p, com 720p como padrão. O manual
+  [Reconstrução gráfica](docs/reconstrucao-grafica.md) registra como testar e
+  o trabalho de Blender para o Heitor. O relato de S2 abaixo descreve a entrega original.
+
 - **Pronto e no ar:** vilarejo, Catedral do Véu (nave, Ossário, Relicário, Santuário, selos), inimigos cavaleiro, caçador e Penitente, miniboss Guardião do Véu, bolsa e frascos de cura, lápides, atalhos, menu de configurações, trilha sonora, terceira pessoa, mira travada, parry com a pistola, crítico, visceral, execução, ataque forte carregado, rolamento e quickstep. Estado mais recente: **S7 pronto** (a bolsa aberta durante a luta deixa livre o canto das barras; só CSS). Antes: S3 (estrada e taverna). Antes dele, S2 (botão de gráfico PS1 / HD em Configurações). Antes dele, a Etapa C ficou completa com o PR C3.
 - **Salvamento estilo Souls (item 1, pronto):** o jogo grava sozinho a cada acontecimento e não há salvar manual. O **Osso de Retorno** é usado pela bolsa, é único e de uso ilimitado. Hoje não há penalidade ao usar.
 - **Base dos ataques (item 2, pronto):** todos os inimigos usam a mesma máquina de golpes (`src/entidades/Ataques.js`), com 3 fases (preparo, golpe ativo, recuperação) e 3 tipos, cada um com pose, cor e som próprios: **alto**, **pesado** (vermelho, sino grave) e **rasteira** (agachado, amarelo). As sequências de cada inimigo ficam em `CONFIG.inimigos` (`ataques`) e os números de cada tipo em `CONFIG.combate.ataquesInimigos`. A rasteira é larga, não pode ser aparada nem bloqueada e passa por baixo de quem está no ar.
@@ -165,6 +172,11 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 - [ ] **9. S6: primeira área nova** (castelo, floresta ou caverna; spec 05; o Heitor escolhe)
 - [x] **10. S7: bolsa cobrindo a barra de vida em telas estreitas** — com a luta rolando, a tela da bolsa reserva 140 px embaixo (`.tela.ao-vivo` no `estilo.css`) e o painel rola por dentro; PR 24
 - [ ] **11. S8: Supabase** (spec 06; precisa do Heitor para criar o projeto)
+- [x] **Gráficos, incremento 1** — materiais PBR nas quatro áreas, barris,
+  tapete retrô e resolução HD selecionável. Avaliação visual e desempenho com GPU pendentes.
+- [ ] **Gráficos, próximo incremento** — validar o percurso com e sem GPU, depois
+  testar a fachada modular e os LODs do guia gráfico. Alinhar iluminação com S5 e
+  os modelos animados com S4. Presets de celular ficam para depois.
 
 **Decidido pela IA, o Heitor revisa** (detalhes nas specs): clique direito e C atiram; 8 balas, repostas na lanterna e não gravadas no save; visceral não gasta estamina; golpe comum de lado em inimigo desequilibrado continua crítico de 2,6×; golpes que não podem ser aparados avisam em branco-violeta; no máximo 2 inimigos comuns atacando juntos; NPCs não podem ser feridos; taverna sem loja; login por link mágico; a floresta como primeira área nova.
 

@@ -4,8 +4,8 @@
 //  2) Amplia essa imagem para a tela inteira SEM suavizar (pixels grandes).
 //  3) No caminho, reduz a quantidade de cores com pontilhado (dithering),
 //     como nos consoles dos anos 90.
-//  O estilo HD (definirEstilo('hd')) usa a mesma cena com mais linhas, sem
-//  pontilhado nem redução de cores e com um pouco mais de cor e contraste.
+//  O estilo HD desenha a cena sem pontilhado na resolução selecionada,
+//  limitada à área visível e à capacidade do navegador.
 // =============================================================================
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
@@ -75,6 +75,10 @@ export class RenderizadorRetro {
     this.renderer.autoClear = true;
     container.appendChild(this.renderer.domElement);
     this.canvas = this.renderer.domElement;
+    const gl = this.renderer.getContext();
+    const [limiteX, limiteY] = gl.getParameter(gl.MAX_VIEWPORT_DIMS);
+    const limiteAlvo = Math.min(this.renderer.capabilities.maxTextureSize, gl.getParameter(gl.MAX_RENDERBUFFER_SIZE));
+    this.limiteHd = new THREE.Vector2(Math.min(limiteX, limiteAlvo), Math.min(limiteY, limiteAlvo));
 
     // Imagem interna pequena, sem suavização.
     this.alvo = new THREE.WebGLRenderTarget(480, 270, {
@@ -110,6 +114,7 @@ export class RenderizadorRetro {
     this.proporcao = 16 / 9;
     this.alturaInterna = CONFIG.render.alturaInterna;
     this.resolucaoPs1 = CONFIG.render.alturaInterna; // escolhida em "Pixelização"
+    this.resolucaoHd = CONFIG.render.estilos.hd.resolucoes[0];
     this.tremorPs1 = true;                           // escolhido em "Tremor dos vértices"
     this.estilo = null;
     addEventListener('resize', () => this.ajustarTamanho());
@@ -117,20 +122,26 @@ export class RenderizadorRetro {
   }
 
   ajustarTamanho() {
-    const l = innerWidth, a = innerHeight;
+    const l = Math.max(1, innerWidth), a = Math.max(1, innerHeight);
     this.proporcao = l / a;
-    // No HD a imagem interna nunca passa da altura da janela (não adianta desenhar mais).
-    const altura = this.estilo === 'hd' ? Math.min(this.alturaInterna, Math.max(2, a)) : this.alturaInterna;
-    const largura = Math.max(2, Math.round(altura * this.proporcao / 2) * 2);
-    this.renderer.setSize(l, a, false);
+    const hd = this.estilo === 'hd';
+    const escala = Math.min(
+      window.devicePixelRatio || 1,
+      this.alturaInterna / a, this.alturaInterna * (16 / 9) / l,
+      this.limiteHd.x / l, this.limiteHd.y / a,
+    );
+    const altura = hd ? Math.max(1, Math.floor(a * escala)) : this.alturaInterna;
+    const largura = hd ? Math.max(1, Math.floor(l * escala)) : Math.max(2, Math.round(altura * this.proporcao / 2) * 2);
+    this.renderer.setSize(hd ? largura : l, hd ? altura : a, false);
     this.alvo.setSize(largura, altura);
     this.uniformes.uRes.value.set(largura, altura);
     uniformesRetro.uRetroRes.value.set(largura, altura);
   }
 
-  aplicarPreferencias({ resolucao, brilho, tremor, estiloGrafico }) {
+  aplicarPreferencias({ resolucao, resolucaoHd, brilho, tremor, estiloGrafico }) {
     this.uniformes.uBrilho.value = brilho / 100;
     this.resolucaoPs1 = resolucao;
+    this.resolucaoHd = resolucaoHd;
     this.tremorPs1 = tremor;
     this.definirEstilo(estiloGrafico);
   }
@@ -138,6 +149,7 @@ export class RenderizadorRetro {
   /** Troca o estilo de imagem na hora: 'ps1' (padrão) ou 'hd'. Não troca de renderizador. */
   definirEstilo(nome) {
     const estilos = CONFIG.render.estilos;
+    const anterior = this.estilo;
     this.estilo = Object.hasOwn(estilos, nome ?? '') ? nome : CONFIG.render.estiloPadrao;
     const e = estilos[this.estilo];
     this.uniformes.uNiveis.value = e.niveisDeCor;
@@ -147,8 +159,9 @@ export class RenderizadorRetro {
     // No PS1 valem a pixelização e o tremor escolhidos; no HD eles ficam guardados.
     uniformesRetro.uTremor.value = this.estilo === 'ps1' && !this.tremorPs1 ? 0 : e.tremor;
     definirFiltroTexturas(e.filtroTextura);
-    const altura = e.linhas ?? this.resolucaoPs1;
-    if (altura === this.alturaInterna) return;
+    const altura = this.estilo === 'hd' ? this.resolucaoHd : this.resolucaoPs1;
+    this.canvas.style.imageRendering = this.estilo === 'hd' ? 'auto' : 'pixelated';
+    if (altura === this.alturaInterna && anterior === this.estilo) return;
     this.alturaInterna = altura;
     this.ajustarTamanho();
   }

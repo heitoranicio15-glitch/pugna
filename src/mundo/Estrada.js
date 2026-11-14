@@ -13,7 +13,7 @@ import { Colisores } from './Colisores.js';
 import { criarSorteio, texturas } from '../render/texturas.js';
 import { retro } from '../render/retro.js';
 import { placa } from './Aderecos.js';
-import { materiais, caixa, casa, torre, tocha, animarTochas, arvoreSeca, muralha, planoDeChao } from './pecas.js';
+import { materiais, caixa, casa, torre, tocha, animarTochas, arvoreSeca, muralha, planoDeChao, barril } from './pecas.js';
 
 const C = CONFIG.areas.estrada;
 
@@ -138,8 +138,8 @@ export class Estrada {
       const cx = caixa(t, t, t, m.madeira, 1); cx.position.set(x, t / 2, z); cx.rotation.y = sorteio() * 1.2; this.grupo.add(cx);
     }
     for (const [x, z] of [[-6.2, zC - 0.4], [8.2, zC - 0.9]]) {
-      const barril = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.46, 0.95, 8), m.madeira);
-      barril.position.set(x, 0.47, z); barril.rotation.z = (sorteio() - 0.5) * 0.4; this.grupo.add(barril);
+      const tambor = barril(0.46, 0.95);
+      tambor.position.set(x, 0.47, z); tambor.rotation.z = (sorteio() - 0.5) * 0.4; this.grupo.add(tambor);
     }
     // Estacas e tábuas cruzadas: "em obras".
     for (const x of [-9, -3, 3, 8.5]) {
@@ -249,10 +249,10 @@ export class Estrada {
     this.grupo.add(luz);
     // Barris e banco ao lado da porta.
     for (const [dx, dz] of [[0.9, 5.4], [1.5, 6.2]]) {
-      const barril = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.44, 0.9, 8), m.madeira);
-      barril.position.set(T.x + frente + dx, 0.45, T.z - dz);
-      this.grupo.add(barril);
-      this.colisores.adicionar(barril.position.x, barril.position.z, 0.8, 0.8, 0.9);
+      const tambor = barril(0.44, 0.9);
+      tambor.position.set(T.x + frente + dx, 0.45, T.z - dz);
+      this.grupo.add(tambor);
+      this.colisores.adicionar(tambor.position.x, tambor.position.z, 0.8, 0.8, 0.9);
     }
     const banco = caixa(0.5, 0.5, 2.2, m.madeira, 1);
     banco.position.set(T.x + frente + 0.45, 0.25, T.z - 3.0);

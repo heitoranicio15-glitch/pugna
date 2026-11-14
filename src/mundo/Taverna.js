@@ -13,7 +13,7 @@ import { CONFIG } from '../config.js';
 import { Colisores } from './Colisores.js';
 import { retro } from '../render/retro.js';
 import { texturas } from '../render/texturas.js';
-import { materiais, caixa, animarTochas, planoDeChao } from './pecas.js';
+import { materiais, caixa, animarTochas, planoDeChao, barril } from './pecas.js';
 
 const C = CONFIG.areas.taverna;
 
@@ -50,8 +50,8 @@ export class Taverna {
     // O assoalho não grava profundidade e tem ordem fixa (nota técnica do chão, veja Vilarejo.js).
     planoDeChao(this, { x: 0, z: 0, l: maxX - minX + 0.8, p: maxZ - minZ + 0.8, ladrilho: 1.6, material: m.madeiraChao, ordem: -6 });
     planoDeChao(this, {
-      x: -0.4, z: 0.9, l: 4.4, p: 3.2, ladrilho: 1, ordem: -5, y: 0.01,
-      material: retro(new THREE.MeshLambertMaterial({ color: 0x6a2430, depthWrite: false })),
+      x: -0.4, z: 0.9, l: 4.4, p: 3.2, ladrilho: null, ordem: -5, y: 0.01,
+      material: retro(new THREE.MeshLambertMaterial({ map: texturas().tapete, depthWrite: false })),
     });
     // O teto só aparece de baixo: com a câmera alta (olhando para baixo) o salão fica à mostra.
     const teto = planoDeChao(this, { x: 0, z: 0, l: maxX - minX + 0.8, p: maxZ - minZ + 0.8, ladrilho: 1.6, material: m.madeiraEscura, ordem: 0, y: H });
@@ -90,9 +90,7 @@ export class Taverna {
 
     // ---------- barris ao lado do balcão ----------
     for (const [x, z, r] of [[3.2, -3.85, 0.45], [4.2, -3.95, 0.42], [3.55, -2.95, 0.38]]) {
-      const barril = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.88, r, 0.95, 8), m.madeira);
-      colocar(barril, x, 0.475, z);
-      for (const y of [0.25, 0.7]) colocar(new THREE.Mesh(new THREE.CylinderGeometry(r * 0.98, r * 0.98, 0.06, 8), m.metal), x, y, z);
+      colocar(barril(r, 0.95), x, 0.475, z);
       this.colisores.adicionar(x, z, r * 2, r * 2, 0.95);
     }
 

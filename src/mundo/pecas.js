@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { retro } from '../render/retro.js';
 import { texturas } from '../render/texturas.js';
+import { registrarMaterialHd } from '../render/materiaisHd.js';
 
 let M = null;
 /** Materiais compartilhados (criados uma vez). */
@@ -15,23 +16,26 @@ export function materiais() {
   const t = texturas();
   const lambert = (map, extra = {}) => retro(new THREE.MeshLambertMaterial({ map, ...extra }));
   const basico = (map, extra = {}) => retro(new THREE.MeshBasicMaterial({ map, ...extra }));
+  const pedra = (extra) => registrarMaterialHd(lambert(t.pedra, extra), 'castle_wall_slates', 0.8);
+  const calcamento = (map, extra) => registrarMaterialHd(lambert(map, extra), 'cobblestone_floor_001', 0.62);
+  const terra = (extra) => registrarMaterialHd(lambert(t.terra, extra), 'stony_dirt_path', 0.6);
+  const madeira = (extra) => registrarMaterialHd(lambert(t.madeira, extra), 'old_planks_02', 0.7);
   M = {
-    pedra: lambert(t.pedra),
-    pedraEscura: lambert(t.pedra, { color: 0x9a94c8 }),
-    calcamento: lambert(t.calcamento),
+    pedra: pedra(),
+    pedraEscura: pedra({ color: 0x9a94c8 }),
+    calcamento: calcamento(t.calcamento),
     // Chão e ruas não gravam profundidade: são desenhados primeiro e tudo o mais fica por
     // cima. Isso evita o "pisca-pisca" entre a grama e o calçamento (veja Vilarejo.js).
-    calcamentoChao: lambert(t.calcamento, { depthWrite: false }),
-    terraChao: lambert(t.terra, { depthWrite: false }),
-    caminhoChao: lambert(t.terra, { color: 0xcdb89a, depthWrite: false }),   // terra batida da estrada
-    madeiraChao: lambert(t.madeira, { color: 0xb59a86, depthWrite: false }), // assoalho da taverna
-    lajesChao: lambert(t.lajes, { depthWrite: false }),
+    calcamentoChao: calcamento(t.calcamento, { depthWrite: false }),
+    terraChao: terra({ depthWrite: false }),
+    caminhoChao: terra({ color: 0xcdb89a, depthWrite: false }),
+    madeiraChao: madeira({ color: 0xb59a86, depthWrite: false }),
+    lajesChao: calcamento(t.lajes, { depthWrite: false }),
     mosaicoChao: lambert(t.mosaico, { depthWrite: false }),
     telhado: lambert(t.telhado, { side: THREE.DoubleSide }),
-    madeira: lambert(t.madeira),
-    madeiraEscura: lambert(t.madeira, { color: 0x9a7e6c }),
-    terra: lambert(t.terra),
-    morro: lambert(t.terra, { color: 0x8890c0, flatShading: true }),
+    madeira: madeira(),
+    madeiraEscura: madeira({ color: 0x9a7e6c }),
+    morro: terra({ color: 0x8890c0, flatShading: true }),
     metal: lambert(t.metal),
     tronco: lambert(t.madeira, { color: 0x6a6090, flatShading: true }),
     janelaAcesa: basico(t.janelaAcesa),
@@ -60,13 +64,16 @@ export function caixa(l, a, p, material, ladrilho = 2) {
 
 /**
  * Plano horizontal cuja textura se repete a cada `ladrilho` metros. Para chãos e ruas:
- * use um material com depthWrite: false e uma `ordem` fixa (veja o comentário em Vilarejo.js).
+ * use um material com depthWrite: false e uma `ordem` fixa (veja Vilarejo.js).
+ * Use `ladrilho: null` para aplicar uma imagem inteira, como no tapete.
  */
 export function planoDeChao(mundo, { x, z, l, p, ladrilho = 5, material, ordem = -6, y = 0 }) {
   const geo = new THREE.PlaneGeometry(l, p);
-  const uv = geo.attributes.uv;
-  for (let i = 0; i < uv.count; i++) {
-    uv.setXY(i, (x + (uv.getX(i) - 0.5) * l) / ladrilho, (-z + (uv.getY(i) - 0.5) * p) / ladrilho);
+  if (ladrilho !== null) {
+    const uv = geo.attributes.uv;
+    for (let i = 0; i < uv.count; i++) {
+      uv.setXY(i, (x + (uv.getX(i) - 0.5) * l) / ladrilho, (-z + (uv.getY(i) - 0.5) * p) / ladrilho);
+    }
   }
   const malha = new THREE.Mesh(geo, material);
   malha.rotation.x = -Math.PI / 2;
@@ -74,6 +81,28 @@ export function planoDeChao(mundo, { x, z, l, p, ladrilho = 5, material, ordem =
   malha.renderOrder = ordem;
   mundo.grupo.add(malha);
   return malha;
+}
+
+const aduelas = new THREE.LatheGeometry([
+  [0, -0.5], [0.76, -0.5], [0.83, -0.48], [0.86, -0.38],
+  [0.96, -0.2], [1, 0], [0.96, 0.2], [0.86, 0.38], [0.83, 0.48],
+  [0.76, 0.5], [0.76, 0.455], [0, 0.455],
+].map(([r, y]) => new THREE.Vector2(r, y)), 8);
+const cinta = new THREE.CylinderGeometry(0.94, 0.97, 0.055, 8, 1, true);
+
+/** Barril facetado com tampa rebaixada e aros. Raio e altura são o envelope visual. */
+export function barril(raio, altura) {
+  const m = materiais();
+  const grupo = new THREE.Group();
+  grupo.scale.set(raio, altura, raio);
+  grupo.add(new THREE.Mesh(aduelas, m.madeira));
+  for (const lado of [-1, 1]) {
+    const aro = new THREE.Mesh(cinta, m.metal);
+    aro.position.y = lado * 0.255;
+    aro.rotation.z = lado === -1 ? Math.PI : 0;
+    grupo.add(aro);
+  }
+  return grupo;
 }
 
 function perfilOgival(meia, altura) {

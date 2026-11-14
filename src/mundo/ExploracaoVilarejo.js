@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { bloco, chave, frasco, placa } from './Aderecos.js';
-import { materiais, telhado, tocha } from './pecas.js';
+import { materiais, telhado, tocha, barril } from './pecas.js';
 import { CHAVE_SACRISTIA } from '../nucleo/Inventario.js';
 
 export function montarExploracaoVilarejo(mundo) {
@@ -64,9 +64,9 @@ export function montarExploracaoVilarejo(mundo) {
   const bigorna = bloco(grupo, m.metal, -10.6, 1.35, -11.58, 0.62, 0.11, 0.28);
   bigorna.rotation.y = -0.15;
   for (const x of [-12.24, -11.82]) {
-    const barril = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.56, 7), m.madeira);
-    barril.position.set(x, 0.28, -10.55);
-    grupo.add(barril);
+    const tambor = barril(0.2, 0.56);
+    tambor.position.set(x, 0.28, -10.55);
+    grupo.add(tambor);
     col.adicionar(x, -10.55, 0.42, 0.42, 0.56);
   }
   for (let i = 0; i < 3; i++) {

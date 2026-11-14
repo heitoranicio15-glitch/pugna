@@ -8,6 +8,18 @@ Arte e efeitos produzidos no código do projeto:
 - **Efeitos sonoros**: sintetizados em tempo real em `src/audio/Som.js`.
 - **Lua e céu**: desenhados por shaders em `src/mundo/Lua.js` e `src/mundo/Ceu.js`.
 
+## Materiais HD de cenário
+
+O jogo distribui mapas de cor, normal OpenGL e rugosidade de 1K, convertidos
+para WebP. Cada conjunto fica numa subpasta de `public/assets/materiais/`.
+
+| Pasta | Autor / site | Licença |
+|---|---|---|
+| `castle_wall_slates` | Rob Tuytel / [Poly Haven](https://polyhaven.com/a/castle_wall_slates) | CC0 |
+| `cobblestone_floor_001` | Rob Tuytel / [Poly Haven](https://polyhaven.com/a/cobblestone_floor_001) | CC0 |
+| `old_planks_02` | Rob Tuytel / [Poly Haven](https://polyhaven.com/a/old_planks_02) | CC0 |
+| `stony_dirt_path` | eye-candy.xyz / [Poly Haven](https://polyhaven.com/a/stony_dirt_path) | CC0 |
+
 ## Trilha sonora
 
 As quatro faixas vieram do ZIP fornecido pelo colaborador, que confirmou a autorização

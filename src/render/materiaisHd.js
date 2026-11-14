@@ -1,0 +1,94 @@
+import * as THREE from 'three';
+
+const porMaterial = new WeakMap();
+const mapasPorAsset = new Map();
+
+/** Associa um acabamento HD a um material de cenário já usado no PS1. */
+export function registrarMaterialHd(material, asset, intensidade) {
+  porMaterial.set(material, { asset, intensidade });
+  return material;
+}
+
+function carregarMapas(asset) {
+  if (!mapasPorAsset.has(asset)) {
+    const loader = new THREE.TextureLoader();
+    const carregar = async (nome, colorSpace) => {
+      const textura = await loader.loadAsync(`${import.meta.env.BASE_URL}assets/materiais/${asset}/${nome}.webp`);
+      textura.colorSpace = colorSpace;
+      textura.wrapS = textura.wrapT = THREE.RepeatWrapping;
+      textura.anisotropy = 4;
+      return textura;
+    };
+    mapasPorAsset.set(asset, Promise.all([
+      carregar('diffuse', THREE.SRGBColorSpace),
+      carregar('nor_gl', THREE.NoColorSpace),
+      carregar('rough', THREE.NoColorSpace),
+    ]).catch(() => {
+      console.warn(`PUGNA: material HD indisponível (${asset}).`);
+      return null;
+    }));
+  }
+  return mapasPorAsset.get(asset);
+}
+
+async function criarVariante(material, { asset, intensidade }) {
+  const mapas = await carregarMapas(asset);
+  if (!mapas) return material;
+  const [map, normalMap, roughnessMap] = mapas;
+  return new THREE.MeshStandardMaterial({
+    map, normalMap, roughnessMap,
+    normalScale: new THREE.Vector2(intensidade, intensidade),
+    color: material.color, side: material.side, depthWrite: material.depthWrite,
+    flatShading: material.flatShading ?? false,
+    roughness: 1, metalness: 0,
+  });
+}
+
+export class MateriaisHd {
+  constructor(areas) {
+    this.malhas = [];
+    this.variantes = new Map();
+    this.hd = false;
+    for (const { grupo } of areas) {
+      grupo.traverse((malha) => {
+        if (!malha.isMesh) return;
+        const original = malha.material;
+        const materiais = Array.isArray(original) ? original : [original];
+        if (materiais.some((material) => porMaterial.has(material))) {
+          this.malhas.push({ malha, original });
+        }
+      });
+    }
+  }
+
+  definirEstilo(estilo) {
+    const hd = estilo === 'hd';
+    if (this.hd === hd) return;
+    this.hd = hd;
+    for (const entrada of this.malhas) {
+      if (!hd) {
+        entrada.malha.material = entrada.original;
+        continue;
+      } else if (entrada.variante) {
+        entrada.malha.material = entrada.variante;
+      } else {
+        entrada.carregamento ??= this.carregar(entrada.original).then((material) => {
+          entrada.variante = material;
+          if (this.hd) entrada.malha.material = material;
+        });
+      }
+    }
+  }
+
+  carregar(original) {
+    const variante = (material) => {
+      const descriptor = porMaterial.get(material);
+      if (!descriptor) return material;
+      if (!this.variantes.has(material)) {
+        this.variantes.set(material, criarVariante(material, descriptor));
+      }
+      return this.variantes.get(material);
+    };
+    return Array.isArray(original) ? Promise.all(original.map(variante)) : Promise.resolve(variante(original));
+  }
+}

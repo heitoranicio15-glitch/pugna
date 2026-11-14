@@ -14,7 +14,7 @@ export const CONFIG = {
     // Estilos de imagem escolhidos em Configurações (preferência estiloGrafico).
     estiloPadrao: 'ps1',
     estilos: {
-      // PS1 (padrão): o visual de sempre. As linhas vêm da opção "Pixelização".
+      // PS1 (padrão): as linhas vêm da opção "Pixelização".
       ps1: {
         niveisDeCor: 32,      // tons por canal de cor (PS1 usava 32). Menor = mais "faixas"
         dithering: 1.0,       // intensidade do pontilhado (0 desliga)
@@ -23,9 +23,9 @@ export const CONFIG = {
         contraste: 1,         // 1 = contraste como está
         filtroTextura: 'nearest', // texturas pixeladas
       },
-      // HD "fantasia sombria": menos pixelado, sem pontilhado e com mais cor.
+      // HD "fantasia sombria": acabamento PBR, sem pontilhado.
       hd: {
-        linhas: 720,          // linhas da imagem interna (fixo; ignora "Pixelização")
+        resolucoes: [720, 1080, 1440, 2160],
         niveisDeCor: 0,       // 0 = sem redução de cores
         dithering: 0,
         tremor: 0,            // sem tremida (ignora "Tremor dos vértices")

@@ -1255,14 +1255,16 @@ test('estilo de imagem: padrão PS1, preferência antiga vira PS1, escolha persi
     registros.set('pugna-preferencias-v1', '{"musica":30,"resolucao":180,"tremor":false}');
     const antiga = carregarPreferencias();
     assert.equal(antiga.estiloGrafico, 'ps1');
+    assert.equal(antiga.resolucaoHd, 720);
     assert.deepEqual([antiga.musica, antiga.resolucao, antiga.tremor], [30, 180, false]);
     // Valor desconhecido também volta ao PS1.
     registros.set('pugna-preferencias-v1', '{"estiloGrafico":"ultra"}');
     assert.equal(carregarPreferencias().estiloGrafico, 'ps1');
     // Escolher HD persiste ao "recarregar" e guarda os valores do PS1.
-    salvarPreferencias({ ...antiga, estiloGrafico: 'hd' });
+    salvarPreferencias({ ...antiga, estiloGrafico: 'hd', resolucaoHd: 2160 });
     const recarregada = carregarPreferencias();
     assert.equal(recarregada.estiloGrafico, 'hd');
+    assert.equal(recarregada.resolucaoHd, 2160);
     assert.deepEqual([recarregada.resolucao, recarregada.tremor], [180, false]);
     // Apagar o progresso não mexe nas preferências.
     const saves = new SalvamentoLocal();

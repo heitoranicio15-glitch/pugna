@@ -21,6 +21,7 @@ import { Entrada } from './Entrada.js';
 import { SalvamentoLocal, normalizarProgresso, SELOS_DO_VEU } from './Salvamento.js';
 import { carregarPreferencias, salvarPreferencias } from './Preferencias.js';
 import { RenderizadorRetro } from '../render/RenderizadorRetro.js';
+import { MateriaisHd } from '../render/materiaisHd.js';
 import { Ceu } from '../mundo/Ceu.js';
 import { criarAreas } from '../mundo/areas.js';
 import { Navegacao } from '../mundo/Navegacao.js';
@@ -54,6 +55,8 @@ export class Jogo {
     this.ceu = new Ceu(this.cena);
     const { areas, porId, inicial } = criarAreas(this.cena, this.ceu);
     this.areas = areas;
+    this.materiaisHd = new MateriaisHd(areas);
+    this.materiaisHd.definirEstilo(this.render.estilo);
     this.areasPorId = porId;
     this.areaInicial = inicial;
     this.vilarejo = porId.get('vilarejo');
@@ -395,6 +398,7 @@ export class Jogo {
   aplicarPreferencias() {
     salvarPreferencias(this.preferencias);
     this.render.aplicarPreferencias(this.preferencias);
+    this.materiaisHd.definirEstilo(this.render.estilo);
     this.atualizarAudio();
   }
 

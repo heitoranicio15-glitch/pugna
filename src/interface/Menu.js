@@ -57,6 +57,7 @@ export class Menu {
     // No HD a pixelização e o tremor não valem: ficam cinza, guardando o valor do PS1.
     const hd = this.jogo.preferencias.estiloGrafico === 'hd';
     for (const nome of ['resolucao', 'tremor']) this.form.elements[nome].disabled = hd;
+    this.form.elements.resolucaoHd.disabled = !hd;
   }
 
   atualizarProgresso(progresso, nome) {

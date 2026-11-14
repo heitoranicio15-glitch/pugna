@@ -308,8 +308,12 @@ ficam em `CONFIG.areas.estrada` e `CONFIG.areas.taverna` (`src/config.js`).
   sorriso aberto com dentes tortos à mostra, vira o rosto e as pupilas na direção do
   jogador, e quando é encarada por alguns segundos os olhos acendem e a boca abre mais.
 - Filtro PS1: baixa resolução ampliada sem suavização, texturas "nearest", tremida
-  de vértices, dithering e redução de cores. Em Configurações dá para trocar pelo
-  gráfico HD (mais linhas, texturas suavizadas, mais cor).
+  de vértices, dithering e redução de cores. Ambos os modos têm barris facetados
+  com cintas e tapete ornamentado na taverna.
+- Em **Configurações → Gráfico → HD**, pedra, terra e madeira ganham materiais
+  escaneados que reagem à luz. A **Resolução HD** vai de 720p a 2160p, limitada
+  à área visível e ao navegador. Comece em 720p; para 4K, use uma tela 4K em
+  tela cheia e um desktop com GPU. A escolha fica salva neste navegador.
 - Movimento em terceira pessoa com colisão; dá para subir em caixotes e degraus.
   A câmera gira em volta do caçador e encurta ao encostar em paredes.
 - Boneco simples do caçador (chapéu, capa, espada e pistola), animado no código.
@@ -354,7 +358,8 @@ pugna/
    ├─ render/
    │  ├─ RenderizadorRetro.js  baixa resolução + dithering; definirEstilo('ps1'|'hd')
    │  ├─ retro.js          tremida de vértices PS1
-   │  └─ texturas.js       texturas pixeladas feitas no código (filtro troca no HD)
+   │  ├─ texturas.js       texturas pixeladas feitas no código (filtro troca no HD)
+   │  └─ materiaisHd.js    variantes PBR carregadas ao selecionar HD
    ├─ mundo/
    │  ├─ Vilarejo.js       ★ o MAPA: onde fica cada casa, tocha, inimigo, lanterna
    │  ├─ areas.js          registro das áreas: uma linha por área nova
@@ -484,8 +489,8 @@ pugna/
   esquema (veja o comentário em `Vilarejo.js`). Consequência: nada pode ficar abaixo
   do nível do chão esperando ser escondido por ele.
 - Three.js + Vite + JavaScript puro (sem TypeScript, para facilitar a leitura).
-- O jogo é desenhado em 270 linhas de altura e ampliado; é muito leve para qualquer
-  placa de vídeo atual.
+- No PS1, o padrão são 270 linhas de altura ampliadas na tela. No HD, o alvo
+  respeita o limite de pixels equivalente ao preset em 16:9.
 - Abrir o jogo com `?teste` no endereço (`http://localhost:5173/?teste`) deixa jogar
   sem prender o mouse; serve para testes automáticos.
 - No console do navegador (F12), a variável `jogo` dá acesso a tudo
