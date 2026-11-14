@@ -84,9 +84,11 @@ continuam guardados no código (`src/interface/Toque.js`) para voltar depois.
 | Girar a câmera | Mouse |
 | Correr | Shift (segurando, em qualquer direção) |
 | Pular | Espaço |
+| Agachar / levantar | Z (agachado anda devagar, não corre nem pula) |
 | Ataque leve | Clique esquerdo |
 | Ataque forte (mais carga, mais dano) | Segurar o clique esquerdo e soltar |
 | Visceral / execução | Atacar de frente um inimigo desequilibrado |
+| Golpe pelas costas | Atacar de perto, por trás, um inimigo que ainda não te viu |
 | Atirar com a pistola (parry) | Clique direito ou C |
 | Travar / soltar a mira | Tab ou botão do meio do mouse |
 | Trocar de alvo (mira travada) | Mover o mouse rápido para o lado |
@@ -167,6 +169,22 @@ ou **Alt** para esquivar.
   lanterna, ao morrer ou com o Osso de Retorno. Sem bala, a pistola só dá um
   clique seco. Atirar não gasta estamina e tem uma recuperação curta (a esquiva
   corta o fim dela).
+- **Agachar (Z):** agachado, o caçador anda a menos da metade da velocidade,
+  não corre nem pula, e os inimigos que patrulham só o veem num cone estreito
+  à frente e de mais perto; por trás, quase não ouvem. Em pé vale a regra de
+  sempre: de frente eles enxergam longe e, por trás, ouvem a uns 5 m (correndo,
+  mais longe). Atacar, esquivar, atirar ou apanhar levantam o caçador. Quem
+  percebe o caçador chama os vizinhos a até uns 10 m.
+- **Golpe pelas costas:** atacar um inimigo comum que ainda **não te viu**,
+  por trás dele e bem de perto (uns 1,6 m), vira uma estocada silenciosa que o
+  mata na hora: sem pausa, sem tremor, sem grito e sem alertar os vizinhos.
+  Devolve toda a parte laranja da vida. Aparece **PELAS COSTAS**. Não vale no
+  Guardião nem em quem já está lutando.
+- **Pisada:** pulou a rasteira e caiu perto de quem a soltou (uns 1,8 m, logo
+  em seguida)? O caçador pisa nele: 1,5 vez o dano do leve, ele fica
+  desequilibrado (dá para emendar o visceral) e o caçador quica. Aparece
+  **PISADA**. Já pular contra um golpe **alto** custa caro: no ar, ele tira
+  mais vida.
 - **Não existe bloqueio.** O broquel saiu: contra um golpe, as respostas são o
   tiro no tempo certo, a esquiva ou o pulo (contra a rasteira).
 - Tudo gasta **estamina** (barra verde): correr, pular, atacar e esquivar. Sem
@@ -226,7 +244,7 @@ avisa de um jeito e pede uma resposta diferente:
 |---|---|---|
 | **Alto** | Ergue a arma acima da cabeça; tinido de metal | Tiro de pistola no fim do aviso (parry) ou esquivar |
 | **Pesado** | Arma atrás da cabeça, corpo arqueado; arma e olhos **vermelhos**; sino grave | Tiro de pistola com a janela mais curta, ou esquivar |
-| **Rasteira** | Agacha com a arma de lado; arma e olhos **amarelos**; aço raspando e dois estalos | **Pular** (**Espaço**). É larga e pega quem está de lado. O tiro não apara (só arranha e gasta a bala) |
+| **Rasteira** | Agacha com a arma de lado; arma e olhos **amarelos**; aço raspando e dois estalos | **Pular** (**Espaço**) e cair perto dele (pisada). É larga e pega quem está de lado. O tiro não apara (só arranha e gasta a bala) |
 
 A esquiva serve contra os três, mas não dá recompensa. Aparar o golpe alto abre
 o **visceral**; aparar o pesado abre a **execução**, que causa ainda mais dano.
@@ -426,6 +444,10 @@ pugna/
 - **mudar quantos inimigos atacam juntos ou a punição do frasco:** blocos
   `combate.grupo` e `combate.punirFrasco` em `src/config.js` (o Guardião tem
   `chefe: true`, que dispensa a ficha, e `punirFrasco: { chance: 1 }`)
+- **mudar o agachar, a percepção dos inimigos, o golpe pelas costas ou a
+  pisada:** blocos `combate.furtividade`, `combate.costas`, `combate.pisada` e
+  `combate.danoExtraNoAr` em `src/config.js` (as regras puras ficam em
+  `src/entidades/Furtividade.js`)
 - **mudar a aparência ou as poses do caçador:** `src/entidades/Boneco.js`
 - **mudar o mapa** (mover casa, pôr tocha, pôr inimigo): `src/mundo/Vilarejo.js`
   (a estrada e a taverna ficam em `Estrada.js` e `Taverna.js`; o que o taverneiro diz,
@@ -493,7 +515,8 @@ pugna/
 - [x] Pistola como parry, com balas (o broquel saiu do combate)
 - [x] Golpe visceral, execução e ataque forte carregado
 - [x] Quickstep (esquiva curta com a mira travada)
-- [ ] Combate menos genérico: golpe pelas costas, sequências de ataques, armas
+- [x] Agachar, golpe pelas costas e pisada depois de pular a rasteira
+- [ ] Combate menos genérico: sequências de ataques, armas
       com ritmos diferentes
 - [x] Interior da catedral
 - [ ] Interior de algumas casas

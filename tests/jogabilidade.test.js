@@ -11,6 +11,7 @@ import { contarFrascos } from '../src/nucleo/Inventario.js';
 import { MaquinaDeAtaque, golpeAlcanca, montarGolpe, sortearSequencia } from '../src/entidades/Ataques.js';
 import { Inimigo } from '../src/entidades/Inimigo.js';
 import { Fichas } from '../src/entidades/Fichas.js';
+import { alcancaPisada, pelasCostas, percebe, raioDeBarulho, vizinhosParaAlertar } from '../src/entidades/Furtividade.js';
 import * as THREE from 'three';
 
 test('a mira escolhe o objeto visível no alcance e respeita a altura dos obstáculos', () => {
@@ -1302,4 +1303,184 @@ test('estilo de imagem: padrão PS1, preferência antiga vira PS1, escolha persi
   } finally {
     delete globalThis.localStorage;
   }
+});
+
+// -----------------------------------------------------------------------------
+//  Etapa D: agachar, golpe pelas costas e pulo contra a rasteira
+// -----------------------------------------------------------------------------
+
+test('percepção: em pé vale a regra de antes; agachado, cone estreito, menos alcance e quase nenhum barulho', () => {
+  const F = CONFIG.combate.furtividade;
+  // Em pé: idêntico ao antigo "de frente enxerga a visao; de costas, só a 5 m".
+  const antiga = (dist, cos, visao) => dist < (cos > -0.15 ? visao : 5);
+  for (const visao of [12, 15, 19, 20]) {
+    for (let dist = 0.5; dist < 25; dist += 0.75) {
+      for (let cos = -1; cos <= 1; cos += 0.1) {
+        assert.equal(percebe({ dist, cosFrente: cos, visao }), antiga(dist, cos, visao), `${visao} ${dist} ${cos}`);
+      }
+    }
+  }
+  const visao = 15, cone = Math.cos(F.anguloVisao * Math.PI / 360);
+  assert.equal(percebe({ dist: 5, cosFrente: 1, visao, agachado: true }), true);                       // bem na frente
+  assert.equal(percebe({ dist: visao * F.visaoNoEscuro + 0.1, cosFrente: 1, visao, agachado: true }), false);
+  assert.equal(percebe({ dist: 5, cosFrente: cone - 0.05, visao, agachado: true }), false);             // fora do cone
+  assert.equal(percebe({ dist: 2, cosFrente: -1, visao, agachado: true }), false);                      // atrás, agachado
+  assert.equal(percebe({ dist: F.raioAgachado * 0.9, cosFrente: -1, visao, agachado: true }), true);    // perto demais
+  // Por trás: andando (ou parado em pé) ouve a 5 m; correndo, mais longe.
+  assert.deepEqual([raioDeBarulho({}), raioDeBarulho({ correndo: true }), raioDeBarulho({ agachado: true })],
+    [F.raioAndando, F.raioCorrendo, F.raioAgachado]);
+  assert.equal(percebe({ dist: 6, cosFrente: -1, visao }), false);
+  assert.equal(percebe({ dist: 6, cosFrente: -1, visao, correndo: true }), true);
+});
+
+test('regras puras: cone das costas, alcance da pisada e vizinhos do alerta', () => {
+  const K = CONFIG.combate.costas, P = CONFIG.combate.pisada;
+  // Inimigo olhando para +Z: as costas ficam em -Z.
+  assert.equal(pelasCostas(0, 0, -1.4), true);
+  assert.equal(pelasCostas(0, 0, -(K.alcance + 0.1)), false);
+  assert.equal(pelasCostas(0, 1, -1), false);    // 45° de lado: fora do cone de 60°
+  assert.equal(pelasCostas(0, 0, 1.2), false);   // de frente
+  assert.equal(pelasCostas(Math.PI, 0, 1.2), true);
+  assert.equal(alcancaPisada(0.5, 1.5), true);
+  assert.equal(alcancaPisada(P.janela + 0.05, 1.5), false);
+  assert.equal(alcancaPisada(0.5, P.alcance + 0.1), false);
+  const R = CONFIG.combate.furtividade.raioAlerta;
+  const ini = (x, estado = 'patrulha', extra = {}) => ({ pos: { x, z: 0 }, estado, morto: false, cfg: {}, ...extra });
+  const origem = ini(0, 'perseguir');
+  const perto = ini(R - 1), longe = ini(R + 1), lutando = ini(2, 'perseguir'), morto = ini(2, 'patrulha', { morto: true });
+  const chefe = ini(3, 'patrulha', { cfg: { chefe: true } });
+  assert.deepEqual(vizinhosParaAlertar(origem, [origem, perto, longe, lutando, morto, chefe]), [perto]);
+});
+
+/** Caçador na origem olhando para -Z; inimigos de costas para ele (olhando para -Z). */
+function emboscada(tipo, posicoes, agachado) {
+  const d = bando(tipo, posicoes);
+  for (const i of d.inimigos) { i.angulo = Math.PI; i.rota = [[i.pos.x, i.pos.z]]; }
+  d.jogador.agachado = agachado;
+  const rodar = (segundos) => {
+    for (let t = 0; t < segundos; t += 0.02) { d.jogador.atualizar(0.02); for (const i of d.inimigos) i.atualizar(0.02); }
+  };
+  return { ...d, rodar };
+}
+
+test('golpe pelas costas: agachado atrás do desatento, mata em silêncio, sem pausa nem tremor, e ninguém reage', () => {
+  const { jogador, eventos, inimigos, rodar } = emboscada('cavaleiro', [[0, -1.4], [6, -6]], true);
+  const [alvo, vizinho] = inimigos;
+  const ev = { costas: 0, visceral: 0, alerta: 0 };
+  eventos.em('golpe:costas', () => ev.costas++);
+  eventos.em('golpe:visceral', () => ev.visceral++);
+  eventos.em('inimigo:alerta', () => ev.alerta++);
+  let pausas = 0;
+  jogador.jogo.pausaDeImpacto = () => pausas++;
+  jogador.receberDano(20, { x: 5, y: 0, z: 5 });   // deixa vida recuperável (rally)
+  jogador.agachado = true; jogador.acao = 'livre'; jogador.tremor = 0;
+  rodar(0.1);
+  assert.deepEqual([alvo.estado, vizinho.estado], ['patrulha', 'patrulha']);   // agachado, ninguém percebe
+  jogador.iniciarAtaque('leve');
+  assert.deepEqual([jogador.acao, jogador.costas, jogador.agachado], ['visceral', true, true]);
+  assert.ok(jogador.invencivel >= CONFIG.combate.visceral.duracao - 1e-9);
+  rodar(CONFIG.combate.visceral.duracao + 1);
+  assert.deepEqual([alvo.morto, alvo.silencioso], [true, true]);
+  assert.deepEqual(ev, { costas: 1, visceral: 0, alerta: 0 });
+  assert.deepEqual([pausas, jogador.tremor < 1e-3, jogador.recuperavel], [0, true, 0]);   // rally cheio
+  assert.equal(vizinho.estado, 'patrulha');
+});
+
+test('visto, os vizinhos passam a perseguir depois de 0,4 s; em pé, quem está atrás ouve a 5 m', () => {
+  const F = CONFIG.combate.furtividade;
+  const { jogador, inimigos } = emboscada('cavaleiro', [[0, -1.4], [6, -6]], false);
+  const [alvo, vizinho] = inimigos;
+  alvo.atualizar(0.02);
+  assert.deepEqual([alvo.estado, vizinho.estado, vizinho.alertaEm], ['perseguir', 'patrulha', F.atrasoAlerta]);
+  for (let t = 0; t < F.atrasoAlerta - 0.1; t += 0.02) vizinho.atualizar(0.02);
+  assert.equal(vizinho.estado, 'patrulha');
+  for (let t = 0; t < 0.2; t += 0.02) vizinho.atualizar(0.02);
+  assert.ok(['perseguir', 'procurar'].includes(vizinho.estado));
+  // Quem já percebeu não leva o golpe pelas costas: vale o ataque comum.
+  jogador.acao = 'livre';
+  alvo.angulo = Math.PI; alvo.mudar('perseguir');
+  jogador.iniciarAtaque('leve');
+  assert.equal(jogador.acao, 'preparo');
+});
+
+test('o Guardião não morre pelas costas, e agachar não muda quem já está em combate', () => {
+  const { jogador, inimigos } = emboscada('guardiao', [[0, -1.4]], true);
+  jogador.iniciarAtaque('leve');
+  assert.equal(jogador.acao, 'preparo');
+  assert.equal(inimigos[0].vida > 0, true);
+});
+
+test('agachar: Z alterna, anda devagar, não corre nem pula, abaixa os olhos e atacar levanta', () => {
+  const { jogador, entrada } = arena();
+  const F = CONFIG.combate.furtividade;
+  const teclas = new Set();
+  entrada.apertou = (k) => teclas.has(k);
+  entrada.segurando = (k) => k === 'KeyW' || k === 'ShiftLeft';
+  teclas.add('KeyZ'); jogador.atualizar(0.02); teclas.clear();
+  assert.equal(jogador.agachado, true);
+  for (let i = 0; i < 100; i++) jogador.atualizar(0.02);
+  assert.equal(jogador.correndo, false);
+  assert.ok(Math.abs(Math.hypot(jogador.vel.x, jogador.vel.z) - CONFIG.jogador.velAndar * F.velocidade) < 0.05);
+  assert.ok(Math.abs(jogador.alturaOlhos - CONFIG.jogador.alturaOlhos * F.alturaOlhos) < 0.01);
+  teclas.add('Space'); jogador.atualizar(0.02); teclas.clear();
+  assert.equal(jogador.noChao, true);
+  teclas.add('KeyZ'); jogador.atualizar(0.02); teclas.clear();
+  assert.equal(jogador.agachado, false);
+  teclas.add('KeyZ'); jogador.atualizar(0.02); teclas.clear();
+  jogador.iniciarAtaque('leve');
+  assert.equal(jogador.agachado, false);
+});
+
+test('pisada: pular a rasteira e cair perto pisa no atacante e abre o visceral; longe ou tarde, nada', () => {
+  const P = CONFIG.combate.pisada;
+  const cair = (distancia, demora = 0) => {
+    const d = duelo('cavaleiro');
+    const { jogador, inimigo } = d;
+    inimigo.pos.z = -distancia;
+    inimigo.mudar('perseguir');
+    inimigo.atacar(['rasteira']);
+    const rasteira = inimigo.golpe;
+    jogador.noChao = false; jogador.pos.y = 0.5; jogador.vel.y = 0;
+    assert.equal(jogador.receberDano(rasteira.dano, inimigo.pos, inimigo, rasteira), 'pulou');
+    jogador.tPisada = demora;
+    jogador.pos.y = 0.05; jogador.vel.y = -3;
+    jogador.atualizar(0.02);
+    return d;
+  };
+  const { jogador, inimigo } = cair(1.5);
+  assert.ok(Math.abs(inimigo.vida - (inimigo.cfg.vida - CONFIG.combate.leve.dano * P.multiplicador)) < 1e-9);
+  assert.deepEqual([inimigo.estado, inimigo.tempoDesequilibrio], ['desequilibrado', P.desequilibrio]);
+  assert.ok(jogador.vel.y > 0 && !jogador.noChao);   // quicou
+  jogador.iniciarAtaque('leve');
+  assert.equal(jogador.acao, 'visceral');
+  // Longe demais ou depois da janela: nada acontece.
+  for (const d of [cair(P.alcance + 0.5), cair(1.5, P.janela + 0.1)]) {
+    assert.equal(d.inimigo.vida, d.inimigo.cfg.vida);
+    assert.notEqual(d.inimigo.estado, 'desequilibrado');
+  }
+});
+
+test('pisada: o desequilíbrio dura o tempo próprio e depois ele volta a perseguir', () => {
+  const { inimigo } = duelo('cavaleiro');
+  inimigo.desequilibrar({ duracao: 0.5 });
+  for (let t = 0; t < 0.45; t += 0.02) inimigo.atualizar(0.02);
+  assert.equal(inimigo.estado, 'desequilibrado');
+  for (let t = 0; t < 0.1; t += 0.02) inimigo.atualizar(0.02);
+  assert.notEqual(inimigo.estado, 'desequilibrado');
+  assert.equal(inimigo.tempoDesequilibrio, null);
+});
+
+test('pular contra golpe alto custa dano extra; no chão, ou contra o pesado, não', () => {
+  const X = CONFIG.combate.danoExtraNoAr;
+  const alto = montarGolpe(CONFIG.inimigos.cavaleiro, 'alto'), pesado = montarGolpe(CONFIG.inimigos.cavaleiro, 'pesado');
+  const caso = (golpe, altura) => {
+    const { jogador } = arena();
+    jogador.noChao = altura === 0; jogador.pos.y = altura;
+    jogador.receberDano(golpe.dano, { x: 0, y: 0, z: -1 }, null, golpe);
+    return 100 - jogador.vida;
+  };
+  assert.equal(caso(alto, 0.6), alto.dano * X.multiplicador);
+  assert.equal(caso(alto, 0), alto.dano);
+  assert.equal(caso(alto, X.alturaMin / 2), alto.dano);
+  assert.equal(caso(pesado, 0.6), pesado.dano);
 });

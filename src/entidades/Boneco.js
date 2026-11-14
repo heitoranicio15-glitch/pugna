@@ -137,6 +137,7 @@ export class Boneco {
     this.pose = { ...REPOUSO };
     this.rumo = 0;
     this.queda = 0;
+    this.agacho = 0;   // 0 = em pé, 1 = agachado (Etapa D)
     cena.add(this.grupo);
   }
 
@@ -213,6 +214,10 @@ export class Boneco {
       }
     }
 
+    // Agachado: tronco para a frente e o corpo encolhido (os pés ficam no chão).
+    this.agacho += ((j.agachado && !j.morto ? 1 : 0) - this.agacho) * (dt > 0 ? 1 - Math.exp(-dt * 12) : 1);
+    if (j.agachado && !j.morto && j.acao !== 'visceral') { alvo.cx += 0.38; alvo.bex -= 0.3; }
+
     const pose = this.pose;
     for (const chave in pose) pose[chave] += (alvo[chave] - pose[chave]) * (direto ? 1 : k);
     this.bracoD.rotation.set(pose.bdx, 0, pose.bdz);
@@ -233,7 +238,8 @@ export class Boneco {
 
     // Morte: cai de costas. Esquiva: gira em volta do centro do corpo.
     this.miolo.rotation.x = rolo - this.queda * Math.PI / 2;
-    this.miolo.position.y = altura - this.queda * 0.72 + (j.noChao ? Math.abs(Math.sin(j.fasePasso)) * 0.035 : 0);
-    this.miolo.scale.setScalar(escala);
+    const encolhe = 1 - 0.26 * this.agacho;
+    this.miolo.position.y = altura * encolhe - this.queda * 0.72 + (j.noChao ? Math.abs(Math.sin(j.fasePasso)) * 0.035 : 0);
+    this.miolo.scale.set(escala, escala * encolhe, escala);
   }
 }
