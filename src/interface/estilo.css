@@ -158,6 +158,7 @@ dialog.painel-menu::backdrop { background: #04030bd9; }
 .preferencias input[type="range"] { grid-column: 1 / -1; width: 100%; }
 .preferencias input { accent-color: #df9c6e; }
 .preferencias input[type="checkbox"] { width: 20px; height: 20px; }
+.preferencias label:has(:disabled) { opacity: 0.45; filter: grayscale(1); }
 
 #frascos-hud {
   position: absolute; left: 28px; bottom: 75px; padding: 4px 9px;

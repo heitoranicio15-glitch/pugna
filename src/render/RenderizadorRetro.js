@@ -4,17 +4,22 @@
 //  2) Amplia essa imagem para a tela inteira SEM suavizar (pixels grandes).
 //  3) No caminho, reduz a quantidade de cores com pontilhado (dithering),
 //     como nos consoles dos anos 90.
+//  O estilo HD (definirEstilo('hd')) usa a mesma cena com mais linhas, sem
+//  pontilhado nem redução de cores e com um pouco mais de cor e contraste.
 // =============================================================================
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { uniformesRetro } from './retro.js';
+import { definirFiltroTexturas } from './texturas.js';
 
 const FRAG = /* glsl */ `
   precision highp float;
   uniform sampler2D tCena;
   uniform vec2 uRes;       // resolução interna
-  uniform float uNiveis;   // tons por canal
+  uniform float uNiveis;   // tons por canal (0 = sem redução)
   uniform float uDither;
+  uniform float uSaturacao; // 1 = cores como estão
+  uniform float uContraste; // 1 = contraste como está
   uniform float uEscurecer; // 0 = normal, 1 = preto (usado em transições)
   uniform float uBrilho;
   varying vec2 vUv;
@@ -46,9 +51,18 @@ const FRAG = /* glsl */ `
     cor = pow(max(cor * uBrilho, 0.0), vec3(1.0 / 2.2));
     cor = mix(cor, cor * cor * (3.0 - 2.0 * cor), 0.35);
 
-    // Reduz as cores com pontilhado.
-    cor += bayer(px) * uDither / uNiveis;
-    cor = floor(cor * uNiveis + 0.5) / uNiveis;
+    // Estilo HD: mais cor e contraste (no PS1 os dois valem 1 e nada muda).
+    if (uSaturacao != 1.0 || uContraste != 1.0) {
+      float luz = dot(cor, vec3(0.299, 0.587, 0.114));
+      cor = mix(vec3(luz), cor, uSaturacao);
+      cor = clamp((cor - 0.5) * uContraste + 0.5, 0.0, 1.0);
+    }
+
+    // Reduz as cores com pontilhado (só quando há redução de cores).
+    if (uNiveis > 0.0) {
+      cor += bayer(px) * uDither / uNiveis;
+      cor = floor(cor * uNiveis + 0.5) / uNiveis;
+    }
 
     gl_FragColor = vec4(cor * (1.0 - uEscurecer), 1.0);
   }
@@ -74,8 +88,10 @@ export class RenderizadorRetro {
     this.uniformes = {
       tCena: { value: this.alvo.texture },
       uRes: { value: new THREE.Vector2(480, 270) },
-      uNiveis: { value: CONFIG.render.niveisDeCor },
-      uDither: { value: CONFIG.render.forcaDither },
+      uNiveis: { value: CONFIG.render.estilos.ps1.niveisDeCor },
+      uDither: { value: CONFIG.render.estilos.ps1.dithering },
+      uSaturacao: { value: CONFIG.render.estilos.ps1.saturacao },
+      uContraste: { value: CONFIG.render.estilos.ps1.contraste },
       uEscurecer: { value: 0 },
       uBrilho: { value: 1 },
     };
@@ -93,6 +109,9 @@ export class RenderizadorRetro {
 
     this.proporcao = 16 / 9;
     this.alturaInterna = CONFIG.render.alturaInterna;
+    this.resolucaoPs1 = CONFIG.render.alturaInterna; // escolhida em "Pixelização"
+    this.tremorPs1 = true;                           // escolhido em "Tremor dos vértices"
+    this.estilo = null;
     addEventListener('resize', () => this.ajustarTamanho());
     this.ajustarTamanho();
   }
@@ -100,7 +119,8 @@ export class RenderizadorRetro {
   ajustarTamanho() {
     const l = innerWidth, a = innerHeight;
     this.proporcao = l / a;
-    const altura = this.alturaInterna;
+    // No HD a imagem interna nunca passa da altura da janela (não adianta desenhar mais).
+    const altura = this.estilo === 'hd' ? Math.min(this.alturaInterna, Math.max(2, a)) : this.alturaInterna;
     const largura = Math.max(2, Math.round(altura * this.proporcao / 2) * 2);
     this.renderer.setSize(l, a, false);
     this.alvo.setSize(largura, altura);
@@ -108,11 +128,28 @@ export class RenderizadorRetro {
     uniformesRetro.uRetroRes.value.set(largura, altura);
   }
 
-  aplicarPreferencias({ resolucao, brilho, tremor }) {
+  aplicarPreferencias({ resolucao, brilho, tremor, estiloGrafico }) {
     this.uniformes.uBrilho.value = brilho / 100;
-    uniformesRetro.uTremor.value = tremor ? CONFIG.render.tremor : 0;
-    if (resolucao === this.alturaInterna) return;
-    this.alturaInterna = resolucao;
+    this.resolucaoPs1 = resolucao;
+    this.tremorPs1 = tremor;
+    this.definirEstilo(estiloGrafico);
+  }
+
+  /** Troca o estilo de imagem na hora: 'ps1' (padrão) ou 'hd'. Não troca de renderizador. */
+  definirEstilo(nome) {
+    const estilos = CONFIG.render.estilos;
+    this.estilo = Object.hasOwn(estilos, nome ?? '') ? nome : CONFIG.render.estiloPadrao;
+    const e = estilos[this.estilo];
+    this.uniformes.uNiveis.value = e.niveisDeCor;
+    this.uniformes.uDither.value = e.dithering;
+    this.uniformes.uSaturacao.value = e.saturacao;
+    this.uniformes.uContraste.value = e.contraste;
+    // No PS1 valem a pixelização e o tremor escolhidos; no HD eles ficam guardados.
+    uniformesRetro.uTremor.value = this.estilo === 'ps1' && !this.tremorPs1 ? 0 : e.tremor;
+    definirFiltroTexturas(e.filtroTextura);
+    const altura = e.linhas ?? this.resolucaoPs1;
+    if (altura === this.alturaInterna) return;
+    this.alturaInterna = altura;
     this.ajustarTamanho();
   }
 

@@ -1237,3 +1237,39 @@ test('frasco: beber a 5 m de um inimigo livre dispara o ataque mais rápido; a 1
   b.inimigo.atualizar(P.reacao + 0.01);
   assert.notEqual(b.inimigo.estado, 'preparo');
 });
+
+test('estilo de imagem: padrão PS1, preferência antiga vira PS1, escolha persiste e sobrevive a apagar o progresso', async () => {
+  const { carregarPreferencias, salvarPreferencias } = await import('../src/nucleo/Preferencias.js');
+  const registros = new Map();
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
+    getItem: (key) => registros.get(key) ?? null,
+    setItem: (key, value) => registros.set(key, value),
+    removeItem: (key) => registros.delete(key),
+  } });
+  try {
+    assert.equal(CONFIG.render.estiloPadrao, 'ps1');
+    assert.ok(CONFIG.render.estilos.ps1 && CONFIG.render.estilos.hd);
+    // Primeira vez: PS1.
+    assert.equal(carregarPreferencias().estiloGrafico, 'ps1');
+    // Preferência antiga, sem o campo novo: PS1, e o resto continua igual.
+    registros.set('pugna-preferencias-v1', '{"musica":30,"resolucao":180,"tremor":false}');
+    const antiga = carregarPreferencias();
+    assert.equal(antiga.estiloGrafico, 'ps1');
+    assert.deepEqual([antiga.musica, antiga.resolucao, antiga.tremor], [30, 180, false]);
+    // Valor desconhecido também volta ao PS1.
+    registros.set('pugna-preferencias-v1', '{"estiloGrafico":"ultra"}');
+    assert.equal(carregarPreferencias().estiloGrafico, 'ps1');
+    // Escolher HD persiste ao "recarregar" e guarda os valores do PS1.
+    salvarPreferencias({ ...antiga, estiloGrafico: 'hd' });
+    const recarregada = carregarPreferencias();
+    assert.equal(recarregada.estiloGrafico, 'hd');
+    assert.deepEqual([recarregada.resolucao, recarregada.tremor], [180, false]);
+    // Apagar o progresso não mexe nas preferências.
+    const saves = new SalvamentoLocal();
+    await saves.salvar(normalizarProgresso({ descanso: 'adro-da-igreja' }));
+    assert.equal(saves.apagar(), true);
+    assert.equal(carregarPreferencias().estiloGrafico, 'hd');
+  } finally {
+    delete globalThis.localStorage;
+  }
+});

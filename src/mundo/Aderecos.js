@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { caixa, materiais } from './pecas.js';
 import { retro } from '../render/retro.js';
+import { registrarTextura } from '../render/texturas.js';
 
 export function bloco(grupo, mat, x, y, z, l, a, p) {
   const malha = caixa(l, a, p, mat, 1.25);
@@ -27,6 +28,7 @@ export function placa(grupo, texto, x, y, z, largura, rotacao = 0) {
   const textura = new THREE.CanvasTexture(tela);
   textura.colorSpace = THREE.SRGBColorSpace;
   textura.magFilter = THREE.NearestFilter;
+  registrarTextura(textura);
   const material = retro(new THREE.MeshBasicMaterial({ map: textura }));
   const malha = new THREE.Mesh(new THREE.PlaneGeometry(largura, largura / 4), material);
   malha.position.set(x, y, z);
