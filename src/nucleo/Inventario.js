@@ -68,7 +68,7 @@ export const ANOTACOES = Object.freeze({
   },
   'catedral:registro-guardiao': {
     nome: 'Vigília do Guardião',
-    texto: 'Ele nos pediu que voltássemos à vila e trancou a grade do lado de dentro. Ainda bate a maça duas vezes no chão, como quem marca o intervalo do sino. Quando o elmo arde, espera a segunda varrida antes de te aproximares.',
+    texto: 'Ele nos pediu que voltássemos à vila e trancou a grade do lado de dentro. Ainda bate a lâmina duas vezes no chão, como quem marca o intervalo do sino. Quando o elmo arde, espera a segunda varrida antes de te aproximares.',
   },
   'catedral:lista-das-devolucoes': {
     nome: 'Lista das devoluções',

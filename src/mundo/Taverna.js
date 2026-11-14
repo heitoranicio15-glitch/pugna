@@ -264,7 +264,7 @@ export class Taverna {
     this.bracoEsquerdo.add(caneca);
     this.bracoDireito.add(cx(0.2, 0.02, 0.14, avental, 0, -0.62, 0.06));   // o pano
     this.grupo.add(g);
-    this.modeloTaverneiro = modeloDePersonagem(g, 'taverneiro-pugna', {
+    this.modeloTaverneiro = modeloDePersonagem(g, 'scary-doctor', {
       reserva: [...g.children],
       armas: [['maoE', caneca, [0, 0, 0]]],
     });
@@ -293,8 +293,8 @@ export class Taverna {
     if (rig) {
       rig.tronco(this.corpoTaverneiro.rotation.x, 0, 0);
       rig.cabeca(0.05, this.cabecaTaverneiro.rotation.y, 0);
-      rig.bracoE(this.bracoEsquerdo.rotation.x * 1.42, 0, -0.42);
-      rig.bracoD(this.bracoDireito.rotation.x * 1.26, 0, 0.38);
+      rig.bracoE(-0.38 + Math.sin(tempo * 1.9) * 0.10, 0, -0.13);
+      rig.bracoD(-0.15 + Math.sin(tempo * 1.9 + 1.2) * 0.10, 0, 0.11);
     }
   }
 }

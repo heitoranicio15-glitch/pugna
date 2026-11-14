@@ -31,12 +31,13 @@ import { modeloPronto } from '../render/modelos.js';
 import { modeloDePersonagem } from './ModeloDePersonagem.js';
 
 const v2 = new THREE.Vector3();
-const MODELOS = { guardiao: 'guardiao-pugna', cavaleiro: 'cavaleiro-pugna', penitente: 'penitente-pugna', cacador: 'vigia-pugna' };
+const MODELOS = { guardiao: 'cavaleiro-negro', cavaleiro: 'alma-das-cinzas', penitente: 'mulher-encapuzada', cacador: 'mulher-encapuzada' };
 
 /** Monta o corpo facetado e devolve o grupo e as partes animadas. */
-function montarCorpo(tipo) {
+function montarCorpo(tipo, visual) {
   const t = texturas();
   const guardiao = tipo === 'guardiao';
+  const encapuzada = visual === 'mulher-encapuzada';
   const penitente = tipo === 'penitente';
   const cavaleiro = tipo === 'cavaleiro' || guardiao;
   const metal = { asset: 'Metal032', normal: 0.35, metalness: 0.54 };
@@ -140,7 +141,7 @@ function montarCorpo(tipo) {
     modeloPronto(arma, 'Hammer_Double', { pos: [0,-0.28,0.76], tamanho: [0.48,0.56,1.6],
       orientacao: [Math.PI / 2,0,0], material: m => /wood/i.test(m.name) ? armadura : aco,
       reserva: [...arma.children] });
-  } else {
+  } else if (!encapuzada) {
     arma.add(lamina(aco, cavaleiro ? 0.135 : 0.075, comp));
     arma.add(cx(0.3, 0.05, 0.05, armadura, 0, 0, 0.1));
     modeloPronto(arma, 'Sword', { pos: [0, -0.032, comp * 0.43], tamanho: [0.29,0.064,comp + 0.19],
@@ -160,21 +161,12 @@ function montarCorpo(tipo) {
     armas.push(['maoE', suporte, [0, 0, Math.PI / 2]]);
   }
 
-  const modelo = modeloDePersonagem(g, MODELOS[tipo], {
-    reserva: [corpo, pernaE, pernaD], armas, emissao: armadura.emissive,
-    aoMontar(cabeca) {
-      const pos = cabeca.getWorldPosition(new THREE.Vector3());
-      const altura = guardiao ? 1.76 : penitente ? 1.56 : tipo === 'cacador' ? 1.61 : 1.72;
-      const face = guardiao ? 0.46 : penitente ? 0.43 : tipo === 'cacador' ? 0.4 : 0.24;
-      for (const lado of [-1, 1]) {
-        const marca = cx(0.062, 0.021, 0.018, olho, 0, 0, 0);
-        marca.position.copy(cabeca.worldToLocal(pos.clone().set(pos.x + lado * 0.085, altura, face)));
-        marca.scale.setScalar(1 / cabeca.getWorldScale(new THREE.Vector3()).x);
-        cabeca.add(marca);
-      }
-    },
+  const modelo = modeloDePersonagem(g, visual, {
+    reserva: [corpo, pernaE, pernaD],
+    armas: guardiao || encapuzada ? [] : armas,
+    emissao: guardiao || encapuzada ? aco.emissive : armadura.emissive,
   });
-  return { grupo: g, corpo, pernaE, pernaD, bracoE, bracoD, modelo, olho, aco, materiais: [armadura, pano, aco] };
+  return { grupo: g, corpo, pernaE, pernaD, bracoE, bracoD, modelo, olho, aco, encapuzada, materiais: [armadura, pano, aco] };
 }
 
 export class Inimigo {
@@ -193,7 +185,7 @@ export class Inimigo {
     this.empurrao = new THREE.Vector3();
     this.ataque = new MaquinaDeAtaque();
     this.sorteio = Math.random;   // os testes trocam por um sorteio previsível
-    Object.assign(this, montarCorpo(tipo));
+    Object.assign(this, montarCorpo(tipo, MODELOS[tipo]));
     this.grupo.scale.setScalar(this.cfg.escala);
     this.grupo.rotation.order = 'YXZ'; // assim ele cai "para trás" seja qual for o lado em que olha
     mundo.grupo.add(this.grupo);
@@ -242,6 +234,7 @@ export class Inimigo {
     this.barra.visible = false;
     for (const m of this.materiais) m.emissive.setRGB(0, 0, 0);
     this.modelo.scale.y = 1;
+    this.modelo.userData.correr?.(0, 0);
     this.modelo.userData.clarao?.();
   }
 
@@ -355,9 +348,10 @@ export class Inimigo {
     this.piscar -= dt;
     const claro = this.piscar > 0 ? 0.7 : 0;
     for (const m of this.materiais) m.emissive.setRGB(claro, claro, claro * 1.1);
-    this.modelo.userData.clarao?.();
 
     if (this.morto) {
+      this.modelo.userData.correr?.(0, 0);
+      this.modelo.userData.clarao?.();
       // Cai para trás e, depois de um tempo, se desfaz.
       this.grupo.rotation.x = Math.max(-Math.PI / 2, this.grupo.rotation.x - dt * 3.5);
       if (this.tEstado > 6) this.grupo.scale.multiplyScalar(Math.exp(-dt * 2.5));
@@ -563,11 +557,15 @@ export class Inimigo {
       this.olho.color.setHex(aviso);
       this.aco.emissive.setHex(aviso).multiplyScalar(forcaAviso);
     } else this.olho.color.setHex(this.corOlho);
+    this.modelo.userData.clarao?.();
     const rig = this.modelo.userData.pose;
-    if (rig) {
+    const correndo = this.modelo.userData.correr?.(dt, !ehFaseDeAtaque(this.estado) && andar > c.velPatrulha
+      && andou > 0.005 && dt > 0 ? Math.min(1.35, andou / dt / c.velPerseguir) : 0);
+    if (rig && !correndo) {
       rig.tronco(this.corpo.rotation.x, this.corpo.rotation.y, 0);
       rig.bracoD(this.bracoD.rotation.x, 0, -this.bracoD.rotation.z);
-      rig.bracoE(this.bracoE.rotation.x, 0, 0);
+      rig.bracoE(this.encapuzada && ehFaseDeAtaque(this.estado) ? this.bracoD.rotation.x * 0.76 : this.bracoE.rotation.x,
+        0, this.encapuzada ? this.bracoD.rotation.z * 0.45 : 0);
       rig.pernaD(passo, 0, 0);
       rig.pernaE(-passo, 0, 0);
       this.modelo.scale.y = 1 + this.corpo.position.y * 0.46;

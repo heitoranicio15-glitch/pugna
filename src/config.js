@@ -384,7 +384,7 @@ export const CONFIG = {
         desequilibrio: 0.9,
         virada: { invencivel: 1, passo: 1.2 },
         ataques: [
-          // varrida dupla inaparável: "lado" diz de que lado a maça vem
+          // varrida dupla inaparável: "lado" diz de que lado a lâmina vem
           { golpes: [
             { tipo: 'alto', lado: 1, aparavel: false, aviso: 'inaparavel' },
             { tipo: 'alto', lado: -1, aparavel: false, aviso: 'inaparavel' },

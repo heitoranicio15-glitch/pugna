@@ -3,21 +3,24 @@ import { clone } from 'three/addons/utils/SkeletonUtils.js';
 import { carregarModelo } from '../render/modelos.js';
 import { retro } from '../render/retro.js';
 
-const KAYKIT = {
-  tronco: 'chest', cabeca: 'head', bracoD: 'upperarm.r', bracoE: 'upperarm.l',
-  pernaD: 'upperleg.r', pernaE: 'upperleg.l', maoD: 'hand.r', maoE: 'hand.l',
-};
-const QUATERNIUS = {
-  tronco: 'Torso', cabeca: 'Head', bracoD: 'UpperArm.R', bracoE: 'UpperArm.L',
-  pernaD: 'UpperLeg.R', pernaE: 'UpperLeg.L', maoD: 'Middle1.R', maoE: 'Middle1.L',
+const HUMANOIDE = {
+  tronco: 'Spine2', cabeca: 'Head', bracoD: 'RightArm', bracoE: 'LeftArm',
+  pernaD: 'RightUpLeg', pernaE: 'LeftUpLeg', maoD: 'RightHand', maoE: 'LeftHand',
 };
 const PERFIS = {
-  'cacador-pugna': { altura: 2.13, cor: 0xa7a2bd, rig: QUATERNIUS, brilho: 0.24 },
-  'taverneiro-pugna': { altura: 2.02, cor: 0xc8b5a3, rig: QUATERNIUS, brilho: 0.15 },
-  'penitente-pugna': { altura: 2.05, cor: 0xa380a5, rig: KAYKIT, brilho: 0.11 },
-  'vigia-pugna': { altura: 2.13, cor: 0x9395bb, rig: KAYKIT, brilho: 0.11 },
-  'cavaleiro-pugna': { altura: 2.04, cor: 0xa7abd0, rig: { ...QUATERNIUS, maoD: 'MiddleHand.R', maoE: 'MiddleHand.L' }, brilho: 0.11 },
-  'guardiao-pugna': { altura: 2.19, cor: 0xc8ad76, rig: KAYKIT, brilho: 0.14 },
+  'scary-doctor': { altura: 2.05, cor: 0xfff2e9, rig: HUMANOIDE, brilho: 0.32 },
+  'mulher-encapuzada': { altura: 1.96, cor: 0xe1e3ec, rig: { ...HUMANOIDE, tronco: 'Spine01' }, brilho: 0.19, corrida: true },
+  'bruxo-cacador': { altura: 2.13, cor: 0xf4eaf0, rig: HUMANOIDE, brilho: 0.24 },
+  'cavaleiro-negro': { altura: 2.16, cor: 0xf7f0e7, rig: HUMANOIDE, brilho: 0.21 },
+  'alma-das-cinzas': {
+    altura: 2.04, cor: 0xfff4e5, brilho: 0.24,
+    rig: {
+      tronco: 'spine_upper', cabeca: 'head_neck_upper',
+      bracoD: 'arm_right_shoulder_2', bracoE: 'arm_left_shoulder_2',
+      pernaD: 'leg_right_thigh', pernaE: 'leg_left_thigh',
+      maoD: 'arm_right_wrist', maoE: 'arm_left_wrist',
+    },
+  },
 };
 
 const q = new THREE.Quaternion(), e = new THREE.Euler();
@@ -51,7 +54,7 @@ function equipar(osso, modelo, objeto, rotacao, deslocamento) {
   encaixe.add(objeto);
 }
 
-export function modeloDePersonagem(grupo, id, { reserva, armas = [], emissao, aoMontar } = {}) {
+export function modeloDePersonagem(grupo, id, { reserva, armas = [], emissao } = {}) {
   const suporte = new THREE.Group();
   suporte.name = `Personagem: ${id}`;
   grupo.add(suporte);
@@ -61,10 +64,7 @@ export function modeloDePersonagem(grupo, id, { reserva, armas = [], emissao, ao
     const perfil = PERFIS[id];
     const cena = clone(gltf.scene);
     const ossos = Object.fromEntries(Object.entries(perfil.rig).map(([chave, nome]) => [chave, cena.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(nome))]));
-    if (Object.values(ossos).some(osso => !osso) || !gltf.animations[0]) return false;
-    const poseInicial = new THREE.AnimationMixer(cena);
-    poseInicial.clipAction(gltf.animations[0]).play();
-    poseInicial.update(0);
+    if (Object.values(ossos).some(osso => !osso?.isBone)) return false;
     cena.updateMatrixWorld(true);
     const caixa = new THREE.Box3().setFromObject(cena, true);
     const centro = caixa.getCenter(new THREE.Vector3());
@@ -80,7 +80,7 @@ export function modeloDePersonagem(grupo, id, { reserva, armas = [], emissao, ao
         if (!materiais.has(original)) {
           const mat = retro(original.clone());
           mat.color.multiply(new THREE.Color(perfil.cor));
-          mat.roughness = id === 'cavaleiro-pugna' ? 0.6 : 0.88;
+          if (!mat.roughnessMap) mat.roughness = 0.88;
           mat.emissive.copy(mat.color).multiplyScalar(perfil.brilho);
           mat.emissiveMap = mat.map;
           materiais.set(original, { mat, repouso: mat.emissive.clone() });
@@ -94,13 +94,26 @@ export function modeloDePersonagem(grupo, id, { reserva, armas = [], emissao, ao
       }
     });
     suporte.userData.pose = Object.fromEntries(Object.entries(ossos).map(([chave, osso]) => [chave, controlarOsso(osso, cena)]));
+    if (perfil.corrida && gltf.animations[0]) {
+      // A posição continua nas mãos da IA e dos colisores. Só o esqueleto corre.
+      const original = gltf.animations[0];
+      const clip = new THREE.AnimationClip(original.name, original.duration,
+        original.tracks.filter(track => track.name.endsWith('.quaternion')));
+      const mixer = new THREE.AnimationMixer(cena);
+      const acao = mixer.clipAction(clip);
+      suporte.userData.correr = (dt, velocidade) => {
+        if (velocidade <= 0) { if (acao.isScheduled()) acao.stop(); return false; }
+        acao.play().setEffectiveTimeScale(velocidade);
+        mixer.update(dt);
+        return true;
+      };
+    }
     if (emissao) suporte.userData.clarao = () => {
       for (const { mat, repouso } of materiais.values()) mat.emissive.copy(repouso).add(emissao);
     };
     armas.forEach(([mao, arma, rotacao, deslocamento = [0, 0, 0]]) => {
       equipar(ossos[mao], cena, arma, rotacao, deslocamento);
     });
-    aoMontar?.(ossos.cabeca);
     suporte.add(cena);
     for (const o of reserva) o.visible = false;
     return true;

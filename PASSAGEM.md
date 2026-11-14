@@ -49,6 +49,22 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Personagens de fantasia sombria escolhidos pelo Gabriel.** Witch Hunter
+  é o caçador jogável em terceira pessoa e Scary Doctor é o taverneiro.
+  Terrifying Hooded Horror Woman aparece nas patrulhas rápidas da vila e
+  Dark Knight é o visual do Guardião do Véu. Os quatro modelos foram
+  reexportados em GLB com texturas de até 1K. Witch Hunter e Dark Knight
+  receberam esqueletos para reaproveitar caminhadas, esquivas e ataques
+  do PUGNA. O chefe usa a lâmina e o escudo da malha escolhida e mantém
+  as duas fases, o alcance e a derrota gravada nos saves. O modelo do
+  arquivo `dark-souls.zip`, identificado como Soul of Cinder na página
+  do Sketchfab, ocupa as patrulhas de cavaleiros da vila. A publicação
+  desse modelo foi confirmada pelo Gabriel. As duas variantes usam
+  as rotas, colisores e valores das patrulhas existentes. Os seis
+  modelos anteriores foram removidos. As encapuzadas reaproveitam a
+  corrida original e executam os ataques com as mãos nas janelas do
+  combate do PUGNA.
+
 - **Vestígios da Romaria e personagens importados.** Os seis tipos de
   personagem agora usam modelos com esqueleto do Quaternius e do KayKit.
   As armas e poses do PUGNA acompanham os ossos, inclusive os avisos de
@@ -243,6 +259,8 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 - [x] **Gráficos, personagens e decoração das quatro áreas** — modelos
   para o caçador, o taverneiro e os quatro tipos de inimigo, detalhes de
   taverna e Catedral e embarcadouro na estrada.
+- [x] **Gráficos, seleção de fantasia sombria** — Witch Hunter, Scary
+  Doctor, mulher encapuzada, Alma das Cinzas e Cavaleiro Negro do Sketchfab.
 - [ ] **Gráficos, próximo incremento** — testar o percurso real e medir o custo
   do HD com GPU. Usar o guia gráfico para comparar o primeiro piloto de
   Blender com a fachada procedural. Alinhar iluminação com S5 e os modelos

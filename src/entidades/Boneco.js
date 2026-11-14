@@ -129,9 +129,9 @@ export class Boneco {
       reserva: [...this.pistola.children],
     });
     this.bracoE.add(this.pistola);
-    this.modelo = modeloDePersonagem(base, 'cacador-pugna', {
+    this.modelo = modeloDePersonagem(base, 'bruxo-cacador', {
       reserva: [this.pernaD, this.pernaE, this.corpo],
-      armas: [['maoD', this.espada, [0.52, 0.16, 0]], ['maoE', this.pistola, [-0.1, 0, 0]]],
+      armas: [['maoD', this.espada, [0.39, 0, 0]], ['maoE', this.pistola, [-0.1, 0, 0]]],
     });
 
     this.pose = { ...REPOUSO };

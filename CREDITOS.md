@@ -21,11 +21,14 @@ materiais de algumas superfícies são aplicados pelo jogo.
 | `CommonTree_Dead_*` | Quaternius, [Ultimate Nature Pack](https://quaternius.com/packs/ultimatenature.html). | CC0 |
 | `Sword`, `Helmet*`, `Hammer_Double` | Quaternius, [Animated Knight Pack](https://quaternius.com/packs/knightcharacter.html) e [Modular Weapons Pack](https://quaternius.com/packs/medievalweapons.html). Os GLBs do Quaternius vieram da conversão [quaternius-showcase](https://github.com/trebeljahr/quaternius-showcase/tree/0128ca5/public/glb). | CC0 |
 | `pillar_decorated`, `table_medium`, `table_long_tablecloth`, `torch`, `torch_mounted`, `banner_thin_red`, `wall_arched`, `rubble_half`, `shelf_large`, `key` | Kay Lousberg, [KayKit Dungeon Remastered](https://github.com/KayKit-Game-Assets/KayKit-Dungeon-Remastered-1.0/tree/b0ca9bd). | CC0 |
-| `cacador-pugna`, `taverneiro-pugna`, `pistola-pugna`, `cais-madeira`, `estaca-cais`, `banco-peixes`, `ancora-rio` | Quaternius, [Pirate Kit no Sketchfab](https://sketchfab.com/3d-models/pirate-kit-70-models-52af2bc5ac5846ff84a0d671b897c0a2). Edição [CC0 do autor](https://quaternius.com/packs/piratekit.html), obtida pelo [espelho Open Assets](https://github.com/openassetsarchive/open-assets/releases/tag/pack-quaternius-pirate-kit-11e5f28f6330) e empacotada em GLB. | CC0 |
-| `penitente-pugna`, `vigia-pugna`, `guardiao-pugna` | Kay Lousberg, [KayKit Adventurers](https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0/tree/672074b). | CC0 |
-| `cavaleiro-pugna` | Quaternius, [Animated Knight Pack](https://quaternius.com/packs/knightcharacter.html). | CC0 |
+| `pistola-pugna`, `cais-madeira`, `estaca-cais`, `banco-peixes`, `ancora-rio` | Quaternius, [Pirate Kit no Sketchfab](https://sketchfab.com/3d-models/pirate-kit-70-models-52af2bc5ac5846ff84a0d671b897c0a2). Edição [CC0 do autor](https://quaternius.com/packs/piratekit.html), obtida pelo [espelho Open Assets](https://github.com/openassetsarchive/open-assets/releases/tag/pack-quaternius-pirate-kit-11e5f28f6330) e empacotada em GLB. | CC0 |
 | `barco-rio`, `Bags`, `Hay`, `Cauldron`, `Package_1`, `Rock_Moss_*`, `Willow_Dead_3`, `Plant_3`, `Grass_2`, `WoodLog_Moss`, `Lilypad`, `Book2_Open`, `Book3_Closed`, `Chalice`, `Scroll`, `Pouch` | Quaternius, [Ships Pack](https://quaternius.com/packs/ships.html), [Medieval Village](https://quaternius.com/packs/medievalvillage.html), [Ultimate Nature](https://quaternius.com/packs/ultimatenature.html) e [Ultimate RPG](https://quaternius.com/packs/ultimaterpg.html). Conversão do quaternius-showcase. | CC0 |
 | `bottle_A_green`, `bottle_B_brown`, `plate_food_A`, `plate_food_B`, `plate_stack`, `candle_triple`, `box_stacked`, `banner_patternC_brown`, `shelf_small_candles` | Kay Lousberg, [KayKit Dungeon Remastered](https://github.com/KayKit-Game-Assets/KayKit-Dungeon-Remastered-1.0/tree/b0ca9bd). | CC0 |
+| `scary-doctor.glb` | atomizr, [Scary doctor character](https://sketchfab.com/3d-models/scary-doctor-character-778f51c354084d0eabf9a73cd5d024df). Taverneiro. Texturas redimensionadas e reexportação para o jogo. | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `mulher-encapuzada.glb` | Purple.Point, [Terrifying Hooded Horror Woman](https://sketchfab.com/3d-models/terrifying-hooded-horror-woman-f59d17be392f4494a5b85d927df48ffd). Patrulhas do vilarejo. Texturas redimensionadas e animação adaptada às poses do jogo. | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `cavaleiro-negro.glb` | Pigcraft, [Dark Knight – Spiked Black Armored Warrior](https://sketchfab.com/3d-models/dark-knight-spiked-black-armored-warrior-e2447a48b07c4f7f925356dd73e63ca6). Guardião do Véu. Redução de malha e texturas, esqueleto e pesos novos. | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `bruxo-cacador.glb` | Pigcraft, [Witch Hunter in Long Coat and Wide Hat](https://sketchfab.com/3d-models/witch-hunter-in-long-coat-and-wide-hat-7688bbfe0b2e4375a5175c145404abf1). Personagem jogável. Redução de malha e texturas, esqueleto e pesos novos. | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `alma-das-cinzas.glb` | Vasian-Digital3D, [Dark Souls](https://sketchfab.com/3d-models/dark-souls-b7a14e347ab04a188b07fe30f1ffaaf0), modelo de Soul of Cinder de Dark Souls III. Patrulhas do vilarejo. Rotação, ajuste de material, redução de texturas e adaptação das poses para o PUGNA. | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) indicada na página do modelo |
 
 ## Materiais HD de cenário
 
@@ -75,7 +78,7 @@ As imagens da pasta `referencias/` servem só como guia de clima, cor e composi�
 Elas **não** fazem parte do jogo e não devem ser distribuídas com ele.
 
 ## Como registrar assets novos
-Ao baixar um modelo, textura ou som (somente licença **CC0** ou equivalente), guarde em
+Ao baixar um modelo, textura ou som com permissão de redistribuição, guarde em
 `public/assets/` e acrescente uma linha aqui:
 
 | Arquivo | Autor / site | Link | Licença |
