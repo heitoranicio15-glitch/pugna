@@ -347,8 +347,11 @@ trilha é a mesma do vilarejo.
 
 ## O que existe hoje
 
-- Vilarejo gótico pequeno: ruas de pedra, 17 casas, torres, cemitério, muralha,
-  tochas e névoa.
+- Vilarejo gótico: ruas de pedra em três larguras, cerca de 80 casas em fileira
+  (pequena, média e grande), arcos sobre as ruas compridas, ruínas e árvores secas
+  nos miolos de quarteirão, torres, cemitério, muralha, tochas e névoa. O plano em
+  metros está em [docs/mapa.md](docs/mapa.md); as fileiras são montadas por
+  `src/mundo/QuadrasVilarejo.js`.
 - **Catedral** ao norte: fachada com torres, rosácea e vitrais. O portal leva à
   nave, ao Ossário, ao Relicário e ao Santuário.
 - **Estrada do Sul**, **taverna** (saída pelo Portão Sul) e **floresta** (pela ponta sul da estrada):
@@ -484,7 +487,7 @@ pugna/
   `combate.danoExtraNoAr` em `src/config.js` (as regras puras ficam em
   `src/entidades/Furtividade.js`)
 - **mudar a aparência ou as poses do caçador:** `src/entidades/Boneco.js`
-- **mudar o mapa** (mover casa, pôr tocha, pôr inimigo): `src/mundo/Vilarejo.js`
+- **mudar o mapa** (ruas, tochas, inimigos): `src/mundo/Vilarejo.js` e `BairrosVilarejo.js`; as casas nascem sozinhas nas beiras das ruas (`QuadrasVilarejo.js`, números em `CONFIG.vila`)
   (a estrada, a taverna e a floresta ficam em `Estrada.js`, `Taverna.js` e `Floresta.js`; o que o taverneiro diz,
   em `CONFIG.areas.taverna.taverneiro.falas`, e o viajante, em `CONFIG.areas.estrada.viajante`)
 - **mudar o título do jogo:** `titulo` em `src/config.js`

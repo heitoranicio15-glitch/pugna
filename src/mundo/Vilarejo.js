@@ -12,11 +12,12 @@ import { CONFIG } from '../config.js';
 import { Colisores } from './Colisores.js';
 import { montarExploracaoVilarejo } from './ExploracaoVilarejo.js';
 import { texturas, criarSorteio } from '../render/texturas.js';
-import { materiais, caixa, piramide, casa, torre, igreja, tocha, animarTochas, arvoreSeca, muralha, planoDeChao, ladrilhoDe } from './pecas.js';
+import { materiais, caixa, piramide, torre, igreja, tocha, animarTochas, arvoreSeca, muralha, planoDeChao, ladrilhoDe } from './pecas.js';
 import { sombrasDeContato } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
 import { montarBairrosVilarejo } from './BairrosVilarejo.js';
 import { decorarVilarejo } from './Decoracao.js';
+import { montarQuadras } from './QuadrasVilarejo.js';
 import { modeloPronto } from '../render/modelos.js';
 
 const C = CONFIG.areas.vilarejo;
@@ -46,8 +47,12 @@ export class Vilarejo {
     // elas são desenhadas primeiro, em ordem fixa (renderOrder), sem gravar profundidade.
     // Como nada fica abaixo do chão, tudo o mais é desenhado por cima sem conflito.
     planoDeChao(this, { x: 0, z: 0, l: 700, p: 700, ladrilho: 7, material: m.terraChao });
+    // Toda rua fica registrada em this.ruas com a sua classe (CONFIG.vila.ruas): o
+    // QuadrasVilarejo.js põe as fileiras de casas nas beiras das ruas com `casas`.
+    this.ruas = [];
     let ordemRua = -5;
-    const rua = (x, z, l, pf) => {
+    const rua = (x, z, l, pf, opcoes = {}) => {
+      this.ruas.push({ x, z, l, p: pf, classe: 'principal', casas: true, ...opcoes });
       const geo = new THREE.PlaneGeometry(l, pf);
       const uv = geo.attributes.uv;
       const lad = ladrilhoDe(m.calcamentoChao, 4);
@@ -60,13 +65,14 @@ export class Vilarejo {
       r.renderOrder = ordemRua; ordemRua += 0.1;
       this.grupo.add(r);
     };
-    rua(0, 48.6, 6.5, 16.8);   // trecho entre o Portão Sul e a triagem
-    rua(0, 20.5, 6.5, 25);     // da triagem ao poço
-    rua(-21.5, 1.2, 42, 5.8);  // rua dos fundos da oficina
-    rua(24, 3, 39, 5.2);       // rua do mercado, desencontrada da rua oeste
-    rua(2.2, 0.8, 21, 21);     // praça em torno do poço
-    rua(0, -23.8, 5.6, 31);
-    rua(0, -43, 22, 12);       // adro da igreja
+    const P = CONFIG.vila.ruas.principal;
+    rua(0, 48.6, P, 16.8);                 // trecho entre o Portão Sul e a triagem
+    rua(0, 20.5, P, 25);                   // da triagem ao poço
+    rua(-24.75, 1.2, 51.5, P, { arcos: true });  // rua oeste: da praça ao Bairro dos Estábulos
+    rua(26.25, 3, 43.5, P);                // rua do mercado, desencontrada da rua oeste
+    rua(2.2, 0.8, 21, 21, { classe: 'praca' });  // praça em torno do poço
+    rua(0, -23.8, P, 31);                  // da praça ao adro
+    rua(0, -43, 22, 12, { classe: 'praca', casas: false });  // adro da igreja
 
     // ---------- igreja ao fundo (norte) ----------
     this.igreja = igreja(this, { x: 0, z: -72 });
@@ -78,54 +84,6 @@ export class Vilarejo {
     // Portão Sul: leva à estrada. Quem volta da estrada chega logo dentro do portão, olhando para o norte.
     this.portais.push({ x: 0, z: 55.4, raio: 1.6, destino: 'estrada', texto: 'E — sair pelo Portão Sul' });
     this.chegadas.estrada = { x: 0, z: 52.6, yaw: 0 };
-
-    // ---------- casas ----------
-    const casas = [
-      // rua principal, trecho sul
-      { x: -8.6, z: 43, l: 8, p: 7, a: 5.2, frente: 'L', acesa: true },
-      { x: -8.2, z: 34.4, l: 11.5, p: 6.4, a: 6.2, frente: 'L' },
-      { x: -8.4, z: 21, l: 8, p: 6.5, a: 6, frente: 'L' },
-      { x: 8.6, z: 45, l: 7, p: 7, a: 4.4, frente: 'O' },
-      { x: 11.55, z: 35, l: 9, p: 8, a: 6.2, frente: 'O', acesa: true },
-      { x: 9.2, z: 21, l: 9, p: 7.5, a: 4.8, frente: 'O' },
-      // em volta da praça
-      { x: -17.5, z: -16.5, l: 9, p: 8, a: 6.4, frente: 'S' },
-      { x: 17.5, z: -16.5, l: 9, p: 8, a: 5, frente: 'S', acesa: true },
-      { x: -18, z: 16.5, l: 8, p: 7, a: 4.6, frente: 'N' },
-      // rua transversal
-      { x: -29, z: -8, l: 8, p: 7.5, a: 5, frente: 'S' },
-      { x: -39, z: 8, l: 9, p: 7.5, a: 5.6, frente: 'N', acesa: true },
-      { x: -28.5, z: 8.4, l: 7, p: 7, a: 4.2, frente: 'N' },
-      { x: 27, z: 13.7, l: 9, p: 8.5, a: 6.9, frente: 'O' },
-      { x: 38, z: -8, l: 9, p: 7.5, a: 4.6, frente: 'S' },
-      { x: 28.5, z: -8.2, l: 7, p: 7, a: 5.2, frente: 'S' },
-      // rua principal, trecho norte
-      { x: -8.6, z: -27, l: 8, p: 6.5, a: 5.4, frente: 'L' },
-      { x: 8.6, z: -28, l: 8, p: 6.5, a: 6.6, frente: 'O' },
-    ];
-    casas.push(
-      { x: -42, z: 34, l: 12, p: 10, a: 6.2, frente: 'L' },
-      { x: -53.5, z: 37, l: 9, p: 7, a: 5, frente: 'N' },
-      { x: -55, z: 21, l: 9, p: 8, a: 5.6, frente: 'L', acesa: true },
-      { x: -39, z: 17.5, l: 8, p: 7, a: 5, frente: 'O' },
-      { x: -42.4, z: -27, l: 9, p: 7, a: 6, frente: 'L' },
-      { x: -54.5, z: -27.4, l: 8, p: 7, a: 4.5, frente: 'L' },
-      { x: -51, z: -45, l: 11, p: 9, a: 8.5, frente: 'L' },
-      { x: -41.4, z: -56.1, l: 10, p: 8, a: 5.5, frente: 'S' },
-      { x: -25.5, z: -60, l: 8, p: 7, a: 5, frente: 'S' },
-      { x: 48, z: 17, l: 10, p: 8, a: 5.3, frente: 'N' },
-      { x: 56, z: 8, l: 9, p: 8, a: 6.2, frente: 'O', acesa: true },
-      { x: 55, z: -9, l: 10, p: 8, a: 5.5, frente: 'O' },
-      { x: 55, z: -33.5, l: 10, p: 8, a: 6.7, frente: 'O' },
-      { x: 55.5, z: -48, l: 10, p: 8, a: 5.4, frente: 'O' },
-      { x: 32.8, z: -111.5, l: 10, p: 9, a: 6.5, frente: 'O' },
-      { x: -26, z: -111.5, l: 10, p: 9, a: 6, frente: 'L' },
-    );
-    for (const c of casas) casa(this, c);
-    sombrasDeContato(this.grupo, casas.map(({ x, z, l = 7, p = 8, frente }) => {
-      const deLado = frente === 'L' || frente === 'O';
-      return [x, z, (deLado ? p : l) * 1.5, (deLado ? l : p) * 1.5];
-    }));
 
     // ---------- torres ----------
     torre(this, { x: -21, z: 31, lado: 5.5, a: 15, tipo: 'ameias' });
@@ -196,14 +154,14 @@ export class Vilarejo {
     decorarVilarejo(this);
 
     // ---------- caixotes e barris (dá para pular em cima) ----------
-    for (const [x, z, t] of [[4.6, 30, 1], [5.2, 31.2, 0.8], [-12.6, 8, 1], [11.5, -3.5, 0.9], [-21, -3.8, 1], [20.4, 6.6, 1.1], [-5, -36, 1]]) {
+    for (const [x, z, t] of [[4.6, 30, 1], [5.2, 31.2, 0.8], [-12.6, 8, 1], [11.5, -3.5, 0.9], [-21, -3.8, 1], [21.6, 8.4, 1.1], [-5, -36, 1]]) {
       const cx = caixa(t, t, t, m.madeira, 1); cx.position.set(x, t / 2, z); cx.rotation.y = sorteio() * 0.2;
       this.grupo.add(cx); this.colisores.adicionar(x, z, t, t, t);
       modeloPronto(this.grupo, 'Crate', { pos: [x, 0, z], tamanho: [t, t, t], reserva: [cx] });
     }
 
     // ---------- árvores secas ----------
-    for (const [x, z] of [[-14, 51], [15, 53], [-30, 22], [-40, -22], [-33, -34], [-22, -46], [-14, -56], [36, 38], [28, 46], [-36, 44], [40, -40], [22, -90], [-30, -66], [-24, -88], [38, -84], [-20, 6.5]]) {
+    for (const [x, z] of [[-14, 51], [15, 53], [-30, 22], [-40, -22], [-33, -34], [-22, -46], [-14, -56], [36, 38], [28, 46], [40, -40], [22, -90], [-24, -88], [38, -84], [-20, 6.5]]) {
       arvoreSeca(this, { x, z, altura: 5 + sorteio() * 4, sorteio });
     }
 
@@ -266,6 +224,10 @@ export class Vilarejo {
       { tipo: 'cacador', rota: [[50, 2], [46, -15], [44, -41]] },
       { tipo: 'cavaleiro', rota: [[-29, -102], [-7, -114], [22, -110]] },
     ];
+
+    // ---------- casas em fileira e miolos de quarteirão (docs/mapa.md) ----------
+    // Por último: as fileiras desviam de tudo o que já está no mapa.
+    this.casas = montarQuadras(this);
   }
 
   atualizar(dt, tempo) {

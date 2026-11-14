@@ -94,6 +94,10 @@ export function problemasDosAderecos(area) {
       if (distanciaAoColisorAlto(area, a) > a.tamanho[2] / 2 + 0.25) problemas.push(`${nome(a)} é de parede mas está solto, longe da parede`);
       continue;
     }
+    // Ruas, becos e travessas ficam livres: adereço só na beira (até 1 m da borda).
+    const rua = (area.ruas ?? []).find((r) => ['principal', 'secundaria', 'beco'].includes(r.classe)
+      && Math.abs(a.x - r.x) < r.l / 2 - 1 && Math.abs(a.z - r.z) < r.p / 2 - 1);
+    if (rua) problemas.push(`${nome(a)} está no meio da rua (${rua.classe} em ${rua.x}; ${rua.z})`);
     const apoiado = temApoio(area, a, raycaster, malhas, aderecos);
     if (!apoiado) problemas.push(`${nome(a)} está ${a.y < 0.06 ? 'fora do terreno (sem chão embaixo)' : 'flutuando'}`);
     // Quem está em cima de um móvel ou da cornija pode ficar dentro do colisor desse móvel.

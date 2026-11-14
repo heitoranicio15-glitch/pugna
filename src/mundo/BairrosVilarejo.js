@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { CONFIG } from '../config.js';
 import { bloco, placa } from './Aderecos.js';
 import { arcoOgival, caixa, materiais, planoDeChao, telhado, tocha } from './pecas.js';
 import { retro } from '../render/retro.js';
@@ -15,9 +16,15 @@ export function montarBairrosVilarejo(mundo) {
     bloco(grupo, m.pedra, x, altura + 0.09, z, l + 0.14, 0.18, p + 0.1);
     colisores.adicionar(x, z, l, p, altura + 0.18);
   };
-  const pavimento = (x, z, l, p) => planoDeChao(mundo, {
-    x, z, l, p, ladrilho: 4.2, material: m.calcamentoChao, ordem: -3.8, y: 0.024,
-  });
+  // Pátios e becos (sem fileira de casas) e ruas dos bairros (com fileira), em mundo.ruas.
+  const pavimento = (x, z, l, p, opcoes = { classe: 'patio', casas: false }) => {
+    mundo.ruas.push({ x, z, l, p, ...opcoes });
+    return planoDeChao(mundo, { x, z, l, p, ladrilho: 4.2, material: m.calcamentoChao, ordem: -3.8, y: 0.024 });
+  };
+  const S = CONFIG.vila.ruas.secundaria;
+  const ruaDoBairro = (x, z, comprimento, aoLongoDeX, arcos = false) => pavimento(
+    x, z, aoLongoDeX ? comprimento : S, aoLongoDeX ? S : comprimento, { classe: 'secundaria', casas: true, arcos },
+  );
   const inscricao = (nome, evento, x, y, z) => {
     placa(grupo, nome, x, y, z, 1.55);
     mundo.objetos.push({ x, y, z: z + 0.022, acao: 'ler', evento });
@@ -29,7 +36,7 @@ export function montarBairrosVilarejo(mundo) {
   const arco = arcoOgival(2.75, 1.32, 0.27, 0.72, m.pedra);
   arco.position.set(5.54, 2.22, 37);
   grupo.add(arco);
-  pavimento(5.54, 37, 3, 12);
+  pavimento(5.54, 37, CONFIG.vila.ruas.beco, 12, { classe: 'beco', casas: false, gargalo: 'arco da triagem' });
   pavimento(2.3, 42.8, 7, 3.2);
   pavimento(2.3, 31.5, 7, 3.2);
   inscricao('Aviso de triagem', 'vilarejo:edital-triagem', 0.7, 1.56, 37.5);
@@ -78,20 +85,24 @@ export function montarBairrosVilarejo(mundo) {
   inscricao('Marco dos ausentes', 'vilarejo:marco-dos-ausentes', 22.1, 1.27, -40.86);
 
   // Dois bairros laterais e um caminho completo atrás da Catedral.
-  for (const [x, z, l, p] of [
-    [-47.2, 28.6, 5.8, 31], [-23.8, 43.8, 43, 5.5], [-25, 1.2, 53, 5],
-    [-47.4, -28.8, 6.3, 52], [-32.2, -52.5, 32, 4.8], [-30, -85.7, 5.5, 66],
-    [48.2, -24.8, 5.3, 58], [32, 3.6, 30, 5], [43, -68, 6, 36],
-    [32.5, -95, 28, 5], [0, -105.7, 65, 5.8], [-31.5, -98.5, 7, 16],
-  ]) pavimento(x, z, l, p);
+  // Ruas secundárias (CONFIG.vila.ruas.secundaria), todas da mesma largura.
+  for (const [x, z, comprimento, aoLongoDeX, arcos] of [
+    [-47.2, 28.6, 31, false], [-24.275, 43.8, 42.05, true],   // termina na beira da rua principal
+    [-47.4, -28.8, 52, false, true], [-32.2, -52.5, 32, true], [-30, -85.7, 66, false, true],
+    [48.2, -24.8, 58, false, true], [43, -68, 36, false],
+    [32.5, -95, 28, true], [0, -105.7, 65, true, true],
+    // Bairro do Portão Leste: fecha o quadrante sudeste, que era um campo vazio.
+    [25.6, 48.6, 44.7, true, true], [50.7, 26.7, 41.4, false, true],
+  ]) ruaDoBairro(x, z, comprimento, aoLongoDeX, arcos);
+  pavimento(-31.5, -98.5, 7, 16);   // largo das urnas
   for (const [x,z] of [[-47.3,41],[-45.6,6.5],[-48.3,-38.6],[-32.8,-59.4],[48.5,4.8],[48.5,-33.5],[41.7,-66.4],[29,-104],[-24,-106]]) {
     tocha(mundo, { x, z, altura: 2.12, luz: false });
   }
-  for (const [x, z, rotacao] of [[-50,26,0],[-42.4,-48,1.6],[51,-37,1.57],[26.4,-103,0],[-20.7,-107,0]]) {
+  for (const [x, z, rotacao] of [[-50,26,0],[-42.4,-48,1.6],[51,-37,1.57],[26.4,-103,0],[-20.7,-101.8,0]]) {
     modeloPronto(grupo, 'Bench_1', { pos: [x, 0, z], tamanho: [2.15, 0.54, 0.61], rotacao });
     colisores.adicionar(x, z, rotacao ? 0.61 : 2.15, rotacao ? 2.15 : 0.61, 0.54);
   }
-  for (const [x,z] of [[-53.4, 28.6],[-50.5,-34.2],[53.7,-18],[41,-66.5],[1.4,-108.3]]) {
+  for (const [x,z] of [[-50.5,-34.2],[41,-66.5],[1.4,-108.3]]) {
     modeloPronto(grupo, 'rgs-entulho', { pos: [x,0.025,z], tamanho: [1.9,0.26,1.3], rotacao: z * 0.3 });
   }
   const destinos = [
