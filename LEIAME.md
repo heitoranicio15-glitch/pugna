@@ -184,7 +184,13 @@ ou **Alt** para esquivar.
   some.
 - **Frasco de cura:** beber leva um instante. O caçador anda devagar, não ataca
   e, se apanhar antes de terminar, a cura é interrompida (o frasco não é gasto).
-  Afaste-se antes de beber.
+  Afaste-se antes de beber: quem está lutando com você e a até uns 7 m
+  costuma **punir o gole** (avança na hora com o golpe mais rápido que tem; o
+  Guardião pune sempre).
+- **Em grupo, no máximo 2 atacam juntos.** Os outros inimigos comuns ficam
+  rondando a uns 4,5 m, andando de lado e encarando, esperando a vez. Quando um
+  termina a sequência, cambaleia, é aparado ou morre, a vez passa para quem
+  esperava. O Guardião não espera a vez.
 - **A bolsa não pausa o jogo.** Com ela aberta, o mundo continua e o caçador
   fica parado. Só o **Esc** pausa.
 - **Cavaleiro:** lento e forte. Usa os três tipos de ataque e às vezes emenda um
@@ -323,6 +329,7 @@ pugna/
    │  ├─ Boneco.js         o boneco do caçador em terceira pessoa (só animação)
    │  ├─ Inimigo.js        aparência, patrulha e combate dos inimigos
    │  ├─ Ataques.js        fases e tipos de ataque (a máquina única dos inimigos)
+   │  ├─ Fichas.js         quantos inimigos atacam ao mesmo tempo (fichas de ataque)
    │  └─ Lanterna.js       ponto de descanso
    ├─ audio/Som.js         sons sintetizados
    └─ interface/
@@ -345,6 +352,9 @@ pugna/
 - **mudar o visceral, a execução ou a carga do forte:** blocos
   `combate.visceral`, `combate.execucao` e `combate.carga` em `src/config.js`
   (o crítico comum fica em `combate.critico`)
+- **mudar quantos inimigos atacam juntos ou a punição do frasco:** blocos
+  `combate.grupo` e `combate.punirFrasco` em `src/config.js` (o Guardião tem
+  `chefe: true`, que dispensa a ficha, e `punirFrasco: { chance: 1 }`)
 - **mudar a aparência ou as poses do caçador:** `src/entidades/Boneco.js`
 - **mudar o mapa** (mover casa, pôr tocha, pôr inimigo): `src/mundo/Vilarejo.js`
 - **mudar o título do jogo:** `titulo` em `src/config.js`
@@ -440,7 +450,7 @@ pugna/
 ## Testes
 
 - `npm test` verifica a janela de acerto, o custo da esquiva, o quickstep com a mira, o tiro de pistola
-  (janela do parry, balas, parede, alcance), o golpe crítico, o visceral, a execução e a carga do forte, as fases e os tipos de ataque dos inimigos, o golpe inaparável e a fase final do Guardião, a interrupção ao apanhar,
+  (janela do parry, balas, parede, alcance), o golpe crítico, o visceral, a execução e a carga do forte, as fases e os tipos de ataque dos inimigos, o golpe inaparável e a fase final do Guardião, as fichas de ataque (no máximo 2 atacando juntos) e a punição do frasco, a interrupção ao apanhar,
   a firmeza dos inimigos, o rally, o frasco interrompido, a mira travada, a câmera em terceira pessoa, colisões, navegação,
   interação com objetos, inventário, Osso de Retorno e migração de saves.
 - `npx playwright-core install chromium` instala o navegador de teste.

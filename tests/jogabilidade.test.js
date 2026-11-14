@@ -10,6 +10,7 @@ import { alvoDaMira, alvoProximo } from '../src/mundo/Interacoes.js';
 import { contarFrascos } from '../src/nucleo/Inventario.js';
 import { MaquinaDeAtaque, golpeAlcanca, montarGolpe, sortearSequencia } from '../src/entidades/Ataques.js';
 import { Inimigo } from '../src/entidades/Inimigo.js';
+import { Fichas } from '../src/entidades/Fichas.js';
 import * as THREE from 'three';
 
 test('a mira escolhe o objeto visível no alcance e respeita a altura dos obstáculos', () => {
@@ -1127,4 +1128,112 @@ test('carga completa pelas costas desequilibra (sem execução) e abre o viscera
   // De frente, ou pelas costas sem carga completa, só cambaleia.
   assert.equal(golpeForte(0, CB.tempoMaximoCarga).inimigo.estado, 'atordoado');
   assert.equal(golpeForte(Math.PI, CB.tempoMaximoCarga * 0.7).inimigo.estado, 'atordoado');
+});
+
+// -----------------------------------------------------------------------------
+//  Etapa C, PR C3: pressão em grupo e punição do frasco
+// -----------------------------------------------------------------------------
+
+/** Vários inimigos na mesma área, com um conjunto de fichas (limite do config). */
+function bando(tipo, posicoes) {
+  const d = duelo(tipo);
+  const mundo = d.inimigo.mundo;
+  mundo.fichas = new Fichas();
+  d.inimigo.pos.set(posicoes[0][0], 0, posicoes[0][1]);
+  const inimigos = [d.inimigo];
+  for (const [x, z] of posicoes.slice(1)) {
+    const i = new Inimigo(d.jogador.jogo, mundo, { tipo, rota: [[x, z]] });
+    mundo.entidades.push(i);
+    d.jogador.jogo.inimigos.push(i);
+    inimigos.push(i);
+  }
+  return { ...d, mundo, inimigos };
+}
+
+test('fichas: com limite 2 e 3 inimigos, só 2 atacam ao mesmo tempo e o terceiro ronda', () => {
+  assert.equal(CONFIG.combate.grupo.atacantesSimultaneos, 2);
+  const { jogador, mundo, inimigos } = bando('cavaleiro', [[-1.5, -2], [0, -2.5], [1.5, -2]]);
+  jogador.vida = jogador.vidaMax = 1e6;   // isola a regra: o caçador não morre
+  for (const i of inimigos) { i.sorteio = () => 0.3; i.mudar('perseguir'); }
+  let maxAtacando = 0;
+  const atacaram = new Set();
+  let rondou = false;
+  for (let k = 0; k < 600; k++) {
+    for (const i of inimigos) i.atualizar(0.02);
+    const atacando = inimigos.filter((i) => ['preparo', 'ativo', 'recuperacao'].includes(i.estado));
+    for (const i of atacando) atacaram.add(i);
+    maxAtacando = Math.max(maxAtacando, atacando.length);
+    assert.ok(mundo.fichas.donos.size <= 2);
+    if (inimigos.some((i) => i.estado === 'perseguir' && mundo.fichas.fila.includes(i))) rondou = true;
+  }
+  assert.equal(maxAtacando, 2, 'nunca três atacando juntos');
+  assert.ok(rondou, 'quem ficou sem ficha esperou rondando');
+  assert.equal(atacaram.size, 3, 'a ficha passa adiante: o terceiro também chega a atacar');
+
+  // O chefe não usa ficha: ataca mesmo com as fichas ocupadas.
+  const fichas = new Fichas(2);
+  assert.ok(fichas.pedir(inimigos[0]) && fichas.pedir(inimigos[1]));
+  assert.equal(fichas.pedir(inimigos[2]), false);
+  assert.equal(fichas.pedir({ cfg: CONFIG.inimigos.guardiao }), true);
+  assert.equal(fichas.donos.size, 2);
+});
+
+test('fichas: a ficha volta quando o inimigo morre, cambaleia ou é aparado', () => {
+  for (const caso of ['morre', 'cambaleia', 'aparado', 'fim da sequência']) {
+    const { jogador, mundo, inimigos } = bando('cavaleiro', [[0, -2], [1.5, -2], [-1.5, -2]]);
+    jogador.vida = jogador.vidaMax = 1e6;
+    const [a] = inimigos;
+    a.sorteio = () => 0;
+    a.mudar('perseguir');
+    a.atualizar(0.02);
+    assert.equal(a.estado, 'preparo', caso);
+    assert.ok(mundo.fichas.tem(a), caso);
+    if (caso === 'morre') a.receberDano(9999, { x: 0, z: -1 }, 0, false);
+    else if (caso === 'cambaleia') a.receberDano(10, { x: 0, z: -1 }, 2.5, true);
+    else if (caso === 'aparado') a.serAparado();
+    else for (let k = 0; k < 300 && a.estado !== 'perseguir'; k++) a.atualizar(0.02);
+    assert.equal(mundo.fichas.tem(a), false, caso);
+  }
+});
+
+test('frasco: beber a 5 m de um inimigo livre dispara o ataque mais rápido; a 10 m, não', () => {
+  const P = CONFIG.combate.punirFrasco;
+  for (const [distancia, pune] of [[5, true], [10, false]]) {
+    const { jogador, inimigo } = duelo('cavaleiro');
+    inimigo.mundo.fichas = new Fichas();
+    inimigo.pos.set(0, 0, -distancia);
+    inimigo.sorteio = () => 0;   // o sorteio da chance sempre passa
+    inimigo.mudar('perseguir');
+    jogador.comecarCura();
+    inimigo.atualizar(P.reacao * 0.5);
+    assert.equal(inimigo.estado, 'perseguir', 'reage só depois do tempo de reação');
+    inimigo.atualizar(P.reacao * 0.6);
+    assert.equal(inimigo.estado === 'preparo', pune, `${distancia} m`);
+    if (pune) {
+      assert.deepEqual(inimigo.ataque.fila.map((g) => g.tipo), ['alto'], 'a sequência mais rápida do cavaleiro');
+      const antes = inimigo.pos.z;
+      inimigo.atualizar(0.1);
+      assert.ok(inimigo.pos.z > antes, 'avança durante o aviso');
+    }
+  }
+
+  // A chance falhou: não pune. O Guardião sempre pune (chance 1).
+  const { jogador, inimigo } = duelo('cavaleiro');
+  inimigo.pos.set(0, 0, -5);
+  inimigo.sorteio = () => 0.99;
+  inimigo.mudar('perseguir');
+  jogador.comecarCura();
+  inimigo.atualizar(P.reacao + 0.01);
+  assert.equal(inimigo.estado, 'perseguir');
+  assert.equal(CONFIG.inimigos.guardiao.punirFrasco.chance, 1);
+
+  // Respeita as fichas: sem ficha livre, não pune.
+  const b = bando('cavaleiro', [[0, -4], [2, -1], [-2, -1]]);
+  b.mundo.fichas.pedir(b.inimigos[1]);
+  b.mundo.fichas.pedir(b.inimigos[2]);
+  b.inimigo.sorteio = () => 0;
+  b.inimigo.mudar('perseguir');
+  b.jogador.comecarCura();
+  b.inimigo.atualizar(P.reacao + 0.01);
+  assert.notEqual(b.inimigo.estado, 'preparo');
 });

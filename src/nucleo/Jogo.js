@@ -27,6 +27,7 @@ import { Navegacao } from '../mundo/Navegacao.js';
 import { Jogador } from '../entidades/Jogador.js';
 import { Boneco } from '../entidades/Boneco.js';
 import { Inimigo } from '../entidades/Inimigo.js';
+import { Fichas } from '../entidades/Fichas.js';
 import { Lanterna } from '../entidades/Lanterna.js';
 import { Som } from '../audio/Som.js';
 import { Trilha } from '../audio/Trilha.js';
@@ -68,6 +69,7 @@ export class Jogo {
     this.boneco = new Boneco(this.cena);
     this.boneco.grupo.visible = false;
     for (const area of this.areas) {
+      area.fichas = new Fichas();   // limite de inimigos atacando juntos (CONFIG.combate.grupo)
       area.entidades = area.inimigos.map((i) => new Inimigo(this, area, i));
       area.lanternas = area.pontosDeDescanso.map((p) => new Lanterna(area, p));
       area.navegacao = new Navegacao(area.colisores, area.limites);
@@ -426,6 +428,7 @@ export class Jogo {
   ativarArea(area) {
     this.mundo = area;
     this.inimigos = area.entidades;
+    area.fichas.limpar();
     this.lanternas = area.lanternas;
     for (const mundo of this.areas) mundo.grupo.visible = mundo === area;
     this.ceu.malha.visible = area.usaCeu;
@@ -436,6 +439,7 @@ export class Jogo {
 
   reporInimigos() {
     for (const area of this.areas) {
+      area.fichas.limpar();
       for (const i of area.entidades) {
         if (i.eventoDeDerrota && this.progresso.eventos.includes(i.eventoDeDerrota)) i.ocultarDerrotado();
         else i.reiniciar();
