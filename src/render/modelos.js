@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { CONFIG } from '../config.js';
 import { retro } from './retro.js';
 import { registrarTextura } from './texturas.js';
 import { registrarMaterialHd } from './materiaisHd.js';
@@ -34,29 +35,42 @@ export function carregarModelo(id) {
 }
 
 const projecoes = new WeakMap();
+// Metros por repetição de cada acabamento HD: o mesmo das peças do jogo (CONFIG.arte.ladrilho).
+const FAMILIA_DA_SUPERFICIE = { castle_wall_slates: 'pedra', old_planks_02: 'madeira', roof_slates_02: 'telhado' };
 
-function projetarUv(geometria) {
-  if (!projecoes.has(geometria)) {
+/**
+ * Refaz o UV de uma malha importada projetando cada triângulo no plano da sua face,
+ * em METROS já com a escala do encaixe. Assim a textura fica do mesmo tamanho numa
+ * caixa de 1 m e num muro de 10 m, e não estica quando o modelo é encaixado com escala
+ * diferente em cada eixo. `matriz` leva os vértices da malha ao espaço do encaixe.
+ */
+function projetarUv(geometria, matriz, superficie) {
+  if (!projecoes.has(geometria)) projecoes.set(geometria, new Map());
+  const porEscala = projecoes.get(geometria);
+  const chave = `${superficie}:${matriz.elements.map(v => v.toFixed(4)).join(',')}`;
+  if (!porEscala.has(chave)) {
     const geo = geometria.index ? geometria.toNonIndexed() : geometria.clone();
     const pos = geo.attributes.position;
     const uv = new Float32Array(pos.count * 2);
-    const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+    const ladrilho = CONFIG.arte.ladrilho[FAMILIA_DA_SUPERFICIE[superficie]] ?? 2;
+    const v = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+    const ab = new THREE.Vector3(), ac = new THREE.Vector3();
     for (let i = 0; i < pos.count; i += 3) {
-      a.fromBufferAttribute(pos, i);
-      b.fromBufferAttribute(pos, i + 1).sub(a);
-      c.fromBufferAttribute(pos, i + 2).sub(a);
-      const n = b.cross(c);
-      // Os módulos FBX convertidos têm o eixo local Z apontando para cima.
-      const eixo = Math.abs(n.z) > Math.max(Math.abs(n.x), Math.abs(n.y)) ? 2 : Math.abs(n.x) > Math.abs(n.y) ? 0 : 1;
-      for (let j = i; j < i + 3; j++) {
-        uv[j * 2] = (eixo === 0 ? pos.getY(j) : pos.getX(j)) * 95;
-        uv[j * 2 + 1] = (eixo === 2 ? pos.getY(j) : pos.getZ(j)) * 95;
+      for (let k = 0; k < 3; k++) v[k].fromBufferAttribute(pos, i + k).applyMatrix4(matriz);
+      const n = ab.subVectors(v[1], v[0]).cross(ac.subVectors(v[2], v[0]));
+      const ax = Math.abs(n.x), ay = Math.abs(n.y), az = Math.abs(n.z);
+      for (let k = 0; k < 3; k++) {
+        const p = v[k];
+        // Parede virada para X usa (z, y); para Z usa (x, y); chão e teto usam (x, z).
+        const [u, w] = ax >= ay && ax >= az ? [p.z, p.y] : az >= ay ? [p.x, p.y] : [p.x, p.z];
+        uv[(i + k) * 2] = u / ladrilho;
+        uv[(i + k) * 2 + 1] = w / ladrilho;
       }
     }
     geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
-    projecoes.set(geometria, geo);
+    porEscala.set(chave, geo);
   }
-  return projecoes.get(geometria);
+  return porEscala.get(chave);
 }
 
 function acabamento(material, tinta, aceso, superficie) {
@@ -92,6 +106,8 @@ export function modeloPronto(grupo, id, {
   encaixe.position.set(...pos);
   encaixe.rotation.y = rotacao;
   grupo.add(encaixe);
+  // Medidas do encaixe, para os testes conferirem onde cada adereço ficou (tests/aderecos.test.js).
+  encaixe.userData.modelo = { id, tamanho };
   // A montagem de mapas em Node também serve aos testes de navegação.
   if (!import.meta.env || typeof window === 'undefined') return encaixe;
   encaixe.userData.pronto = carregarModelo(id).then(gltf => {
@@ -106,6 +122,7 @@ export function modeloPronto(grupo, id, {
     const suporte = new THREE.Group();
     suporte.scale.set(...escala);
     suporte.add(o);
+    suporte.updateMatrixWorld(true);   // ainda sem pai: matrixWorld = escala do encaixe × nós do modelo
     o.traverse(malha => {
       if (!malha.isMesh) return;
       const trocar = m => {
@@ -118,7 +135,7 @@ export function modeloPronto(grupo, id, {
         if (!m.map && (/Stone|Rock|Plaster/i.test(n) || /^rgs-(?:muro|arcada|pilar|entulho)$/.test(id))) {
           if (!/black|yellow/i.test(n)) superficie = 'castle_wall_slates';
         }
-        if (superficie) malha.geometry = projetarUv(malha.geometry);
+        if (superficie) malha.geometry = projetarUv(malha.geometry, malha.matrixWorld, superficie);
         return acabamento(m, tinta, aceso, superficie);
       };
       malha.material = Array.isArray(malha.material) ? malha.material.map(trocar) : trocar(malha.material);

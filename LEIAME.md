@@ -365,6 +365,13 @@ trilha é a mesma do vilarejo.
   escaneados que reagem à luz. A **Resolução HD** vai de 720p a 2160p, limitada
   à área visível e ao navegador. Comece em 720p; para 4K, use uma tela 4K em
   tela cheia e um desktop com GPU. A escolha fica salva neste navegador.
+- Casas, torres, muralhas e paredes da catedral são montadas no código por um kit
+  modular (`casa()`, `torre()`, `muralha()` em `src/mundo/pecas.js`): paredes de
+  pedra fechadas, rodapé escuro, cantos e vigas de madeira queimada e telhado de
+  ardósia, com porta e janelas de medida única (`CONFIG.arte.casa`). A textura tem o
+  mesmo tamanho por metro em todas as peças (`CONFIG.arte.ladrilho`). Os modelos
+  baixados ficaram só nos adereços (barris, caixas, bancos, plantas, velas...), e o
+  teste `tests/aderecos.test.js` acusa adereço flutuando, dentro de parede ou sem chão.
 - Nas duas versões, as casas têm guarnições de madeira e ferragens visíveis
   de perto, a rosácea da catedral tem nervuras, o riacho tem ondas e a lareira
   tem arco e cornija. O HD também usa ardósia escaneada nos telhados e nas lajes.

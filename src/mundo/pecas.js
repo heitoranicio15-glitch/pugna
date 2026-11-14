@@ -12,6 +12,16 @@ import { registrarMaterialHd } from '../render/materiaisHd.js';
 import { modeloPronto } from '../render/modelos.js';
 
 let M = null;
+// Família de textura de cada material compartilhado (CONFIG.arte.ladrilho). Com ela,
+// caixa(), planoDeChao() e telhado() usam o mesmo tamanho de tijolo em qualquer peça.
+const FAMILIA = new WeakMap();
+const familia = (material, nome) => { FAMILIA.set(material, nome); return material; };
+/** Metros por repetição de textura do material (ou `reserva` se ele não tem família). */
+export function ladrilhoDe(material, reserva) {
+  const nome = FAMILIA.get(material);
+  return nome ? CONFIG.arte.ladrilho[nome] : reserva;
+}
+
 /** Materiais compartilhados (criados uma vez). */
 export function materiais() {
   if (M) return M;
@@ -23,20 +33,20 @@ export function materiais() {
   const terra = (extra) => registrarMaterialHd(lambert(t.terra, extra), 'stony_dirt_path', 0.6);
   const madeira = (extra) => registrarMaterialHd(lambert(t.madeira, extra), 'old_planks_02', 0.7);
   M = {
-    pedra: pedra(),
-    pedraEscura: pedra({ color: 0x9a94c8 }),
-    calcamento: calcamento(t.calcamento),
+    pedra: familia(pedra(), 'pedra'),
+    pedraEscura: familia(pedra({ color: 0x9a94c8 }), 'pedra'),
+    calcamento: familia(calcamento(t.calcamento), 'calcamento'),
     // Chão e ruas não gravam profundidade: são desenhados primeiro e tudo o mais fica por
     // cima. Isso evita o "pisca-pisca" entre a grama e o calçamento (veja Vilarejo.js).
-    calcamentoChao: calcamento(t.calcamento, { depthWrite: false }),
+    calcamentoChao: familia(calcamento(t.calcamento, { depthWrite: false }), 'calcamento'),
     terraChao: terra({ depthWrite: false }),
     caminhoChao: terra({ color: 0xcdb89a, depthWrite: false }),
-    madeiraChao: registrarMaterialHd(lambert(t.assoalho, { color: 0xb59a86, depthWrite: false }), 'old_planks_02', 0.7),
-    lajesChao: registrarMaterialHd(lambert(t.lajes, { depthWrite: false }), 'patterned_slate_tiles', 0.55),
+    madeiraChao: familia(registrarMaterialHd(lambert(t.assoalho, { color: 0xb59a86, depthWrite: false }), 'old_planks_02', 0.7), 'assoalho'),
+    lajesChao: familia(registrarMaterialHd(lambert(t.lajes, { depthWrite: false }), 'patterned_slate_tiles', 0.55), 'lajes'),
     mosaicoChao: lambert(t.mosaico, { depthWrite: false }),
-    telhado: registrarMaterialHd(lambert(t.telhado, { side: THREE.DoubleSide }), 'roof_slates_02', 0.8),
-    madeira: madeira(),
-    madeiraEscura: madeira({ color: 0x9a7e6c }),
+    telhado: familia(registrarMaterialHd(lambert(t.telhado, { side: THREE.DoubleSide }), 'roof_slates_02', 0.8), 'telhado'),
+    madeira: familia(madeira(), 'madeira'),
+    madeiraEscura: familia(madeira({ color: 0x9a7e6c }), 'madeira'),
     morro: terra({ color: 0x8890c0, flatShading: true }),
     metal: lambert(t.metal),
     tronco: lambert(t.madeira, { color: 0x6a6090, flatShading: true }),
@@ -51,6 +61,7 @@ export function materiais() {
 
 /** Caixa cuja textura se repete conforme o tamanho real (1 ladrilho = `ladrilho` metros). */
 export function caixa(l, a, p, material, ladrilho = 2) {
+  ladrilho = ladrilhoDe(material, ladrilho);
   const geo = new THREE.BoxGeometry(l, a, p);
   const uv = geo.attributes.uv;
   // Ordem das faces da caixa no Three.js: +x, -x, +y, -y, +z, -z (4 cantos cada).
@@ -72,6 +83,7 @@ export function caixa(l, a, p, material, ladrilho = 2) {
 export function planoDeChao(mundo, { x, z, l, p, ladrilho = 5, material, ordem = -6, y = 0 }) {
   const geo = new THREE.PlaneGeometry(l, p);
   if (ladrilho !== null) {
+    ladrilho = ladrilhoDe(material, ladrilho);
     const uv = geo.attributes.uv;
     for (let i = 0; i < uv.count; i++) {
       uv.setXY(i, (x + (uv.getX(i) - 0.5) * l) / ladrilho, (-z + (uv.getY(i) - 0.5) * p) / ladrilho);
@@ -173,6 +185,7 @@ export function colunaFacetada(altura, raio, pedra, base) {
 
 /** Telhado de duas águas (prisma triangular). A cumeeira corre no eixo Z. */
 export function telhado(l, a, p, matTelha, matEmpena, ladrilho = 2) {
+  ladrilho = ladrilhoDe(matTelha, ladrilho);
   const x = l / 2, z = p / 2, s = Math.hypot(x, a);
   const pos = [], uv = [];
   const quad = (A, B, C, D, u, v) => {
@@ -201,98 +214,172 @@ export function piramide(lado, altura, material) {
 
 const ROTACAO = { S: 0, L: Math.PI / 2, N: Math.PI, O: -Math.PI / 2 };
 
-/** Agrupa a marcenaria de uma fachada por material e a esconde à distância. */
-function guarnicaoDaCasa(grupo) {
+/**
+ * Junta caixas por material e devolve uma malha por material.
+ * Assim uma casa inteira custa poucas chamadas de desenho, e o UV de cada caixa
+ * continua em metros (mesma densidade de textura de qualquer outra peça).
+ */
+export function juntarPorMaterial() {
   const porMaterial = new Map();
-  const adicionar = (x, y, z, l, a, p, material) => {
-    const { geometry } = caixa(l, a, p, material, 1.4);
-    geometry.translate(x, y, z);
+  const guardar = (material, geometry) => {
     if (!porMaterial.has(material)) porMaterial.set(material, []);
-    porMaterial.get(material).push(geometry);
+    porMaterial.get(material).push(geometry.index ? geometry.toNonIndexed() : geometry);
   };
-  const montar = () => {
-    const detalhe = new THREE.Group();
-    detalhe.name = 'Guarnições da fachada';
-    for (const [material, geometrias] of porMaterial) {
-      detalhe.add(new THREE.Mesh(mergeGeometries(geometrias), material));
-      for (const geo of geometrias) geo.dispose();
-    }
-    const lod = new THREE.LOD();
-    lod.addLevel(detalhe, 0);
-    lod.addLevel(new THREE.Group(), 34, 0.12);
-    grupo.add(lod);
+  return {
+    /** Caixa de l × a × p com o centro em (x, y, z) e giro `ry` no eixo vertical. */
+    caixa(x, y, z, l, a, p, material, ry = 0) {
+      const { geometry } = caixa(l, a, p, material);
+      if (ry) geometry.rotateY(ry);
+      geometry.translate(x, y, z);
+      guardar(material, geometry);
+    },
+    /** Geometria pronta (já posicionada) com o material dado. */
+    geometria(geometry, material) { guardar(material, geometry); },
+    montar(grupo, nome) {
+      for (const [material, geometrias] of porMaterial) {
+        const malha = new THREE.Mesh(mergeGeometries(geometrias), material);
+        malha.name = nome;
+        grupo.add(malha);
+        for (const geo of geometrias) geo.dispose();
+      }
+      porMaterial.clear();
+    },
   };
-  return { adicionar, montar };
 }
 
+/** Telhado de duas águas com cumeeira no eixo X, beiral nos quatro lados e empenas
+ *  de pedra rentes às paredes (não sobra fresta entre a parede e o telhado). */
+function geometriaTelhado(l, p, h, beiral) {
+  const meia = p / 2, queda = beiral * h / meia;          // o beiral continua o caimento
+  const x0 = -l / 2 - beiral, x1 = l / 2 + beiral, zb = meia + beiral;
+  const lad = ladrilhoDe(materiais().telhado, 2), s = Math.hypot(zb, h + queda);
+  const aguas = [], uvAguas = [];
+  const quad = (A, B, C, D) => {
+    aguas.push(...A, ...B, ...C, ...A, ...C, ...D);
+    const u = (x1 - x0) / lad, v = s / lad;
+    uvAguas.push(0, 0, u, 0, u, v, 0, 0, u, v, 0, v);
+  };
+  quad([x0, -queda, zb], [x1, -queda, zb], [x1, h, 0], [x0, h, 0]);     // água da frente (+z)
+  quad([x1, -queda, -zb], [x0, -queda, -zb], [x0, h, 0], [x1, h, 0]);   // água de trás (−z)
+  const telha = new THREE.BufferGeometry();
+  telha.setAttribute('position', new THREE.Float32BufferAttribute(aguas, 3));
+  telha.setAttribute('uv', new THREE.Float32BufferAttribute(uvAguas, 2));
+  telha.computeVertexNormals();
+  // Empenas: triângulos de pedra fechando os dois lados, na mesma face das paredes.
+  const lp = ladrilhoDe(materiais().pedra, 2);
+  const emp = [], uvEmp = [];
+  for (const lado of [-1, 1]) {
+    const x = lado * l / 2;
+    const tri = lado > 0 ? [[x, 0, meia], [x, 0, -meia], [x, h, 0]] : [[x, 0, -meia], [x, 0, meia], [x, h, 0]];
+    for (const [vx, vy, vz] of tri) { emp.push(vx, vy, vz); uvEmp.push(vz / lp, vy / lp); }
+  }
+  const empena = new THREE.BufferGeometry();
+  empena.setAttribute('position', new THREE.Float32BufferAttribute(emp, 3));
+  empena.setAttribute('uv', new THREE.Float32BufferAttribute(uvEmp, 2));
+  empena.computeVertexNormals();
+  return { telha, empena };
+}
+
+/** Escolha estável (sem sorteio): a mesma casa no mesmo lugar acende as mesmas janelas. */
+const estavel = (x, z, i) => {
+  const s = Math.sin(x * 12.9898 + z * 78.233 + i * 37.719) * 43758.5453;
+  return s - Math.floor(s);
+};
+
 /**
- * Casa de pedra. frente = para onde a porta aponta ('N','S','L','O').
+ * Casa modular de pedra (paredes + cantos + telhado que sempre fecham).
+ * frente = para onde a porta aponta ('N','S','L','O').
+ * Use `tipo` ('pequena', 'media', 'grande' em CONFIG.vila.tipos, quando existir) ou
  * l = largura da fachada, p = profundidade, a = altura das paredes.
+ * As medidas de porta, janela, pé-direito e beiral vêm de CONFIG.arte.casa.
  */
 export function casa(mundo, {
-  x, z, l = 7, p = 8, a = 5, frente = 'S', acesa = false, sorteio = Math.random,
+  x, z, l = 7, p = 8, a = 5, frente = 'S', acesa = false,
   todasAcesas = false,      // todas as janelas acesas (a taverna)
-  xPorta: xPortaFixo = null, // posição da porta na fachada (padrão: sorteada)
-  chamine: posChamine = null, // { x, z } da chaminé (padrão: sorteada)
-  modelo = 'House_1',
+  xPorta: xPortaFixo = null, // posição da porta na fachada (padrão: centro)
+  chamine: posChamine = null, // { x, z } da chaminé (padrão: perto da empena direita)
 }) {
   const m = materiais();
+  const K = CONFIG.arte.casa;
   const g = new THREE.Group();
-  const guarnicao = guarnicaoDaCasa(g);
-  const detalhe = guarnicao.adicionar;
-  const corpo = caixa(l, a, p, m.pedra); corpo.position.y = a / 2; g.add(corpo);
+  g.name = 'Casa';
+  const kit = juntarPorMaterial();
+  const frenteZ = p / 2;
+  const sobrado = a >= K.peDireito + 2;
 
-  const altTelhado = 2.2 + sorteio() * 1.6;
-  const teto = telhado(p + 0.7, altTelhado, l + 0.7, m.telhado, m.pedraEscura);
-  teto.rotation.y = Math.PI / 2; teto.position.y = a; g.add(teto);
-  for (const lado of [-1, 1]) {
-    detalhe(0, a - 0.04, lado * (p / 2 + 0.28), l + 0.66, 0.17, 0.19, m.madeiraEscura);
-    detalhe(lado * (l / 2 - 0.18), a / 2, p / 2 + 0.02, 0.19, a, 0.2, m.madeiraEscura);
+  // Corpo de pedra (caixa fechada), rodapé escuro e cantos de madeira queimada.
+  kit.caixa(0, a / 2, 0, l, a, p, m.pedra);
+  kit.caixa(0, K.rodape / 2, 0, l + 0.16, K.rodape, p + 0.16, m.pedraEscura);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    kit.caixa(sx * (l / 2 - 0.08), a / 2, sz * (p / 2 - 0.08), 0.28, a, 0.28, m.madeiraEscura);
   }
-  if (a >= 5) detalhe(0, a - 2.12, p / 2 + 0.02, l, 0.18, 0.18, m.madeiraEscura);
+  // Viga do sobrado e frechal (no topo das paredes), nos quatro lados.
+  for (const y of sobrado ? [K.peDireito, a - 0.1] : [a - 0.1]) {
+    for (const sz of [-1, 1]) kit.caixa(0, y, sz * (p / 2 + 0.04), l + 0.1, 0.2, 0.16, m.madeiraEscura);
+    for (const sx of [-1, 1]) kit.caixa(sx * (l / 2 + 0.04), y, 0, 0.16, 0.2, p + 0.1, m.madeiraEscura);
+  }
 
-  const chamine = caixa(0.8, 1.8, 0.8, m.pedraEscura, 1.5);
-  chamine.position.set((sorteio() - 0.5) * (l - 2), a + altTelhado * 0.55, (sorteio() - 0.5) * 2);
-  if (posChamine) chamine.position.set(posChamine.x, chamine.position.y, posChamine.z);
-  g.add(chamine);
-  g.userData.topoChamine = new THREE.Vector3(chamine.position.x, chamine.position.y + 0.9, chamine.position.z);
+  // Telhado: altura fixa pelo caimento (sem sorteio), empenas de pedra.
+  const altTelhado = K.caimento * p / 2;
+  const { telha, empena } = geometriaTelhado(l, p, altTelhado, K.beiral);
+  telha.translate(0, a, 0); empena.translate(0, a, 0);
+  kit.geometria(telha, m.telhado);
+  kit.geometria(empena, m.pedra);
+  kit.caixa(0, a + altTelhado + 0.06, 0, l + 2 * K.beiral + 0.1, 0.14, 0.3, m.madeiraEscura);   // cumeeira
 
-  const porta = caixa(1.15, 2.1, 0.16, m.madeira, 1.2);
-  const xPorta = xPortaFixo ?? (sorteio() - 0.5) * (l - 3.2);
-  porta.position.set(xPorta, 1.05, p / 2 + 0.03); g.add(porta);
+  // Chaminé atravessando o telhado, sempre acima da cumeeira.
+  const cx = posChamine?.x ?? l / 2 - 1.1, cz = posChamine?.z ?? -p / 4;
+  const baseChamine = a + altTelhado * (1 - Math.abs(cz) / (p / 2)) - 0.4;
+  const topoChamine = a + altTelhado + 0.9;
+  kit.caixa(cx, (baseChamine + topoChamine) / 2, cz, 0.8, topoChamine - baseChamine, 0.8, m.pedraEscura);
+  kit.caixa(cx, topoChamine + 0.08, cz, 0.95, 0.16, 0.95, m.pedra);
+  g.userData.topoChamine = new THREE.Vector3(cx, topoChamine + 0.2, cz);
+
+  // Porta (medida única) com batentes e ferragens.
+  const P = K.porta;
+  const xPorta = xPortaFixo ?? 0;
+  kit.caixa(xPorta, P.altura / 2, frenteZ + 0.07, P.largura, P.altura, 0.12, m.madeira);   // à frente do rodapé
   if (!todasAcesas) {
-    for (const lado of [-1, 1]) detalhe(xPorta + lado * 0.65, 1.09, p / 2 + 0.05, 0.15, 2.18, 0.23, m.pedraEscura);
-    detalhe(xPorta, 2.2, p / 2 + 0.05, 1.5, 0.2, 0.23, m.pedraEscura);
+    for (const lado of [-1, 1]) kit.caixa(xPorta + lado * (P.largura / 2 + 0.08), P.altura / 2, frenteZ + 0.1, 0.16, P.altura, 0.2, m.pedraEscura);
+    kit.caixa(xPorta, P.altura + 0.1, frenteZ + 0.1, P.largura + 0.32, 0.2, 0.2, m.pedraEscura);
   }
-  for (const y of [0.62, 1.61]) detalhe(xPorta, y, p / 2 + 0.12, 0.99, 0.085, 0.035, m.metal);
-  detalhe(xPorta + 0.34, 1.08, p / 2 + 0.135, 0.12, 0.15, 0.045, m.metal);
+  for (const y of [0.6, 1.6]) kit.caixa(xPorta, y, frenteZ + 0.145, P.largura - 0.16, 0.08, 0.03, m.metal);
 
-  const janela = (jx, jy, jz, lateral) => {
-    const luz = todasAcesas || (acesa && sorteio() < 0.6);
-    const j = caixa(0.95, 1.15, 0.12, luz ? m.janelaAcesa : m.janelaApagada, 1);
-    j.geometry.attributes.uv.array.fill(0); // refaz o UV para mostrar a janela inteira
-    const uv = j.geometry.attributes.uv;
+  // Janelas (medida única): moldura, peitoril e vidro aceso ou apagado.
+  const J = K.janela;
+  let n = 0;
+  const janela = (jx, jy, face) => {
+    const luz = todasAcesas || (acesa && estavel(x, z, n++) < 0.55);
+    const vidro = caixa(J.largura, J.altura, 0.06, luz ? m.janelaAcesa : m.janelaApagada, 1);
+    const uv = vidro.geometry.attributes.uv;   // a imagem da janela inteira em cada face
     for (let f = 0; f < 6; f++) { uv.setXY(f * 4, 0, 1); uv.setXY(f * 4 + 1, 1, 1); uv.setXY(f * 4 + 2, 0, 0); uv.setXY(f * 4 + 3, 1, 0); }
-    j.position.set(jx, jy, jz);
-    if (lateral) j.rotation.y = Math.PI / 2;
-    g.add(j);
-    if (!lateral) {
-      detalhe(jx, jy - 0.62, jz + 0.035, 1.25, 0.15, 0.29, m.pedraEscura);
-      detalhe(jx, jy + 0.59, jz + 0.01, 1.17, 0.12, 0.19, m.madeiraEscura);
-      for (const lado of [-1, 1]) detalhe(jx + lado * 0.59, jy, jz + 0.025, 0.18, 1.13, 0.17, m.madeiraEscura);
+    // face: 0 = frente (+z), 1 = trás (−z), 2 = direita (+x), 3 = esquerda (−x)
+    const ry = [0, Math.PI, Math.PI / 2, -Math.PI / 2][face];
+    const [px, pz] = [[jx, frenteZ], [-jx, -frenteZ], [l / 2, -jx], [-l / 2, jx]][face];
+    const dentro = (d) => [px + Math.sin(ry) * d, pz + Math.cos(ry) * d];
+    const geo = vidro.geometry; geo.rotateY(ry);
+    const [vx, vz] = dentro(0.02); geo.translate(vx, jy, vz);
+    kit.geometria(geo, vidro.material);
+    const [mx, mz] = dentro(0.07);
+    const larg = J.largura + 0.3;
+    const lx = Math.cos(ry), lz = -Math.sin(ry);
+    kit.caixa(mx, jy + J.altura / 2 + 0.06, mz, larg, 0.14, 0.14, m.madeiraEscura, ry);
+    kit.caixa(mx, jy - J.altura / 2 - 0.07, mz, larg + 0.1, 0.12, 0.22, m.pedraEscura, ry);
+    for (const lado of [-1, 1]) {
+      kit.caixa(mx + lx * lado * (J.largura / 2 + 0.07), jy, mz + lz * lado * (J.largura / 2 + 0.07), 0.14, J.altura, 0.14, m.madeiraEscura, ry);
     }
   };
-  const doisAndares = a >= 5;
-  for (const jx of [-l / 2 + 1.3, l / 2 - 1.3]) {
-    if (Math.abs(jx - xPorta) > 1.3) janela(jx, 1.75, p / 2 + 0.02);
-    if (doisAndares) janela(jx, a - 1.3, p / 2 + 0.02);
+  const yTerreo = 1.65, ySobrado = K.peDireito + 1.25;
+  const colunas = [-l / 2 + 1.5, l / 2 - 1.5];
+  for (const jx of colunas) {
+    if (Math.abs(jx - xPorta) > P.largura / 2 + J.largura / 2 + 0.4) janela(jx, yTerreo, 0);
+    if (sobrado) janela(jx, ySobrado, 0);
   }
-  janela(-l / 2 - 0.02, doisAndares ? a - 1.4 : 1.75, 0.6, true);
-  janela(l / 2 + 0.02, 1.75, -0.8, true);
-  guarnicao.montar();
-  modeloPronto(g, todasAcesas ? 'Inn' : modelo, {
-    tamanho: [l - 0.04, a + altTelhado, p - 0.04], aceso: acesa || todasAcesas, reserva: [...g.children],
-  });
+  if (sobrado && l >= 8) janela(xPorta, ySobrado, 0);
+  janela(0, sobrado ? ySobrado : yTerreo, 2);
+  janela(0, sobrado ? ySobrado : yTerreo, 3);
+  janela(colunas[0], yTerreo, 1);
+  kit.montar(g, 'Casa');
 
   g.position.set(x, 0, z);
   g.rotation.y = ROTACAO[frente];
@@ -306,26 +393,32 @@ export function casa(mundo, {
 export function torre(mundo, { x, z, lado = 5, a = 16, tipo = 'ameias', colide = true }) {
   const m = materiais();
   const g = new THREE.Group();
-  const corpo = caixa(lado, a, lado, m.pedra); corpo.position.y = a / 2; g.add(corpo);
-  const aba = caixa(lado + 0.8, 0.6, lado + 0.8, m.pedraEscura); aba.position.y = a; g.add(aba);
+  g.name = 'Torre';
+  const kit = juntarPorMaterial();
+  kit.caixa(0, a / 2, 0, lado, a, lado, m.pedra);
+  kit.caixa(0, CONFIG.arte.casa.rodape / 2, 0, lado + 0.2, CONFIG.arte.casa.rodape, lado + 0.2, m.pedraEscura);
+  kit.caixa(0, a, 0, lado + 0.8, 0.6, lado + 0.8, m.pedraEscura);
   if (tipo === 'ameias') {
     const n = Math.max(2, Math.round(lado / 1.6));
     for (let i = 0; i < n; i++) {
       const d = -lado / 2 + (i + 0.5) * (lado / n);
       for (const [ax, az] of [[d, lado / 2 + 0.1], [d, -lado / 2 - 0.1], [lado / 2 + 0.1, d], [-lado / 2 - 0.1, d]]) {
-        const am = caixa(0.7, 0.9, 0.7, m.pedraEscura, 1.5); am.position.set(ax, a + 0.75, az); g.add(am);
+        kit.caixa(ax, a + 0.75, az, 0.7, 0.9, 0.7, m.pedraEscura);
       }
     }
   } else {
-    const ponta = piramide(lado + 1, lado * 1.9, m.telhado); ponta.position.y = a + 0.3 + lado * 0.95; g.add(ponta);
+    const ponta = piramide(lado + 1, lado * 1.9, m.telhado);
+    ponta.updateMatrix();
+    const geo = ponta.geometry.toNonIndexed().applyMatrix4(ponta.matrix).translate(0, a + 0.3 + lado * 0.95, 0);
+    kit.geometria(geo, m.telhado);
   }
-  for (const [jx, jz, r] of [[0, lado / 2 + 0.02, 0], [lado / 2 + 0.02, 0, Math.PI / 2]]) {
-    const j = caixa(0.6, 1.5, 0.1, m.janelaApagada, 1.5); j.position.set(jx, a * 0.7, jz); j.rotation.y = r; g.add(j);
+  // Seteiras escuras nas quatro faces.
+  for (const r of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) {
+    const j = caixa(0.5, 1.4, 0.1, m.janelaApagada, 1.5).geometry.rotateY(r);
+    j.translate(Math.sin(r) * (lado / 2 + 0.02), a * 0.7, Math.cos(r) * (lado / 2 + 0.02));
+    kit.geometria(j, m.janelaApagada);
   }
-  modeloPronto(g, tipo === 'ameias' ? 'SmallSquareTowerBricks' : 'PointyTower', {
-    tamanho: [lado + 0.16, tipo === 'ameias' ? a + 0.9 : a + lado * 1.5, lado + 0.16],
-    reserva: [...g.children],
-  });
+  kit.montar(g, 'Torre');
   g.position.set(x, 0, z);
   mundo.grupo.add(g);
   if (colide) mundo.colisores.adicionar(x, z, lado, lado);
@@ -543,20 +636,5 @@ export function muralha(mundo, x1, z1, x2, z2, altura = 5, espessura = 1.4) {
   const muro = caixa(l, altura, p, m.pedraEscura); muro.position.set((x1 + x2) / 2, altura / 2, (z1 + z2) / 2);
   const topo = caixa(l + 0.4, 0.4, p + 0.4, m.pedra); topo.position.set((x1 + x2) / 2, altura + 0.2, (z1 + z2) / 2);
   mundo.grupo.add(muro, topo);
-  const lateral = p > l;
-  const extensao = lateral ? p : l;
-  const paineis = Math.ceil(extensao / 10);
-  const tamanho = extensao / paineis;
-  const modelos = [];
-  for (let i = 0; i < paineis; i++) {
-    const trecho = -extensao / 2 + (i + 0.5) * tamanho;
-    modelos.push(modeloPronto(mundo.grupo, 'TallWallBricks', {
-      pos: [muro.position.x + (lateral ? 0 : trecho), 0, muro.position.z + (lateral ? trecho : 0)],
-      rotacao: lateral ? Math.PI / 2 : 0, tamanho: [tamanho, altura + 0.38, espessura],
-    }));
-  }
-  Promise.all(modelos.map(o => o.userData.pronto)).then(prontos => {
-    if (prontos.every(Boolean)) muro.visible = topo.visible = false;
-  });
   mundo.colisores.adicionar((x1 + x2) / 2, (z1 + z2) / 2, l, p);
 }

@@ -11,11 +11,8 @@ export function montarBairrosVilarejo(mundo) {
   const lona = retro(new THREE.MeshLambertMaterial({ color: 0x744f53, side: THREE.DoubleSide }));
   const lonaDesbotada = retro(new THREE.MeshLambertMaterial({ color: 0x5c6460, side: THREE.DoubleSide }));
   const muro = (x, z, l, p, altura) => {
-    const corpo = bloco(grupo, m.pedraEscura, x, altura / 2, z, l, altura, p);
-    const topo = bloco(grupo, m.pedra, x, altura + 0.09, z, l + 0.14, 0.18, p + 0.1);
-    const lateral = p > l;
-    modeloPronto(grupo, 'rgs-muro', { pos: [x, 0, z], tamanho: [lateral ? p : l, altura + 0.18, lateral ? l : p],
-      rotacao: lateral ? Math.PI / 2 : 0, reserva: [corpo, topo], tinta: 0xaea6b4 });
+    bloco(grupo, m.pedraEscura, x, altura / 2, z, l, altura, p);
+    bloco(grupo, m.pedra, x, altura + 0.09, z, l + 0.14, 0.18, p + 0.1);
     colisores.adicionar(x, z, l, p, altura + 0.18);
   };
   const pavimento = (x, z, l, p) => planoDeChao(mundo, {
@@ -32,9 +29,6 @@ export function montarBairrosVilarejo(mundo) {
   const arco = arcoOgival(2.75, 1.32, 0.27, 0.72, m.pedra);
   arco.position.set(5.54, 2.22, 37);
   grupo.add(arco);
-  modeloPronto(grupo, 'rgs-arcada', {
-    pos: [5.54, 0, 37], tamanho: [2.99,3.75,0.74], reserva: [arco],
-  });
   pavimento(5.54, 37, 3, 12);
   pavimento(2.3, 42.8, 7, 3.2);
   pavimento(2.3, 31.5, 7, 3.2);

@@ -79,8 +79,8 @@ export function montarExploracaoVilarejo(mundo) {
     x: -9.5, y: 1.13, z: -11.19, nome: 'chave da sacristia', acao: 'recolher',
     evento: CHAVE_SACRISTIA, atualizar: (recolhida) => { malhaChave.visible = !recolhida; },
   });
-  placa(grupo, 'Ordens', -10.99, 1.56, -11.84, 0.9);
-  mundo.objetos.push({ x: -10.99, y: 1.56, z: -11.79, acao: 'ler', evento: 'vilarejo:registro-da-oficina' });
+  placa(grupo, 'Ordens', -10.99, 1.56, -12.2, 0.9);   // pregada na parede, atrás da bancada
+  mundo.objetos.push({ x: -10.99, y: 1.56, z: -12.15, acao: 'ler', evento: 'vilarejo:registro-da-oficina' });
 
   const carroca = new THREE.Group();
   carroca.position.set(12.6, 0, 9);

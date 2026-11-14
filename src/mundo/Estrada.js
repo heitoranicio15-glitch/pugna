@@ -111,17 +111,18 @@ export class Estrada {
     }
     // As margens do riacho fora da ponte são intransponíveis.
     const bordaL = maxX - (lp / 2), bordaO = (lp / 2) - minX;
-    this.colisores.adicionar(lp / 2 + bordaL / 2, zPonte, bordaL, C.ponte.riacho);
-    this.colisores.adicionar(-lp / 2 - bordaO / 2, zPonte, bordaO, C.ponte.riacho);
+    // A água do riacho: ninguém entra, mas cais, barco e plantas aquáticas ficam nela.
+    this.colisores.adicionar(lp / 2 + bordaL / 2, zPonte, bordaL, C.ponte.riacho).agua = true;
+    this.colisores.adicionar(-lp / 2 - bordaO / 2, zPonte, bordaO, C.ponte.riacho).agua = true;
     this.animarRio = montarRio(this, C.ponte, meioX, lp);
     this.animarRio(0);
     decorar(this.grupo, [
-      ['Bags', -3.15, 0, -54.65, 0.6], ['box_stacked', 4.55, 0, -54.3, -0.3],
+      ['Bags', -4.75, 0, -54.65, 0.6], ['box_stacked', 4.55, 0, -54.3, -0.3],
       ['Grass_2', -4.62, 0, -36.75, 2.1, 1.4], ['Rock_Moss_4', -5.1, 0, -36.3, 0.7],
       ['WoodLog_Moss', 6.75, 0, -25.9, 0.5], ['Plant_3', 7.03, 0, -25.3, 0.2],
       ['Rock_Moss_2', 7.74, 0, 8.28, 1.2], ['Grass_2', 8.64, 0, 8.35, 0.9, 1.3],
       ['Grass_2', -12.1, 0, 32.75, 0.34], ['Rock_Moss_4', -12, 0, 32.2, 0.8],
-      ['Package_1', 5.39, 0, 53.2, -0.4], ['Bags', -3.42, 0, 52.9, 0.4],
+      ['Package_1', 5.39, 0, 53.2, -0.4], ['Bags', -4.8, 0, 52.9, 0.4],
     ]);
 
     // ---------- ponta sul: a boca da trilha da floresta e a carroça tombada ao lado ----------
@@ -168,7 +169,8 @@ export class Estrada {
     for (let i = 0; i < 34; i++) {   // fora das cercas: só paisagem
       const lado = i % 2 ? 1 : -1;
       const x = lado > 0 ? maxX + 3 + sorteio() * 28 : minX - 3 - sorteio() * 28;
-      const z = minZ + 4 + sorteio() * (maxZ - minZ - 8);
+      let z = minZ + 4 + sorteio() * (maxZ - minZ - 8);
+      if (Math.abs(z - zPonte) < C.ponte.riacho / 2 + 1.5) z += C.ponte.riacho + 3;   // nunca dentro do riacho
       arvoreSeca(this, { x, z, altura: 6 + sorteio() * 6, sorteio, colide: false });
     }
 

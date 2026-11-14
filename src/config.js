@@ -173,6 +173,23 @@ export const CONFIG = {
     },
   },
 
+  // ---- Direção de arte: medidas comuns a todas as construções ----
+  // (relatório em docs/auditoria-visual.md)
+  arte: {
+    // Metros cobertos por uma repetição de cada textura. É o mesmo em casa, igreja,
+    // muralha e catedral, para o tijolo ter o mesmo tamanho em todo lugar.
+    ladrilho: { pedra: 2, madeira: 1.4, telhado: 2, calcamento: 4, lajes: 4, assoalho: 1.6 },
+    // Casa modular (src/mundo/pecas.js, casa()): sempre fecha os quatro lados e o telhado.
+    casa: {
+      porta: { largura: 1.2, altura: 2.2 },
+      janela: { largura: 0.95, altura: 1.15 },
+      peDireito: 3,           // altura do térreo (a viga do sobrado fica aqui)
+      rodape: 0.75,           // faixa de pedra escura na base das paredes
+      beiral: 0.45,           // quanto o telhado passa da parede
+      caimento: 0.8,          // altura do telhado = caimento × metade da profundidade
+    },
+  },
+
   // ---- Áudio: transições entre áreas (o som de cada área fica em CONFIG.areas.<área>.som) ----
   audio: {
     crossfadeAmbiente: 0.6,   // s: o ambiente antigo some e o novo entra (o mesmo tempo da névoa)

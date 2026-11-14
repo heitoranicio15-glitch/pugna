@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { Colisores } from './Colisores.js';
-import { abobadaOgival, arcoOgival, caixa, colunaFacetada, materiais, tocha, animarTochas } from './pecas.js';
+import { abobadaOgival, arcoOgival, caixa, colunaFacetada, ladrilhoDe, materiais, tocha, animarTochas } from './pecas.js';
 import { retro } from '../render/retro.js';
 import { placa } from './Aderecos.js';
 import { montarSacristia } from './Sacristia.js';
@@ -46,23 +46,10 @@ export class Catedral {
       this.grupo.add(malha);
       return malha;
     };
+    // Paredes de pedra maciça (caixa fechada): o mesmo tijolo das casas e da fachada.
     const parede = (x, z, l, p, a = 7, mat = m.pedra) => {
-      const base = bloc(x, a / 2, z, l, a, p, mat);
-      const lateral = p > l;
-      const comprimento = lateral ? p : l;
-      const paineis = Math.ceil(comprimento / 5);
-      const modulos = [];
-      for (let i = 0; i < paineis; i++) {
-        const d = comprimento / paineis * (i + 0.5) - comprimento / 2;
-        modulos.push(modeloPronto(this.grupo, 'rgs-muro', {
-          pos: [x + (lateral ? 0 : d), 0, z + (lateral ? d : 0)],
-          tamanho: [comprimento / paineis, a, lateral ? l : p], rotacao: lateral ? Math.PI / 2 : 0,
-          tinta: 0xb7aec0,
-        }));
-      }
-      Promise.all(modulos.map(o => o.userData.pronto)).then(prontos => {
-        if (prontos.every(Boolean)) base.visible = false;
-      });
+      bloc(x, a / 2, z, l, a, p, mat);
+      bloc(x, 0.3, z, l + 0.12, 0.6, p + 0.12, m.pedraEscura);   // rodapé
       return this.colisores.adicionar(x, z, l, p);
     };
     const movel = (x, z, l, a, p, mat) => {
@@ -72,6 +59,7 @@ export class Catedral {
     const piso = (x, z, l, p, altura, ladrilho, mat = m.lajesChao) => {
       const base = new THREE.Mesh(new THREE.PlaneGeometry(l, p), mat);
       const uv = base.geometry.attributes.uv;
+      ladrilho = ladrilhoDe(mat, ladrilho);
       for (let i = 0; i < uv.count; i++) {
         uv.setXY(i, (x + (uv.getX(i) - 0.5) * l) / ladrilho, (-z + (uv.getY(i) - 0.5) * p) / ladrilho);
       }
@@ -124,9 +112,6 @@ export class Catedral {
         const coluna = colunaFacetada(5.42, 0.44, m.pedra, m.pedraEscura);
         coluna.position.set(lado * 6.8, 0, z);
         this.grupo.add(coluna);
-        modeloPronto(this.grupo, 'pillar_decorated', {
-          pos: [lado * 6.8, 0, z], tamanho: [0.98, 5.42, 0.98], reserva: [coluna],
-        });
         this.colisores.adicionar(lado * 6.8, z, 0.98, 0.98);
         sombrasNave.push([lado * 6.8, z, 2.65, 2.65]);
       }
@@ -211,7 +196,6 @@ export class Catedral {
     // Relicário a leste. Vitrais frios iluminam os relicários e o selo.
     bloc(21.61, 4, -5, 0.15, 3.7, 1.8, m.vitral);
     gotico(21.45, 5.83, -5, 1.8, 1.35, 0.2, 0.24, Math.PI / 2);
-    modeloPronto(this.grupo, 'wall_arched', { pos: [34.52,0.03,-5], tamanho: [4.8,4.84,0.28], rotacao: -Math.PI / 2 });
     for (const z of [-9.4, -0.5]) {
       movel(18.5, z, 2, 0.8, 1.2, m.pedraEscura);
       bloc(18.5, 1.01, z, 1.35, 0.42, 0.72, metalDourado);
@@ -248,7 +232,6 @@ export class Catedral {
         const coluna = colunaFacetada(7.8, 0.56, m.pedra, m.pedraEscura);
         coluna.position.set(lado * 8.6, 0, z);
         this.grupo.add(coluna);
-        modeloPronto(this.grupo, 'rgs-pilar', { pos: [lado * 8.6,0,z], tamanho: [1.2,7.8,1.2], reserva: [coluna] });
         this.colisores.adicionar(lado * 8.6, z, 1.2, 1.2);
         const faixa = bloc(lado * 8, 4.2, z, 0.13, 3.1, 1.12, pano);
         modeloPronto(this.grupo, 'banner_thin_red', { pos: [lado * 8, 2.65, z], tamanho: [1.12,3.1,0.22],
