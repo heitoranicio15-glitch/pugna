@@ -20,6 +20,7 @@ export class Lanterna {
     const tampa = caixa(0.34, 0.07, 0.34, m.metal, 1); tampa.position.set(0.4, 1.45, 0);
     this.halo = new THREE.Sprite(new THREE.SpriteMaterial({
       map: texturas().brilho, color: 0x8fd0ff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.8,
+      fog: false,   // a lanterna fura a névoa: guia o jogador de longe
     }));
     this.halo.position.copy(this.vidro.position); this.halo.scale.setScalar(2.2);
     this.luz = new THREE.PointLight(0x9fd4ff, 8, 13, 1.7); this.luz.position.set(0.4, 1.4, 0);

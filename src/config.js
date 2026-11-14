@@ -19,9 +19,12 @@ export const CONFIG = {
         niveisDeCor: 32,      // tons por canal de cor (PS1 usava 32). Menor = mais "faixas"
         dithering: 1.0,       // intensidade do pontilhado (0 desliga)
         tremor: 1.0,          // tremida dos vértices (0 desliga, 2 = bem forte)
-        saturacao: 1,         // 1 = cores como estão
+        saturacao: 0.9,       // 1 = cores como estão (antes 1: a paleta fica presa no índigo e no âmbar)
         contraste: 1,         // 1 = contraste como está
         filtroTextura: 'nearest', // texturas pixeladas
+        tomDasSombras: 0.5,   // puxa as sombras para a cor da névoa baixa da área
+        bandasDeNevoa: 4,     // a névoa baixa em degraus, como a névoa por vértice do PS1
+        grao: 0, halo: 0,
       },
       // HD "fantasia sombria": acabamento PBR, sem pontilhado.
       hd: {
@@ -29,9 +32,13 @@ export const CONFIG = {
         niveisDeCor: 0,       // 0 = sem redução de cores
         dithering: 0,
         tremor: 0,            // sem tremida (ignora "Tremor dos vértices")
-        saturacao: 1.15,
+        saturacao: 1.02,      // antes 1,15: nada de "vidro limpo"
         contraste: 1.08,
         filtroTextura: 'linear', // texturas suavizadas
+        tomDasSombras: 0.4,
+        bandasDeNevoa: 0,     // névoa baixa suave
+        grao: 0.022,          // grão de filme discreto
+        halo: 0.55,           // brilho leve em volta do fogo, das janelas e dos cristais
       },
     },
   },
@@ -71,12 +78,17 @@ export const CONFIG = {
   areas: {
     vilarejo: {
       luzJogador: 5, corLuzJogador: 0x8a8eff,
-      nevoa: { cor: 0x242346, densidade: 0.0155 },
-      fundo: 0x16162b,
-      luzAmbiente: { ceu: 0x777bc7, chao: 0x2b1d39, intensidade: 1.15 },
-      luar: { cor: 0xa1adf7, intensidade: 0.8 },
-      paletaDoCeu: { zenite: 0x0c0921, meio: 0x232047, horizonte: 0x242346, nuvem: 0x665587 },
-      bruma: { cor: 0x706893, opacidade: 0.16, altura: 0.4, variacao: 1.2, velocidade: 1 },
+      // Direção de arte (Fase 3): breu índigo + acentos âmbar (tochas e janelas). A névoa
+      // fecha em uns 60 m: o fim da vila nunca aparece, só as silhuetas.
+      // Antes: névoa 0x242346 / 0,0155, fundo 0x16162b, ambiente 1,15.
+      nevoa: { cor: 0x161a3a, densidade: 0.026 },
+      fundo: 0x080a18,
+      luzAmbiente: { ceu: 0x5a64b0, chao: 0x161226, intensidade: 1.0 },
+      luar: { cor: 0x8ea4ff, intensidade: 0.85 },
+      paletaDoCeu: { zenite: 0x04050d, meio: 0x0e1230, horizonte: 0x161a3a, nuvem: 0x3a4372 },
+      bruma: { cor: 0x5a6aa8, opacidade: 0.18, altura: 0.4, variacao: 1.2, velocidade: 0.7 },
+      // Névoa baixa (src/render/retro.js): engole a base das casas e apaga o chão ao longe.
+      nevoaBaixa: { cor: 0x26306a, forca: 0.75, altura: 2.4 },
       // Som ambiente (0 a 1 em cada camada; `base` = vento e zumbido de sempre) e faixa da trilha.
       // Tipos: vila | pedra | taverna | estrada | floresta (veja src/audio/regras.js). Trilha decidida pela IA.
       som: { tipo: 'vila', base: 1, vento: 0.45, grilo: 0.4, sino: 0.3 },
@@ -84,9 +96,10 @@ export const CONFIG = {
     },
     catedral: {
       luzJogador: 8, corLuzJogador: 0xa39dff,
-      nevoa: { cor: 0x211d36, densidade: 0.032 },
-      fundo: 0x0d0b19,
-      luzAmbiente: { ceu: 0xb8a7d6, chao: 0x3d294a, intensidade: 1.06 },
+      nevoa: { cor: 0x1a1630, densidade: 0.034 },   // antes 0x211d36 / 0,032
+      fundo: 0x09070f,
+      luzAmbiente: { ceu: 0xa898d0, chao: 0x2e203c, intensidade: 0.95 },
+      nevoaBaixa: { cor: 0x2a2450, forca: 0.4, altura: 1.2 },   // poeira fria rente ao piso
       feixes: [
         { origem: [21.37, 4.85, -5], destino: [12.4, 0.08, -3.1], largura: 1.25, cor: 0xa2bfff, opacidade: 0.125 },
         { origem: [0, 4.55, -32.29], destino: [0, 0.08, -24.7], largura: 2.5, cor: 0xb391ee, opacidade: 0.08 },
@@ -97,11 +110,12 @@ export const CONFIG = {
     // Estrada ao sul do vilarejo (120 x 30 m, corre de norte a sul; o vilarejo fica no norte).
     estrada: {
       luzJogador: 5, corLuzJogador: 0x9dadff,
-      nevoa: { cor: 0x253a47, densidade: 0.019 },
-      fundo: 0x122027,
-      luzAmbiente: { ceu: 0x607d9c, chao: 0x1a2a29, intensidade: 1.3 },
-      luar: { cor: 0x9cbdd8, intensidade: 0.79 },
-      paletaDoCeu: { zenite: 0x0b172b, meio: 0x21384d, horizonte: 0x253a47, nuvem: 0x547085 },
+      nevoa: { cor: 0x152433, densidade: 0.028 },   // antes 0x253a47 / 0,019
+      fundo: 0x080f16,
+      luzAmbiente: { ceu: 0x506f94, chao: 0x121c20, intensidade: 1.15 },
+      luar: { cor: 0x8fb4dc, intensidade: 0.75 },
+      paletaDoCeu: { zenite: 0x040a12, meio: 0x0f2030, horizonte: 0x152433, nuvem: 0x34506a },
+      nevoaBaixa: { cor: 0x24405a, forca: 0.8, altura: 2.0 },
       bruma: { cor: 0x6d9da4, opacidade: 0.24, altura: 0.28, variacao: 0.9, velocidade: 1.5 },
       som: { tipo: 'estrada', base: 1, vento: 0.7, madeira: 0.5, agua: 0.45 },
       trilha: 'vilarejo',   // a mesma do vilarejo: ao sair pelo portão a música segue sem reiniciar
@@ -130,11 +144,12 @@ export const CONFIG = {
     // Primeira área nova (S6, escolha da IA; o Heitor revisa). Sem tochas: a única luz fixa é a lanterna.
     floresta: {
       luzJogador: 5, corLuzJogador: 0x9fd6c8,
-      nevoa: { cor: 0x16302f, densidade: 0.027 },
-      fundo: 0x0a1514,
-      luzAmbiente: { ceu: 0x4f827f, chao: 0x14231e, intensidade: 1.2 },
-      luar: { cor: 0x8fc4c4, intensidade: 0.62 },
-      paletaDoCeu: { zenite: 0x07121c, meio: 0x14303a, horizonte: 0x16302f, nuvem: 0x3c5e64 },
+      nevoa: { cor: 0x10221f, densidade: 0.034 },   // antes 0x16302f / 0,027
+      fundo: 0x050c0b,
+      luzAmbiente: { ceu: 0x3f6e6a, chao: 0x0d1814, intensidade: 1.1 },
+      luar: { cor: 0x86bcbc, intensidade: 0.6 },
+      paletaDoCeu: { zenite: 0x030a0e, meio: 0x0c2026, horizonte: 0x10221f, nuvem: 0x2c4a4e },
+      nevoaBaixa: { cor: 0x1e3d3a, forca: 0.85, altura: 2.6 },
       bruma: { cor: 0x4f8a80, opacidade: 0.22, altura: 0.3, variacao: 1, velocidade: 0.8 },
       som: { tipo: 'floresta', base: 1, vento: 0.55, coruja: 0.4, galhos: 0.45 },
       // Trilha decidida pela IA: a mesma do vilarejo (continuidade com a estrada; só há 2 faixas de área).
@@ -233,6 +248,19 @@ export const CONFIG = {
     custoCorrer: 11,         // por segundo
     custoPulo: 8,
     giro: 13,                // rapidez com que o corpo vira para onde anda (rad/s)
+    // Fora de combate (sem mira travada e sem inimigo atrás dele) o caçador anda e corre
+    // 12% mais devagar: o mapa parece maior. Esquiva, quickstep e luta não mudam.
+    // Andar 3,3 → 2,9 m/s e correr 6,2 → 5,46 m/s (decidido pela IA).
+    ritmoExploracao: 0.88,
+    distanciaDeCombate: 18,  // m: inimigo perseguindo até aqui conta como combate
+  },
+
+  // ---- Presságios: pequenos sustos baratos (src/mundo/Pressagios.js). Nenhum muda dano. ----
+  medo: {
+    corvos: { intervalo: [28, 55], quantidade: [3, 6], altura: [18, 32], duracao: 7 },
+    tochaFalha: { intervalo: [18, 40], alcance: 25, duracao: 0.45 },
+    rajada: { intervalo: [30, 65] },
+    silencio: { abafar: 0.2, segura: 1.2, volta: 2.5 },   // o ambiente se cala quando um inimigo percebe
   },
 
   // ---- Câmera em terceira pessoa ----

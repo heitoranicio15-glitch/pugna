@@ -33,7 +33,10 @@ export function materiais() {
   const terra = (extra) => registrarMaterialHd(lambert(t.terra, extra), 'stony_dirt_path', 0.6);
   const madeira = (extra) => registrarMaterialHd(lambert(t.madeira, extra), 'old_planks_02', 0.7);
   M = {
-    pedra: familia(pedra(), 'pedra'),
+    // Tintas da direção de arte: pedra fria, madeira queimada, ardósia azulada.
+    pedra: familia(pedra({ color: 0xd2d3de }), 'pedra'),
+    // Musgo e umidade na base das paredes (rodapé de casas, torres, muros e da catedral).
+    pedraMusgo: familia(pedra({ color: 0x6a8b88 }), 'pedra'),
     pedraEscura: familia(pedra({ color: 0x9a94c8 }), 'pedra'),
     calcamento: familia(calcamento(t.calcamento), 'calcamento'),
     // Chão e ruas não gravam profundidade: são desenhados primeiro e tudo o mais fica por
@@ -44,9 +47,9 @@ export function materiais() {
     madeiraChao: familia(registrarMaterialHd(lambert(t.assoalho, { color: 0xb59a86, depthWrite: false }), 'old_planks_02', 0.7), 'assoalho'),
     lajesChao: familia(registrarMaterialHd(lambert(t.lajes, { depthWrite: false }), 'patterned_slate_tiles', 0.55), 'lajes'),
     mosaicoChao: lambert(t.mosaico, { depthWrite: false }),
-    telhado: familia(registrarMaterialHd(lambert(t.telhado, { side: THREE.DoubleSide }), 'roof_slates_02', 0.8), 'telhado'),
+    telhado: familia(registrarMaterialHd(lambert(t.telhado, { color: 0xa2a8c0, side: THREE.DoubleSide }), 'roof_slates_02', 0.8), 'telhado'),
     madeira: familia(madeira(), 'madeira'),
-    madeiraEscura: familia(madeira({ color: 0x9a7e6c }), 'madeira'),
+    madeiraEscura: familia(madeira({ color: 0x7c6458 }), 'madeira'),   // madeira queimada (antes 0x9a7e6c)
     morro: terra({ color: 0x8890c0, flatShading: true }),
     metal: lambert(t.metal),
     tronco: lambert(t.madeira, { color: 0x6a6090, flatShading: true }),
@@ -54,7 +57,7 @@ export function materiais() {
     janelaApagada: lambert(t.janelaApagada),
     vitral: basico(t.vitral, { color: 0xb0b0b0 }),
     chama: retro(new THREE.MeshBasicMaterial({ color: 0xffc46a })),
-    silhueta: new THREE.MeshBasicMaterial({ color: 0x10245a, fog: false }),
+    silhueta: new THREE.MeshBasicMaterial({ color: 0x080b1c, fog: false }),   // quase preto contra o céu
   };
   return M;
 }
@@ -347,7 +350,7 @@ export function casa(mundo, {
 
   // Corpo de pedra (caixa fechada), rodapé escuro e cantos de madeira queimada.
   kit.caixa(0, a / 2, 0, l, a, p, m.pedra);
-  kit.caixa(0, K.rodape / 2, 0, l + 0.16, K.rodape, p + 0.16, m.pedraEscura);
+  kit.caixa(0, K.rodape / 2, 0, l + 0.16, K.rodape, p + 0.16, m.pedraMusgo);
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
     kit.caixa(sx * (l / 2 - 0.08), a / 2, sz * (p / 2 - 0.08), 0.28, a, 0.28, m.madeiraEscura);
   }
@@ -433,7 +436,7 @@ export function torre(mundo, { x, z, lado = 5, a = 16, tipo = 'ameias', colide =
   g.name = 'Torre';
   const kit = juntarPorMaterial();
   kit.caixa(0, a / 2, 0, lado, a, lado, m.pedra);
-  kit.caixa(0, CONFIG.arte.casa.rodape / 2, 0, lado + 0.2, CONFIG.arte.casa.rodape, lado + 0.2, m.pedraEscura);
+  kit.caixa(0, CONFIG.arte.casa.rodape / 2, 0, lado + 0.2, CONFIG.arte.casa.rodape, lado + 0.2, m.pedraMusgo);
   kit.caixa(0, a, 0, lado + 0.8, 0.6, lado + 0.8, m.pedraEscura);
   if (tipo === 'ameias') {
     const n = Math.max(2, Math.round(lado / 1.6));
@@ -617,8 +620,9 @@ export function tocha(mundo, { x, z, altura = 2.3, luz = true }) {
   const halo = new THREE.Sprite(new THREE.SpriteMaterial({
     map: texturas().brilho, color: CONFIG.paleta.fogo, blending: THREE.AdditiveBlending,
     depthWrite: false, transparent: true, opacity: 0.7,
+    fog: false,   // o fogo fura a névoa: o halo aparece mesmo longe
   }));
-  halo.position.y = altura + 0.35; halo.scale.setScalar(1.8); g.add(halo);
+  halo.position.y = altura + 0.35; halo.scale.setScalar(2.2); g.add(halo);
   let ponto = null;
   if (luz) {
     ponto = new THREE.PointLight(CONFIG.paleta.fogo, 22, 17, 1.7);
@@ -633,12 +637,44 @@ export function tocha(mundo, { x, z, altura = 2.3, luz = true }) {
 
 export function animarTochas(tochas, tempo) {
   for (const t of tochas) {
-    const f = 0.82 + 0.12 * Math.sin(tempo * 11 + t.fase) + 0.1 * Math.sin(tempo * 23.7 + t.fase * 1.7);
+    // `falha` (0 a 1) vem dos presságios: a tocha quase apaga por um instante.
+    const f = (0.82 + 0.12 * Math.sin(tempo * 11 + t.fase) + 0.1 * Math.sin(tempo * 23.7 + t.fase * 1.7)) * (1 - (t.falha ?? 0));
     if (t.luz) t.luz.intensity = t.base * f;
     t.chama.scale.set(1, 0.8 + f * 0.4, 1);
     t.chama.rotation.y = tempo * 6 + t.fase;
-    t.halo.scale.setScalar(1.5 + f * 0.5);
+    t.halo.scale.setScalar(1.8 + f * 0.7);
   }
+}
+
+/**
+ * Silhuetas colossais no horizonte (sem névoa, quase pretas contra o céu): uma agulha
+ * gigante na direção da lua, para ela aparecer recortada no disco, e uma torre partida
+ * do outro lado. `centro` é o meio da área; a distância esconde a escala real.
+ */
+export function silhuetasColossais(grupo, direcaoLua, centro = { x: 0, z: 0 }) {
+  const m = materiais();
+  const kit = juntarPorMaterial();
+  const horiz = new THREE.Vector2(direcaoLua.x, direcaoLua.z).normalize();
+  const caixaS = (x, y, z, l, a, p) => kit.caixa(x, y, z, l, a, p, m.silhueta);
+  const cone = (x, y, z, r, a, lados = 4) => {
+    const geo = new THREE.ConeGeometry(r, a, lados).toNonIndexed();
+    geo.translate(x, y + a / 2, z);
+    kit.geometria(geo, m.silhueta);
+  };
+  // Agulha colossal sob a lua (uns 230 m de altura a 340 m de distância).
+  const ax = centro.x + horiz.x * 340, az = centro.z + horiz.y * 340;
+  caixaS(ax, 40, az, 46, 80, 46);
+  caixaS(ax, 110, az, 26, 70, 26);
+  cone(ax, 145, az, 19, 90);
+  for (const lado of [-1, 1]) {
+    caixaS(ax + lado * 32, 35, az + 8, 16, 70, 16);
+    cone(ax + lado * 32, 70, az + 8, 12, 40);
+  }
+  // Torre partida a oeste, mais perto e mais baixa.
+  const bx = centro.x - horiz.y * 260 - horiz.x * 120, bz = centro.z + horiz.x * 260 - horiz.y * 120;
+  caixaS(bx, 45, bz, 30, 90, 30);
+  caixaS(bx + 6, 100, bz, 18, 20, 22);
+  kit.montar(grupo, 'Silhuetas colossais');
 }
 
 /** Árvore seca e torta. */
@@ -670,8 +706,16 @@ export function arvoreSeca(mundo, { x, z, altura = 6, sorteio = Math.random, col
 export function muralha(mundo, x1, z1, x2, z2, altura = 5, espessura = 1.4) {
   const m = materiais();
   const l = Math.abs(x2 - x1) + espessura, p = Math.abs(z2 - z1) + espessura;
-  const muro = caixa(l, altura, p, m.pedraEscura); muro.position.set((x1 + x2) / 2, altura / 2, (z1 + z2) / 2);
-  const topo = caixa(l + 0.4, 0.4, p + 0.4, m.pedra); topo.position.set((x1 + x2) / 2, altura + 0.2, (z1 + z2) / 2);
-  mundo.grupo.add(muro, topo);
-  mundo.colisores.adicionar((x1 + x2) / 2, (z1 + z2) / 2, l, p);
+  const cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
+  const kit = juntarPorMaterial();
+  kit.caixa(cx, altura / 2, cz, l, altura, p, m.pedraEscura);
+  kit.caixa(cx, 0.45, cz, l + 0.2, 0.9, p + 0.2, m.pedraMusgo);           // base úmida
+  kit.caixa(cx, altura + 0.2, cz, l + 0.4, 0.4, p + 0.4, m.pedra);
+  // Ameias: o recorte do alto da muralha contra o céu.
+  const comprido = l >= p, extensao = comprido ? l : p;
+  for (let d = -extensao / 2 + 1; d <= extensao / 2 - 1; d += 2.4) {
+    kit.caixa(cx + (comprido ? d : 0), altura + 0.9, cz + (comprido ? 0 : d), comprido ? 1.1 : espessura, 1, comprido ? espessura : 1.1, m.pedraEscura);
+  }
+  kit.montar(mundo.grupo, 'Muralha');
+  mundo.colisores.adicionar(cx, cz, l, p);
 }

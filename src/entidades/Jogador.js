@@ -180,6 +180,8 @@ export class Jogador {
       if (desejado !== null) this.rumo += THREE.MathUtils.clamp(difAngulo(desejado, this.rumo), -C.giro * dt, C.giro * dt);
     }
     let alvo = correndo ? C.velCorrer : C.velAndar;
+    // Explorando (sem mira travada e sem inimigo atrás dele) anda um pouco mais devagar.
+    if (!this.emCombate()) alvo *= C.ritmoExploracao ?? 1;
     if (this.carregando || this.acao === 'preparo' || this.acao === 'ativo') alvo *= 0.45;
     if (this.acao === 'recuperacao') alvo *= 0.65;
     if (this.acao === 'curando') alvo *= CB.frasco.velocidade;   // bebendo o frasco: anda devagar
@@ -742,6 +744,14 @@ export class Jogador {
   // ---------------------------------------------------------------------------
   //  A câmera fica nos olhos em primeira pessoa, ou orbita com colisão em terceira.
   // ---------------------------------------------------------------------------
+  /** Em combate: mira travada ou algum inimigo vivo perseguindo o caçador por perto. */
+  emCombate() {
+    if (this.alvo) return true;
+    const perto = CONFIG.jogador.distanciaDeCombate ?? 18;
+    return (this.jogo.inimigos ?? []).some((i) => !i.morto && i.estado !== 'patrulha'
+      && Math.hypot(i.pos.x - this.pos.x, i.pos.z - this.pos.z) < perto);
+  }
+
   atualizarCamera(dt, rapidez = 0) {
     const cam = this.jogo.camera, col = this.jogo.mundo.colisores;
     this.tremor *= Math.exp(-dt * 9);

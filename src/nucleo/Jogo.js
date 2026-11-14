@@ -38,6 +38,7 @@ import { Trilha } from '../audio/Trilha.js';
 import { Hud } from '../interface/Hud.js';
 import { Menu } from '../interface/Menu.js';
 import { Bolsa } from '../interface/Bolsa.js';
+import { Pressagios } from '../mundo/Pressagios.js';
 import { Toque } from '../interface/Toque.js';
 import { ANOTACOES, CURA_FRASCO, FRASCOS, contarFrascos } from './Inventario.js';
 import { alvoProximo, atualizarObjetos } from '../mundo/Interacoes.js';
@@ -68,6 +69,7 @@ export class Jogo {
     this.luzJogador = new THREE.PointLight(0x7a86ff, 5, 11, 1.6);
     this.cena.add(this.luzJogador);
     this.atmosfera = new Atmosfera(this.cena, this.ceu, this.luzJogador);
+    this.pressagios = new Pressagios(this);   // corvos, tocha que falha, rajada (CONFIG.medo)
 
     // ---------- entidades ----------
     this.jogador = new Jogador(this);
@@ -594,6 +596,7 @@ export class Jogo {
     }
     if (this.estado === 'pausado') { this.desenharPartida(0); return; }
     this.atmosfera.atualizar(dt);
+    if (!this.teste) this.pressagios.atualizar(dt);   // fora dos testes automáticos (são aleatórios)
 
     if (this.tDescanso > 0) {
       this.tDescanso = Math.max(0, this.tDescanso - dt);

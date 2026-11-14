@@ -210,3 +210,56 @@ O [Medieval Village MegaKit de Quaternius](https://quaternius.itch.io/medieval-v
 pode servir de base modular para PS1. O
 [Wine Barrel 01 do Poly Haven](https://polyhaven.com/a/wine_barrel_01)
 é candidato ao próximo teste de redução de malha no HD.
+
+## Direção de arte: limpeza, plano da vila e atmosfera de medo
+
+Três fases (PRs 30, 31 e o da Fase 3). Relatório da limpeza em
+[auditoria-visual.md](auditoria-visual.md); plano da vila em [mapa.md](mapa.md).
+
+### Regras tiradas das referências
+
+1. Breu com uma ou duas cores de luz por área (índigo frio; âmbar do fogo).
+2. Névoa baixa e azulada que engole a base das construções e apaga o fundo.
+3. Silhuetas em camadas (casas, arcos, ruínas) e um foco de luz distante (a lua).
+4. Escala exagerada: lua maior e baixa, agulha colossal recortada contra ela.
+5. Luz forte só no que emite (fogo, janelas, lanternas, cristais); o resto é breu
+   com contorno azulado.
+6. Poucas famílias de textura: pedra fria, musgo azul-esverdeado, madeira queimada,
+   ardósia.
+
+### Fase 3: como foi feito (barato de propósito)
+
+- **Névoa baixa** (`src/render/retro.js`): calculada no pixel de cada material, nos
+  dois modos, pela altura e pela distância, ondulando devagar. Sem camadas
+  transparentes por cima: custa quase nada sem placa de vídeo. No PS1 ela sai em
+  degraus (como a névoa por vértice do console); no HD, suave. Valores por área em
+  `CONFIG.areas.<área>.nevoaBaixa`.
+- **Névoa de distância** mais densa e colorida: fecha em uns 60 a 80 m nos exteriores
+  (o teste `tests/atmosfera.test.js` exige mais de 95 % a 80 m e menos de um terço a 15 m,
+  para a luta continuar legível).
+- **Céu e lua**: céu quase preto, estrelas mais densas, lua 21° (antes 18°) e mais
+  baixa, com halo azul largo. **Silhuetas colossais** (`silhuetasColossais()` em
+  `pecas.js`): uma agulha gigante na direção da lua e uma torre partida, em vila,
+  estrada e floresta.
+- **Imagem final** (`RenderizadorRetro.js`): as sombras puxam para a cor da névoa baixa
+  da área (paleta presa); PS1 com saturação 0,9; HD com saturação 1,02 (antes 1,15),
+  grão discreto e um halo de 8 amostras em volta das luzes fortes.
+- **Fogo e lanternas** furam a névoa (halo sem névoa, um pouco maior).
+- **Contorno frio** nos personagens importados (luz de borda da cor do luar).
+- **Musgo e umidade**: rodapé de casas, torres, muralha e catedral em pedra
+  azul-esverdeada; pedra, madeira e ardósia tingidas para a paleta. Muralha com ameias.
+- **Ritmo**: fora de combate o caçador anda e corre 12 % mais devagar
+  (`CONFIG.jogador.ritmoExploracao`); passos mais graves.
+- **Presságios** (`src/mundo/Pressagios.js`, `CONFIG.medo`): bando de corvos cruzando
+  o céu, tocha que quase apaga, rajada que sussurra, e o ambiente que se cala quando um
+  inimigo percebe o caçador. Nenhum muda dano nem inimigos.
+
+### Antes e depois, por área
+
+| Área | Antes | Depois |
+| --- | --- | --- |
+| Vilarejo | 33 casas importadas, esticadas, algumas com buracos; névoa violeta clara (fecha em ~130 m); campos vazios | 78 casas do kit em fileira, ruas em 3 larguras, arcos e ruínas; breu índigo, névoa que fecha em ~70 m e engole a base das casas; lua grande e baixa com a agulha colossal recortada |
+| Catedral | paredes de módulos esticados (cinza liso no PS1), peças KayKit de outra cor | pedra maciça com rodapé úmido, colunas e arcos do jogo, poeira fria rente ao piso, sombras violeta |
+| Estrada | névoa azul-esverdeada rala, fachada da taverna importada | névoa azul fechada com véu sobre o riacho, fachada do kit, torres colossais no horizonte |
+| Taverna | — | igual (respiro quente, sem névoa baixa), só a madeira mais queimada |
+| Floresta | névoa verde | névoa verde-azulada mais densa e véu alto entre os troncos; silhuetas colossais acima das copas |

@@ -49,6 +49,15 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Direção de arte, Fase 3: atmosfera de medo (pronto).** Detalhes e antes/depois por área em `docs/reconstrucao-grafica.md` (seção "Direção de arte").
+  - **Névoa baixa** calculada no pixel de cada material (`src/render/retro.js`), nos dois modos: engole a base das construções e apaga o chão ao longe; degraus no PS1, suave no HD. Valores em `CONFIG.areas.<área>.nevoaBaixa` (vila, estrada, floresta, catedral; a taverna não tem).
+  - **Paleta e névoa:** céu quase preto, névoa índigo (vila), azul (estrada), verde-azulada (floresta) e violeta (catedral) bem mais densa; os valores antigos ficaram anotados no `config.js`. Sombras puxam para a cor da área no passe final; HD com grão e halo leve nos emissivos; PS1 com saturação 0,9.
+  - **Escala:** lua 21° (antes 18°) e mais baixa, halo azul largo, estrelas densas; agulha colossal e torre partida no horizonte das três áreas abertas; muralha com ameias. Halos de tochas e lanternas furam a névoa. Contorno frio nos personagens.
+  - **Texturas:** pedra fria, madeira queimada, ardósia azulada; rodapé com musgo (casas, torres, muralha, catedral).
+  - **Medo:** corvos, tocha que quase apaga, rajada sussurrada e o ambiente que se cala quando um inimigo percebe (`src/mundo/Pressagios.js`, `CONFIG.medo`; desligados no modo de teste). Nada muda dano.
+  - **Decidido pela IA (o Heitor revisa):** fora de combate (sem mira travada e sem inimigo perseguindo a menos de 18 m) o caçador anda e corre 12% mais devagar: **andar 3,3 → 2,9 m/s, correr 6,2 → 5,46 m/s** (`ritmoExploracao` 0,88; `velAndar`/`velCorrer` e esquivas não mudaram); passos mais graves; HD saturação 1,15 → 1,02; todas as cores e densidades de névoa; a agulha colossal; os presságios e seus intervalos. **Ninguém viu nem ouviu ainda**: o principal risco é ficar escuro demais (o brilho nas Configurações compensa) ou a névoa baixa forte demais (`nevoaBaixa.forca`).
+  - `npm test` (129) e `npm run build` passam. Novo `tests/atmosfera.test.js`.
+
 - **Direção de arte, Fase 2: plano da vila (pronto).** Plano em metros em `docs/mapa.md`; regras em `CONFIG.vila` e testadas em `tests/vila.test.js`.
   - **Casas em fileira:** `src/mundo/QuadrasVilarejo.js` põe casas dos dois lados de cada rua principal ou secundária, a 0,6 m da beira, porta para a rua, ritmo fixo de três tipos (pequena 7 × 6,5 m térrea, média 8,5 × 7,5 m sobrado, grande 10,5 × 9 m). Casas da mesma fileira se encostam; quando o lote está ocupado (torre, abrigo, rota, lanterna, placa), abre-se um vão de pelo menos um beco. Muro logo atrás: a casa fica mais funda e encosta. Eram 33 casas soltas; agora são 78.
   - **Ruas:** principal 6,5 m, secundária 5,5 m, beco 3,2 m (o arco da triagem é o gargalo marcado). Corredor mínimo de 3 m (quickstep de 2,2 m + corpo). A rua oeste e a rua do mercado agora vão até os bairros; novo **Bairro do Portão Leste** (z 48,6 e x 50,7) fecha o quadrante sudeste vazio.
@@ -309,7 +318,7 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
   taverna e Catedral e embarcadouro na estrada.
 - [x] **Gráficos, seleção de fantasia sombria** — Witch Hunter, Scary
   Doctor, mulher encapuzada, Alma das Cinzas e Cavaleiro Negro do Sketchfab.
-- [ ] **Direção de arte (prompt 7)** — Fase 1 limpeza e Fase 2 plano da vila feitas (kit modular, textura por metro, casas em fileira, `docs/mapa.md`); Fase 3 atmosfera na fila
+- [ ] **Direção de arte (prompt 7)** — Fases 1, 2 e 3 feitas (kit modular, textura por metro, casas em fileira, `docs/mapa.md`, névoa baixa, paleta, lua, presságios); falta ver no link e medir o HD na GPU do Heitor
 - [ ] **Gráficos, próximo incremento** — testar o percurso real e medir o custo
   do HD com GPU. Usar o guia gráfico para comparar o primeiro piloto de
   Blender com a fachada procedural. Alinhar iluminação com S5 e os modelos

@@ -49,7 +49,7 @@ export class Catedral {
     // Paredes de pedra maciça (caixa fechada): o mesmo tijolo das casas e da fachada.
     const parede = (x, z, l, p, a = 7, mat = m.pedra) => {
       bloc(x, a / 2, z, l, a, p, mat);
-      bloc(x, 0.3, z, l + 0.12, 0.6, p + 0.12, m.pedraEscura);   // rodapé
+      bloc(x, 0.3, z, l + 0.12, 0.6, p + 0.12, m.pedraMusgo);   // rodapé úmido, com musgo
       return this.colisores.adicionar(x, z, l, p);
     };
     const movel = (x, z, l, a, p, mat) => {
