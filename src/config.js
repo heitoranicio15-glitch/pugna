@@ -77,6 +77,10 @@ export const CONFIG = {
       luar: { cor: 0xa1adf7, intensidade: 0.8 },
       paletaDoCeu: { zenite: 0x0c0921, meio: 0x232047, horizonte: 0x242346, nuvem: 0x665587 },
       bruma: { cor: 0x706893, opacidade: 0.16, altura: 0.4, variacao: 1.2, velocidade: 1 },
+      // Som ambiente (0 a 1 em cada camada; `base` = vento e zumbido de sempre) e faixa da trilha.
+      // Tipos: vila | pedra | taverna | estrada (veja src/audio/regras.js). Trilha decidida pela IA.
+      som: { tipo: 'vila', base: 1, vento: 0.45, grilo: 0.4, sino: 0.3 },
+      trilha: 'vilarejo',
     },
     catedral: {
       luzJogador: 8, corLuzJogador: 0xa39dff,
@@ -87,6 +91,8 @@ export const CONFIG = {
         { origem: [21.37, 4.85, -5], destino: [12.4, 0.08, -3.1], largura: 1.25, cor: 0xa2bfff, opacidade: 0.125 },
         { origem: [0, 4.55, -32.29], destino: [0, 0.08, -24.7], largura: 2.5, cor: 0xb391ee, opacidade: 0.08 },
       ],
+      som: { tipo: 'pedra', base: 0.6, vento: 0.25, gotas: 0.5, eco: 0.7 },
+      trilha: 'catedral',
     },
     // Estrada ao sul do vilarejo (120 x 30 m, corre de norte a sul; o vilarejo fica no norte).
     estrada: {
@@ -97,6 +103,8 @@ export const CONFIG = {
       luar: { cor: 0x9cbdd8, intensidade: 0.79 },
       paletaDoCeu: { zenite: 0x0b172b, meio: 0x21384d, horizonte: 0x253a47, nuvem: 0x547085 },
       bruma: { cor: 0x6d9da4, opacidade: 0.24, altura: 0.28, variacao: 0.9, velocidade: 1.5 },
+      som: { tipo: 'estrada', base: 1, vento: 0.7, madeira: 0.5, agua: 0.45 },
+      trilha: 'vilarejo',   // a mesma do vilarejo: ao sair pelo portão a música segue sem reiniciar
       limites: { minX: -18, maxX: 12, minZ: -60, maxZ: 60 },
       larguraDaPista: 8,       // terra batida, centrada em x = 0
       portaoNorte: { z: -60 }, // o Portão Sul do vilarejo visto de fora (portal para o vilarejo)
@@ -124,6 +132,8 @@ export const CONFIG = {
       nevoa: { cor: 0x412819, densidade: 0.032 },
       fundo: 0x1a100c,
       luzAmbiente: { ceu: 0xf2bc9a, chao: 0x533428, intensidade: 0.93 },
+      som: { tipo: 'taverna', base: 0.3, fogo: 0.6, murmurio: 0.5 },
+      trilha: 'vilarejo',
       altura: 3.5,
       lareira: { intensidade: 38, alcance: 14 },    // luz laranja que tremula
       lampiao: { intensidade: 12, alcance: 12 },    // vela no teto, bem fraca
@@ -138,6 +148,12 @@ export const CONFIG = {
         ],
       },
     },
+  },
+
+  // ---- Áudio: transições entre áreas (o som de cada área fica em CONFIG.areas.<área>.som) ----
+  audio: {
+    crossfadeAmbiente: 0.6,   // s: o ambiente antigo some e o novo entra (o mesmo tempo da névoa)
+    crossfadeTrilha: 1.5,     // s: uma faixa da trilha sai e outra entra
   },
 
   // ---- Jogador ----

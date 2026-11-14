@@ -90,7 +90,7 @@ export class Jogo {
     this.ativarArea(this.areaInicial);
 
     this.som = new Som(this.eventos, this);
-    this.trilha = new Trilha();
+    this.trilha = new Trilha({ base: import.meta.env.BASE_URL, duracao: CONFIG.audio.crossfadeTrilha });
     this.estado = 'titulo';
     this.tempo = 0;
     this.congelado = 0;                      // pausa de impacto ("hit stop")
@@ -428,7 +428,7 @@ export class Jogo {
   }
 
   atualizarAudio() {
-    let faixa = this.mundo === this.catedral ? 'catedral' : 'vilarejo';
+    let faixa = this.mundo.trilha ?? 'vilarejo';
     if (this.mundo === this.catedral && this.jogador.pos.z <= this.guardiao.limiteZ && !this.guardiao.morto) {
       faixa = this.guardiao.emFaseFinal ? 'guardiao-final' : 'guardiao';
     }
@@ -445,6 +445,7 @@ export class Jogo {
     this.lanternas = area.lanternas;
     for (const mundo of this.areas) mundo.grupo.visible = mundo === area;
     this.atmosfera.mudarArea(area, transicao);
+    this.eventos.emitir('area:entrou', { id: area.id, som: area.som, trilha: area.trilha, transicao });
   }
 
   reporInimigos() {
