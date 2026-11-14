@@ -36,6 +36,13 @@ export const CONFIG = {
   },
   nevoa: { densidade: 0.0145 },
 
+  // ---- Áreas ----
+  // luzJogador: força da luz fraca que acompanha o caçador em cada área.
+  areas: {
+    vilarejo: { luzJogador: 5 },
+    catedral: { luzJogador: 8 },
+  },
+
   // ---- Jogador ----
   jogador: {
     alturaOlhos: 1.7,

@@ -18,6 +18,8 @@ export class Vilarejo {
   constructor(cena, direcaoLua) {
     this.id = 'vilarejo';
     this.nome = 'Vilarejo';
+    this.luzJogador = CONFIG.areas.vilarejo.luzJogador;
+    this.usaCeu = true; // mostra e atualiza o céu e a lua
     this.limites = { minX: -47, maxX: 47, minZ: -99, maxZ: 56 };
     this.grupo = new THREE.Group();
     this.colisores = new Colisores();

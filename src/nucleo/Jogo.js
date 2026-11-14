@@ -22,8 +22,7 @@ import { SalvamentoLocal, normalizarProgresso, SELOS_DO_VEU } from './Salvamento
 import { carregarPreferencias, salvarPreferencias } from './Preferencias.js';
 import { RenderizadorRetro } from '../render/RenderizadorRetro.js';
 import { Ceu } from '../mundo/Ceu.js';
-import { Vilarejo } from '../mundo/Vilarejo.js';
-import { Catedral } from '../mundo/Catedral.js';
+import { criarAreas } from '../mundo/areas.js';
 import { Navegacao } from '../mundo/Navegacao.js';
 import { Jogador } from '../entidades/Jogador.js';
 import { Boneco } from '../entidades/Boneco.js';
@@ -52,10 +51,12 @@ export class Jogo {
     this.cena = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(CONFIG.render.campoDeVisao, 16 / 9, 0.08, 3000);
     this.ceu = new Ceu(this.cena);
-    this.vilarejo = new Vilarejo(this.cena, this.ceu.direcaoLua);
-    this.catedral = new Catedral(this.cena);
-    this.areas = [this.vilarejo, this.catedral];
-    this.areasPorId = new Map(this.areas.map((area) => [area.id, area]));
+    const { areas, porId, inicial } = criarAreas(this.cena, this.ceu);
+    this.areas = areas;
+    this.areasPorId = porId;
+    this.areaInicial = inicial;
+    this.vilarejo = porId.get('vilarejo');
+    this.catedral = porId.get('catedral');
 
     // Uma luz fraca que acompanha o jogador, para enxergar o que está bem perto
     // (truque comum nos jogos antigos de masmorra).
@@ -74,8 +75,8 @@ export class Jogo {
     this.checkpoints = new Map(this.areas.flatMap((area) => area.lanternas.map((lanterna) => [lanterna.id, { area, lanterna }])));
     this.guardiao = this.catedral.entidades.find((i) => i.tipo === 'guardiao');
     this.progresso = normalizarProgresso();
-    this.descanso = this.vilarejo.lanternas[0];
-    this.ativarArea(this.vilarejo);
+    this.descanso = this.areaInicial.lanternas[0];
+    this.ativarArea(this.areaInicial);
 
     this.som = new Som(this.eventos, this);
     this.trilha = new Trilha();
@@ -189,11 +190,11 @@ export class Jogo {
     this.progresso = await this.salvamento.carregar();
     const checkpoint = this.localizarCheckpoint(this.progresso);
     this.aplicarProgresso();
-    this.descanso = checkpoint?.lanterna || this.vilarejo.lanternas[0];
+    this.descanso = checkpoint?.lanterna || this.areaInicial.lanternas[0];
     if (checkpoint) {
       this.renascer();
     } else {
-      this.jogador.reiniciar(this.vilarejo.nascimento.x, this.vilarejo.nascimento.z, 0);
+      this.jogador.reiniciar(this.areaInicial.nascimento.x, this.areaInicial.nascimento.z, 0);
       this.reporInimigos();
     }
     this.definirEstado(this.entrada.podeJogar() ? 'jogando' : 'pausado');
@@ -368,7 +369,7 @@ export class Jogo {
     this.hud.mostrarTrava(null);
     this.jogador.soltarMira();
     this.boneco.grupo.visible = false;
-    this.ativarArea(this.vilarejo);
+    this.ativarArea(this.areaInicial);
     this.definirEstado('titulo');
     if (this.entrada.travado) document.exitPointerLock();
     document.getElementById('botao-comecar').focus();
@@ -380,7 +381,7 @@ export class Jogo {
       return;
     }
     this.progresso = normalizarProgresso();
-    this.descanso = this.vilarejo.lanternas[0];
+    this.descanso = this.areaInicial.lanternas[0];
     this.aplicarProgresso();
     this.reporInimigos();
     this.voltarAoTitulo();
@@ -425,10 +426,10 @@ export class Jogo {
     this.inimigos = area.entidades;
     this.lanternas = area.lanternas;
     for (const mundo of this.areas) mundo.grupo.visible = mundo === area;
-    this.ceu.malha.visible = area === this.vilarejo;
+    this.ceu.malha.visible = area.usaCeu;
     this.cena.fog = area.nevoa;
     this.cena.background = area.nevoa.color;
-    this.luzJogador.intensity = area === this.catedral ? 8 : 5;
+    this.luzJogador.intensity = area.luzJogador;
   }
 
   reporInimigos() {
@@ -605,7 +606,7 @@ export class Jogo {
       }
     }
     this.mundo.atualizar(dt, this.tempo);
-    if (this.mundo === this.vilarejo) this.ceu.atualizar(dt, this.tempo, this.camera, this.jogador.pos);
+    if (this.mundo.usaCeu) this.ceu.atualizar(dt, this.tempo, this.camera, this.jogador.pos);
     this.boneco.atualizar(dt, this.jogador);
     // A luz fraca acompanha o caçador (não a câmera), para ele nunca sumir no escuro.
     // Fica um pouco atrás dele, do lado da câmera, para clarear as costas do boneco.

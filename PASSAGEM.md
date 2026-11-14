@@ -64,6 +64,7 @@ O parry com a pistola entra na Etapa B. Até lá, o jogo ainda usa o aparo antig
 - **Ainda não existe:** pistola, visceral, execução, quickstep, dano que cresce com a carga do ataque forte, contra-ataque pisando e dano extra ao pular contra golpe alto. O bloqueio do broquel continua forte (segura 85% do dano) até a Etapa B tirá-lo.
 - **Infra:** `jogar.bat` com atualização automática, `atualizar.bat`, e regra de integração automática no `AGENTS.md` com o `CLAUDE.md` apontando para ele.
 - **Specs (pronto):** `docs/specs/` tem uma página por tarefa futura (00 a 08), com objetivo, arquivos, critérios de aceite e modelo de IA recomendado. A ordem está na "Fila do Gabriel".
+- **Contrato de área (pronto):** `src/mundo/areas.js` tem o registro das áreas, e cada área declara `luzJogador` e `usaCeu`. Área nova não exige mexer no `Jogo.js`.
 - **A conferir:** origem das 4 músicas (o repositório é público). Os números da Etapa A são um primeiro chute e precisam ser sentidos jogando. O painel da bolsa cobre um pedaço da barra de vida em telas estreitas.
 - **Pendente para o Heitor decidir:** a penalidade ao morrer (como as almas e os ecos de sangue; ela casa com o rally) e a penalidade do Osso de Retorno. Até lá, morrer e usar o osso não custam nada.
 
@@ -96,7 +97,7 @@ O parry com a pistola entra na Etapa B. Até lá, o jogo ainda usa o aparo antig
 As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página em [`docs/specs/`](docs/specs/README.md). As letras B a E são as mesmas etapas do Plano acima; os "S" são tarefas de mundo e sistema. Quem terminar um item marca aqui **e** no Plano.
 
 - [x] **0. Specs 00 a 08 escritas** (`docs/specs/`)
-- [ ] **0b. Contrato de área aplicado** (spec 00: `src/mundo/areas.js`)
+- [x] **0b. Contrato de área aplicado** (spec 00: `src/mundo/areas.js`)
 - [ ] **1. B: pistola, parry, visceral e quickstep** (spec 07; Opus ou Fable)
 - [ ] **2. C: chefe e imprevisibilidade** (spec 08; Opus ou Fable)
 - [ ] **3. S2: botão de gráfico PS1 / HD** (spec 02)
