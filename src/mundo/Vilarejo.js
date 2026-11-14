@@ -15,6 +15,7 @@ import { texturas, criarSorteio } from '../render/texturas.js';
 import { materiais, caixa, piramide, casa, torre, igreja, tocha, animarTochas, arvoreSeca, muralha, planoDeChao } from './pecas.js';
 import { sombrasDeContato } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
+import { montarBairrosVilarejo } from './BairrosVilarejo.js';
 
 const C = CONFIG.areas.vilarejo;
 
@@ -56,9 +57,12 @@ export class Vilarejo {
       r.renderOrder = ordemRua; ordemRua += 0.1;
       this.grupo.add(r);
     };
-    rua(0, 5, 6.5, 104);       // rua principal: do portão sul até a igreja
-    rua(0, 0, 90, 6.5);        // rua transversal (leste-oeste)
-    rua(0, 0, 22, 22);         // praça central
+    rua(0, 48.6, 6.5, 16.8);   // trecho entre o Portão Sul e a triagem
+    rua(0, 20.5, 6.5, 25);     // da triagem ao poço
+    rua(-21.5, 1.2, 42, 5.8);  // rua dos fundos da oficina
+    rua(24, 3, 39, 5.2);       // rua do mercado, desencontrada da rua oeste
+    rua(2.2, 0.8, 21, 21);     // praça em torno do poço
+    rua(0, -23.8, 5.6, 31);
     rua(0, -43, 22, 12);       // adro da igreja
 
     // ---------- igreja ao fundo (norte) ----------
@@ -76,11 +80,11 @@ export class Vilarejo {
     const casas = [
       // rua principal, trecho sul
       { x: -8.6, z: 43, l: 8, p: 7, a: 5.2, frente: 'L', acesa: true },
-      { x: -8.9, z: 32, l: 9, p: 7.5, a: 4.2, frente: 'L' },
+      { x: -8.2, z: 34.4, l: 11.5, p: 6.4, a: 6.2, frente: 'L' },
       { x: -8.4, z: 21, l: 8, p: 6.5, a: 6, frente: 'L' },
       { x: 8.6, z: 45, l: 7, p: 7, a: 4.4, frente: 'O' },
-      { x: 9.1, z: 35, l: 9, p: 8, a: 6.2, frente: 'O', acesa: true },
-      { x: 8.5, z: 24, l: 8, p: 6.6, a: 4.8, frente: 'O' },
+      { x: 11.55, z: 35, l: 9, p: 8, a: 6.2, frente: 'O', acesa: true },
+      { x: 9.2, z: 21, l: 9, p: 7.5, a: 4.8, frente: 'O' },
       // em volta da praça
       { x: -17.5, z: -16.5, l: 9, p: 8, a: 6.4, frente: 'S' },
       { x: 17.5, z: -16.5, l: 9, p: 8, a: 5, frente: 'S', acesa: true },
@@ -89,7 +93,7 @@ export class Vilarejo {
       { x: -29, z: -8, l: 8, p: 7.5, a: 5, frente: 'S' },
       { x: -39, z: 8, l: 9, p: 7.5, a: 5.6, frente: 'N', acesa: true },
       { x: -28.5, z: 8.4, l: 7, p: 7, a: 4.2, frente: 'N' },
-      { x: 28, z: 8, l: 8, p: 7.5, a: 5.8, frente: 'N' },
+      { x: 27, z: 13.7, l: 9, p: 8.5, a: 6.9, frente: 'O' },
       { x: 38, z: -8, l: 9, p: 7.5, a: 4.6, frente: 'S' },
       { x: 28.5, z: -8.2, l: 7, p: 7, a: 5.2, frente: 'S' },
       // rua principal, trecho norte
@@ -155,9 +159,11 @@ export class Vilarejo {
       const c = caixa(l, 1.1, pf, m.madeira, 0.9); c.position.set(x, 0.55, z); this.grupo.add(c);
       this.colisores.adicionar(x, z, l, pf, 1.1);
     };
-    cerca(19.5, -44, 17, 0.14);
+    cerca(16, -44, 10, 0.14);
+    cerca(25.2, -44, 5.6, 0.14);
     cerca(28, -54, 0.14, 20);
     montarExploracaoVilarejo(this);
+    montarBairrosVilarejo(this);
 
     // ---------- caixotes e barris (dá para pular em cima) ----------
     for (const [x, z, t] of [[4.6, 30, 1], [5.2, 31.2, 0.8], [-12.6, 8, 1], [11.5, -3.5, 0.9], [-21, -3.8, 1], [20, 4.2, 1.1], [-5, -36, 1]]) {
@@ -221,7 +227,7 @@ export class Vilarejo {
     // ---------- inimigos: tipo + rota de patrulha (lista de pontos x, z) ----------
     this.inimigos = [
       { tipo: 'cavaleiro', rota: [[4, 8], [-5, 7], [-6, -7], [5, -6]] },
-      { tipo: 'cacador', rota: [[14, 0.5], [40, -0.5]] },
+      { tipo: 'cacador', rota: [[15.7, 24.6], [16.4, 12.4], [22.7, 5.5], [39, 2.5]] },
       { tipo: 'cacador', rota: [[-14, -0.5], [-42, 0.5]] },
       { tipo: 'cavaleiro', rota: [[-4, -38], [4, -38]] },
       { tipo: 'cacador', rota: [[14, -40], [31, -42], [22, -66]] },

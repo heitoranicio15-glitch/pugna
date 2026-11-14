@@ -30,7 +30,7 @@ export function materiais() {
     calcamentoChao: calcamento(t.calcamento, { depthWrite: false }),
     terraChao: terra({ depthWrite: false }),
     caminhoChao: terra({ color: 0xcdb89a, depthWrite: false }),
-    madeiraChao: madeira({ color: 0xb59a86, depthWrite: false }),
+    madeiraChao: registrarMaterialHd(lambert(t.assoalho, { color: 0xb59a86, depthWrite: false }), 'old_planks_02', 0.7),
     lajesChao: registrarMaterialHd(lambert(t.lajes, { depthWrite: false }), 'patterned_slate_tiles', 0.55),
     mosaicoChao: lambert(t.mosaico, { depthWrite: false }),
     telhado: registrarMaterialHd(lambert(t.telhado, { side: THREE.DoubleSide }), 'roof_slates_02', 0.8),

@@ -63,6 +63,24 @@ Guarde a criação de NPCs e o contrato de falas para S4.
 Os valores ficam em `CONFIG.areas`. Feixes e fagulhas são procedurais.
 O som ambiente específico de cada área permanece na fila de S5.
 
+## Quinto incremento
+
+O Portão Sul agora conduz a um muro de triagem com arco à direita. Depois
+dele, o caminho se divide entre a rua do poço e a travessa leste do
+mercado, que volta à praça pelas bancas. A entrada entre as cercas do
+cemitério liga o adro ao Marco dos Ausentes.
+
+Na Catedral, a Galeria dos Nomes fecha um circuito com a nave e o Ossário.
+O Relicário mantém o atalho da sacristia. O estrado de dois degraus e o
+altar de pedra dão um fim à nave central, depois da arena do Guardião.
+Os bancos foram redistribuídos com espaço para passar nas laterais e pelo centro.
+
+O segundo toque, a separação dos ossos e nomes e a decisão do Guardião são
+contados por documentos de quem viveu o fechamento. A lista fica em
+`src/nucleo/Inventario.js`; os cinco registros novos usam o mesmo sistema
+de leitura e salvamento. A chave, a alavanca, os selos e os checkpoints
+mantêm os IDs publicados.
+
 ## Teste de jogo para Gabriel e Heitor
 
 1. Abra o [jogo publicado](https://heitoranicio15-glitch.github.io/pugna/) e anote
@@ -71,6 +89,8 @@ O som ambiente específico de cada área permanece na fila de S5.
 2. Na catedral, confira o piso da nave, as paredes ogivais e a legibilidade dos
    avisos de ataque. Volte pelo Portão Sul, atravesse a ponte e aproxime-se da
    taverna. Dentro, compare o assoalho, o tapete e os barris perto da lareira.
+   Faça o desvio do mercado e complete o circuito nave–Galeria–Ossário.
+   Leia uma inscrição em cada área e tente alcançar a arena antes dos selos.
    Compare também a rosácea do adro, a água de cima da ponte e as guarnições
    da taverna ao se aproximar. O interior tem arco e cornija na lareira.
    Ao sair pelo Portão Sul, veja o céu mudar para o tom da estrada. Na

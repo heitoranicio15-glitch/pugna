@@ -49,6 +49,14 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Vilarejo e Catedral redesenhados:** em cima de `66edae4`, o caminho sul
+  passa pelo arco de triagem e bifurca entre a rua do poço e o mercado. A
+  Catedral ganhou um circuito a oeste pela Galeria dos Nomes, bancos
+  redistribuídos e o estrado do coro. A grade do Santuário ainda pede os dois
+  selos. A história do segundo toque, dos ossos e dos nomes liga os novos
+  documentos às lápides e aos registros que já estavam no jogo. IDs e
+  checkpoints publicados foram mantidos.
+
 - **Quarto incremento gráfico:** em cima de `4470b28`, o vilarejo tem bruma
   violeta, a estrada tem névoa azul-esverdeada mais baixa, a catedral ganhou
   feixes de vitral e a taverna ganhou luz mais quente e fagulhas. Os perfis em
@@ -211,6 +219,8 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
   e mira travada nos dois modos gráficos.
 - [x] **Gráficos, incremento 4** — luz, céu e bruma por área, feixes na
   catedral, fagulhas na taverna e transições de atmosfera nos portais.
+- [x] **Gráficos, incremento 5** — redistribuição do vilarejo e interior da
+  Catedral, com novos percursos e cinco registros da história do Véu.
 - [ ] **Gráficos, próximo incremento** — testar o percurso real e medir o custo
   do HD com GPU. Usar o guia gráfico para comparar o primeiro piloto de
   Blender com a fachada procedural. Alinhar iluminação com S5 e os modelos

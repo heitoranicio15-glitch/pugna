@@ -244,6 +244,8 @@ A mesma sequência de golpes nunca sai três vezes seguidas.
 Aproxime-se do portal ao norte do vilarejo e pressione **E**. A nave tem uma
 lanterna à direita da entrada. Explore o **Ossário**, a oeste, e o **Relicário**,
 a leste. Recolha com **E** o selo de cada ala para abrir a grade do **Santuário**.
+A **Galeria dos Nomes** liga o lado oeste da entrada ao fundo do Ossário e
+permite voltar à nave por outra arcada. No Santuário, dois degraus levam ao altar.
 O **Guardião do Véu** usa golpes altos, pesados e rasteiras. Quando perde
 metade da vida, ruge, fica invencível por 1 segundo e se afasta um passo. Na
 **fase final** ele não pode ser vencido só com parry: a maior parte dos golpes
@@ -260,12 +262,16 @@ onde você volta ao morrer ou reabrir o jogo.
 
 ### Exploração e bolsa
 
-- **Vila:** a Casa da Sineira fica a oeste da praça e tem um baú com dois frascos.
-  A Oficina do Poço tem uma chave e um registro na bancada. O cemitério tem
-  lápides que podem ser lidas.
+- **Vila:** saindo do Portão Sul em direção ao poço, contorne o muro pelo arco
+  de triagem à direita. Depois do arco, a travessa a leste passa pelas bancas
+  do mercado e volta à praça. A oeste ficam o baú da Casa da Sineira e a
+  chave na Oficina do Poço. No adro, procure a abertura na cerca do cemitério.
 - **Catedral:** procure as inscrições no Ossário e no Relicário. A chave da
   oficina abre a porta ao sul do Relicário. Dentro da sacristia há uma inscrição,
   um frasco e uma alavanca que abre a grade de serviço para a lanterna da nave.
+- **História:** leia o aviso da triagem, as contas do mercado, as lápides e os
+  registros para descobrir o que aconteceu na noite do segundo toque. As
+  anotações ficam na bolsa.
 - **Taverna:** o bilhete na mesa é uma anotação (vai para a bolsa); o taverneiro responde
   a **E — falar**.
 - Chegue perto do objeto, virado para ele, e pressione **E** quando aparecer a ação. Use

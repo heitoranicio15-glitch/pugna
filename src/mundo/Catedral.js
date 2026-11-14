@@ -7,6 +7,7 @@ import { placa } from './Aderecos.js';
 import { montarSacristia } from './Sacristia.js';
 import { feixeDeLuz, sombrasDeContato } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
+import { montarClaustro } from './Claustro.js';
 
 const C = CONFIG.areas.catedral;
 
@@ -76,17 +77,15 @@ export class Catedral {
     parede(0, 9, 16, 0.7, 10);
     parede(0, -33, 22, 0.7, 12);
     for (const lado of [-1, 1]) {
-      if (lado < 0) parede(-8, 3.25, 0.65, 11.5, 10);
-      else {
-        parede(8, 0.8625, 0.65, 6.725, 10);
-        parede(8, 8.0375, 0.65, 1.925, 10);
-      }
+      parede(lado * 8, 0.8625, 0.65, 6.725, 10);
+      parede(lado * 8, 8.0375, 0.65, 1.925, 10);
+      if (lado < 0) bloc(-8, 6.68, 5.65, 0.65, 6.64, 2.85, m.pedra);
       parede(lado * 8, -10, 0.65, 6, 10);
       bloc(lado * 8, 8.55, -4.75, 0.65, 2.9, 4.5, m.pedraEscura);
       gotico(lado * 7.8, 4.05, -4.75, 3.85, 2.7, 0.34, 0.84, Math.PI / 2);
       luz(lado * 9.15, 3, -5.2, lado < 0 ? 0xff8646 : 0x638dff, 32, 10);
-      if (lado < 0) parede(-15, 2, 14, 0.65);
-      else for (const x of [10.8, 19.2]) parede(x, 2, 5.6, 0.65);
+      for (const x of [10.8, 19.2]) parede(lado * x, 2, 5.6, 0.65);
+      if (lado < 0) bloc(-15, 5.24, 2, 2.84, 3.52, 0.65, m.pedra);
       parede(lado * 15, -12, 14, 0.65);
       parede(lado * 22, -5, 0.65, 14);
       parede(lado * 11, -23, 0.7, 20, 12);
@@ -115,11 +114,14 @@ export class Catedral {
     abobada.position.set(0, 5.15, -2);
     this.grupo.add(abobada);
     bloc(0, 9.89, -2.2, 0.34, 0.24, 20, m.pedra);
-    for (const z of [2, -0.4, -7.7, -10.1]) {
+    // Duas alas de bancos voltadas para o coro, atravessadas por três corredores.
+    for (const z of [2.8, 0.55, -7.7, -10.1]) {
       for (const lado of [-1, 1]) {
-        movel(lado * 4.25, z, 3.1, 0.48, 0.5, m.madeira);
-        bloc(lado * 4.25, 0.69, z + 0.22, 3.1, 0.43, 0.12, m.madeira);
-        sombrasNave.push([lado * 4.25, z, 4.2, 1.75]);
+        const x = lado * 4.2;
+        movel(x, z, 2.8, 0.48, 0.5, m.madeira);
+        bloc(x, 0.7, z + 0.23, 2.8, 0.45, 0.12, m.madeira);
+        for (const ponta of [-1, 1]) bloc(x + ponta * 1.38, 0.39, z, 0.12, 0.78, 0.56, m.madeiraEscura);
+        sombrasNave.push([x, z, 3.7, 1.75]);
       }
     }
     sombrasDeContato(this.grupo, sombrasNave);
@@ -195,6 +197,7 @@ export class Catedral {
       bloc(x, 0.012, -4.98, 0.22, 0.024, 0.22, metalDourado).rotation.y = Math.PI / 4;
     }
     luz(16.5, 3.6, -5, 0x668eff, 46, 16);
+    montarClaustro(this);
     montarSacristia(this);
 
     this.selos = [
@@ -222,7 +225,18 @@ export class Catedral {
       }
       tocha(this, { x: lado * 6, z: -29.5 });
     }
-    movel(0, -30, 5.7, 0.8, 2.1, m.pedraEscura);
+    // Estrado baixo do coro, com dois degraus contínuos e o altar ao fundo.
+    movel(0, -30.5, 12.8, 0.18, 3.6, m.pedraEscura);
+    movel(0, -31.12, 12.2, 0.36, 2.26, m.pedra);
+    movel(0, -31.65, 5.7, 1.2, 1.32, m.pedraEscura);
+    bloc(0, 1.24, -31.65, 6, 0.18, 1.55, m.pedra);
+    for (const x of [-2.1, -1.05, 0, 1.05, 2.1]) {
+      const arco = arcoOgival(0.69, 0.27, 0.09, 0.15, metalDourado);
+      arco.position.set(x, 0.78, -30.95);
+      this.grupo.add(arco);
+    }
+    placa(this.grupo, 'Juramento do Véu', 0, 1.08, -30.85, 1.58);
+    this.objetos.push({ x: 0, y: 1.08, z: -30.82, acao: 'ler', evento: 'catedral:juramento-do-veu' });
     bloc(0, 2.6, -32.58, 4.2, 5.1, 0.2, m.vitral);
     luz(0, 4, -29, 0xa466eb, 63, 19);
     luz(0, 4.2, -17.3, 0xd3a6ed, 27, 15);

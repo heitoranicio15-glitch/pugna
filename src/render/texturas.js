@@ -298,6 +298,7 @@ export function texturas() {
       janelaAcesa: janela(true), janelaApagada: janela(false), vitral: vitral(),
       brilho: brilho(), nevoa: nevoa(), sombra: sombra(), riacho: riacho(), feixe: feixe(),
     };
+    cache.assoalho = prepararPiso(cache.madeira.clone());
     for (const n of ['brilho', 'nevoa', 'sombra', 'feixe']) {
       cache[n].wrapS = cache[n].wrapT = THREE.ClampToEdgeWrapping;
       cache[n].magFilter = cache[n].minFilter = THREE.LinearFilter; // manchas suaves

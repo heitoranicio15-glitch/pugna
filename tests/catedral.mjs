@@ -111,7 +111,7 @@ async function mirar(x, y, z) {
 
 // Vilarejo -> estrada -> taverna e de volta; bilhete, taverneiro e a lanterna nova (sobrevive ao recarregar).
 async function validarEstradaETaverna() {
-  await page.evaluate(() => jogo.ativarArea(jogo.vilarejo));
+  await comecar(); // a exploração anterior termina na tela de título após apagar o save
   await prepararCombate();
   await posicionar(0, 54.6);
   await passos();
@@ -121,7 +121,7 @@ async function validarEstradaETaverna() {
   assert.ok((await estado()).pos[2] < -50);
   await prepararCombate();
   await posicionar(-6.2, -15, Math.PI / 2);
-  await passos();
+  await mirar(-7.5, 1.4, -15);
   assert.match((await estado()).aviso, /entrar na taverna/);
   await tecla('e');
   assert.equal((await estado()).area, 'taverna');
@@ -138,13 +138,13 @@ async function validarEstradaETaverna() {
   await tecla('e');
   assert.match((await estado()).aviso, /Senta/);
   await posicionar(0, 3.9, 0);
-  await passos();
+  await mirar(0, 1.4, 4.5);
   assert.match((await estado()).aviso, /sair da taverna/);
   await tecla('e');
   assert.equal((await estado()).area, 'estrada');
   await prepararCombate();
   await posicionar(-6.6, -10.6, Math.PI / 2);
-  await passos();
+  await mirar(-5.4, 1.4, -10.6);
   assert.match((await estado()).aviso, /descansar na lanterna/);
   await tecla('e');
   assert.equal((await estado()).progresso.descanso, 'taverna-da-estrada');
@@ -340,7 +340,8 @@ try {
     });
     return [...filtros.values()];
   });
-  assert.equal(pisos.length, 4);
+  // Calçamento, terra, lajes, mosaico, água, assoalho e tapete.
+  assert.equal(pisos.length, 7);
   assert.ok(pisos.every(({ mips, mag }) => mips && mag === NearestFilter));
   assert.ok((await estado()).pos[2] > 50);
   await posicionar(0, -40);

@@ -10,17 +10,29 @@ export const FRASCOS = Object.freeze({
 });
 
 export const ANOTACOES = Object.freeze({
+  'vilarejo:edital-triagem': {
+    nome: 'Aviso de triagem',
+    texto: 'Internação ao primeiro toque. Tragam o nome de batismo e uma pessoa que o possa repetir. Quem chegar só aguarda no mercado. Por ordem do Guardião: se o bronze tocar de novo sem que a corda mexa, fechem o portão.',
+  },
+  'vilarejo:contas-do-mercado': {
+    nome: 'Peso do pão',
+    texto: 'Nove pães enviados à nave. Quatorze na volta, todos intactos. Na tábua de nomes havia seis riscos novos. A sineira veio buscar o dela. Disse que ainda tinha fome.',
+  },
+  'vilarejo:marco-dos-ausentes': {
+    nome: 'Marco dos ausentes',
+    texto: 'A pedra foi gravada com os nomes das famílias que receberam urnas leves demais. Os nomes foram raspados por ordem do cabido. Na base ainda se lê: “Se não voltares com o nome, volta com a voz.”',
+  },
   'vilarejo:registro-da-oficina': {
     nome: 'Registro da oficina',
-    texto: 'Entreguei a grade da sacristia. A chave pequena ficou na bancada, junto às limas. A porta do Relicário abre com ela. A grade da nave tem uma alavanca do lado de dentro.',
+    texto: 'Entreguei a grade da sacristia. A chave pequena ficou na bancada, junto às limas. É da porta ao sul do Relicário. A grade da nave tem uma alavanca do lado de dentro. O aprendiz pôs o próprio nome no molde. De manhã só restava a marca do cinzel.',
   },
   'vilarejo:lapide-sineira': {
     nome: 'Lápide da sineira',
-    texto: 'À sineira que dobrou o bronze na noite do Véu. O último toque foi ouvido na praça. As cordas da torre foram encontradas cortadas ao amanhecer.',
+    texto: 'À sineira que cortou as cordas para poupar a vila do segundo toque. O bronze tornou a soar. Foi o primeiro toque que o povo ouviu vindo do poço.',
   },
   'vilarejo:lapide-aprendiz': {
     nome: 'Lápide do aprendiz',
-    texto: 'Ao aprendiz da oficina do poço. Deixou um cinzel, três limas e o molde das chaves. O mestre pediu que enterrassem o molde com ele.',
+    texto: 'Ao aprendiz da oficina do poço. Deixou um cinzel, três limas e o molde das chaves. A mãe pediu que aqui escrevessem o nome. Nenhum dos presentes conseguiu pronunciá-lo.',
   },
   'taverna:bilhete-da-mesa': {
     nome: 'Bilhete na mesa',
@@ -28,15 +40,23 @@ export const ANOTACOES = Object.freeze({
   },
   'catedral:registro-ossario': {
     nome: 'Registro do Ossário',
-    texto: 'As marcas nos nichos são datas de vigília. À terceira noite, o Guardião mandou recolher os nomes e guardar apenas os ossos. Alguém riscou a ordem por baixo.',
+    texto: 'Primeira vigília: a voz volta se alguém disser o nome perto do leito. Terceira vigília: as vozes repetem o nome de quem veio visitar. Ordem do Guardião: separem os ossos dos nomes. À margem: “De que lado ficamos nós?”',
   },
   'catedral:registro-relicario': {
     nome: 'Registro do Relicário',
-    texto: 'O selo azul permanece sob o vitral. A porta ao sul dá acesso à sacristia. O ferreiro da praça fez a chave e a grade de serviço que retorna à nave.',
+    texto: 'O selo azul permanece sob o vitral. O do Ossário guarda o que foi enterrado. Este guarda o que foi escrito. Os dois levantam a grade do Santuário. Ao sul, a porta da sacristia abre com a chave feita na oficina do poço.',
   },
   'catedral:registro-guardiao': {
     nome: 'Vigília do Guardião',
-    texto: 'Quando o elmo arde, ele varre o chão duas vezes. Quem esquiva da primeira pancada deve esperar a segunda antes de avançar. O sino da nave marcava o intervalo.',
+    texto: 'Ele nos pediu que voltássemos à vila e trancou a grade do lado de dentro. Ainda bate a maça duas vezes no chão, como quem marca o intervalo do sino. Quando o elmo arde, espera a segunda varrida antes de te aproximares.',
+  },
+  'catedral:lista-das-devolucoes': {
+    nome: 'Lista das devoluções',
+    texto: 'Da nave para o Ossário: treze pessoas, onze caixões. Do Ossário para a vila: onze urnas, nenhuma voz. As duas pessoas restantes voltaram pelo corredor esta manhã. Traziam o mesmo nome.',
+  },
+  'catedral:juramento-do-veu': {
+    nome: 'Juramento do Véu',
+    texto: 'Selamos os ossos a oeste e os nomes a leste. Eu vigio entre os dois. Enquanto o sino soar, quem subir ainda poderá descer. Se um dia ouvirem a minha voz no poço, deixem a grade fechada. — Guardião',
   },
 });
 

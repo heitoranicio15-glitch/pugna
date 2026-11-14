@@ -7,6 +7,8 @@ import { normalizarProgresso } from '../src/nucleo/Salvamento.js';
 import { CONFIG } from '../src/config.js';
 import { Atmosfera } from '../src/mundo/Atmosfera.js';
 import { Ceu } from '../src/mundo/Ceu.js';
+import { Navegacao } from '../src/mundo/Navegacao.js';
+import { alvoProximo } from '../src/mundo/Interacoes.js';
 
 // Área "de mentira": objeto simples que segue o contrato.
 function areaFalsa(id, outra, pontos) {
@@ -157,6 +159,54 @@ test('cada portal tem a chegada no destino e a chegada fica fora do raio do port
       destino.colisores.resolver(ponto, 0.4, 0, 0.4);
       assert.ok(Math.hypot(ponto.x - chegada.x, ponto.z - chegada.z) < 0.01, `chegada de ${area.id} em ${destino.id} está dentro de um obstáculo`);
     }
+  }
+});
+
+test('a triagem desvia o percurso do Portão Sul e há uma saída pelo mercado', () => {
+  const { porId } = montarAsAreasReais();
+  const vila = porId.get('vilarejo');
+  const navega = new Navegacao(vila.colisores, vila.limites);
+  const raio = CONFIG.jogador.raio;
+  const rua = navega.encontrar({ x: 0, z: 42 }, { x: 0, z: 31 }, raio);
+  assert.ok(rua.some(p => Math.abs(p.z - 37) < 0.7 && p.x > 4.6 && p.x < 6.5));
+  for (const [origem, destino] of [
+    [[5.6, 27.9], [16.4, 27.9]], [[16.4, 27.9], [16.4, 9]], [[16.4, 9], [4, 3]],
+  ]) {
+    const ponto = ([x, z]) => ({ x, z });
+    assert.ok(navega.encontrar(ponto(origem), ponto(destino), raio).length);
+  }
+});
+
+test('a Galeria dos Nomes fecha um circuito com o Ossário sem abrir a grade dos selos', () => {
+  const { porId } = montarAsAreasReais();
+  const catedral = porId.get('catedral');
+  const navega = new Navegacao(catedral.colisores, catedral.limites);
+  const raio = CONFIG.jogador.raio;
+  for (const [a, b] of [
+    [{ x: -4, z: 6.4 }, { x: -14.9, z: 6 }],
+    [{ x: -14.9, z: 6 }, { x: -15, z: -3.7 }],
+    [{ x: -15, z: -3.7 }, { x: -3, z: -4.75 }],
+  ]) assert.ok(navega.encontrar(a, b, raio).length);
+  assert.equal(navega.encontrar({ x: 0, z: -11 }, { x: 0, z: -21 }, raio).length, 0);
+});
+
+test('as novas anotações podem ser lidas de pontos acessíveis dos dois mapas', () => {
+  const { porId } = montarAsAreasReais();
+  const leituras = [
+    ['vilarejo', 'edital-triagem', 0.7, 39.25, 0],
+    ['vilarejo', 'contas-do-mercado', 19, 29, 0],
+    ['vilarejo', 'marco-dos-ausentes', 22.1, -39.1, 0],
+    ['catedral', 'lista-das-devolucoes', -12.1, 6.6, Math.PI],
+    ['catedral', 'juramento-do-veu', 0, -29.1, 0],
+  ];
+  for (const [id, chave, x, z, yaw] of leituras) {
+    const area = porId.get(id), evento = `${id}:${chave}`;
+    const pos = { x, y: 0, z };
+    area.colisores.resolver(pos, CONFIG.jogador.raio, 0, 0.4);
+    assert.deepEqual(pos, { x, y: 0, z }, evento);
+    assert.ok(ANOTACOES[evento]?.texto.length > 80, evento);
+    const jogador = { pos, yaw, rumo: yaw, alturaOlhos: CONFIG.jogador.alturaOlhos };
+    assert.equal(alvoProximo(area.objetos, jogador, area.colisores)?.evento, evento);
   }
 });
 
