@@ -49,6 +49,14 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **S6: a floresta, ligada pela estrada (pronto).** Spec 05. Área nova `floresta` (`src/mundo/Floresta.js`, `CONFIG.areas.floresta`), 40 × 90 m, `usaCeu` true, `luzJogador` 5, névoa verde-azulada 0x16302f. 40 árvores, 5 troncos caídos, 6 rochas, 26 vagalumes, paredes invisíveis nos 4 lados. Sem assets novos.
+  - **Ligação:** a ponta sul da Estrada deixou de ser fechada. Portal `E — seguir pela trilha da floresta` em (0; 57,4) leva à floresta (chegada (0; -38,5)); na floresta, `E — voltar à estrada` em (0; -42,4) volta à estrada (chegada nova `chegadas.floresta` (0; 52,4)). A carroça virou cenário ao lado da pista; saíram a placa "Em obras", as estacas e o colisor que fechava a ponta; entrou a placa "Trilha da floresta". No fim da trilha há uma barricada com a placa "Trilha interrompida" (onde o Castelo entra depois).
+  - **Lanterna** `floresta-clareira` ("Clareira da Floresta") a uns 6 m da chegada. **Patrulhas:** caçador, cavaleiro e penitente, com os números atuais de `CONFIG.inimigos`, a mais de 18 m da chegada e da lanterna.
+  - **Som e trilha:** tipo novo `floresta` (vento, coruja, galhos que estalam); trilha `vilarejo`, para a música seguir sem reiniciar desde a estrada.
+  - **Preservado:** chegadas, portais, lanterna `taverna-da-estrada` e patrulhas das áreas antigas (o teste compara os números); nenhum evento novo no save (entrar na floresta não grava nada; `floresta-clareira` salva como as outras lanternas); saves antigos carregam e renascem onde renasciam.
+  - **Decidido pela IA (o Heitor revisa):** a floresta como primeira área nova; tipo de som próprio em vez de reaproveitar o da estrada (um teste exige tipo único por área); os volumes do som foram escolhidos só no código, **ninguém ouviu**; o fim da trilha fica fechado até a próxima área.
+  - **Pendente:** o `requer` do portal e o `docs/mapa.md` da spec 05 não foram feitos; `tests/catedral.mjs` não atravessa o portal novo (cobre vilarejo → estrada → taverna); ninguém viu a floresta rodando (testes sem WebGL): olhar a floresta jogando. `npm test` (118) e `npm run build` passam.
+
 - **S5: som ambiente por área e crossfade de trilha (pronto; a parte visual já estava).** Spec 04. Código em `src/audio/Ambiente.js` (camadas no WebAudio) e `src/audio/regras.js` (regras puras: taxas dos eventos, ganhos do crossfade); `Trilha.js` foi reescrita com dois players; `ativarArea` agora emite `area:entrou { id, som, trilha, transicao }`. Tempos em `CONFIG.audio` (`crossfadeAmbiente` 0,6 s, `crossfadeTrilha` 1,5 s). Tudo sintetizado, sem arquivo novo e sem mudança em `CREDITOS.md`. O ambiente obedece ao volume de efeitos, à pausa e ao silenciar, e só começa depois do primeiro gesto.
   - **Camadas** (`CONFIG.areas.<area>.som`, números de 0 a 1): vilarejo `vila` (vento 0,45, grilo 0,4, sino distante 0,3); estrada (vento 0,7, riacho 0,45, madeira rangendo 0,5); taverna (fogo 0,6, murmúrio 0,5, base 0,3); catedral `pedra` (ar 0,25, gotas 0,5, eco 0,7, base 0,6).
   - **Trilha** (`CONFIG.areas.<area>.trilha`): vilarejo, estrada e taverna usam a faixa `vilarejo` (a música segue sem reiniciar entre elas); a catedral usa `catedral`; a troca do Guardião mantém a regra de antes, agora com crossfade de 1,5 s.
@@ -265,7 +273,7 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 - [x] **7. S5: atmosfera por área** (spec 04) — parte visual no quarto
   incremento; som ambiente por área e crossfade de trilha entregues.
 - [ ] **8. E: ajuste fino com os amigos** (E1 por simulação feito; falta o ajuste jogando)
-- [ ] **9. S6: primeira área nova** (castelo, floresta ou caverna; spec 05; o Heitor escolhe)
+- [x] **9. S6: primeira área nova** (floresta ligada pela estrada; spec 05; o Heitor revisa a escolha) — faltam `requer` do portal e `docs/mapa.md`
 - [x] **10. S7: bolsa cobrindo a barra de vida em telas estreitas** — com a luta rolando, a tela da bolsa reserva 140 px embaixo (`.tela.ao-vivo` no `estilo.css`) e o painel rola por dentro; PR 24
 - [ ] **11. S8: Supabase** (spec 06; precisa do Heitor para criar o projeto)
 - [x] **Gráficos, incremento 1** — materiais PBR nas quatro áreas, barris,
