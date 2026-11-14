@@ -44,11 +44,11 @@ Cada resposta do jogador precisa ser a melhor contra algum tipo de ataque. Se n�
 | Antes da luta | Golpe pelas costas (agachado, sem ser visto) | Execução silenciosa |
 | Acabou de apanhar | Revidar logo (rally) | Recupera parte da vida perdida |
 
-O parry com a pistola já funciona (PR B1). O visceral, a execução e o quickstep vêm nos PRs B2 e B3.
+O parry com a pistola (PR B1), o visceral e a execução (PR B2) já funcionam. O quickstep vem no PR B3.
 
 ## Estado atual
 
-- **Pronto e no ar:** vilarejo, Catedral do Véu (nave, Ossário, Relicário, Santuário, selos), inimigos cavaleiro, caçador e Penitente, miniboss Guardião do Véu, bolsa e frascos de cura, lápides, atalhos, menu de configurações, trilha sonora, terceira pessoa, mira travada, parry com a pistola e crítico, e rolamento.
+- **Pronto e no ar:** vilarejo, Catedral do Véu (nave, Ossário, Relicário, Santuário, selos), inimigos cavaleiro, caçador e Penitente, miniboss Guardião do Véu, bolsa e frascos de cura, lápides, atalhos, menu de configurações, trilha sonora, terceira pessoa, mira travada, parry com a pistola, crítico, visceral, execução, ataque forte carregado e rolamento.
 - **Salvamento estilo Souls (item 1, pronto):** o jogo grava sozinho a cada acontecimento e não há salvar manual. O **Osso de Retorno** é usado pela bolsa, é único e de uso ilimitado. Hoje não há penalidade ao usar.
 - **Base dos ataques (item 2, pronto):** todos os inimigos usam a mesma máquina de golpes (`src/entidades/Ataques.js`), com 3 fases (preparo, golpe ativo, recuperação) e 3 tipos, cada um com pose, cor e som próprios: **alto**, **pesado** (vermelho, sino grave) e **rasteira** (agachado, amarelo). As sequências de cada inimigo ficam em `CONFIG.inimigos` (`ataques`) e os números de cada tipo em `CONFIG.combate.ataquesInimigos`. A rasteira é larga, não pode ser aparada nem bloqueada e passa por baixo de quem está no ar.
 - **Celular congelado (item 0, pronto):** aviso na tela inicial e ao começar em aparelho de toque, teste do celular fora dos obrigatórios, código de toque guardado.
@@ -67,8 +67,15 @@ O parry com a pistola já funciona (PR B1). O visceral, a execução e o quickst
   - **Saíram:** o bloqueio (clique direito segurado), o aparo com C e o broquel do boneco, que agora carrega uma pistola de caixas e estica o braço com coice ao atirar. Sons novos sintetizados: estampido com eco e clique seco sem bala.
   - **Celular:** `Toque.js` e os botões de toque não mudaram. O `npm run test:celular` (opcional) agora falha porque ainda espera o bloqueio com o botão "Bloquear"; ficou registrado e não foi consertado. Os botões "Aparar" (C) e "Bloquear" (clique direito) do celular passam a atirar.
   - **Decidido pela IA (o Heitor revisa):** a proteção depois do parry (0,25 s) virou `pistola.invencivel` no config; o tiro na rasteira só dá o aviso "pule" durante o aviso e o golpe dela (não na recuperação); o tiro escolhe só inimigos visíveis, a até 1,6 m de desnível; quem patrulha e leva tiro passa a perseguir; apanhar durante a recuperação do tiro não faz cambalear (como quando está livre); o contador de balas some no modo de toque; o contador fica acima dos frascos, sempre visível, e fica apagado com 0 balas.
-- **Ganchos deixados:** `inimigo.abertoParaExecucao` fica ligado enquanto dura o desequilíbrio de um pesado aparado (para a execução, Etapa B). O aviso `jogador:pulou-golpe` sai quando o jogador pula uma rasteira (Etapa D). `jogador.recuperarComGolpe(dano)` é o ponto de entrada do rally (o visceral da Etapa B dá "rally cheio" por ele). `Jogador.receberDano` recebe os dados do golpe (`aparavel`, `bloqueavel`, `evitaPulando`...).
-- **Ainda não existe:** visceral, execução, quickstep (PRs B2 e B3), dano que cresce com a carga do ataque forte, contra-ataque pisando e dano extra ao pular contra golpe alto.
+- **Etapa B, PR B2: visceral, execução e ataque forte carregado (pronto).** Números em `CONFIG.combate.visceral`, `execucao` e `carga`, com comentários:
+  - **Visceral:** ao começar um ataque (leve ou forte), se houver um inimigo desequilibrado a até 2,3 m, à frente do caçador, sem parede no meio e com o caçador à frente dele, o ataque vira visceral. Não gasta estamina. Dura 0,7 s, com o caçador invencível o tempo todo, colado no inimigo e virado para ele; o inimigo fica preso no desequilíbrio até a lâmina entrar (aos 0,25 s). Dano de 3,5× o leve (77), pausa e tremor de tela, empurrão forte, e o inimigo sai cambaleando. Devolve **toda** a vida laranja (rally cheio, via `recuperarComGolpe(Infinity)`). Aparece "VISCERAL"; som de impacto grave com sino.
+  - **Execução:** se o golpe aparado era pesado (`inimigo.abertoParaExecucao`), o visceral vira execução: 5× o leve (110), pausa e tremor maiores, "EXECUÇÃO" na tela e um som mais grave e mais longo.
+  - **Crítico comum preservado:** bater no inimigo desequilibrado de lado ou de longe continua sendo o crítico de 2,6×.
+  - **Ataque forte carregado:** o dano cresce com a carga, de 1× (soltar logo que vira forte) até 1,6× (carga máxima). Carga completa (95% ou mais) acertando **pelas costas** desequilibra o inimigo (`Inimigo.desequilibrar()`, extraído do `serAparado`, sem execução) e abre o visceral, que então vale por trás.
+  - Código: `Jogador.alvoDoVisceral`, `iniciarVisceral` e `golpeVisceral` (ação `'visceral'`), `Inimigo.receberVisceral` (emite `golpe:visceral { execucao }`) e `Inimigo.desequilibrar`. Pose de estocada no `Boneco.js`. Save não mudou; `Toque.js` não mudou.
+  - **Decidido pela IA (o Heitor revisa):** o visceral exige o inimigo num cone de 60° à frente do caçador e o caçador num cone de 60° à frente do inimigo (`visceral.abertura`); aberto pelas costas, vale o mesmo cone atrás dele; o caçador desliza até 1,15 m do inimigo durante o golpe (`visceral.encosta`); o empurrão do visceral é 7 (`visceral.empurrao`); o forte carregado num inimigo que já estava desequilibrado é só o crítico (não reabre o desequilíbrio, para não virar ciclo infinito); "carga completa" e "pelas costas" ficaram em `carga.completa` e `carga.costas`; o empurrão do forte pelas costas joga o inimigo para longe, então é preciso dar um passo para o visceral.
+- **Ganchos deixados:** `inimigo.abertoParaExecucao` (já usado pela execução do B2) e `inimigo.desequilibrar()` (abre o visceral sem execução; serve ao golpe pelas costas da Etapa D). O aviso `jogador:pulou-golpe` sai quando o jogador pula uma rasteira (Etapa D). `jogador.recuperarComGolpe(dano)` é o ponto de entrada do rally (`Infinity` = rally cheio, usado pelo visceral). `Jogador.receberDano` recebe os dados do golpe (`aparavel`, `bloqueavel`, `evitaPulando`...).
+- **Ainda não existe:** quickstep (PR B3), contra-ataque pisando e dano extra ao pular contra golpe alto.
 - **Infra:** `jogar.bat` com atualização automática, `atualizar.bat`, e regra de integração automática no `AGENTS.md` com o `CLAUDE.md` apontando para ele.
 - **Specs (pronto):** `docs/specs/` tem uma página por tarefa futura (00 a 08), com objetivo, arquivos, critérios de aceite e modelo de IA recomendado. A ordem está na "Fila do Gabriel".
 - **Contrato de área (pronto):** `src/mundo/areas.js` tem o registro das áreas, e cada área declara `luzJogador` e `usaCeu`. Área nova não exige mexer no `Jogo.js`.
@@ -87,7 +94,7 @@ O parry com a pistola já funciona (PR B1). O visceral, a execução e o quickst
   - Frasco com tempo: uns 0,6 s de animação, andando devagar, e a cura é interrompida se o caçador apanhar.
   - Abrir a bolsa não pausa mais o jogo. Só o Esc pausa.
   - Inimigos param de recuar sozinhos só porque estão apanhando.
-- [ ] **B. Pistola, visceral e quickstep** (B1 feito; falta B2 visceral e B3 quickstep):
+- [ ] **B. Pistola, visceral e quickstep** (B1 e B2 feitos; falta B3 quickstep):
   - Tiro instantâneo de curto alcance, sem bala voando. Conta como parry se acertar o inimigo num trecho do aviso dele ou no começo do golpe. Usar a máquina de golpes de `Ataques.js` para saber a fase: a janela fica presa à animação do inimigo, como no Bloodborne. A rasteira não pode ser aparada. O parry e o bloqueio do broquel saem aqui.
   - Munição limitada (balas), recuperada ao descansar na lanterna. Ideia do Bloodborne a considerar: gastar vida para fazer balas. Tiro errado gasta bala, e esse é o anti-spam. O tiro tem recuperação curta.
   - Valores iniciais sugeridos: janela de uns 0,13 s no golpe alto e 0,08 s no pesado, sem preparo antes da janela. Tudo ajustável no `config.js`.
@@ -105,7 +112,7 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
 
 - [x] **0. Specs 00 a 08 escritas** (`docs/specs/`)
 - [x] **0b. Contrato de área aplicado** (spec 00: `src/mundo/areas.js`)
-- [ ] **1. B: pistola, parry, visceral e quickstep** (spec 07; Opus ou Fable) — em andamento: B1 feito (pistola, parry, balas, broquel fora); faltam B2 e B3
+- [ ] **1. B: pistola, parry, visceral e quickstep** (spec 07; Opus ou Fable) — em andamento: B1 e B2 feitos (pistola, parry, balas, broquel fora; visceral, execução, forte carregado); falta B3 quickstep
 - [ ] **2. C: chefe e imprevisibilidade** (spec 08; Opus ou Fable)
 - [ ] **3. S2: botão de gráfico PS1 / HD** (spec 02)
 - [ ] **4. S3: estrada e taverna** (spec 01)

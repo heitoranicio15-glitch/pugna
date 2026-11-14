@@ -60,9 +60,9 @@ export class Hud {
     this.mira.style.top = ponto ? ponto.y + '%' : '';
   }
 
-  /** Palavra curta que pisca no alto da tela (aparo, golpe crítico). */
+  /** Palavra curta que pisca no alto da tela (aparo, golpe crítico, visceral, execução). */
   destacar(tipo) {
-    this.destaque.textContent = { aparou: 'APARADO', critico: 'GOLPE CRÍTICO', pulou: 'POR CIMA' }[tipo];
+    this.destaque.textContent = { aparou: 'APARADO', critico: 'GOLPE CRÍTICO', pulou: 'POR CIMA', visceral: 'VISCERAL', execucao: 'EXECUÇÃO' }[tipo];
     this.destaque.dataset.tipo = tipo;
     this.destaque.classList.remove('visivel');
     void this.destaque.offsetWidth;   // reinicia a animação

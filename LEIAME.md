@@ -85,7 +85,8 @@ continuam guardados no código (`src/interface/Toque.js`) para voltar depois.
 | Correr | Shift (segurando, em qualquer direção) |
 | Pular | Espaço |
 | Ataque leve | Clique esquerdo |
-| Ataque forte | Segurar o clique esquerdo e soltar |
+| Ataque forte (mais carga, mais dano) | Segurar o clique esquerdo e soltar |
+| Visceral / execução | Atacar de frente um inimigo desequilibrado |
 | Atirar com a pistola (parry) | Clique direito ou C |
 | Travar / soltar a mira | Tab ou botão do meio do mouse |
 | Trocar de alvo (mira travada) | Mover o mouse rápido para o lado |
@@ -132,10 +133,19 @@ ou **Alt** para esquivar.
   mira travada ou, sem trava, no mais próximo à frente; parede no meio segura o
   tiro. Se o tiro pegar o inimigo **no fim do aviso dele ou no comecinho do
   golpe**, é um **parry**: o golpe não entra e ele fica **desequilibrado** (o
-  marcador da mira fica vermelho). O próximo golpe nele é **crítico** e causa
-  2,6 vezes o dano. A janela dura uns 0,13 s no golpe alto e uns 0,08 s no
+  marcador da mira fica vermelho). A janela dura uns 0,13 s no golpe alto e uns 0,08 s no
   pesado. Fora dela o tiro só arranha (pouco dano, não faz cambalear) e o golpe
   entra normalmente. O Guardião se recompõe mais rápido.
+- **Visceral:** atacar (leve ou forte) um inimigo desequilibrado **de frente e
+  de perto** vira um golpe especial: o caçador cola nele e enfia a espada
+  (3,5 vezes o dano do leve), com pausa e tremor de tela. Durante a animação
+  ele fica invencível, o golpe não gasta estamina e devolve **toda** a parte
+  laranja da vida (rally cheio). Aparece **VISCERAL** na tela.
+- **Execução:** se o golpe aparado era um **pesado**, o visceral vira
+  execução: 5 vezes o dano do leve, pausa e tremor maiores e um sino mais grave.
+  Aparece **EXECUÇÃO**.
+- **Crítico:** bater num inimigo desequilibrado de lado ou de longe (sem
+  visceral) continua sendo um golpe crítico de 2,6 vezes o dano.
 - **Balas:** são 8 (contador acima dos frascos). Todo tiro gasta uma, acertando
   ou não: atirar sem parar não compensa. Elas só voltam ao **descansar** na
   lanterna, ao morrer ou com o Osso de Retorno. Sem bala, a pistola só dá um
@@ -150,6 +160,10 @@ ou **Alt** para esquivar.
 - Toque e solte para um ataque leve. Ao carregar um ataque forte, o caçador
   ergue a espada e um som sinaliza a carga. O golpe acompanha a passagem da lâmina e
   é interrompido se atingir pedra antes do alvo.
+- **Ataque forte carregado:** quanto mais tempo segurando, mais dano (até 1,6
+  vez o forte na carga máxima; ao chegar nela o golpe sai sozinho). Com a carga
+  **completa** acertando o inimigo **pelas costas**, ele fica desequilibrado e
+  abre o visceral (por trás; sem execução).
 - O ataque forte **interrompe** o golpe dos inimigos comuns. O ataque leve
   interrompe o caçador corrompido. O Guardião mantém o ataque mesmo ao receber um golpe forte.
 - **Apanhar interrompe você.** Se um golpe entrar durante o seu ataque leve, o
@@ -185,9 +199,8 @@ avisa de um jeito e pede uma resposta diferente:
 | **Pesado** | Arma atrás da cabeça, corpo arqueado; arma e olhos **vermelhos**; sino grave | Tiro de pistola com a janela mais curta, ou esquivar |
 | **Rasteira** | Agacha com a arma de lado; arma e olhos **amarelos**; aço raspando e dois estalos | **Pular** (**Espaço**). É larga e pega quem está de lado. O tiro não apara (só arranha e gasta a bala) |
 
-A esquiva serve contra os três, mas não dá recompensa. Aparar um golpe pesado
-dá, por enquanto, o mesmo golpe crítico de um aparo comum (a execução vem no
-próximo passo da Etapa B).
+A esquiva serve contra os três, mas não dá recompensa. Aparar o golpe alto abre
+o **visceral**; aparar o pesado abre a **execução**, que causa ainda mais dano.
 - Ao morrer você volta à última **lanterna** em que descansou. Descansar recupera
   vida, estamina e balas e faz os inimigos comuns reaparecerem.
 
@@ -238,7 +251,8 @@ onde você volta ao morrer ou reabrir o jogo.
   A câmera gira em volta do caçador e encurta ao encostar em paredes.
 - Boneco simples do caçador (chapéu, capa, espada e pistola), animado no código.
 - Combate com ataque leve, forte, esquiva com rolamento, estamina, mira travada,
-  pistola com parry, balas limitadas e golpe crítico.
+  pistola com parry, balas limitadas, golpe crítico, visceral, execução e
+  ataque forte que cresce com a carga.
 - Regras contra o spam: apanhar interrompe o ataque, inimigos com firmeza,
   rally (recuperar vida revidando), frasco com tempo e bolsa que não pausa.
 - Cavaleiro, caçador, penitente e Guardião do Véu, com patrulha e combate.
@@ -307,6 +321,9 @@ pugna/
   tipo de golpe é multiplicada por `janelaAparar` em `combate.ataquesInimigos`.
   A regra que prende a janela à fase do golpe é `naJanelaDeAparo` em
   `src/entidades/Ataques.js`
+- **mudar o visceral, a execução ou a carga do forte:** blocos
+  `combate.visceral`, `combate.execucao` e `combate.carga` em `src/config.js`
+  (o crítico comum fica em `combate.critico`)
 - **mudar a aparência ou as poses do caçador:** `src/entidades/Boneco.js`
 - **mudar o mapa** (mover casa, pôr tocha, pôr inimigo): `src/mundo/Vilarejo.js`
 - **mudar o título do jogo:** `titulo` em `src/config.js`
@@ -359,7 +376,8 @@ pugna/
 - [x] Contra o spam: interrupção ao apanhar, firmeza dos inimigos, rally, frasco
       com tempo e bolsa sem pausa
 - [x] Pistola como parry, com balas (o broquel saiu do combate)
-- [ ] Golpe visceral, execução e quickstep
+- [x] Golpe visceral, execução e ataque forte carregado
+- [ ] Quickstep (esquiva curta com a mira travada)
 - [ ] Combate menos genérico: golpe pelas costas, sequências de ataques, armas
       com ritmos diferentes
 - [x] Interior da catedral
@@ -393,7 +411,7 @@ pugna/
 ## Testes
 
 - `npm test` verifica a janela de acerto, o custo da esquiva, o tiro de pistola
-  (janela do parry, balas, parede, alcance) e o golpe crítico, as fases e os tipos de ataque dos inimigos, a interrupção ao apanhar,
+  (janela do parry, balas, parede, alcance), o golpe crítico, o visceral, a execução e a carga do forte, as fases e os tipos de ataque dos inimigos, a interrupção ao apanhar,
   a firmeza dos inimigos, o rally, o frasco interrompido, a mira travada, a câmera em terceira pessoa, colisões, navegação,
   interação com objetos, inventário, Osso de Retorno e migração de saves.
 - `npx playwright-core install chromium` instala o navegador de teste.
@@ -401,7 +419,8 @@ pugna/
   incluindo transições, checkpoint, morte, recarga e derrota do Guardião.
   Também testa o percurso da vila até a sacristia, o frasco com tempo, o rally,
   a bolsa sem pausa, o Osso de Retorno, o contador de balas (atirar baixa,
-  descansar repõe) e o atalho após recarregar.
+  descansar repõe), o dano do forte com carga, um visceral no Guardião e o
+  atalho após recarregar.
   O cenário de celular está congelado e saiu dos testes obrigatórios. Para
   conferi-lo mesmo assim, rode `npm run test:celular`.
   Para usar um Chrome instalado, aponte `PUGNA_CHROME` para o executável.

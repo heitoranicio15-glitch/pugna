@@ -155,6 +155,11 @@ export class Boneco {
       } else if (j.acao === 'curando') {
         // Bebendo o frasco: leva a mão esquerda à boca e inclina a cabeça para trás.
         alvo.bex = -2.3; alvo.bez = -0.35; alvo.cx = -0.14;
+      } else if (j.acao === 'visceral') {
+        // Visceral: recolhe a espada torcendo o tronco e estoca de ponta, com tudo.
+        alvo.esx = 1.55; alvo.bex = 0.3;
+        if (j.tAcao < CB.visceral.momento) { alvo.bdx = -0.7; alvo.cy = 0.6; alvo.cx = -0.12; k = dt > 0 ? 1 - Math.exp(-dt * 18) : 1; }
+        else { alvo.bdx = -1.62; alvo.cy = -0.2; alvo.cx = 0.32; k = dt > 0 ? 1 - Math.exp(-dt * 40) : 1; }
       } else if (j.acao === 'tiro') {
         // Tiro: o braço esquerdo estica à frente e o coice joga a pistola para cima.
         const coice = Math.max(0, 1 - j.tAcao / (CB.pistola.recuperacao * 0.4));
