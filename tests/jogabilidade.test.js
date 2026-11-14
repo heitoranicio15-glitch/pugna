@@ -137,6 +137,60 @@ test('esquiva fica na fila durante a recuperação e respeita o custo', () => {
   assert.equal(jogador.tEsquiva, 0);
 });
 
+test('sem mira a esquiva é o rolamento, com invencibilidade de 0,22 s', () => {
+  const { jogador, entrada, eventos } = arena();
+  const E = CONFIG.combate.esquiva;
+  assert.equal(E.invencivel, 0.22);
+  const avisos = [];
+  eventos.em('jogador:esquiva', (d) => avisos.push(d));
+  entrada.segurando = (codigo) => codigo === 'KeyD';
+  entrada.apertou = (codigo) => codigo === 'KeyQ';
+  jogador.atualizar(0.01);
+  entrada.apertou = () => false;
+  assert.equal(jogador.quickstep, false);
+  assert.equal(jogador.rolando, true);
+  assert.equal(jogador.estamina, 100 - E.custo);
+  assert.ok(Math.abs(jogador.invencivel - E.invencivel) < 1e-9);
+  assert.deepEqual(avisos, [{ quickstep: false }]);
+});
+
+test('com a mira travada a esquiva vira quickstep: mais barato, sem rolar e com menos invencibilidade', () => {
+  const { jogador, entrada, eventos, alvo } = arena();
+  const Q = CONFIG.combate.quickstep, E = CONFIG.combate.esquiva;
+  assert.ok(Q.invencivel < E.invencivel);
+  assert.ok(Q.custo < E.custo);
+  const avisos = [];
+  eventos.em('jogador:esquiva', (d) => avisos.push(d));
+  jogador.alvo = alvo;
+  entrada.segurando = (codigo) => codigo === 'KeyD';
+  entrada.apertou = (codigo) => codigo === 'KeyQ';
+  jogador.atualizar(0.01);
+  entrada.apertou = () => false;
+  assert.equal(jogador.quickstep, true);
+  assert.equal(jogador.rolando, false);
+  assert.equal(jogador.estamina, 100 - Q.custo);
+  assert.ok(Math.abs(jogador.invencivel - Q.invencivel) < 1e-9);
+  assert.deepEqual(avisos, [{ quickstep: true }]);
+  // Passo de lado: o corpo continua virado para o alvo e o passo dura pouco.
+  assert.ok(jogador.vel.x > 0);
+  assert.ok(Math.abs(jogador.vel.z) < 1e-6);
+  for (let i = 0; i < 5; i++) jogador.atualizar(0.05);
+  assert.ok(jogador.tEsquiva <= 0);
+  assert.ok(jogador.invencivel <= 0);
+  assert.equal(jogador.receberDano(10, { x: 0, z: -1 }) === 'esquivou', false);
+});
+
+test('quickstep parado recua, afastando-se do alvo', () => {
+  const { jogador, entrada, alvo } = arena();
+  jogador.alvo = alvo;
+  jogador.rumo = 0;   // de frente para o alvo (em -z)
+  entrada.apertou = (codigo) => codigo === 'KeyQ';
+  jogador.atualizar(0.01);
+  entrada.apertou = () => false;
+  assert.equal(jogador.quickstep, true);
+  assert.ok(jogador.vel.z > 0);
+});
+
 test('navegação contorna parede, respeita raio e reage à abertura da grade', () => {
   const col = new Colisores();
   col.adicionar(0, -3, 0.35, 4.1);

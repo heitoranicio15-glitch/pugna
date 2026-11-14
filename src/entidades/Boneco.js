@@ -140,8 +140,11 @@ export class Boneco {
     } else {
       this.queda = 0;
       if (j.tEsquiva > 0) {
-        const p = 1 - j.tEsquiva / CB.esquiva.duracao;
-        if (j.rolando) {           // rola para a frente, encolhido
+        const p = 1 - j.tEsquiva / (j.quickstep ? CB.quickstep : CB.esquiva).duracao;
+        if (j.quickstep) {         // quickstep: passo curto e baixo, de frente para o alvo
+          altura = ALTURA_MIOLO - 0.12 * Math.sin(Math.PI * p);
+          alvo.cx = 0.12; alvo.bdx = -0.35; alvo.bex = -0.35;
+        } else if (j.rolando) {           // rola para a frente, encolhido
           rolo = p * Math.PI * 2;
           altura = ALTURA_MIOLO - 0.45 * Math.sin(Math.PI * p);
           escala = 1 - 0.22 * Math.sin(Math.PI * p);

@@ -58,6 +58,7 @@ export class Jogador {
     this.tEsquiva = 0; this.esperaEsquiva = 0; this.invencivel = 0;
     this.dirEsquiva = new THREE.Vector2();
     this.rolando = false;       // esquiva com direção (rola) ou parado (salta para trás)
+    this.quickstep = false;     // com a mira travada a esquiva é um passo curto, sem rolar
     this.tiroNaFila = 0;
     this.ataqueNaFila = 0;
     this.tipoNaFila = null;
@@ -114,20 +115,27 @@ export class Jogador {
     // A esquiva corta o fim de um golpe ou do tiro, depois de "liberarEsquiva".
     const podeCancelar = (this.acao === 'recuperacao' && this.tAcao + dt >= CB[this.ataque].liberarEsquiva) ||
       (this.acao === 'tiro' && this.tAcao + dt >= CB.pistola.liberarEsquiva);
+    // Com a mira travada a esquiva vira quickstep: passo curto, mais barato, com
+    // menos invencibilidade e recuperação curta. Sem mira, é o rolamento.
+    const E = this.alvo ? CB.quickstep : CB.esquiva;
     if (this.esquivaNaFila > 0 && this.tEsquiva <= 0 && this.esperaEsquiva <= 0 && this.noChao &&
-        !this.exausto && this.estamina >= CB.esquiva.custo && (this.acao === 'livre' || podeCancelar)) {
-      this.gastar(CB.esquiva.custo);
-      this.tEsquiva = CB.esquiva.duracao; this.invencivel = CB.esquiva.invencivel;
-      this.esperaEsquiva = CB.esquiva.duracao + CB.esquiva.espera;
-      this.rolando = comp > 0;
-      if (this.rolando) {         // rola na direção do movimento
+        !this.exausto && this.estamina >= E.custo && (this.acao === 'livre' || podeCancelar)) {
+      this.gastar(E.custo);
+      this.tEsquiva = E.duracao; this.invencivel = E.invencivel;
+      this.esperaEsquiva = E.duracao + E.espera;
+      this.quickstep = !!this.alvo;
+      this.rolando = !this.quickstep && comp > 0;
+      if (this.quickstep) {       // passo na direção apertada, sem virar o corpo (parado: para trás)
+        if (comp > 0) this.dirEsquiva.set(dx, dz).normalize();
+        else this.dirEsquiva.set(Math.sin(this.rumo), Math.cos(this.rumo));
+      } else if (this.rolando) {  // rola na direção do movimento
         this.dirEsquiva.set(dx, dz).normalize();
         this.rumo = Math.atan2(-dx, -dz);
       } else this.dirEsquiva.set(Math.sin(this.rumo), Math.cos(this.rumo));   // parado: salta para trás
       this.acao = 'livre'; this.ataque = null; this.carregando = false;
       this.ataqueNaFila = 0;
       this.esquivaNaFila = 0;
-      this.jogo.eventos.emitir('jogador:esquiva');
+      this.jogo.eventos.emitir('jogador:esquiva', { quickstep: this.quickstep });
     }
     this.atualizarCombate(dt, e);
 
@@ -159,7 +167,8 @@ export class Jogador {
       }
     } else if (this.tEsquiva > 0) {
       this.tEsquiva -= dt;
-      const f = CB.esquiva.velocidade * (0.45 + 0.55 * this.tEsquiva / CB.esquiva.duracao);
+      const E = this.quickstep ? CB.quickstep : CB.esquiva;
+      const f = E.velocidade * (0.45 + 0.55 * this.tEsquiva / E.duracao);
       this.vel.x = this.dirEsquiva.x * f; this.vel.z = this.dirEsquiva.y * f;
     } else {
       // Aceleração suave: o corpo tem peso, não muda de direção na hora.
