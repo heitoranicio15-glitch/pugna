@@ -55,8 +55,6 @@ export class Jogo {
     this.ceu = new Ceu(this.cena);
     const { areas, porId, inicial } = criarAreas(this.cena, this.ceu);
     this.areas = areas;
-    this.materiaisHd = new MateriaisHd(areas);
-    this.materiaisHd.definirEstilo(this.render.estilo);
     this.areasPorId = porId;
     this.areaInicial = inicial;
     this.vilarejo = porId.get('vilarejo');
@@ -77,6 +75,8 @@ export class Jogo {
       area.lanternas = area.pontosDeDescanso.map((p) => new Lanterna(area, p));
       area.navegacao = new Navegacao(area.colisores, area.limites);
     }
+    this.materiaisHd = new MateriaisHd([...areas, this.boneco]);
+    this.materiaisHd.definirEstilo(this.render.estilo);
     this.checkpoints = new Map(this.areas.flatMap((area) => area.lanternas.map((lanterna) => [lanterna.id, { area, lanterna }])));
     this.guardiao = this.catedral.entidades.find((i) => i.tipo === 'guardiao');
     this.progresso = normalizarProgresso();

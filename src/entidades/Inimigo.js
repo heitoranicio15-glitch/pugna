@@ -26,6 +26,7 @@ import { CONFIG } from '../config.js';
 import { retro } from '../render/retro.js';
 import { texturas } from '../render/texturas.js';
 import { MaquinaDeAtaque, ehFaseDeAtaque, golpeAlcanca, sortearSequencia } from './Ataques.js';
+import { caixa as cx, corpoFacetado, lamina, manto, materialDePersonagem, parte as facetado } from './formas.js';
 
 const v2 = new THREE.Vector3();
 
@@ -35,40 +36,43 @@ function montarCorpo(tipo) {
   const guardiao = tipo === 'guardiao';
   const penitente = tipo === 'penitente';
   const cavaleiro = tipo === 'cavaleiro' || guardiao;
-  const armadura = retro(new THREE.MeshLambertMaterial({ map: t.metal, color: guardiao ? 0xb19565 : cavaleiro ? 0x8088c8 : 0x6a6aa0 }));
+  const metal = { asset: 'Metal032', normal: 0.35, metalness: 0.54 };
+  const armadura = materialDePersonagem(t.metal, guardiao ? 0xb19565 : cavaleiro ? 0x909ac8 : 0x6a6aa0, metal);
   const corPano = { guardiao: 0xa34262, penitente: 0x795270, cavaleiro: 0x7a3a8a, cacador: 0x9090d0 };
-  const pano = retro(new THREE.MeshLambertMaterial({ map: t.tecido, color: corPano[tipo], side: THREE.DoubleSide }));
-  const aco = retro(new THREE.MeshLambertMaterial({ map: t.metal, color: 0xd8dcff }));
+  const pano = materialDePersonagem(t.trama, corPano[tipo], { asset: 'caban', side: THREE.DoubleSide });
+  const aco = materialDePersonagem(t.metal, 0xd8dcff, metal);
+  const sombraElmo = retro(new THREE.MeshBasicMaterial({ color: 0x08060d }));
   const olho = retro(new THREE.MeshBasicMaterial({ color: guardiao ? 0xffad67 : CONFIG.paleta.magia }));
-  const cx = (l, a, p, m, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(new THREE.BoxGeometry(l, a, p), m); o.position.set(x, y, z); return o; };
-  const facetado = (geometria, material, x, y, z) => {
-    const malha = new THREE.Mesh(geometria, material);
-    malha.position.set(x, y, z);
-    return malha;
-  };
 
   const g = new THREE.Group();
   const corpo = new THREE.Group(); g.add(corpo);                 // tudo menos as pernas (inclina ao atacar)
   const larg = cavaleiro ? 0.72 : 0.5;
-  corpo.add(cx(larg, 0.72, 0.36, armadura, 0, 1.22, 0));         // tronco
-  corpo.add(cx(larg * 0.8, 0.2, 0.3, pano, 0, 0.82, 0));         // cintura
-  if (guardiao) {
-    const elmo = facetado(new THREE.CylinderGeometry(0.24, 0.175, 0.42, 6), armadura, 0, 1.78, 0);
-    elmo.rotation.y = Math.PI / 6;
-    corpo.add(elmo);
-    corpo.add(cx(0.26, 0.04, 0.06, olho, 0, 1.8, 0.176));
-  } else {
-    const elmo = facetado(new THREE.CylinderGeometry(0.205, 0.164, 0.39, 6), armadura, 0, 1.78, 0);
-    elmo.rotation.y = Math.PI / 6;
-    corpo.add(elmo);
-    corpo.add(cx(0.24, 0.045, 0.02, olho, 0, 1.8, 0.185));
+  corpo.add(facetado(corpoFacetado([
+    [0.86, larg * 0.7, 0.31], [1.06, larg * 0.8, 0.37],
+    [1.38, larg, cavaleiro ? 0.48 : 0.4, 0.024],
+    [1.48, larg * 0.9, 0.36], [1.58, larg * 0.48, 0.28],
+  ]), armadura));
+  corpo.add(facetado(corpoFacetado([[0.72, larg * 0.82, 0.33], [0.94, larg * 0.78, 0.35]]), pano));
+  const larguraElmo = guardiao ? 0.49 : 0.395;
+  corpo.add(facetado(corpoFacetado([
+    [1.58, larguraElmo * 0.73, 0.31], [1.67, larguraElmo, 0.37],
+    [1.85, larguraElmo, 0.42], [1.97, larguraElmo * 0.78, 0.32],
+    [2.015, 0.06, 0.06],
+  ]), armadura));
+  corpo.add(cx(larguraElmo * 0.74, 0.084, 0.045, sombraElmo, 0, 1.805, 0.192));
+  for (const lado of [-1, 1]) {
+    corpo.add(cx(larguraElmo * 0.26, 0.031, 0.012, olho, lado * larguraElmo * 0.188, 1.811, 0.217));
   }
+  if (cavaleiro) corpo.add(cx(0.065, 0.208, 0.067, armadura, 0, 1.725, 0.199));
   if (cavaleiro) {
     if (guardiao) {
       for (const lado of [-1, 1]) {
         const ombreira = facetado(new THREE.IcosahedronGeometry(0.31), armadura, lado * 0.49, 1.53, 0);
         ombreira.scale.set(1.3, 0.75, 1.1);
         corpo.add(ombreira);
+        const colar = facetado(new THREE.IcosahedronGeometry(0.16), armadura, lado * 0.57, 1.4, 0.035);
+        colar.scale.set(1.45, 0.65, 1.2);
+        corpo.add(colar);
         const ponta = facetado(new THREE.ConeGeometry(0.08, 0.36, 4), aco, lado * 0.15, 2.03, -0.035);
         ponta.rotation.z = -lado * 0.58;
         corpo.add(ponta);
@@ -82,7 +86,10 @@ function montarCorpo(tipo) {
       }
       corpo.add(cx(0.06, 0.3, 0.4, pano, 0, 2.05, -0.02));
     }
-    corpo.add(cx(0.5, 0.75, 0.04, pano, 0, 0.55, 0.19));         // tabardo
+    const tabardo = manto(pano, 0.42, 0.73);
+    tabardo.position.set(0, 0.95, 0.19);
+    tabardo.rotation.y = Math.PI;
+    corpo.add(tabardo);
   } else if (penitente) {
     const capuz = new THREE.Mesh(new THREE.ConeGeometry(0.29, 0.46, 4), pano);
     capuz.position.set(0, 1.99, -0.06);
@@ -93,11 +100,20 @@ function montarCorpo(tipo) {
   } else {
     const aba = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.04, 6), pano); aba.position.y = 1.97; corpo.add(aba); // chapéu
     const copa = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.34, 5), pano); copa.position.y = 2.14; corpo.add(copa);
-    const capa = cx(0.62, 1.15, 0.04, pano, 0, 1.0, -0.22); capa.rotation.x = 0.12; corpo.add(capa);
+    const capa = manto(pano, 0.68, 1.15); capa.position.set(0, 1.51, -0.2); corpo.add(capa);
     corpo.add(cx(0.36, 0.14, 0.38, pano, 0, 1.66, 0));           // gola/lenço cobrindo o rosto
   }
-  const perna = (x) => { const p = new THREE.Group(); p.position.set(x, 0.86, 0); p.add(cx(0.2, 0.86, 0.22, armadura, 0, -0.43, 0)); g.add(p); return p; };
-  const braco = (x) => { const b = new THREE.Group(); b.position.set(x, 1.5, 0); b.add(cx(0.17, 0.7, 0.18, armadura, 0, -0.33, 0)); corpo.add(b); return b; };
+  const malhaPerna = corpoFacetado([
+    [-0.86, 0.205, 0.31, 0.065], [-0.76, 0.21, 0.32, 0.067],
+    [-0.7, 0.15, 0.19], [-0.42, 0.22, 0.25, 0.025],
+    [-0.34, 0.19, 0.2], [0, 0.235, 0.235],
+  ], 6);
+  const malhaBraco = corpoFacetado([
+    [-0.68, 0.12, 0.14], [-0.59, 0.16, 0.18], [-0.4, 0.19, 0.2],
+    [-0.33, 0.155, 0.16], [-0.06, 0.225, 0.23], [0.055, 0.13, 0.15],
+  ], 6);
+  const perna = (x) => { const p = new THREE.Group(); p.position.set(x, 0.86, 0); p.add(facetado(malhaPerna, armadura)); g.add(p); return p; };
+  const braco = (x) => { const b = new THREE.Group(); b.position.set(x, 1.5, 0); b.add(facetado(malhaBraco, armadura)); corpo.add(b); return b; };
   const pernaE = perna(-0.16), pernaD = perna(0.16);
   const bracoE = braco(-(larg / 2 + 0.1)), bracoD = braco(larg / 2 + 0.1);
 
@@ -115,7 +131,7 @@ function montarCorpo(tipo) {
       arma.add(ponta);
     }
   } else {
-    arma.add(cx(cavaleiro ? 0.1 : 0.06, 0.03, comp, aco, 0, 0, comp / 2 + 0.1));
+    arma.add(lamina(aco, cavaleiro ? 0.135 : 0.075, comp));
     arma.add(cx(0.3, 0.05, 0.05, armadura, 0, 0, 0.1));
   }
   bracoD.add(arma);

@@ -1,6 +1,6 @@
 // =============================================================================
 //  O BONECO DO CAÇADOR (o que se vê do jogador em terceira pessoa)
-//  Modelo simples, feito de caixas e cones, no mesmo estilo dos inimigos.
+//  Malhas facetadas presas aos mesmos pivôs das animações.
 //  Este arquivo só ANIMA: quem decide o que acontece é o Jogador.js.
 //
 //  O modelo "olha" para +Z. O braço da espada fica em -X (a direita dele) e o
@@ -9,8 +9,8 @@
 // =============================================================================
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
-import { retro } from '../render/retro.js';
 import { texturas } from '../render/texturas.js';
+import { caixa as cx, corpoFacetado, lamina, manto, materialDePersonagem, parte } from './formas.js';
 
 const CB = CONFIG.combate;
 const ALTURA_MIOLO = 0.95;   // centro do corpo: é em volta dele que o boneco rola
@@ -25,20 +25,16 @@ export class Boneco {
   constructor(cena) {
     const t = texturas();
     // Um pouco de brilho próprio: o caçador continua legível mesmo longe das tochas.
-    const mat = (map, color, extra = {}) => retro(new THREE.MeshLambertMaterial({
-      map, color, emissiveMap: map, emissive: new THREE.Color(color).multiplyScalar(0.4), ...extra,
-    }));
-    const casaco = mat(t.tecido, 0x8f7a94, { side: THREE.DoubleSide });
-    const couro = mat(t.madeira, 0xa08878);
-    const lenco = mat(t.tecido, 0xd8565a, { side: THREE.DoubleSide });
-    const pele = mat(t.tecido, 0xe0c2aa);
-    const aco = mat(t.metal, 0xe4e8ff);
-    const escuro = mat(t.metal, 0x6a6a9a);
-    const cx = (l, a, p, m, x = 0, y = 0, z = 0) => {
-      const o = new THREE.Mesh(new THREE.BoxGeometry(l, a, p), m);
-      o.position.set(x, y, z);
-      return o;
-    };
+    const mat = (map, color, extra = {}) => materialDePersonagem(map, color, { brilho: 0.35, ...extra });
+    const tecido = { asset: 'caban', side: THREE.DoubleSide };
+    const metal = { asset: 'Metal032', metalness: 0.48, normal: 0.28 };
+    const casaco = mat(t.trama, 0x73677f, tecido);
+    const couro = mat(t.madeira, 0x7f6e67, { asset: 'fabric_leather_01', normal: 0.35 });
+    const lenco = mat(t.trama, 0xae4353, tecido);
+    const pele = mat(null, 0xb99985);
+    const aco = mat(t.metal, 0xe4e8ff, metal);
+    const escuro = mat(t.metal, 0x777a93, metal);
+    const latao = mat(t.metal, 0xcaaa77, metal);
 
     this.grupo = new THREE.Group();
     this.miolo = new THREE.Group();
@@ -52,7 +48,13 @@ export class Boneco {
     const perna = (x) => {
       const p = new THREE.Group();
       p.position.set(x, 0.86, 0);
-      p.add(cx(0.19, 0.6, 0.21, casaco, 0, -0.3, 0), cx(0.2, 0.3, 0.25, couro, 0, -0.71, 0.015));
+      p.add(parte(corpoFacetado([
+        [-0.6, 0.18, 0.18], [-0.32, 0.19, 0.2], [0, 0.22, 0.21],
+      ]), casaco));
+      p.add(parte(corpoFacetado([
+        [-0.86, 0.2, 0.31, 0.06], [-0.77, 0.21, 0.34, 0.065],
+        [-0.71, 0.18, 0.21, 0.015], [-0.52, 0.21, 0.22],
+      ]), couro));
       base.add(p);
       return p;
     };
@@ -66,25 +68,31 @@ export class Boneco {
     tronco.position.y = -ALTURA_CINTURA;
     this.corpo.add(tronco);
     base.add(this.corpo);
-    tronco.add(cx(0.5, 0.62, 0.3, casaco, 0, 1.2, 0));
-    tronco.add(cx(0.44, 0.12, 0.33, couro, 0, 0.9, 0));            // cinto
-    tronco.add(cx(0.36, 0.16, 0.36, lenco, 0, 1.56, 0));           // lenço no pescoço
-    tronco.add(cx(0.25, 0.24, 0.25, pele, 0, 1.72, 0));            // cabeça
-    const aba = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.04, 6), couro);
-    aba.position.y = 1.86;
-    const copa = new THREE.Mesh(new THREE.ConeGeometry(0.19, 0.3, 5), couro);
-    copa.position.y = 2.02;
-    tronco.add(aba, copa);
+    tronco.add(
+      parte(corpoFacetado([[0.65, 0.55, 0.36], [0.94, 0.43, 0.3], [1.39, 0.55, 0.34], [1.51, 0.32, 0.28]]), casaco),
+      parte(corpoFacetado([[0.88, 0.46, 0.33], [0.98, 0.465, 0.335]]), couro),
+      cx(0.105, 0.085, 0.03, latao, 0, 0.93, 0.161),
+      cx(0.12, 0.17, 0.105, couro, 0.195, 0.84, 0.1),
+      parte(corpoFacetado([[1.49, 0.36, 0.36], [1.6, 0.29, 0.31, 0.03], [1.65, 0.26, 0.29, 0.035]]), lenco),
+      parte(corpoFacetado([[1.57, 0.16, 0.18], [1.68, 0.235, 0.25, 0.016], [1.8, 0.255, 0.235], [1.89, 0.19, 0.18]]), pele),
+      parte(new THREE.CylinderGeometry(0.37, 0.38, 0.032, 8), couro, 0, 1.856, 0),
+      parte(corpoFacetado([[1.86, 0.39, 0.34], [1.93, 0.35, 0.32], [2.11, 0.28, 0.285, -0.035], [2.16, 0.02, 0.02, -0.055]]), couro),
+      parte(corpoFacetado([[1.88, 0.395, 0.348], [1.925, 0.365, 0.332]]), escuro),
+      cx(0.07, 0.044, 0.025, latao, 0.105, 1.904, 0.163),
+    );
     this.capa = new THREE.Group();
     this.capa.position.set(0, 1.5, -0.17);
-    this.capa.add(cx(0.56, 0.95, 0.04, lenco, 0, -0.475, 0));
+    this.capa.add(manto(lenco, 0.67, 1.07));
     tronco.add(this.capa);
 
     // ---------- braços ----------
     const braco = (x) => {
       const b = new THREE.Group();
       b.position.set(x, 1.46, 0);
-      b.add(cx(0.15, 0.5, 0.17, casaco, 0, -0.24, 0), cx(0.13, 0.2, 0.15, couro, 0, -0.58, 0));
+      b.add(
+        parte(corpoFacetado([[-0.49, 0.135, 0.15], [-0.2, 0.17, 0.18], [0, 0.205, 0.21], [0.045, 0.13, 0.14]]), casaco),
+        parte(corpoFacetado([[-0.69, 0.095, 0.1], [-0.64, 0.137, 0.16], [-0.48, 0.158, 0.175]]), couro),
+      );
       tronco.add(b);
       return b;
     };
@@ -95,8 +103,8 @@ export class Boneco {
     this.espada = new THREE.Group();
     this.espada.position.set(0, -0.66, 0.03);
     this.espada.add(
-      cx(0.055, 0.02, 0.98, aco, 0, 0, 0.6),
-      cx(0.26, 0.05, 0.05, escuro, 0, 0, 0.1),
+      lamina(aco, 0.075, 0.98),
+      cx(0.26, 0.045, 0.05, latao, 0, 0, 0.1),
       cx(0.04, 0.04, 0.2, couro, 0, 0, -0.02),
     );
     this.bracoD.add(this.espada);
@@ -106,8 +114,9 @@ export class Boneco {
     this.pistola = new THREE.Group();
     this.pistola.position.set(0, -0.66, 0.03);
     this.pistola.add(
-      cx(0.05, 0.36, 0.05, escuro, 0, -0.16, 0.03),   // cano
+      parte(new THREE.CylinderGeometry(0.033, 0.031, 0.38, 8), escuro, 0, -0.16, 0.03),
       cx(0.07, 0.12, 0.08, aco, 0, 0.0, 0.03),         // corpo do mecanismo
+      cx(0.078, 0.022, 0.075, latao, 0, -0.27, 0.028),
       cx(0.06, 0.09, 0.2, couro, 0, 0.03, -0.1),       // coronha
     );
     this.bracoE.add(this.pistola);

@@ -319,7 +319,9 @@ ficam em `CONFIG.areas.estrada` e `CONFIG.areas.taverna` (`src/config.js`).
   tem arco e cornija. O HD também usa ardósia escaneada nos telhados e nas lajes.
 - Movimento em terceira pessoa com colisão; dá para subir em caixotes e degraus.
   A câmera gira em volta do caçador e encurta ao encostar em paredes.
-- Boneco simples do caçador (chapéu, capa, espada e pistola), animado no código.
+- Caçador com chapéu, capa com pregas, espada e pistola animados no código.
+  Os inimigos têm armaduras facetadas e viseiras que acendem nos avisos de
+  golpe. O modo HD acrescenta materiais de tecido, couro e aço.
 - Combate com ataque leve, forte, esquiva com rolamento (quickstep com a mira travada), estamina, mira travada,
   pistola com parry, balas limitadas, golpe crítico, visceral, execução e
   ataque forte que cresce com a carga.
@@ -459,7 +461,7 @@ pugna/
 - [x] Inimigos contornam obstáculos e procuram a última posição visível
 - [x] Paredes bloqueiam a detecção inicial e golpes
 - [x] Câmera em terceira pessoa com boneco simples do caçador
-- [ ] Boneco do caçador mais detalhado (hoje é feito de caixas)
+- [x] Boneco facetado do caçador com capa, botas, chapéu e armas remodelados
 - [ ] Trocar sons sintetizados por gravações CC0; música ambiente
 - [x] Menu de configurações e opção de apagar o progresso
 - [x] Salvamento estilo Souls e Osso de Retorno

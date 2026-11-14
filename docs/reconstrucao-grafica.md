@@ -12,8 +12,9 @@ Em `src/mundo/pecas.js`, `materiais()` associa as variantes HD aos materiais
 compartilhados. A montagem de todas as áreas ocorre antes de
 `MateriaisHd` reunir as malhas, inclusive as que têm vários materiais.
 Novas áreas que usem essas peças recebem o acabamento na mesma montagem.
-Os arquivos WebP de 1K somam cerca de 3,4 MiB, baixados na primeira seleção de
-HD. Se um conjunto falhar, o material original serve de reserva.
+Os arquivos WebP de cenário (1K) e personagem (512²) somam cerca de 3,6 MiB,
+baixados na primeira seleção de HD. Se um conjunto falhar, o material
+original serve de reserva.
 
 ## Segundo incremento
 
@@ -32,6 +33,21 @@ HD. Se um conjunto falhar, o material original serve de reserva.
   O PS1 limita os canais à faixa de cor antes do pontilhado. Isso evita a
   inversão de cor em superfícies muito próximas da lareira e das tochas.
 
+## Terceiro incremento
+
+- **Caçador.** Capa com pregas e barra irregular, chapéu com faixa e fivela,
+  casaco, botas, lâmina com espinha e cano facetado na pistola.
+- **Inimigos.** Peitorais, grevas e braçadeiras facetados, dois pontos de luz
+  na viseira, tabardos, manto e lâminas novas. O Guardião conserva a maça
+  e o elmo com pontas. As versões de material compartilham a cor emissiva
+  que acende a arma na preparação de um golpe.
+- **Taverneiro.** Rosto e barba facetados, mangas e avental com alças. A pose
+  de polir a caneca e a conversa seguem a implementação existente.
+
+As peças em `src/entidades/formas.js` usam os pivôs das animações atuais. O
+PS1 conserva a leitura facetada; o HD usa os mapas de lã, couro e aço.
+Guarde a criação de NPCs e o contrato de falas para S4.
+
 ## Teste de jogo para Gabriel e Heitor
 
 1. Abra o [jogo publicado](https://heitoranicio15-glitch.github.io/pugna/) e anote
@@ -45,6 +61,9 @@ HD. Se um conjunto falhar, o material original serve de reserva.
 3. Troque de modo em pausa e recarregue. Confira que a resolução e o estilo
    foram lembrados. Use a lanterna da taverna na estrada e verifique o
    renascimento após recarregar. Dentro, confira a fala do taverneiro e o bilhete.
+   Compare o movimento da capa ao correr e rolar, a pose da pistola durante
+   o tiro e o aviso dos três tipos de ataque. Confira o Guardião em ambas
+   as fases e o encaixe das mãos do taverneiro na caneca.
 4. Heitor, repita o trecho em HD 1080p, 1440p e, se houver tela 4K, em 2160p
    com **F** para tela cheia. Anote quedas de fluidez e o tempo até aparecerem
    os materiais na primeira seleção de HD. Para medir, grave 20 segundos do
@@ -86,6 +105,14 @@ medição em GPU e em 4K precisam de validação à parte.
    ponte. O primeiro personagem com esqueleto deve ser combinado com S4. Leve
    a luz, névoa e identidade por área para S5, comparando legibilidade antes
    de acrescentar sombras ou reflexos de custo alto.
+5. **Piloto de personagem.** Antes de exportar o caçador, compare as novas
+   silhuetas no jogo. Use metros, origem entre os pés, frente +Z e topo do
+   chapéu em torno de 2,16 m no glTF. Exporte um GLB de teste com malhas
+   nomeadas separadamente para tronco, capa, cabeça, pernas, braços e
+   acessórios das mãos. O tronco gira a 0,90 m, as pernas a 0,86 m e os
+   braços a 1,46 m. As armas encaixam em (0, −0,66, 0,03) no braço
+   correspondente. Confira em pé, ataque leve, tiro e rolamento antes
+   de preparar uma versão com esqueleto.
 
 O [Medieval Village MegaKit de Quaternius](https://quaternius.itch.io/medieval-village-megakit)
 pode servir de base modular para PS1. O

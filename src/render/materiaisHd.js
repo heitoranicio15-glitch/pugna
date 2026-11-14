@@ -3,9 +3,9 @@ import * as THREE from 'three';
 const porMaterial = new WeakMap();
 const mapasPorAsset = new Map();
 
-/** Associa um acabamento HD a um material de cenário já usado no PS1. */
-export function registrarMaterialHd(material, asset, intensidade) {
-  porMaterial.set(material, { asset, intensidade });
+/** Associa um acabamento HD a um material usado no PS1. */
+export function registrarMaterialHd(material, asset, intensidade, { metalness = 0, preservarEmissao = false } = {}) {
+  porMaterial.set(material, { asset, intensidade, metalness, preservarEmissao });
   return material;
 }
 
@@ -31,17 +31,21 @@ function carregarMapas(asset) {
   return mapasPorAsset.get(asset);
 }
 
-async function criarVariante(material, { asset, intensidade }) {
+async function criarVariante(material, { asset, intensidade, metalness, preservarEmissao }) {
   const mapas = await carregarMapas(asset);
   if (!mapas) return material;
   const [map, normalMap, roughnessMap] = mapas;
-  return new THREE.MeshStandardMaterial({
+  const variante = new THREE.MeshStandardMaterial({
     map, normalMap, roughnessMap,
     normalScale: new THREE.Vector2(intensidade, intensidade),
     color: material.color, side: material.side, depthWrite: material.depthWrite,
     flatShading: material.flatShading ?? false,
-    roughness: 1, metalness: 0,
+    emissiveMap: material.emissiveMap ? map : null,
+    roughness: 1, metalness,
   });
+  // Avisos e clarões dos personagens animam o mesmo objeto Color nos dois modos.
+  if (preservarEmissao) variante.emissive = material.emissive;
+  return variante;
 }
 
 export class MateriaisHd {

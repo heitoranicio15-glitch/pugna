@@ -22,6 +22,17 @@ para WebP. Cada conjunto fica numa subpasta de `public/assets/materiais/`.
 | `roof_slates_02` | Rob Tuytel / [Poly Haven](https://polyhaven.com/a/roof_slates_02) | CC0 |
 | `stony_dirt_path` | eye-candy.xyz / [Poly Haven](https://polyhaven.com/a/stony_dirt_path) | CC0 |
 
+## Materiais HD de personagens
+
+Mapas WebP de 512 × 512. A cor do Caban foi neutralizada para receber as cores
+das roupas do jogo.
+
+| Pasta | Autor / site | Licença |
+|---|---|---|
+| `caban` | colormass e Rico Cilliers / [Poly Haven](https://polyhaven.com/a/caban) | CC0 |
+| `fabric_leather_01` | Rob Tuytel / [Poly Haven](https://polyhaven.com/a/fabric_leather_01) | CC0 |
+| `Metal032` | [ambientCG](https://ambientcg.com/view?id=Metal032) | CC0 |
+
 ## Trilha sonora
 
 As quatro faixas vieram do ZIP fornecido pelo colaborador, que confirmou a autorização

@@ -48,6 +48,11 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Terceiro incremento gráfico:** em cima de `c2f882b`, o caçador, os quatro
+  tipos de inimigo e o taverneiro ganharam malhas facetadas. Couro, lã e metal
+  têm variantes PBR no HD. As malhas usam os pivôs já existentes; a cor de aviso
+  de golpe continua ligada à animação. A spec de NPCs (S4) segue na fila.
+
 - **Segundo incremento gráfico:** em cima de `44afba9`, casas e fachada da
   taverna ganharam beirais, molduras e ferragens com nível de detalhe por
   distância. A catedral ganhou nervuras na rosácea, a estrada ganhou
@@ -184,6 +189,8 @@ As tarefas do Gabriel, na ordem. Cada uma tem (ou terá) uma spec de uma página
   tapete retrô e resolução HD selecionável. Avaliação visual e desempenho com GPU pendentes.
 - [x] **Gráficos, incremento 2** — fachada modular procedural, detalhes por
   distância, ardósia HD, sombras de contato, riacho animado, rosácea e lareira.
+- [x] **Gráficos, incremento 3** — silhuetas do caçador, inimigos e taverneiro,
+  com materiais HD de personagem e avisos de golpe preservados.
 - [ ] **Gráficos, próximo incremento** — testar o percurso real e medir o custo
   do HD com GPU. Usar o guia gráfico para comparar o primeiro piloto de
   Blender com a fachada procedural. Alinhar iluminação com S5 e os modelos

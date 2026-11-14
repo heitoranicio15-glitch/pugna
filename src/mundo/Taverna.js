@@ -15,6 +15,7 @@ import { retro } from '../render/retro.js';
 import { texturas } from '../render/texturas.js';
 import { materiais, caixa, animarTochas, planoDeChao, barril, arcoOgival } from './pecas.js';
 import { sombrasDeContato } from './efeitosCenario.js';
+import { caixa as cx, corpoFacetado, materialDePersonagem, parte } from '../entidades/formas.js';
 
 const C = CONFIG.areas.taverna;
 
@@ -179,16 +180,11 @@ export class Taverna {
   montarTaverneiro() {
     const t = texturas();
     const T = C.taverneiro;
-    const mat = (map, cor) => retro(new THREE.MeshLambertMaterial({
-      map, color: cor, emissiveMap: map, emissive: new THREE.Color(cor).multiplyScalar(0.35),
-    }));
-    const pele = mat(t.tecido, 0xe0c2aa), camisa = mat(t.tecido, 0x8a6a58), avental = mat(t.tecido, 0xd8ccb0);
-    const calca = mat(t.tecido, 0x4a3a34), pelo = mat(t.tecido, 0x3a2b24), couro = mat(t.madeira, 0xa08878);
-    const cx = (l, a, p, material, x, y, z) => {
-      const o = new THREE.Mesh(new THREE.BoxGeometry(l, a, p), material);
-      o.position.set(x, y, z);
-      return o;
-    };
+    const tecido = (cor) => materialDePersonagem(t.trama, cor, { asset: 'caban', brilho: 0.16, side: THREE.DoubleSide });
+    const pele = materialDePersonagem(null, 0xb9977d, { brilho: 0.08 });
+    const camisa = tecido(0x8a6a58), avental = tecido(0xb5a692), calca = tecido(0x4a3a34);
+    const pelo = materialDePersonagem(null, 0x332521);
+    const couro = materialDePersonagem(t.madeira, 0x826653, { asset: 'fabric_leather_01' });
     const g = new THREE.Group();
     g.position.set(-2, 0, -3.7);              // olha para +Z, de frente para o salão
     g.add(cx(0.2, 0.8, 0.22, calca, 0.13, 0.4, 0), cx(0.2, 0.8, 0.22, calca, -0.13, 0.4, 0));
@@ -197,22 +193,36 @@ export class Taverna {
     g.add(this.corpoTaverneiro);
     const corpo = this.corpoTaverneiro;
     corpo.add(
-      cx(0.52, 0.66, 0.3, camisa, 0, 0.33, 0),
-      cx(0.46, 0.5, 0.05, avental, 0, 0.27, 0.17),
+      parte(corpoFacetado([[0, 0.43, 0.3], [0.21, 0.55, 0.36], [0.55, 0.56, 0.33], [0.69, 0.28, 0.27]]), camisa),
       cx(0.5, 0.08, 0.33, couro, 0, 0.06, 0),
     );
+    const bib = cx(0.31, 0.32, 0.028, avental, 0, 0.31, 0.167);
+    bib.rotation.x = -0.027;
+    corpo.add(bib, cx(0.45, 0.19, 0.042, avental, 0, 0.08, 0.179));
+    for (const lado of [-1, 1]) {
+      const tira = cx(0.037, 0.26, 0.026, couro, lado * 0.122, 0.53, 0.134);
+      tira.rotation.set(-0.28, 0, lado * 0.17);
+      corpo.add(tira);
+    }
     this.cabecaTaverneiro = new THREE.Group();
     this.cabecaTaverneiro.position.y = 0.83;
     this.cabecaTaverneiro.add(
-      cx(0.26, 0.26, 0.26, pele, 0, 0, 0),
-      cx(0.28, 0.14, 0.1, pelo, 0, -0.07, 0.11),   // barba
-      cx(0.28, 0.07, 0.28, pelo, 0, 0.15, 0),      // cabelo
+      parte(corpoFacetado([[-0.16, 0.15, 0.17], [-0.09, 0.23, 0.23], [0.055, 0.275, 0.26], [0.15, 0.21, 0.22], [0.18, 0.04, 0.04]]), pele),
+      parte(corpoFacetado([[-0.23, 0.075, 0.085, 0.11], [-0.13, 0.2, 0.15, 0.107], [-0.057, 0.236, 0.13, 0.094]]), pelo),
+      parte(corpoFacetado([[0.095, 0.272, 0.268, -0.014], [0.15, 0.245, 0.243, -0.019], [0.186, 0.12, 0.09, -0.02], [0.19, 0.02, 0.02]]), pelo),
+      cx(0.059, 0.063, 0.07, pele, 0, 0.006, 0.13),
     );
+    for (const lado of [-1, 1]) {
+      this.cabecaTaverneiro.add(cx(0.033, 0.014, 0.015, pelo, lado * 0.061, 0.043, 0.119));
+    }
     corpo.add(this.cabecaTaverneiro);
     const braco = (x) => {
       const b = new THREE.Group();
       b.position.set(x, 0.6, 0);
-      b.add(cx(0.15, 0.5, 0.17, camisa, 0, -0.24, 0), cx(0.13, 0.18, 0.15, pele, 0, -0.58, 0));
+      b.add(
+        parte(corpoFacetado([[-0.43, 0.15, 0.16], [-0.22, 0.18, 0.19], [0, 0.205, 0.2], [0.06, 0.12, 0.13]]), camisa),
+        parte(corpoFacetado([[-0.66, 0.09, 0.1], [-0.58, 0.13, 0.135], [-0.4, 0.146, 0.15]]), pele),
+      );
       corpo.add(b);
       return b;
     };

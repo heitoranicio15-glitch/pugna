@@ -179,6 +179,15 @@ function tecido() {
   return pintarTextura(16, (x, y) => mult([40, 30, 78], 0.7 + r() * 0.4 - (x % 5 === 0 ? 0.2 : 0)));
 }
 
+function trama() {
+  const r = criarSorteio(163);
+  return pintarTextura(32, (x, y) => {
+    const fio = (x + y) % 2 ? 0.82 : 1;
+    const faixa = x % 8 === 0 ? 0.86 : 1;
+    return mult([111, 103, 116], fio * faixa * (0.83 + r() * 0.3));
+  });
+}
+
 function janela(acesa) {
   const r = criarSorteio(acesa ? 71 : 73);
   return pintarTextura(16, (x, y) => {
@@ -273,7 +282,7 @@ export function texturas() {
     cache = {
       pedra: pedra(), calcamento: prepararPiso(calcamento()), lajes: prepararPiso(lajes()),
       mosaico: prepararPiso(mosaico()), tapete: prepararPiso(tapete()), telhado: telhado(), madeira: madeira(),
-      terra: prepararPiso(terra()), metal: metal(), tecido: tecido(),
+      terra: prepararPiso(terra()), metal: metal(), tecido: tecido(), trama: trama(),
       janelaAcesa: janela(true), janelaApagada: janela(false), vitral: vitral(),
       brilho: brilho(), nevoa: nevoa(), sombra: sombra(), riacho: riacho(),
     };
