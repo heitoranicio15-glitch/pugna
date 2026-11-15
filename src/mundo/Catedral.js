@@ -12,6 +12,7 @@ import { montarAtalhoCripta, volumesDosNiveis } from './NiveisCatedral.js';
 import { montarCenasCatedral, nivelCatedral, visivelNaCatedral } from './CenasCatedral.js';
 import { montarEspoliosCatedral } from './Espolios.js';
 import { criarVitraisDoVeu, modeloBancoDaNave, montarLuzesDaNave } from './AcabamentoCatedral.js';
+import { montarAlasDosSelos } from './AlasDosSelos.js';
 
 const C = CONFIG.areas.catedral;
 
@@ -112,18 +113,19 @@ export class Catedral {
       relicario: [19, -8, luar],
     };
     this.selos = Object.entries(nichos).map(([id, [x, z, material]], i) => {
-      movel(id, x, z, 1.1, 1.05, 1.1, m.pedraEscura);
+      this.colisores.adicionar(x, z, 1.1, 1.1, 1.05);
       const malha = new THREE.Mesh(new THREE.OctahedronGeometry(0.39), material);
       malha.position.set(x, 1.65, z);
       grupoDa(id).add(malha);
       return { id, x, z, nome: ['Selo do Ossário', 'Selo do Relicário'][i], material, malha };
     });
     for (const [sala, x, z, a, largura] of [
-      ['ossario', -19, -15, 0.84, 3.4], ['relicario', 19, -15, 0.84, 3.4],
       ['claustro', -19, 9.6, 0.85, 2.65], ['capela', -34, -13, 1, 3],
       ['arquivo', 34, -13, 1, 3], ['refeitorio', -26, -26.8, 0.86, 3.2],
       ['cabido', 26, -26.8, 0.86, 3.2],
     ]) movel(sala, x, z, largura, a, 1.25, m.pedraEscura);
+    for (const x of [-19, 19]) this.colisores.adicionar(x, -15, 3.4, 1.25, 0.84);
+    montarAlasDosSelos(this, m, metal, C.luzesDasAlas);
     ler('ossario', 'Registro do Ossário', 'registro-ossario', -19, 1.1, -14.27);
     ler('relicario', 'Registro do Relicário', 'registro-relicario', 19, 1.1, -14.27);
     ler('claustro', 'Lista das devoluções', 'lista-das-devolucoes', -12.1, 1.63, 10.66, Math.PI);

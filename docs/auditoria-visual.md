@@ -130,3 +130,20 @@ duas zonas iluminadas. Cada zona usa uma luz sem sombras.
 As contagens são de quadros isolados em PS1 e HD. A faixa e a grade estão
 mais fáceis de ler. Os bancos laterais ainda conservam sombras fortes,
 e o desempenho em partida em um PC sem GPU dedicada fica para teste.
+
+A terceira etapa diferencia as duas alas dos selos. O Ossário combina
+velas, urnas e pedra úmida com um mosaico quente. O Relicário tem um
+cofre com ferragens e um mosaico frio alinhado à luz do vitral. Os
+pedestais usam frisos e aros de bronze. As mesas e os pedestais
+mantêm as medidas dos colisores, e os mosaicos reaproveitam as faces
+do piso. Há uma luz de alcance limitado sem sombras em cada ala.
+
+| Vista | Chamadas antes → depois | Triângulos antes → depois |
+| --- | ---: | ---: |
+| Ossário, diante do selo | 95 → 102 | 88.612 → 89.996 |
+| Relicário, diante do selo | 105 → 110 | 128.838 → 129.450 |
+
+As contagens são de quadros isolados em PS1 e HD, em Chrome com
+renderização por software. Os detalhes nas mesas ainda ficam discretos
+à distância. Ainda falta medir a fluidez ao atravessar as alas em
+computadores com GPUs diferentes.

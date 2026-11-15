@@ -294,6 +294,46 @@ function corredorDoVeu() {
   return tex;
 }
 
+function mosaicoDasAlas() {
+  const r = criarSorteio(529);
+  const tex = prepararPiso(pintarTextura(128, (x, y) => {
+    const eixo = Math.abs(x - 63.5);
+    const distanciaDaBorda = Math.min(x, 127 - x);
+    const losango = eixo + Math.abs(y - 63.5);
+    const grao = 0.86 + 0.22 * r() + 0.09 * Math.sin(x * 0.38 - y * 0.43);
+    if (distanciaDaBorda < 2 || y < 2 || y > 125) return mult([35, 32, 36], grao);
+    if (distanciaDaBorda === 7 || distanciaDaBorda === 12 || Math.abs(losango - 34) < 2) {
+      return mult([157, 137, 113], grao);
+    }
+    if (losango < 12) return mult([155, 144, 138], grao);
+    if (losango < 31) return mult([111, 104, 101], grao);
+    const junta = (x + (Math.floor(y / 32) % 2) * 16) % 32;
+    if (y % 32 < 2 || junta < 2) return mult([55, 49, 54], grao);
+    return mult([100, 92, 90], grao * (y % 32 < 4 || junta < 4 ? 1.14 : 1));
+  }));
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  return tex;
+}
+
+function estandarteDoVeu() {
+  const r = criarSorteio(530);
+  const tex = prepararPiso(pintarTextura(128, (x, y) => {
+    const lado = Math.abs(x - 63.5);
+    const altura = Math.abs(y - 52);
+    const losango = lado * 0.83 + altura;
+    const anel = Math.hypot(lado, altura * 1.13);
+    const trama = 0.8 + r() * 0.23 + 0.06 * ((x + y) % 2);
+    const desfiado = y > 116 ? 0.76 + r() * 0.21 : 1;
+    if (Math.abs(anel - 21) < 1.7 || Math.abs(losango - 11) < 1.8 || lado > 54 && lado < 58) {
+      return mult([171, 152, 118], trama * desfiado);
+    }
+    const fio = 0.91 + Math.sin(x * 0.31) * 0.09;
+    return mult([77, 70, 68], trama * fio * desfiado);
+  }));
+  tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+  return tex;
+}
+
 /** Mancha redonda e suave: usada em brilhos, chamas e névoa. */
 function brilho() {
   return pintarTextura(32, () => [255, 255, 255], (x, y) => {
@@ -380,6 +420,7 @@ export function texturas() {
       janelaAcesa: janela(true), janelaApagada: janela(false), vitral: vitral(),
       vitralVeuAzul: vitralDoVeu(false), vitralVeuAmbar: vitralDoVeu(true),
       cantariaVeu: cantariaDoVeu(), lajesNave: lajesDaNave(), corredorVeu: corredorDoVeu(),
+      mosaicoAlas: mosaicoDasAlas(), estandarteVeu: estandarteDoVeu(),
       brilho: brilho(), nevoa: nevoa(), sombra: sombra(), riacho: riacho(), feixe: feixe(),
     };
     cache.assoalho = prepararPiso(cache.madeira.clone());

@@ -51,6 +51,13 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Polimento da Catedral, terceira etapa.** No Ossário, um mosaico
+  quente leva ao pedestal com velas e à mesa com urnas. No Relicário,
+  o piso e a luz azul acompanham o vitral e o cofre de madeira e
+  bronze. As duas alas têm mesas esculpidas, cantaria, estandartes e
+  uma luz local sem sombras. Os selos e os móveis ocupam os mesmos
+  pontos da planta.
+
 - **Polimento da Catedral, segunda etapa.** A nave e o transepto têm
   cantaria mais granulada, rodapé úmido, lajes laterais e uma faixa de
   pedra com filetes de bronze ao longo do caminho até a grade. O
@@ -399,7 +406,9 @@ registra o que falta e a ordem sugerida.
 
 - [x] **Polimento 1:** bancos e vitrais da Catedral.
 - [x] **Polimento 2:** pedra, piso e luz da nave e do transepto, com leitura clara do corredor.
-- [ ] **Polimento 3:** aplicar o padrão visual aos demais ambientes já jogáveis.
+- [x] **Polimento 3:** materiais, iluminação e mobiliário do Ossário e do Relicário.
+- [ ] **Polimento 4:** melhorar a leitura da galeria, das passarelas e das escadas existentes.
+- [ ] Aplicar o padrão visual aos demais ambientes já jogáveis.
 
 - [x] **Prompt 8 / 1A:** kit modular e planta maior do térreo.
 - [x] **Prompt 8 / 1B:** galeria, torre, cripta, escadas e atalhos.

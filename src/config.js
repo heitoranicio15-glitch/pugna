@@ -105,6 +105,10 @@ export const CONFIG = {
         candelabro: { z: 3, y: 3.58, intensidade: 24, alcance: 13, cor: 0xffca9d },
         grade: { z: -28.65, y: 2.86, intensidade: 19, alcance: 11, cor: 0xffb879 },
       },
+      luzesDasAlas: {
+        ossario: { cor: 0xffb680, intensidade: 20, alcance: 10.5, y: 2.12, z: -7.6 },
+        relicario: { cor: 0x9cc8ff, intensidade: 22, alcance: 11.5, y: 2.8, z: -10.68 },
+      },
       feixes: [
         { origem: [18, 4.85, -16.61], destino: [13, 0.08, -11.8], largura: 1.25, cor: 0xa2bfff, opacidade: 0.125 },
         { origem: [0, 6.55, -64.61], destino: [-6.8, 0.08, -58.3], largura: 2.5, cor: 0xb391ee, opacidade: 0.08 },
