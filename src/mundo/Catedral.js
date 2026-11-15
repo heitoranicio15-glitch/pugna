@@ -9,6 +9,7 @@ import { feixeDeLuz } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
 import { plantaTerreo, volumesTerreo } from './PlantaCatedral.js';
 import { fecharTetos, montarKit } from './KitCatedral.js';
+import { montarAtalhoCripta, volumesDosNiveis } from './NiveisCatedral.js';
 
 const C = CONFIG.areas.catedral;
 
@@ -17,9 +18,9 @@ export class Catedral {
     this.id = 'catedral';
     this.nome = 'Catedral do Véu';
     this.usaCeu = false;
-    this.limites = { minX: -38, maxX: 38, minZ: -65, maxZ: 11 };
+    this.limites = { minX: -38, maxX: 38, minZ: -65, maxZ: 35 };
     this.grupo = new THREE.Group();
-    this.colisores = new Colisores();
+    this.colisores = new Colisores(-12);
     this.tochas = [];
     this.objetos = [];
     this.setores = new Map();
@@ -27,7 +28,7 @@ export class Catedral {
     cena.add(this.grupo);
 
     this.planta = plantaTerreo();
-    this.volumes = fecharTetos(volumesTerreo(this.planta));
+    this.volumes = fecharTetos([...volumesTerreo(this.planta), ...volumesDosNiveis()]);
     const vaos = [...this.planta.arestas.values()].filter(a => a.vao)
       .map(a => ({ ...a.vao, sala: a.salas[0] }));
     montarKit(this, this.volumes, vaos);
@@ -93,7 +94,7 @@ export class Catedral {
     for (const y of [0.62, 2.6]) barras.caixa(0, y, 0.115, 3.48, 0.15, 0.08, metal);
     barras.montar(this.grade, 'bronze da grade');
     grupoDa('transepto').add(this.grade);
-    this.bloqueio = this.colisores.adicionar(0, -29, 3.5, 0.5);
+    this.bloqueio = this.colisores.adicionar(0, -29, 3.5, 0.5, 4.5, 0, false);
     this.indicadores = [-2.35, 2.35].map(x => {
       const cristal = new THREE.Mesh(new THREE.OctahedronGeometry(0.26), luar);
       cristal.position.set(x, 1.93, -28.59);
@@ -126,6 +127,7 @@ export class Catedral {
     ler('capela', 'Capela do Último Nome', 'capela-ultimo-nome', -34, 1.34, -12.27);
     ler('arquivo', 'Arquivo das Vigílias', 'arquivo-das-vigilias', 34, 1.34, -12.27);
     montarSacristia(this);
+    montarAtalhoCripta(this);
 
     // Degraus disjuntos e com espelho baixo, de frente para a abside.
     for (const [z, p, a] of [[-60.5, 1, 0.18], [-61.5, 1, 0.36], [-63.3, 2.6, 0.54]]) {
@@ -150,7 +152,13 @@ export class Catedral {
     this.chegadas = { vilarejo: this.entrada };
     this.portao = { x: 0, z: -28.44 };
     this.altar = { x: 0, z: -62.2 };
-    this.pontosDeDescanso = [{ id: 'nave-do-veu', nome: 'Nave do Véu', x: 4.55, z: 6.55, olhar: Math.PI }];
+    this.pontosDeDescanso = [
+      { id: 'nave-do-veu', nome: 'Nave do Véu', x: 4.55, z: 6.55, olhar: Math.PI },
+      { id: 'catedral-galeria', nome: 'Passarela das Vigílias', x: -8.7, y: 4, z: -9, olhar: 0 },
+      { id: 'catedral-torre', nome: 'Sala do Bronze', x: 20, y: 8, z: 13.9, olhar: 0 },
+      { id: 'catedral-cripta', nome: 'Cripta das Urnas', x: -23, y: -4, z: 31.7, olhar: 0 },
+      { id: 'catedral-coro', nome: 'Coro do Véu', x: 3.8, z: -34.65, olhar: 0 },
+    ];
     this.inimigos = [
       { tipo: 'penitente', rota: [[-14, -8], [-16, -11], [-16, -4.8]] },
       { tipo: 'penitente', rota: [[15, -7], [18, -4], [18, -11]] },

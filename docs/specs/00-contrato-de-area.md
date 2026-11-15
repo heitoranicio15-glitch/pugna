@@ -17,9 +17,9 @@ Hoje o `Jogo.js` cria `Vilarejo` e `Catedral` pelo nome e tem regras escritas à
 | `luzJogador` | número (intensidade da luz que acompanha o caçador) | **novo**: vilarejo 5, catedral 8 (hoje em `Jogo.js:431`) |
 | `usaCeu` | booleano (mostra e atualiza céu e lua) | **novo**: vilarejo `true`, catedral `false` (hoje em `Jogo.js:428` e `:608`) |
 | `portais` | lista de `{ x, z, raio, destino, texto }` | já existe |
-| `chegadas` | `{ [idDaAreaDeOrigem]: { x, z, yaw } }` | já existe |
-| `pontosDeDescanso` | lista de `{ id, nome, x, z, olhar }` | já existe (IDs publicados: `portao-sul`, `adro-da-igreja`, `nave-do-veu`) |
-| `inimigos` | lista de `{ tipo, rota, ...opcionais }` | já existe |
+| `chegadas` | `{ [idDaAreaDeOrigem]: { x, z, yaw, y? } }` | `y` é 0 se omitido |
+| `pontosDeDescanso` | lista de `{ id, nome, x, z, olhar, y? }` | `y` é 0 se omitido; o save identifica a lanterna pelo ID |
+| `inimigos` | lista de `{ tipo, rota, y?, ...opcionais }` | cada patrulha navega na altura de nascimento; `y` é 0 se omitido |
 | `grupo`, `colisores`, `objetos` | cena, colisões e objetos interativos | já existem |
 | `nascimento` *(só a área inicial)* | `{ x, z }` | vilarejo |
 | `aplicarProgresso(progresso)`, `atualizar(dt, tempo)` *(opcionais)* | funções | já existem |

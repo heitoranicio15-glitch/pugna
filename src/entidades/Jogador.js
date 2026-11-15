@@ -34,8 +34,8 @@ export class Jogador {
   }
 
   /** Coloca o jogador num ponto, com vida e estamina cheias. */
-  reiniciar(x, z, yaw) {
-    this.pos.set(x, 0, z); this.vel.set(0, 0, 0);
+  reiniciar(x, z, yaw, y = 0) {
+    this.pos.set(x, y, z); this.vel.set(0, 0, 0);
     this.pivo?.copy(this.pos); this.pivoAlvo?.copy(this.pos);   // teletransporte: a câmera não vem deslizando
     this.yaw = yaw; this.pitch = CAM.inclinacaoInicial; this.rumo = yaw;
     // Mira travada (CAM3): desvio do foco da câmera, distância extra e tempo desde que travou.
@@ -239,13 +239,20 @@ export class Jogador {
     this.pos.x += this.vel.x * dt; this.pos.z += this.vel.z * dt;
     col.resolver(this.pos, this.raio, this.pos.y, this.noChao ? 0.4 : 0.05);
     for (const i of this.jogo.inimigos) {   // não atravessa inimigos vivos
-      if (i.morto) continue;
+      if (i.morto || Math.abs(this.pos.y - i.pos.y) > 1.4) continue;
       const ix = this.pos.x - i.pos.x, iz = this.pos.z - i.pos.z, d = Math.hypot(ix, iz), min = this.raio + i.raio;
       if (d < min && d > 1e-4) { this.pos.x = i.pos.x + ix / d * min; this.pos.z = i.pos.z + iz / d * min; }
     }
     col.resolver(this.pos, this.raio, this.pos.y, this.noChao ? 0.4 : 0.05);
+    const antesY = this.pos.y;
     this.pos.y += this.vel.y * dt;
-    const chao = col.alturaDoChao(this.pos.x, this.pos.z, this.pos.y, this.noChao ? 0.4 : 0.05);
+    if (this.vel.y > 0) {
+      const teto = col.alturaDoTeto(this.pos.x, this.pos.z, antesY, C.alturaOlhos + 0.15, this.raio);
+      if (this.pos.y >= teto) { this.pos.y = teto; this.vel.y = 0; }
+    }
+    // Olha a partir da altura anterior na descida, para não perder o piso
+    // quando a gravidade já levou os pés para dentro dele neste quadro.
+    const chao = col.alturaDoChao(this.pos.x, this.pos.z, Math.max(this.pos.y, antesY), this.noChao ? 0.4 : 0.05);
     this.tPisada += dt;
     if (this.pos.y <= chao || (this.noChao && this.pos.y - chao < 0.45 && this.vel.y <= 0)) {
       if (!this.noChao && this.vel.y < -5) { this.afundar = Math.min(0.25, -this.vel.y * 0.022); this.jogo.eventos.emitir('jogador:pouso'); }
@@ -299,7 +306,8 @@ export class Jogador {
     for (const i of this.jogo.inimigos) {
       if (i === excluir || i.morto || i.grupo?.visible === false) continue;
       const d = Math.hypot(i.pos.x - this.pos.x, i.pos.z - this.pos.z);
-      if (d > M.alcance || Math.abs(i.pos.y - this.pos.y) > 4 || col.bloqueiaTrecho(this.pos, i.pos, 1.45)) continue;
+      if (d > M.alcance || Math.abs(i.pos.y - this.pos.y) > 4 ||
+          col.interceptarTrecho(this.pos, i.pos, this.pos.y + 1.45, 0, i.pos.y + 1.45) !== null) continue;
       const angulo = difAngulo(anguloPara(this.pos, i.pos), this.yaw);   // positivo = à esquerda
       let nota;
       if (lado) {
@@ -330,7 +338,7 @@ export class Jogador {
       if (proximo) this.travar(proximo); else this.soltarMira();
       return;
     }
-    const visto = !this.jogo.mundo.colisores.bloqueiaTrecho(this.pos, a.pos, 1.45);
+    const visto = this.jogo.mundo.colisores.interceptarTrecho(this.pos, a.pos, this.pos.y + 1.45, 0, a.pos.y + 1.45) === null;
     this.tSemVisao = visto ? 0 : this.tSemVisao + dt;
     if (Math.hypot(a.pos.x - this.pos.x, a.pos.z - this.pos.z) > M.soltar ||
         this.tSemVisao > M.semVisao || a.grupo?.visible === false) { this.soltarMira(); return; }
@@ -356,7 +364,7 @@ export class Jogador {
       if (d >= menor) continue;
       const angulo = anguloPara(this.pos, i.pos);
       if (Math.cos(angulo - this.rumo) < 0 && Math.cos(angulo - this.yaw) < 0.3) continue;   // está às costas
-      if (col.bloqueiaTrecho(this.pos, i.pos, 1.22)) continue;
+      if (col.interceptarTrecho(this.pos, i.pos, this.pos.y + 1.22, 0, i.pos.y + 1.22) !== null) continue;
       menor = d; melhor = angulo;
     }
     if (melhor !== null) this.rumo = melhor;

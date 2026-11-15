@@ -8,7 +8,7 @@ export function montarSacristia(mundo) {
   const vao = id => mundo.planta.vaos.find(v => v.trava === id);
   const { x, z, largura } = vao('porta-sacristia');
   const porta = bloco(g, m.madeiraEscura, x, 1.6, z, largura, 3.2, 0.22);
-  const colPorta = c.adicionar(x, z, largura, 0.5);
+  const colPorta = c.adicionar(x, z, largura, 0.5, 3.75, 0, false);
   placa(g, 'Sacristia', x, 2.38, z - 0.27, 1.44, Math.PI);
   mundo.objetos.push({
     x, y: 1.44, z: z - 0.3, tolerancia: 0.83, acao: 'abrir',
@@ -27,7 +27,7 @@ export function montarSacristia(mundo) {
   for (const dz of [-1.52, -1.02, -0.51, 0, 0.51, 1.02, 1.52]) barras.caixa(0, 1.7, dz, 0.13, 3.4, 0.12, m.metal);
   for (const y of [0.52, 2.65]) barras.caixa(0.11, y, 0, 0.09, 0.13, 3.5, m.metal);
   barras.montar(grade, 'grade de serviço');
-  const colGrade = c.adicionar(servico.x, servico.z, 0.5, servico.largura);
+  const colGrade = c.adicionar(servico.x, servico.z, 0.5, servico.largura, 3.75, 0, false);
   bloco(g, m.metal, 10.37, 1.45, 7.1, 0.22, 0.59, 0.36);
   const haste = bloco(g, m.metal, 10.67, 1.53, 7.1, 0.38, 0.085, 0.105);
   const punho = bloco(g, m.madeira, 10.91, 1.53, 7.1, 0.1, 0.14, 0.18);

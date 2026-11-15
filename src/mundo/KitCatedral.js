@@ -13,9 +13,9 @@ export function recortar(a, b) {
 
 /** Recorta tetos baixos nos encontros com paredes de salas mais altas. */
 export function fecharTetos(volumes) {
-  const paredes = volumes.filter(p => ['parede', 'verga', 'canto'].includes(p.tipo));
+  const paredes = volumes.filter(p => ['parede', 'verga', 'canto', 'parapeito'].includes(p.tipo));
   return volumes.flatMap(v => {
-    if (v.tipo !== 'teto') return [v];
+    if (!['teto','patamar','piso'].includes(v.tipo)) return [v];
     let partes = [[v.min[0], v.min[2], v.max[0], v.max[2]]];
     for (const p of paredes) {
       if (p.min[1] >= v.max[1] || p.max[1] <= v.min[1]) continue;
@@ -82,16 +82,15 @@ export function montarKit(mundo, volumes, vaos) {
     pegar(lote).geometria(geo, m[material]);
   }
   for (const v of volumes) {
-    if (v.min[1] !== 0 || !['parede', 'canto'].includes(v.tipo)) continue;
-    const [x, , z] = v.min, [X, , Z] = v.max;
-    // O primeiro segmento é o rodapé de uma parede inteira, nunca um degrau.
-    mundo.colisores.adicionar((x + X) / 2, (z + Z) / 2, X - x, Z - z);
+    const [x, y, z] = v.min, [X, Y, Z] = v.max;
+    const piso = ['piso','patamar','degrau'].includes(v.tipo);
+    mundo.colisores.adicionar((x + X) / 2, (z + Z) / 2, X - x, Z - z, Y, y, piso);
   }
   const arco = arcoOgival(3.12, 1.1, 0.18, 0.46, m.pedraEscura);
-  for (const { x, z, eixo, sala } of vaos) {
+  for (const { x, y, z, eixo, sala } of vaos) {
     const geo = arco.geometry.clone();
     if (eixo === 'x') geo.rotateY(Math.PI / 2);
-    pegar(sala).geometria(geo.translate(x, 3.22, z), m.pedraEscura);
+    pegar(sala).geometria(geo.translate(x, y + 2.46, z), m.pedraEscura);
   }
   arco.geometry.dispose();
   for (const [sala, lote] of lotes) {

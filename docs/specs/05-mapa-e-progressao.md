@@ -26,7 +26,7 @@ Definir como as áreas se ligam. O PASSAGEM decidiu: **semi-linear**, com atalho
 - **Portais:** sempre nos dois sentidos, cada lado com `destino` e a `chegada` correspondente (o `montarAreas` da spec 00 já recusa portal sem volta).
 - **Portal trancado:** campo opcional `requer: 'area:evento'` e `textoTrancado`. Sem o evento no save, o portal mostra o texto e não abre.
 - **Atalhos:** porta, grade ou elevador que só abre de um lado. Ao abrir, grava `area:atalho-<nome>` e fica aberto para sempre (mesmo padrão da grade de serviço da sacristia).
-- **Lanternas:** uma na entrada de cada área e uma antes de cada chefe; no máximo 3 por área. O bom atalho devolve o jogador a uma lanterna já conhecida, em vez de criar outra.
+- **Lanternas:** uma na entrada de cada área e uma antes de cada chefe; no máximo 3 por área. A Catedral é a exceção (até 6): são quatro níveis que compartilham o mesmo ID de área e precisam de um ponto por nível, além do ponto antes da arena do Guardião. O bom atalho devolve o jogador a uma lanterna já conhecida.
 - **IDs:** áreas e lanternas com `id` único, minúsculo, com hífen. Eventos `area:evento`. Nunca renomear o que já foi publicado.
 - **Inimigos:** comuns voltam ao descansar; chefes e minibosses usam `eventoDeDerrota` e não voltam.
 - **Sem mapa na tela e sem viagem rápida** entre lanternas por enquanto (o Osso de Retorno já leva à última).

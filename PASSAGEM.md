@@ -51,6 +51,17 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Prompt 8 — 1B, Catedral vertical:** a nave leste sobe à galeria e à
+  Sala do Bronze; o claustro desce à cripta, cujo ferrolho abre por dentro.
+  Quatro cotas navegáveis, lanternas no coro e nos pisos novos, câmera e
+  navegação com colisão em altura. O chão antigo e o ID da nave continuam no
+  mesmo lugar; o save continua apontando à lanterna pelo ID.
+  **Decidido pela IA:** de 1 para 4 níveis (−4/0/+4/+8 m) e de 1 para 5
+  lanternas na Catedral (teto na spec 05: de 3 para 6, só ali). Quatro lances
+  de 16 degraus, espelho de 0,25 m, piso de 0,50 m e largura de 3,50 m,
+  com patamares em módulos de 4 m. A torre usa dois lances com mudança de
+  direção. Testes em Node percorrem os lances, o ferrolho e a rota do Guardião.
+
 - **Prompt 8 — 1A, catedral modular (pronto no código):** térreo com nave e
   corredores laterais, transepto, coro, arena, abside, claustro, sacristia,
   capela, arquivo, refeitório e cabido. O kit usa a mesma planta para volumes e
@@ -325,7 +336,7 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 ## Plano (fazer um por vez, cada um num chat novo)
 
 - [x] **Prompt 8 / 1A:** kit modular e planta maior do térreo.
-- [ ] **Prompt 8 / 1B:** galeria, torre, cripta, escadas e atalhos.
+- [x] **Prompt 8 / 1B:** galeria, torre, cripta, escadas e atalhos.
 - [ ] **Prompt 8 / 1C:** história das salas, clima e visibilidade.
 - [ ] **Prompt 8 / 2–4:** névoa, floresta e progressão com itens.
 

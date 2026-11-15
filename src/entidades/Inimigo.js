@@ -176,7 +176,7 @@ function montarCorpo(tipo, visual) {
 
 export class Inimigo {
   /** tipo: nome em CONFIG.inimigos. rota: pontos [x, z] da patrulha. */
-  constructor(jogo, mundo, { tipo, rota, limiteZ = Infinity, eventoDeDerrota = null }) {
+  constructor(jogo, mundo, { tipo, rota, limiteZ = Infinity, eventoDeDerrota = null, y = 0 }) {
     this.jogo = jogo;
     this.mundo = mundo;
     this.tipo = tipo;
@@ -184,6 +184,7 @@ export class Inimigo {
     this.base = CONFIG.inimigos[tipo];
     this.cfg = this.base;
     this.limiteZ = limiteZ;
+    this.andarY = y;
     this.rota = rota;
     this.raio = this.cfg.raio;
     this.pos = new THREE.Vector3();
@@ -228,7 +229,7 @@ export class Inimigo {
     this.morto = false;
     this.estado = 'patrulha'; this.tEstado = 0;
     this.pontoAtual = 0; this.espera = 0;
-    this.pos.set(this.rota[0][0], 0, this.rota[0][1]);
+    this.pos.set(this.rota[0][0], this.andarY ?? 0, this.rota[0][1]);
     this.angulo = 0; this.fase = Math.random() * 6; this.piscar = 0;
     this.caminho = [];
     this.alvoDaRota = null;
@@ -377,7 +378,7 @@ export class Inimigo {
       this.alertaEm -= dt;
       if (this.alertaEm <= 0) {
         this.alertaEm = null;
-        if (this.estado === 'patrulha' && !jog.morto) {
+        if (this.estado === 'patrulha' && !jog.morto && Math.abs(jog.pos.y - this.pos.y) < 1.75) {
           this.ultimaVista = { x: jog.pos.x, z: jog.pos.z };
           this.mudar('perseguir'); this.jogo.eventos.emitir('inimigo:alerta', this);
         }
@@ -387,7 +388,7 @@ export class Inimigo {
     const dist = Math.hypot(dx, dz);
     const anguloJogador = Math.atan2(dx, dz);
     const visivel = !jog.morto && jog.pos.z <= this.limiteZ && Math.abs(jog.pos.y - this.pos.y) < 3 &&
-      dist < c.visao * 1.9 && !col.bloqueiaTrecho(this.pos, jog.pos, 1.45);
+      dist < c.visao * 1.9 && col.interceptarTrecho(this.pos, jog.pos, this.pos.y + 1.45, 0, jog.pos.y + 1.45) === null;
     let andar = 0, alvoAngulo = this.angulo, giro = 6;   // giro = quão rápido vira (rad/s)
     let lateral = 0;   // andar de lado (rondando sem ficha), positivo = para a direita dele
     let destino = null;
@@ -549,16 +550,21 @@ export class Inimigo {
     }
     this.pos.x += this.empurrao.x * dt; this.pos.z += this.empurrao.z * dt;
     this.empurrao.multiplyScalar(Math.exp(-dt * 7));
-    col.resolver(this.pos, this.raio, 0, 0);
+    col.resolver(this.pos, this.raio, this.pos.y, 0);
     for (const o of this.mundo.entidades) {   // não se amontoam
-      if (o === this || o.morto) continue;
+      if (o === this || o.morto || Math.abs(o.pos.y - this.pos.y) > 1.4) continue;
       const ox = this.pos.x - o.pos.x, oz = this.pos.z - o.pos.z, od = Math.hypot(ox, oz), min = this.raio + o.raio;
       if (od < min && od > 1e-4) { this.pos.x += ox / od * (min - od) * 0.5; this.pos.z += oz / od * (min - od) * 0.5; }
     }
     const minJ = this.raio + jog.raio;
-    if (dist < minJ && dist > 1e-4 && !jog.morto) { this.pos.x = jog.pos.x - dx / dist * minJ; this.pos.z = jog.pos.z - dz / dist * minJ; }
+    if (dist < minJ && dist > 1e-4 && !jog.morto && Math.abs(jog.pos.y - this.pos.y) < 1.4) {
+      this.pos.x = jog.pos.x - dx / dist * minJ; this.pos.z = jog.pos.z - dz / dist * minJ;
+    }
     this.pos.z = Math.min(this.pos.z, this.limiteZ);
-    col.resolver(this.pos, this.raio, 0, 0);
+    col.resolver(this.pos, this.raio, this.pos.y, 0);
+    if (col.chaoPadrao < -4 && col.alturaDoChao(this.pos.x, this.pos.z, this.pos.y, 0.05) !== this.pos.y) {
+      this.pos.x = antesX; this.pos.z = antesZ;
+    }
 
     const andou = Math.hypot(this.pos.x - antesX, this.pos.z - antesZ);
     if (destino && andar > 0 && andou < andar * dt * 0.25 && this.recalcularRota <= 0) this.alvoDaRota = null;
@@ -613,7 +619,7 @@ export class Inimigo {
     const g = this.ataque.golpe, jog = this.jogo.jogador;
     if (!g || this.ataque.resolvido || jog.morto) return;
     if (!golpeAlcanca(g, dist, Math.cos(anguloJogador - this.angulo), jog.pos.y - this.pos.y)) return;
-    if (this.mundo.colisores.bloqueiaTrecho(this.pos, jog.pos, 1.35)) return;
+    if (this.mundo.colisores.interceptarTrecho(this.pos, jog.pos, this.pos.y + 1.35, 0, jog.pos.y + 1.35) !== null) return;
     this.ataque.resolvido = true;
     jog.receberDano(g.dano, this.pos, this, g);
   }

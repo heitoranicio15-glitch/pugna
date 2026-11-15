@@ -465,7 +465,7 @@ export class Jogo {
   renascer() {
     const l = this.descanso;
     this.ativarArea(this.checkpoints.get(l.id).area);
-    this.jogador.reiniciar(l.x - Math.sin(l.olhar) * 1.2, l.z - Math.cos(l.olhar) * 1.2 + 0.001, l.olhar === Math.PI ? 0 : l.olhar);
+    this.jogador.reiniciar(l.x - Math.sin(l.olhar) * 1.2, l.z - Math.cos(l.olhar) * 1.2 + 0.001, l.olhar === Math.PI ? 0 : l.olhar, l.y);
     this.jogador.balas = CONFIG.combate.pistola.balasMax;   // renascer (ou o Osso) repõe as balas
     this.jogador.atualizarCamera(0, 0);
     this.boneco.atualizar(0, this.jogador);
@@ -485,10 +485,10 @@ export class Jogo {
     this.eventos.emitir('descanso', lanterna);
   }
 
-  atravessar(area, { x, z, yaw }, nome) {
+  atravessar(area, { x, y = 0, z, yaw }, nome) {
     const j = this.jogador;
     this.ativarArea(area, true);
-    j.pos.set(x, 0, z);
+    j.pos.set(x, y, z);
     j.vel.set(0, 0, 0);
     j.yaw = yaw;
     j.rumo = yaw;
@@ -502,7 +502,7 @@ export class Jogo {
 
   interacao() {
     const pos = this.jogador.pos;
-    const perto = (p, raio = 2.35) => Math.hypot(p.x - pos.x, p.z - pos.z) < raio;
+    const perto = (p, raio = 2.35) => Math.abs((p.y ?? 0) - pos.y) < 1.45 && Math.hypot(p.x - pos.x, p.z - pos.z) < raio;
     // Em terceira pessoa basta chegar perto e estar virado para o objeto
     // (vale a direção do corpo ou a da câmera).
     const objeto = alvoProximo(this.mundo.objetos, this.jogador, this.mundo.colisores);
@@ -634,7 +634,7 @@ export class Jogo {
         this.hud.avisar(this.usarFrasco(), 1.8);
       }
     }
-    this.mundo.atualizar(dt, this.tempo);
+    this.mundo.atualizar(dt, this.tempo, this.jogador.pos);
     for (const npc of this.mundo.personagens) npc.atualizar(dt, this.tempo, this.jogador.pos);
     if (this.mundo.usaCeu) this.ceu.atualizar(dt, this.tempo, this.camera, this.jogador.pos);
     this.boneco.atualizar(dt, this.jogador);
