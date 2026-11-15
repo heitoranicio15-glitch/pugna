@@ -107,12 +107,26 @@ identidade do jogo.
 
 A primeira etapa troca os blocos dos bancos por peças de marcenaria que
 cabem no volume de colisão existente. Os quatro vitrais internos usam um
-perfil ogival e duas texturas procedurais de 128 px. O próximo recorte é
-pedra, piso e iluminação da nave e do transepto. Em seguida vêm o aço e
-o tecido dos personagens e o acabamento das demais áreas prontas.
+perfil ogival e duas texturas procedurais de 128 px.
 
 Nas mesmas câmeras, PS1 e HD passaram de 50.232 para 51.397 triângulos
 na vista do banco e de 45.517 para 45.543 no Relicário. As chamadas de
 desenho ficaram em 83 e 79, respectivamente. São contagens de quadros
 isolados em Chrome com renderização por software. A madeira ainda perde
 detalhe nas sombras, especialmente no HD.
+
+A segunda etapa dá textura própria à cantaria e às lajes da nave e do
+transepto. A faixa central de 2,8 m tem bordas com losangos e filetes de
+bronze. Ela ocupa parte das faces originais do chão e leva da entrada
+até a grade. Um candelabro na nave e duas arandelas na grade marcam as
+duas zonas iluminadas. Cada zona usa uma luz sem sombras.
+
+| Vista | Chamadas antes → depois | Triângulos antes → depois |
+| --- | ---: | ---: |
+| Eixo da nave | 120 → 132 | 130.541 → 131.061 |
+| Bancos da nave | 82 → 87 | 51.385 → 51.429 |
+| Grade do transepto | 53 → 58 | 41.688 → 41.768 |
+
+As contagens são de quadros isolados em PS1 e HD. A faixa e a grade estão
+mais fáceis de ler. Os bancos laterais ainda conservam sombras fortes,
+e o desempenho em partida em um PC sem GPU dedicada fica para teste.

@@ -101,6 +101,10 @@ export const CONFIG = {
       fundo: 0x09070f,
       luzAmbiente: { ceu: 0xa898d0, chao: 0x2e203c, intensidade: 0.95 },
       nevoaBaixa: { cor: 0x2a2450, forca: 0.4, altura: 1.2 },   // poeira fria rente ao piso
+      luzesDaNave: {
+        candelabro: { z: 3, y: 3.58, intensidade: 24, alcance: 13, cor: 0xffca9d },
+        grade: { z: -28.65, y: 2.86, intensidade: 19, alcance: 11, cor: 0xffb879 },
+      },
       feixes: [
         { origem: [18, 4.85, -16.61], destino: [13, 0.08, -11.8], largura: 1.25, cor: 0xa2bfff, opacidade: 0.125 },
         { origem: [0, 6.55, -64.61], destino: [-6.8, 0.08, -58.3], largura: 2.5, cor: 0xb391ee, opacidade: 0.08 },

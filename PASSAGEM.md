@@ -51,6 +51,13 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Polimento da Catedral, segunda etapa.** A nave e o transepto têm
+  cantaria mais granulada, rodapé úmido, lajes laterais e uma faixa de
+  pedra com filetes de bronze ao longo do caminho até a grade. O
+  candelabro e as velas da grade criam dois pontos de luz quente.
+  A iluminação revela o bronze e a pedra, mas a madeira dos bancos ainda
+  fica escura nas laterais. A contenção do custo usa duas luzes sem sombras.
+
 - **Polimento da Catedral, primeira etapa.** A nave ganhou bancos com pés,
   assento, encosto e encaixes visíveis. Os vitrais existentes ganharam
   silhueta ogival, rosácea e juntas de chumbo. Esta etapa foi escolhida
@@ -391,7 +398,7 @@ o mapa. A [auditoria](docs/auditoria-visual.md#acabamento-das-áreas-existentes)
 registra o que falta e a ordem sugerida.
 
 - [x] **Polimento 1:** bancos e vitrais da Catedral.
-- [ ] **Polimento 2:** pedra, piso e luz da nave, com leitura clara do corredor.
+- [x] **Polimento 2:** pedra, piso e luz da nave e do transepto, com leitura clara do corredor.
 - [ ] **Polimento 3:** aplicar o padrão visual aos demais ambientes já jogáveis.
 
 - [x] **Prompt 8 / 1A:** kit modular e planta maior do térreo.

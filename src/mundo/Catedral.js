@@ -11,7 +11,7 @@ import { fecharTetos, montarKit } from './KitCatedral.js';
 import { montarAtalhoCripta, volumesDosNiveis } from './NiveisCatedral.js';
 import { montarCenasCatedral, nivelCatedral, visivelNaCatedral } from './CenasCatedral.js';
 import { montarEspoliosCatedral } from './Espolios.js';
-import { criarVitraisDoVeu, modeloBancoDaNave } from './AcabamentoCatedral.js';
+import { criarVitraisDoVeu, modeloBancoDaNave, montarLuzesDaNave } from './AcabamentoCatedral.js';
 
 const C = CONFIG.areas.catedral;
 
@@ -43,6 +43,7 @@ export class Catedral {
     const luar = retro(new THREE.MeshBasicMaterial({ color: 0x8dcfff }));
     const vitral = criarVitraisDoVeu();
     const grupoDa = sala => this.setores.get(sala);
+    montarLuzesDaNave(grupoDa('nave'), grupoDa('transepto'), m, metal, C.luzesDaNave);
     const movel = (sala, x, z, l, a, p, mat) => {
       bloco(grupoDa(sala), mat, x, a / 2, z, l, a, p);
       this.colisores.adicionar(x, z, l, p, a);
