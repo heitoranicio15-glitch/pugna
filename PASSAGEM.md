@@ -51,6 +51,19 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Prompt 8 — 1A, catedral modular (pronto no código):** térreo com nave e
+  corredores laterais, transepto, coro, arena, abside, claustro, sacristia,
+  capela, arquivo, refeitório e cabido. O kit usa a mesma planta para volumes e
+  colisões. Permanecem o checkpoint da nave, os dois selos, os eventos da
+  sacristia e a derrota do Guardião. A planta por andar e a medição em Node
+  estão em `docs/mapa.md`. Testes pesados dispensados no Prompt 8; verificar
+  iluminação, câmera e ritmo caminhando no jogo.
+  - **Decidido pela IA:** malha nova de 4 m, parede de 0,5 m, vão de 3,5 m,
+    pés-direitos de 5 a 12 m, caixa da planta 70 × 42 → 76 × 76 m. Grade dos
+    selos z −13 → −29, Guardião z −24 → −47; seguem no eixo norte da nave.
+    Refeitório e cabido ganham ligação com o transepto e as capelas. Guardião,
+    patrulhas e itens mantêm o mesmo número e as mesmas regras de combate.
+
 - **Câmera estilo Souls, fase CAM4: opções em Configurações (pronto). Com isso a câmera estilo Souls (CAM1 a CAM4) está completa.** Spec 10, seção CAM4. Só na terceira pessoa.
   - **Três opções novas** em Configurações (tela inicial e pausa), logo abaixo de "Câmera". Valem na hora, ficam salvas e ficam cinza na primeira pessoa:
     1. **Recentralizar sozinha** (desligada por padrão): andando ou correndo sem mexer o mouse por 1,5 s, o olhar volta devagar para trás do corpo. Mexer o mouse cancela na hora. Não vale com a mira travada.
@@ -310,6 +323,11 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 - **Pendente para o Heitor decidir:** a penalidade ao morrer (como as almas e os ecos de sangue; ela casa com o rally) e a penalidade do Osso de Retorno. Até lá, morrer e usar o osso não custam nada.
 
 ## Plano (fazer um por vez, cada um num chat novo)
+
+- [x] **Prompt 8 / 1A:** kit modular e planta maior do térreo.
+- [ ] **Prompt 8 / 1B:** galeria, torre, cripta, escadas e atalhos.
+- [ ] **Prompt 8 / 1C:** história das salas, clima e visibilidade.
+- [ ] **Prompt 8 / 2–4:** névoa, floresta e progressão com itens.
 
 - [x] **1. Salvamento estilo Souls + Osso de Retorno** (ver "Decisões")
 - [x] **2. Base dos ataques:** máquina de estados única para todos os inimigos humanos, com 3 fases e 3 tipos de golpe, aviso visual e sonoro por tipo.

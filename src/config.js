@@ -102,8 +102,8 @@ export const CONFIG = {
       luzAmbiente: { ceu: 0xa898d0, chao: 0x2e203c, intensidade: 0.95 },
       nevoaBaixa: { cor: 0x2a2450, forca: 0.4, altura: 1.2 },   // poeira fria rente ao piso
       feixes: [
-        { origem: [21.37, 4.85, -5], destino: [12.4, 0.08, -3.1], largura: 1.25, cor: 0xa2bfff, opacidade: 0.125 },
-        { origem: [0, 4.55, -32.29], destino: [0, 0.08, -24.7], largura: 2.5, cor: 0xb391ee, opacidade: 0.08 },
+        { origem: [18, 4.85, -16.61], destino: [13, 0.08, -11.8], largura: 1.25, cor: 0xa2bfff, opacidade: 0.125 },
+        { origem: [0, 6.55, -64.61], destino: [-6.8, 0.08, -58.3], largura: 2.5, cor: 0xb391ee, opacidade: 0.08 },
       ],
       som: { tipo: 'pedra', base: 0.6, vento: 0.25, gotas: 0.5, eco: 0.7 },
       trilha: 'catedral',

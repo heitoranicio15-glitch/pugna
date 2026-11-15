@@ -185,11 +185,11 @@ test('a Galeria dos Nomes fecha um circuito com o Ossário sem abrir a grade dos
   const navega = new Navegacao(catedral.colisores, catedral.limites);
   const raio = CONFIG.jogador.raio;
   for (const [a, b] of [
-    [{ x: -4, z: 6.4 }, { x: -14.9, z: 6 }],
-    [{ x: -14.9, z: 6 }, { x: -15, z: -3.7 }],
-    [{ x: -15, z: -3.7 }, { x: -3, z: -4.75 }],
+    [{ x: -4, z: 5 }, { x: -16, z: 5 }],
+    [{ x: -16, z: 5 }, { x: -16, z: -3 }],
+    [{ x: -16, z: -3 }, { x: -3, z: -7 }],
   ]) assert.ok(navega.encontrar(a, b, raio).length);
-  assert.equal(navega.encontrar({ x: 0, z: -11 }, { x: 0, z: -21 }, raio).length, 0);
+  assert.equal(navega.encontrar({ x: 0, z: -26 }, { x: 0, z: -47 }, raio).length, 0);
 });
 
 test('a expansão liga os bairros pelos fundos e dá duas entradas a cada ala nova da Catedral', () => {
@@ -205,10 +205,10 @@ test('a expansão liga os bairros pelos fundos e dá duas entradas a cada ala no
   const catedral = porId.get('catedral');
   const navegaCatedral = new Navegacao(catedral.colisores, catedral.limites);
   for (const lado of [-1, 1]) {
-    for (const z of [-9.05, -0.95]) {
+    for (const z of [-11, -3]) {
       assert.ok(navegaCatedral.livre({ x: lado * 21.1, z }, { x: lado * 24, z }, raio), `${lado}, ${z}`);
     }
-    assert.ok(navegaCatedral.encontrar({ x: lado * 24, z: -9.05 }, { x: lado * 24, z: -0.95 }, raio).length);
+    assert.ok(navegaCatedral.encontrar({ x: lado * 24, z: -11 }, { x: lado * 24, z: -3 }, raio).length);
   }
 });
 
@@ -218,8 +218,8 @@ test('as novas anotações podem ser lidas de pontos acessíveis dos dois mapas'
     ['vilarejo', 'edital-triagem', 0.7, 39.25, 0],
     ['vilarejo', 'contas-do-mercado', 19, 29, 0],
     ['vilarejo', 'marco-dos-ausentes', 22.1, -39.1, 0],
-    ['catedral', 'lista-das-devolucoes', -12.1, 6.6, Math.PI],
-    ['catedral', 'juramento-do-veu', 0, -29.1, 0],
+    ['catedral', 'lista-das-devolucoes', -12.1, 8.5, Math.PI],
+    ['catedral', 'juramento-do-veu', 0, -61.1, 0],
   ];
   for (const [id, chave, x, z, yaw] of leituras) {
     const area = porId.get(id), evento = `${id}:${chave}`;
