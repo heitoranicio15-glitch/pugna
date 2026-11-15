@@ -5,6 +5,7 @@ import { uniformesRetro } from '../render/retro.js';
 export function montarAtmosfera(area, config, direcaoLua) {
   const { nevoa, fundo, luzAmbiente, luar, paletaDoCeu } = config;
   area.nevoa = new THREE.FogExp2(nevoa.cor, nevoa.densidade);
+  area.nevoaEmDegraus = config.nevoaEmDegraus === true;
   area.fundo = new THREE.Color(fundo);
   area.paletaDoCeu = paletaDoCeu;
   area.luzJogador = config.luzJogador;
@@ -56,6 +57,7 @@ export class Atmosfera {
     this.luzJogador.color.set(area.corLuzJogador ?? 0x7a86ff);
     this.tempo = animar ? 0.6 : 0;
     const u = uniformesRetro;
+    u.uNevoaEmDegraus.value = area.nevoaEmDegraus ? 1 : 0;
     this.inicioBruma.copy(u.uBrumaCor.value);
     this.inicioForca = animar ? u.uBrumaForca.value : null;
     this.inicioAltura = animar ? u.uBrumaAltura.value : null;

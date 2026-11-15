@@ -39,6 +39,17 @@ test('o PS1 desenha a névoa baixa em degraus e o HD suave', () => {
   assert.equal(CONFIG.render.estilos.ps1.grao, 0);   // o PS1 já tem o pontilhado
 });
 
+test('a distância com 90% de névoa é menor ao sair da vila e menor ainda na mata', () => {
+  const { estrada, floresta, vilarejo } = CONFIG.areas;
+  const distancia = a => Math.sqrt(Math.log(10)) / a.nevoa.densidade;
+  assert.ok(distancia(estrada) >= 35 && distancia(estrada) <= 50);
+  assert.ok(distancia(floresta) >= 25 && distancia(floresta) <= 40);
+  assert.ok(distancia(vilarejo) > distancia(estrada));
+  assert.equal(vilarejo.nevoaEmDegraus, undefined);
+  assert.equal(estrada.nevoaEmDegraus, true);
+  assert.equal(floresta.nevoaEmDegraus, true);
+});
+
 test('explorar é mais lento, mas esquiva, quickstep e luta não mudam', () => {
   const J = CONFIG.jogador;
   assert.ok(J.ritmoExploracao > 0.8 && J.ritmoExploracao < 1);

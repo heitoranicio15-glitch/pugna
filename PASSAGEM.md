@@ -51,6 +51,14 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Prompt 8 — 2, névoa do exterior:** estrada e floresta têm curvas,
+  desvios que voltam, xisto e silhuetas em camadas. Limites e portais
+  permanecem. O PS1 usa bandas de névoa imóveis e o HD usa névoa contínua
+  com bancos móveis. O sino da estrada e a coruja usam estéreo.
+  **Decidido pela IA:** densidade 0,028 → 0,036 na estrada e 0,034 → 0,042
+  na mata; alturas da névoa baixa 2 → 2,5 m e 2,6 → 3,25 m. Vila em 0,026,
+  exploração em 0,88 e combate conservados. Cores anteriores em CONFIG.
+
 - **Prompt 8 — 1C, clima e salas:** seis anotações novas, cela da sineira,
   urnas, sala do bronze, vitrais e poeira em dois feixes. A nave tem eco, a
   torre tem vento e a cripta tem gotas. Os três inimigos comuns mantêm seus
@@ -349,7 +357,9 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 - [x] **Prompt 8 / 1A:** kit modular e planta maior do térreo.
 - [x] **Prompt 8 / 1B:** galeria, torre, cripta, escadas e atalhos.
 - [x] **Prompt 8 / 1C:** história das salas, clima e visibilidade.
-- [ ] **Prompt 8 / 2–4:** névoa, floresta e progressão com itens.
+- [x] **Prompt 8 / 2:** névoa exterior e profundidade visual.
+- [ ] **Prompt 8 / 3:** floresta maior e pontos narrativos.
+- [ ] **Prompt 8 / 4:** progressão com chave, armas e itens.
 
 - [x] **1. Salvamento estilo Souls + Osso de Retorno** (ver "Decisões")
 - [x] **2. Base dos ataques:** máquina de estados única para todos os inimigos humanos, com 3 fases e 3 tipos de golpe, aviso visual e sonoro por tipo.

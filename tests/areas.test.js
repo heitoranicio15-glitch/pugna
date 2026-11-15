@@ -8,6 +8,7 @@ import { CONFIG } from '../src/config.js';
 import { Atmosfera } from '../src/mundo/Atmosfera.js';
 import { Ceu } from '../src/mundo/Ceu.js';
 import { Navegacao } from '../src/mundo/Navegacao.js';
+import { xEmZ } from '../src/mundo/PaisagemExterior.js';
 import { alvoProximo } from '../src/mundo/Interacoes.js';
 import { criarNpcs } from '../src/entidades/Npc.js';
 
@@ -557,4 +558,17 @@ test('a ponta sul da estrada tem a trilha, as placas e a pista livre; a carroça
   assert.ok(placas.length >= 3, 'as placas (taverna, taverna, trilha) são desenhadas');
   // A pista de terra batida está livre na ponta sul, de ponta a ponta da largura da pista.
   for (let x = -3.5; x <= 3.5; x += 0.5) assert.ok(livreEm(estrada, x, 56, 0.4), `x=${x}`);
+});
+
+
+test('os desvios voltam à trilha principal e têm o centro livre nas curvas', () => {
+  const { porId } = montarAsAreasReais();
+  for (const id of ['estrada','floresta']) {
+    const cfg = CONFIG.areas[id], desvio = cfg.desvio, principal = cfg.eixo ?? cfg.caminho;
+    for (const [x,z] of [desvio[0],desvio.at(-1)]) assert.equal(xEmZ(principal,z),x,id);
+    for (let z=desvio[0][1];z<=desvio.at(-1)[1];z+=0.5) {
+      const p={x:xEmZ(desvio,z),z};
+      assert.ok(!porId.get(id).colisores.bloqueiaTrecho(p,p,0,CONFIG.jogador.raio),JSON.stringify({id,...p}));
+    }
+  }
 });

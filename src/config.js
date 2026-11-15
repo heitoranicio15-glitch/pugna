@@ -117,17 +117,20 @@ export const CONFIG = {
     // Estrada ao sul do vilarejo (120 x 30 m, corre de norte a sul; o vilarejo fica no norte).
     estrada: {
       luzJogador: 5, corLuzJogador: 0x9dadff,
-      nevoa: { cor: 0x152433, densidade: 0.028 },   // antes 0x253a47 / 0,019
-      fundo: 0x080f16,
+      nevoa: { cor: 0x18283d, densidade: 0.036 },   // antes 0x152433 / 0,028
+      nevoaEmDegraus: true,
+      fundo: 0x0a1525,
       luzAmbiente: { ceu: 0x506f94, chao: 0x121c20, intensidade: 1.15 },
       luar: { cor: 0x8fb4dc, intensidade: 0.75 },
       paletaDoCeu: { zenite: 0x040a12, meio: 0x0f2030, horizonte: 0x152433, nuvem: 0x34506a },
-      nevoaBaixa: { cor: 0x24405a, forca: 0.8, altura: 2.0 },
-      bruma: { cor: 0x6d9da4, opacidade: 0.24, altura: 0.28, variacao: 0.9, velocidade: 1.5 },
-      som: { tipo: 'estrada', base: 1, vento: 0.7, madeira: 0.5, agua: 0.45 },
+      nevoaBaixa: { cor: 0x29445f, forca: 0.87, altura: 2.5 }, // antes 0x24405a / 0,8 / 2 m
+      bruma: { cor: 0x6587a2, opacidade: 0.28, altura: 0.28, variacao: 0.9, velocidade: 1.1 },
+      som: { tipo: 'estrada', base: 1, vento: 0.76, madeira: 0.5, agua: 0.45, sino: 0.32 },
       trilha: 'vilarejo',   // a mesma do vilarejo: ao sair pelo portão a música segue sem reiniciar
       limites: { minX: -18, maxX: 12, minZ: -60, maxZ: 60 },
-      larguraDaPista: 8,       // terra batida, centrada em x = 0
+      larguraDaPista: 8,
+      eixo: [[0,-59],[1.5,-46],[-1.2,-33],[-1.4,-18],[1.8,3],[0,15],[0,29],[-1.6,40],[0,59]],
+      desvio: [[1.5,-46],[-8.5,-41],[-9,-35],[-1.2,-33]],
       portaoNorte: { z: -60 }, // o Portão Sul do vilarejo visto de fora (portal para o vilarejo)
       ponte: { z: 22, comprimento: 8, riacho: 6 },
       carroca: { z: 57 },      // carroça tombada, agora só cenário ao lado da trilha (S6 abriu a ponta sul)
@@ -151,20 +154,21 @@ export const CONFIG = {
     // Primeira área nova (S6, escolha da IA; o Heitor revisa). Sem tochas: a única luz fixa é a lanterna.
     floresta: {
       luzJogador: 5, corLuzJogador: 0x9fd6c8,
-      nevoa: { cor: 0x10221f, densidade: 0.034 },   // antes 0x16302f / 0,027
-      fundo: 0x050c0b,
-      luzAmbiente: { ceu: 0x3f6e6a, chao: 0x0d1814, intensidade: 1.1 },
-      luar: { cor: 0x86bcbc, intensidade: 0.6 },
-      paletaDoCeu: { zenite: 0x030a0e, meio: 0x0c2026, horizonte: 0x10221f, nuvem: 0x2c4a4e },
-      nevoaBaixa: { cor: 0x1e3d3a, forca: 0.85, altura: 2.6 },
-      bruma: { cor: 0x4f8a80, opacidade: 0.22, altura: 0.3, variacao: 1, velocidade: 0.8 },
-      som: { tipo: 'floresta', base: 1, vento: 0.55, coruja: 0.4, galhos: 0.45 },
+      nevoa: { cor: 0x142737, densidade: 0.042 },   // antes 0x10221f / 0,034 (S6: 0,027)
+      nevoaEmDegraus: true,
+      fundo: 0x050e19,
+      luzAmbiente: { ceu: 0x48648c, chao: 0x102026, intensidade: 1.1 },
+      luar: { cor: 0x829fda, intensidade: 0.64 },
+      paletaDoCeu: { zenite: 0x030714, meio: 0x102034, horizonte: 0x142737, nuvem: 0x2c4c57 },
+      nevoaBaixa: { cor: 0x224153, forca: 0.91, altura: 3.25 }, // antes 0x1e3d3a / 0,85 / 2,6 m
+      bruma: { cor: 0x54818c, opacidade: 0.30, altura: 0.3, variacao: 1, velocidade: 0.65 },
+      som: { tipo: 'floresta', base: 1, vento: 0.63, coruja: 0.52, galhos: 0.45 },
       // Trilha decidida pela IA: a mesma do vilarejo (continuidade com a estrada; só há 2 faixas de área).
       trilha: 'vilarejo',
       limites: { minX: -20, maxX: 20, minZ: -45, maxZ: 45 },
       larguraDoCaminho: 4.5,
-      // Eixo da trilha: de [z inicial, z final, x]. Só desenha o chão; a clareira inteira é andável.
-      caminho: [[-45, -28, 0], [-28, -8, 2.5], [-8, 10, -2.5], [10, 28, 2], [28, 41, -1]],
+      caminho: [[0,-45],[0,-34],[3,-27],[-1,-11],[-3,0],[4,19],[0,34],[-1,41.5]],
+      desvio: [[3,-27],[9.6,-23],[9,-16],[-1,-11]],
       portaNorte: { z: -42.4 },       // portal de volta à estrada
       barricadaSul: { z: 41.8 },      // a trilha acaba aqui (o Castelo virá depois)
       lanterna: { x: -4.4, z: -33.5 },   // 'floresta-clareira', perto da chegada

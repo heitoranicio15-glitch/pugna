@@ -63,6 +63,18 @@ class Cena {
     this.fontes.push(o);
   }
 
+  /** Voz baixa e abrigada, com posição estéreo fixa para a duração do evento. */
+  longe(pan, freq) {
+    const filtro = this.ctx.createBiquadFilter();
+    filtro.type = 'lowpass'; filtro.frequency.value = freq;
+    const lado = this.ctx.createStereoPanner?.();
+    if (lado) {
+      lado.pan.value = pan;
+      filtro.connect(lado).connect(this.bus);
+    } else filtro.connect(this.bus);
+    return filtro;
+  }
+
   /** Tom curto num instante marcado. Devolve o ganho (para rampas extras). */
   tom(t, { freq, ate = freq, volume = 0.05, duracao = 0.2, forma = 'sine', destino = this.bus, ataque = 0.005 }) {
     const c = this.ctx;
@@ -170,6 +182,11 @@ const CONSTRUTORES = {
 
   // Estrada: vento mais forte, madeira que range e o riacho ao longe.
   estrada(cena, som) {
+    const longe = cena.longe(-0.62, 430);
+    cena.vozes.sino = (t) => {
+      cena.tom(t,{freq:146.8,volume:0.032,duracao:3.1,destino:longe});
+      cena.tom(t,{freq:292,volume:0.019,duracao:1.8,destino:longe});
+    };
     const vento = cena.ruido({ freq: 520, q: 0.5, ganho: 0.15 * (som.vento ?? 0) });
     cena.lfo(0.13, 230, vento.filtro.frequency);
     cena.lfo(0.09, 0.06 * (som.vento ?? 0), vento.ganho.gain);
@@ -197,11 +214,12 @@ const CONSTRUTORES = {
     cena.lfo(0.05, 0.06 * vento, copa.ganho.gain);
     const folhas = cena.ruido({ freq: 2200, q: 0.8, ganho: 0.018 * vento });
     cena.lfo(0.17, 0.012 * vento, folhas.ganho.gain);
+    const longe = cena.longe(0.64, 680);
     cena.vozes.coruja = (t) => {
       // dois "hu" graves, o segundo mais baixo
       const f = ALEATORIO(300, 360);
-      cena.tom(t, { freq: f, ate: f * 0.94, volume: 0.05, duracao: 0.45, ataque: 0.12 });
-      cena.tom(t + 0.62, { freq: f * 0.9, ate: f * 0.82, volume: 0.045, duracao: 0.7, ataque: 0.15 });
+      cena.tom(t, { freq: f, ate: f * 0.94, volume: 0.05, duracao: 0.45, ataque: 0.12, destino: longe });
+      cena.tom(t + 0.62, { freq: f * 0.9, ate: f * 0.82, volume: 0.045, duracao: 0.7, ataque: 0.15, destino: longe });
     };
     cena.vozes.galho = (t) => {
       cena.estouro(t, { tipo: 'bandpass', freq: ALEATORIO(900, 1800), q: 3, volume: ALEATORIO(0.05, 0.1), duracao: 0.05 });
