@@ -5,13 +5,13 @@
 //  caixotes) e pular em cima delas.
 // =============================================================================
 export class Colisores {
-  constructor() { this.caixas = []; }
+  constructor(chaoPadrao = 0) { this.caixas = []; this.chaoPadrao = chaoPadrao; }
 
   /** Adiciona uma caixa pelo centro e tamanho. topo = altura até onde ela bloqueia. */
-  adicionar(x, z, largura, profundidade, topo = Infinity) {
+  adicionar(x, z, largura, profundidade, topo = Infinity, base = -Infinity, piso = true) {
     const caixa = {
       minX: x - largura / 2, maxX: x + largura / 2,
-      minZ: z - profundidade / 2, maxZ: z + profundidade / 2, topo, ativa: true,
+      minZ: z - profundidade / 2, maxZ: z + profundidade / 2, topo, base, piso, ativa: true,
     };
     this.caixas.push(caixa);
     return caixa;
@@ -21,9 +21,9 @@ export class Colisores {
    * Empurra um círculo (jogador ou inimigo) para fora das caixas.
    * pos: objeto com x e z (é alterado). peY: altura dos pés. degrau: altura que sobe sozinho.
    */
-  resolver(pos, raio, peY = 0, degrau = 0) {
+  resolver(pos, raio, peY = 0, degrau = 0, corpo = 1.75) {
     for (const c of this.caixas) {
-      if (!c.ativa || c.topo <= peY + degrau) continue; // está por cima dela (ou é só um degrau)
+      if (!c.ativa || c.topo <= peY + (c.piso ? degrau : 0) || c.base >= peY + corpo) continue;
       const px = Math.max(c.minX, Math.min(pos.x, c.maxX));
       const pz = Math.max(c.minZ, Math.min(pos.z, c.maxZ));
       let dx = pos.x - px, dz = pos.z - pz;
@@ -44,10 +44,22 @@ export class Colisores {
 
   /** Altura do chão num ponto, considerando caixas baixas em que dá para pisar. */
   alturaDoChao(x, z, peY, degrau = 0.4, folga = 0.2) {
-    let h = 0;
+    let h = this.chaoPadrao;
     for (const c of this.caixas) {
-      if (!c.ativa || c.topo > peY + degrau || c.topo <= h) continue;
+      if (!c.ativa || !c.piso || c.topo > peY + degrau || c.topo <= h) continue;
       if (x > c.minX - folga && x < c.maxX + folga && z > c.minZ - folga && z < c.maxZ + folga) h = c.topo;
+    }
+    return h;
+  }
+
+  /** Limite dos pés ao pular embaixo de um piso suspenso ou de uma verga. */
+  alturaDoTeto(x, z, peY, corpo, raio) {
+    let h = Infinity;
+    for (const c of this.caixas) {
+      if (!c.ativa || c.base < peY + corpo - 0.001 || c.base - corpo >= h) continue;
+      const dx = Math.max(c.minX - x, 0, x - c.maxX);
+      const dz = Math.max(c.minZ - z, 0, z - c.maxZ);
+      if (dx * dx + dz * dz < raio * raio) h = c.base - corpo;
     }
     return h;
   }
@@ -67,7 +79,7 @@ export class Colisores {
     const trechoMinZ = Math.min(origem.z, destino.z), trechoMaxZ = Math.max(origem.z, destino.z);
     let primeiro = 1;
     for (const c of this.caixas) {
-      if (!c.ativa || c.topo <= Math.min(altura, alturaDestino)) continue;
+      if (!c.ativa || c.topo <= Math.min(altura, alturaDestino) || c.base > Math.max(altura, alturaDestino)) continue;
       if (c.maxX - c.minX < tamanhoMinimo && c.maxZ - c.minZ < tamanhoMinimo) continue;
       const minX = c.minX - margem, maxX = c.maxX + margem;
       const minZ = c.minZ - margem, maxZ = c.maxZ + margem;
@@ -89,6 +101,11 @@ export class Colisores {
         const cruzamento = (c.topo - altura) / (alturaDestino - altura);
         if (alturaDestino > altura) saida = Math.min(saida, cruzamento);
         else entrada = Math.max(entrada, cruzamento);
+      }
+      if (Number.isFinite(c.base) && altura !== alturaDestino) {
+        const cruzamento = (c.base - altura) / (alturaDestino - altura);
+        if (alturaDestino > altura) entrada = Math.max(entrada, cruzamento);
+        else saida = Math.min(saida, cruzamento);
       }
       if (entrada <= saida && entrada < primeiro && saida > 0) primeiro = entrada;
     }

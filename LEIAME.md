@@ -292,6 +292,9 @@ permite voltar à nave por outra arcada. Pelo corredor central, a grade de bronz
 fica no fim do transepto; depois do coro e da arena, três degraus levam ao altar.
 O Ossário e o Relicário têm, cada um, duas passagens na parede externa.
 As de oeste levam à **Capela do Último Nome** e as de leste ao **Arquivo das Vigílias**.
+Pelo corredor leste, suba à **galeria** e à **torre** pelo patamar de serviço.
+Pelo claustro, desça à **cripta** e abra por dentro o ferrolho que encurta a
+volta à nave. A lanterna no coro fica logo antes da arena.
 O **Guardião do Véu** usa golpes altos, pesados e rasteiras. Quando perde
 metade da vida, ruge, fica invencível por 1 segundo e se afasta um passo. Na
 **fase final** ele não pode ser vencido só com parry: a maior parte dos golpes

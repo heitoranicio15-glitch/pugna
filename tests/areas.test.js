@@ -107,7 +107,16 @@ test('as áreas de verdade passam em validarArea e em montarAreas', () => {
   for (const id of ['portao-sul', 'adro-da-igreja', 'nave-do-veu', 'taverna-da-estrada', 'floresta-clareira']) assert.ok(checkpoints.has(id), id);
   assert.equal(checkpoints.get('taverna-da-estrada').area.id, 'estrada');
   assert.equal(checkpoints.get('floresta-clareira').area.id, 'floresta');
-  assert.equal(checkpoints.size, 5);
+  assert.equal(checkpoints.size, 9);
+  for (const [id, y] of [['catedral-galeria', 4], ['catedral-torre', 8], ['catedral-cripta', -4], ['catedral-coro', 0]]) {
+    const { area, ponto } = checkpoints.get(id);
+    assert.equal(area.id, 'catedral');
+    assert.equal(ponto.y ?? 0, y);
+    const x = ponto.x - Math.sin(ponto.olhar) * 1.2;
+    const z = ponto.z - Math.cos(ponto.olhar) * 1.2;
+    assert.equal(area.colisores.alturaDoChao(x,z,y,0.05), y, id);
+    assert.ok(!area.colisores.bloqueiaTrecho({x,z},{x,z},y+1), id);
+  }
 });
 
 test('a atmosfera aplica os perfis e interpola o céu, a névoa e o fundo entre áreas', () => {
@@ -503,7 +512,8 @@ test('as chegadas, os pontos de descanso e os portais antigos continuam com os m
   ]);
   assert.deepEqual(vila.portais.map((p) => [p.x, p.z, p.raio, p.destino]), [[0, -47.15, 2.6, 'catedral'], [0, 55.4, 1.6, 'estrada']]);
   assert.deepEqual(catedral.chegadas, { vilarejo: { x: 0, z: 6, yaw: 0 } });
-  assert.deepEqual(catedral.pontosDeDescanso.map((p) => [p.id, p.nome, p.x, p.z, p.olhar]), [['nave-do-veu', 'Nave do Véu', 4.55, 6.55, Math.PI]]);
+  const nave = catedral.pontosDeDescanso.find(p => p.id === 'nave-do-veu');
+  assert.deepEqual([nave.id, nave.nome, nave.x, nave.z, nave.olhar], ['nave-do-veu', 'Nave do Véu', 4.55, 6.55, Math.PI]);
   assert.deepEqual(catedral.portais.map((p) => [p.x, p.z, p.raio, p.destino]), [[0, 8.45, 2.35, 'vilarejo']]);
   const { floresta: _, ...chegadasAntigas } = estrada.chegadas;
   assert.deepEqual(chegadasAntigas, { vilarejo: { x: 0, z: -55.2, yaw: Math.PI }, taverna: { x: -4.4, z: -15, yaw: -Math.PI / 2 } });

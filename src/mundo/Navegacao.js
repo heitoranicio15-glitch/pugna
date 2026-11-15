@@ -16,24 +16,33 @@ export class Navegacao {
 
   invalidar() { this.grades.clear(); }
 
-  livre(a, b, raio) {
-    return !this.colisores.bloqueiaTrecho(a, b, 0, raio + 0.04);
+  livre(a, b, raio, y = a.y ?? 0) {
+    if (this.colisores.bloqueiaTrecho(a, b, y + 0.05, raio + 0.04)) return false;
+    if (this.colisores.chaoPadrao === 0) return true;
+    const passos = Math.ceil(Math.hypot(a.x - b.x, a.z - b.z) / PASSO) || 1;
+    for (let i = 0; i <= passos; i++) {
+      const x = a.x + (b.x - a.x) * i / passos, z = a.z + (b.z - a.z) * i / passos;
+      if (this.colisores.alturaDoChao(x, z, y, 0.05, 0.006) !== y) return false;
+    }
+    return true;
   }
 
   encontrar(origem, destino, raio, limiteZ = Infinity) {
     if (destino.z > limiteZ) return [];
-    if (this.livre(origem, destino, raio)) return [{ x: destino.x, z: destino.z }];
+    const y = origem.y ?? 0;
+    if (this.livre(origem, destino, raio, y)) return [{ x: destino.x, z: destino.z }];
 
     const { largura, profundidade, minX, minZ } = this;
     const ponto = (id) => ({ x: minX + id % largura * PASSO, z: minZ + Math.floor(id / largura) * PASSO });
-    let grade = this.grades.get(raio);
+    const chave = `${raio}:${y}`, livre = (a, b, r) => this.livre(a, b, r, y);
+    let grade = this.grades.get(chave);
     if (!grade) {
       grade = new Uint8Array(largura * profundidade);
-      this.grades.set(raio, grade);
+      this.grades.set(chave, grade);
     }
     const transitavel = (id, p) => {
       if (p.z > limiteZ) return false;
-      if (!grade[id]) grade[id] = this.livre(p, p, raio) ? 1 : 2;
+      if (!grade[id]) grade[id] = livre(p, p, raio) ? 1 : 2;
       return grade[id] === 1;
     };
     const distancia = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -43,7 +52,7 @@ export class Navegacao {
       for (let z = Math.max(0, z0 - 3); z <= Math.min(profundidade - 1, z0 + 3); z++) {
         for (let x = Math.max(0, x0 - 3); x <= Math.min(largura - 1, x0 + 3); x++) {
           const id = z * largura + x, q = ponto(id), d = distancia(p, q);
-          if (d < menor && transitavel(id, q) && this.livre(p, q, Math.max(0, raio - 0.09))) {
+          if (d < menor && transitavel(id, q) && livre(p, q, Math.max(0, raio - 0.09))) {
             escolhido = id; menor = d;
           }
         }
@@ -66,7 +75,7 @@ export class Navegacao {
           rota.push(ponto(id));
         }
         rota.reverse();
-        if (this.livre(alvo, destino, raio)) rota.push({ x: destino.x, z: destino.z });
+        if (livre(alvo, destino, raio)) rota.push({ x: destino.x, z: destino.z });
         return rota;
       }
       abertos.delete(atual);
@@ -76,7 +85,7 @@ export class Navegacao {
         if (nx < 0 || nx >= largura || nz < 0 || nz >= profundidade) continue;
         const id = nz * largura + nx, q = ponto(id);
         const custo = custos.get(atual) + distancia(p, q);
-        if (custo >= (custos.get(id) ?? Infinity) || !transitavel(id, q) || !this.livre(p, q, raio)) continue;
+        if (custo >= (custos.get(id) ?? Infinity) || !transitavel(id, q) || !livre(p, q, raio)) continue;
         custos.set(id, custo);
         anteriores.set(id, atual);
         abertos.set(id, custo + distancia(q, alvo));

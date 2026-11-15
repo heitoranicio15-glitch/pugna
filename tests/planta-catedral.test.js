@@ -36,18 +36,18 @@ test('o kit não sobrepõe volumes nem emite faces coplanares em duplicata', () 
 
 test('cada borda externa fecha a sala e os vãos de combate têm mais de 3 m', () => {
   const raio = CONFIG.jogador.raio;
-  for (const { x, z, eixo, vao, salas } of c.planta.arestas.values()) {
+  for (const { x, z, eixo, vao, salas, base } of c.planta.arestas.values()) {
     const dx = eixo === 'x' ? 1 : 0, dz = 1 - dx;
     if (salas.length === 1) assert.equal(vao, undefined);
     for (const s of [-1.6, 0, 1.6]) {
       if (vao?.trava) continue;
       const a = { x: x - dx + s * dz, z: z - dz + s * dx };
       const b = { x: x + dx + s * dz, z: z + dz + s * dx };
-      assert.equal(c.colisores.bloqueiaTrecho(a,b,1.6), !vao, JSON.stringify({ x,z,eixo,s }));
+      assert.equal(c.colisores.bloqueiaTrecho(a,b,(vao?.y ?? base) + 1.6), !vao, JSON.stringify({ x,z,eixo,s }));
     }
     if (vao) assert.ok(vao.largura >= 3 && vao.altura >= 2.5);
     if (salas.length === 1) {
-      assert.ok(c.colisores.bloqueiaTrecho({ x:x-dx,z:z-dz }, { x:x+dx,z:z+dz }, 0, raio));
+      assert.ok(c.colisores.bloqueiaTrecho({ x:x-dx,z:z-dz }, { x:x+dx,z:z+dz }, base, raio));
     }
   }
 });
@@ -84,4 +84,67 @@ test('os IDs antigos do térreo e a abertura da sacristia sobrevivem ao progress
   assert.ok(c.colisores.bloqueiaTrecho(a,b,1.6));
   atualizarObjetos(c, [PORTA_SACRISTIA, ATALHO_SACRISTIA]);
   assert.ok(!c.colisores.bloqueiaTrecho(a,b,1.6));
+});
+
+import { ANDARES, ATALHO_CRIPTA, ESCADAS } from '../src/mundo/NiveisCatedral.js';
+
+// Percorre os lances em ambas as direções usando o mesmo colisor do caçador.
+function caminhar(coords) {
+  const [primeiro, ...alvos] = coords;
+  const [x,y,z] = primeiro;
+  const pos = { x,y,z }, raio = CONFIG.jogador.raio;
+  for (const [destX, destZ, destY] of alvos) {
+    const passos = Math.max(1, Math.ceil(Math.hypot(destX-pos.x, destZ-pos.z) / 0.1));
+    const dx = (destX-pos.x)/passos, dz = (destZ-pos.z)/passos;
+    for (let i=0;i<passos;i++) {
+      pos.x += dx; pos.z += dz;
+      c.colisores.resolver(pos, raio, pos.y, 0.4);
+      const h = c.colisores.alturaDoChao(pos.x, pos.z, pos.y, 0.4);
+      assert.ok(Math.abs(pos.y-h) <= 0.4, JSON.stringify({pos,h,destX,destZ}));
+      pos.y = h;
+    }
+    assert.ok(Math.hypot(pos.x-destX,pos.z-destZ)<0.11, JSON.stringify({pos,destX,destZ}));
+    if (destY !== undefined) assert.equal(pos.y, destY, JSON.stringify(pos));
+  }
+  return pos;
+}
+
+test('as escadas têm 3,5 m de largura e chegam a patamares navegáveis nos quatro pisos', () => {
+  for (const { id, x,z,rumo,base,alto } of ESCADAS) {
+    const lances = c.volumes.filter(v=>v.tipo==='degrau' && (v.max[0]+v.min[0])/2===x);
+    assert.equal(lances.length,16,id);
+    for (const p of lances) {
+      assert.equal(p.max[0]-p.min[0],3.5,id);
+      assert.equal(p.max[2]-p.min[2],0.5,id);
+    }
+    assert.deepEqual(lances.map(v=>v.max[1]), Array.from({length:16},(_,i)=>base+0.25*(i+1)),id);
+    assert.equal(alto-base,4,id);
+    assert.equal(c.colisores.alturaDoChao(x,z+rumo*8.55,alto,0.05),alto,id);
+  }
+  caminhar([[0,0,5],[8,5],[8,13],[12,13],[12,24.5,ANDARES.galeria],[8,24.5],[8,-23],[-8,-23],[-8,-9,4]]);
+  caminhar([[8,4,24.5],[12,24.5],[12,13,0],[8,13],[8,7]]);
+  caminhar([[12,4,25],[16,25],[16,13,ANDARES.torre],[19,13,8],[16,13],[16,25,4]]);
+  caminhar([[0,0,5],[-8,5],[-16,5],[-16,13],[-16,25,ANDARES.cripta],[-16,30],[-23,30,-4]]);
+});
+
+test('ferrolho abre somente do lado da cripta e libera o retorno à nave', () => {
+  const a={x:-20,z:14}, b={x:-20,z:16};
+  assert.ok(c.colisores.bloqueiaTrecho(a,b,1));
+  const alavanca=c.objetos.find(o=>o.evento===ATALHO_CRIPTA && o.acao==='acionar');
+  assert.ok(c.colisores.interceptarTrecho(a,alavanca,1.7,0,alavanca.y) !== null);
+  atualizarObjetos(c,[ATALHO_CRIPTA]);
+  assert.ok(!c.colisores.bloqueiaTrecho(a,b,1));
+  caminhar([[-20,-4,29],[-20,24],[-20,13,0],[-16,13],[-16,5],[-8,5],[0,5]]);
+});
+
+test('câmera e navegação distinguem o teto dos dois lados da mesma passarela', () => {
+  const p = { x:8,z:3 };
+  assert.equal(c.colisores.alturaDoChao(p.x,p.z,0),0);
+  assert.equal(c.colisores.alturaDoChao(p.x,p.z,4),4);
+  assert.equal(c.colisores.alturaDoTeto(p.x,p.z,0,1.75,0.4),2);
+  assert.ok(c.colisores.interceptarTrecho(p,p,1.5,0,5.5,0.8) !== null);
+  assert.ok(c.colisores.interceptarTrecho(p,{x:8,z:7},5.5,0,5.5) === null);
+  const nav=new Navegacao(c.colisores,c.limites);
+  assert.ok(nav.encontrar({x:8,z:-15,y:4},{x:-8,z:-15,y:4},0.4).some(p=>p.z<-21));
+  assert.ok(!nav.livre({x:8,z:-15,y:4},{x:-8,z:-15,y:4},0.4));
 });
