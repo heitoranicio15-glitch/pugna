@@ -81,7 +81,7 @@ continuam guardados no código (`src/interface/Toque.js`) para voltar depois.
 | Ação | Tecla |
 |---|---|
 | Andar | W A S D |
-| Girar a câmera | Mouse |
+| Girar a câmera (opções em Configurações → Câmera) | Mouse |
 | Correr | Shift (segurando, em qualquer direção) |
 | Pular | Espaço |
 | Agachar / levantar | Z (agachado anda devagar, não corre nem pula) |
@@ -103,7 +103,7 @@ continuam guardados no código (`src/interface/Toque.js`) para voltar depois.
 
 **Configurações** está disponível na tela inicial e no menu de pausa. É possível
 ajustar o volume da música e dos efeitos separadamente, a sensibilidade do mouse,
-o brilho, o gráfico, a pixelização e o tremor dos vértices.
+o brilho, a câmera, o gráfico, a pixelização e o tremor dos vértices.
 
 **Gráfico** escolhe o estilo de imagem e troca na hora, sem recarregar:
 
@@ -120,6 +120,22 @@ Em **Configurações → Câmera**, escolha **Terceira pessoa** (padrão) ou
 independentes e ficam salvos ao recarregar. Na primeira pessoa, a espada e a
 pistola aparecem nas mãos do caçador e os golpes sem trava seguem o seu olhar
 no plano horizontal. **Tab** ou o botão do meio do mouse trava a mira.
+
+Logo abaixo ficam três opções da câmera em **terceira pessoa**, como as dos jogos
+da FromSoftware. Elas valem na hora, ficam salvas como preferências e ficam cinza
+na primeira pessoa:
+
+- **Recentralizar sozinha** (desligada por padrão): andando ou correndo sem mexer
+  o mouse por uns 1,5 s, a câmera volta devagar para trás do caçador. Mexer o
+  mouse cancela na hora. Não vale com a mira travada nem andando de frente para a câmera.
+- **Desviar de paredes** (ligada por padrão): com uma parede de um lado da câmera,
+  ela gira um pouco, devagar, para o lado livre. Desligada, a câmera só encurta
+  ao bater na parede. Não age com a mira travada nem logo depois de mexer o mouse.
+- **Abertura da câmera**: de 40° a 60° (padrão 48°). Menor aproxima e fecha o
+  quadro; maior mostra mais dos lados.
+
+Os tempos e as velocidades ficam em `CONFIG.camera` (`recentrar...`, `desviar...`,
+`aberturaMin` e `aberturaMax`).
 
 O salvamento é no estilo Souls: **o jogo salva sozinho** a cada coisa que
 acontece (descansar, recolher, abrir, usar um item, derrotar o Guardião). Não
@@ -485,7 +501,8 @@ pugna/
   (`crossfadeAmbiente` e `crossfadeTrilha`, em segundos).
 - **mudar a distância, a altura do giro, a abertura ou o peso (atraso) da câmera em terceira pessoa, ou o
   alcance da mira e o comportamento da câmera com a mira travada (inclinação, foco, distância, suavidade):**
-  blocos `camera` e `mira` em `src/config.js`. A abertura da primeira
+  blocos `camera` e `mira` em `src/config.js` (inclusive os tempos e velocidades de "Recentralizar
+  sozinha" e "Desviar de paredes" e a faixa de "Abertura da câmera"). A abertura da primeira
   pessoa e do menu inicial é `render.campoDeVisao`. O plano da câmera estilo Souls está na
   [spec 10](docs/specs/10-camera-souls.md)
 - **mudar a pistola** (balas, dano, alcance, janela do parry, tempo de
@@ -614,7 +631,7 @@ pugna/
 
 - `npm test` verifica a janela de acerto, o custo da esquiva, o quickstep com a mira, o tiro de pistola
   (janela do parry, balas, parede, alcance), o golpe crítico, o visceral, a execução e a carga do forte, as fases e os tipos de ataque dos inimigos, o golpe inaparável e a fase final do Guardião, as fichas de ataque (no máximo 2 atacando juntos) e a punição do frasco, a interrupção ao apanhar,
-  a firmeza dos inimigos, o rally, o frasco interrompido, a mira travada (e a câmera dela: inclinação, foco, distância e transições sem tranco), a câmera em terceira pessoa (e a abertura de cada perspectiva), colisões, navegação,
+  a firmeza dos inimigos, o rally, o frasco interrompido, a mira travada (e a câmera dela: inclinação, foco, distância e transições sem tranco), a câmera em terceira pessoa (e a abertura de cada perspectiva), as opções da câmera (preferências com padrão e faixa, recentralizar sozinha e desviar de paredes), colisões, navegação,
   interação com objetos, inventário, Osso de Retorno e migração de saves. O
   `tests/areas.test.js` também monta as cinco áreas de verdade (sem navegador) e confere
   o contrato, os portais e chegadas, a estrada aberta até a trilha da floresta, a floresta (patrulhas e lanterna longe da chegada, caminho até a porta de volta e até cada patrulha, chegadas antigas inalteradas, save antigo), a lanterna, o bilhete e os NPCs
