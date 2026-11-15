@@ -121,6 +121,11 @@ export const CONFIG = {
         coro: { x: -1.93, y: 2.71, z: -35.48, cor: 0xffc79e, intensidade: 15, alcance: 8.2 },
         abside: { x: 0.24, y: 2.46, z: -62.13, cor: 0xffca9a, intensidade: 23, alcance: 10.7 },
       },
+      luzesDeServico: {
+        sacristia: { cor: 0xffbd8c, intensidade: 17, alcance: 9.8 },
+        porta: { cor: 0xffc59d, intensidade: 10, alcance: 6.2 },
+        claustro: { cor: 0xe5c38e, intensidade: 16, alcance: 9.3 },
+      },
       feixes: [
         { origem: [18, 4.85, -16.61], destino: [13, 0.08, -11.8], largura: 1.25, cor: 0xa2bfff, opacidade: 0.125 },
         { origem: [0, 6.55, -64.61], destino: [-6.8, 0.08, -58.3], largura: 2.5, cor: 0xb391ee, opacidade: 0.08 },

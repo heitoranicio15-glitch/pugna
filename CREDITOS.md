@@ -103,3 +103,7 @@ cerâmica das urnas são texturas procedurais do projeto.
 Os painéis e as arandelas do Coro, o altar, o estrado e os castiçais
 da Abside foram modelados no código do PUGNA. O mosaico e o tecido
 do altar são texturas procedurais do projeto.
+
+As ferragens da porta e dos atalhos da Sacristia e da Cripta,
+as alavancas e as arandelas foram modeladas no código do PUGNA.
+As faixas de piso reutilizam a textura procedural das alas.

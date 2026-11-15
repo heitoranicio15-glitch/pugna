@@ -51,6 +51,13 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Polimento da Catedral, sétima etapa.** O Claustro ganhou uma
+  faixa de mosaico rumo à Cripta. A porta da Sacristia tem tábuas,
+  travessas, rebites e puxador de ferro. As duas grades de atalho
+  têm alavancas articuladas e um indicador que fica verde após a
+  abertura. As chaves, os lados de acionamento e os saves usam
+  as regras anteriores.
+
 - **Polimento da Catedral, sexta etapa.** A faixa de pedra da nave
   continua pelo Coro. Painéis de madeira e arandelas marcam a passagem
   para o Santuário. Na Abside, um mosaico antecede o estrado, com
@@ -428,7 +435,8 @@ registra o que falta e a ordem sugerida.
 - [x] **Polimento 4:** melhorar a leitura da galeria, das passarelas e das escadas existentes.
 - [x] **Polimento 5:** detalhar a Sala do Bronze e a Cripta das Urnas.
 - [x] **Polimento 6:** refinar o Coro e a Abside, incluindo o entorno do altar.
-- [ ] **Polimento 7:** detalhar o Claustro e a Sacristia, incluindo os atalhos existentes.
+- [x] **Polimento 7:** detalhar o Claustro e a Sacristia, incluindo os atalhos existentes.
+- [ ] **Polimento 8:** detalhar a Capela do Último Nome e o Arquivo das Vigílias.
 - [ ] Aplicar o padrão visual aos demais ambientes já jogáveis.
 
 - [x] **Prompt 8 / 1A:** kit modular e planta maior do térreo.

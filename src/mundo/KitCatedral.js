@@ -61,8 +61,13 @@ const MOSAICOS = {
   mosaicoOssario: [-14.25, -20.65, 0, -17.35],
   mosaicoRelicario: [-14.25, 17.35, 0, 20.65],
   mosaicoAltar: [-60, -1.5, -57, 1.5],
+  mosaicoClaustro: [3, -17.3, 11, -14.7],
+  mosaicoSacristia: [3, 14.7, 9.25, 17.3],
 };
-const MOSAICO_POR_SETOR = { ossario: 'mosaicoOssario', relicario: 'mosaicoRelicario', abside: 'mosaicoAltar' };
+const MOSAICO_POR_SETOR = {
+  ossario: 'mosaicoOssario', relicario: 'mosaicoRelicario', abside: 'mosaicoAltar',
+  claustro: 'mosaicoClaustro', sacristia: 'mosaicoSacristia',
+};
 const SETORES_DO_CORREDOR = ['nave', 'transepto', 'coro'];
 
 function revestirTrecho(face, trecho, base, acabamento) {

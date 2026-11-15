@@ -134,8 +134,8 @@ export class Catedral {
     ler('claustro', 'Lista das devoluções', 'lista-das-devolucoes', -12.1, 1.63, 10.66, Math.PI);
     ler('capela', 'Capela do Último Nome', 'capela-ultimo-nome', -34, 1.34, -12.27);
     ler('arquivo', 'Arquivo das Vigílias', 'arquivo-das-vigilias', 34, 1.34, -12.27);
-    montarSacristia(this);
-    montarAtalhoCripta(this);
+    montarSacristia(this, metal, C.luzesDeServico);
+    montarAtalhoCripta(this, metal);
 
     montarCoroEAbside(this, m, metal, C.luzesDoCoroEAbside);
     ler('abside', 'Juramento do Véu', 'juramento-do-veu', 0, 1.42, -62.96);
