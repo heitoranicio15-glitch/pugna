@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { Colisores } from './Colisores.js';
-import { animarTochas, arcoOgival, caixa, colunaFacetada, juntarPorMaterial, materiais, tocha } from './pecas.js';
+import { animarTochas, arcoOgival, colunaFacetada, juntarPorMaterial, materiais, tocha } from './pecas.js';
 import { retro } from '../render/retro.js';
 import { bloco, placa } from './Aderecos.js';
 import { montarSacristia } from './Sacristia.js';
@@ -11,6 +11,7 @@ import { fecharTetos, montarKit } from './KitCatedral.js';
 import { montarAtalhoCripta, volumesDosNiveis } from './NiveisCatedral.js';
 import { montarCenasCatedral, nivelCatedral, visivelNaCatedral } from './CenasCatedral.js';
 import { montarEspoliosCatedral } from './Espolios.js';
+import { criarVitraisDoVeu, modeloBancoDaNave } from './AcabamentoCatedral.js';
 
 const C = CONFIG.areas.catedral;
 
@@ -40,9 +41,7 @@ export class Catedral {
     const metal = retro(new THREE.MeshLambertMaterial({ color: 0xb78843, map: m.metal.map }));
     const brasa = retro(new THREE.MeshBasicMaterial({ color: 0xffac65 }));
     const luar = retro(new THREE.MeshBasicMaterial({ color: 0x8dcfff }));
-    const vitrais = [luar, brasa].map((mat, i) => retro(new THREE.MeshBasicMaterial({
-      map: m.vitral.map, color: i ? 0xdd9a55 : 0x85afff,
-    })));
+    const vitral = criarVitraisDoVeu();
     const grupoDa = sala => this.setores.get(sala);
     const movel = (sala, x, z, l, a, p, mat) => {
       bloco(grupoDa(sala), mat, x, a / 2, z, l, a, p);
@@ -75,9 +74,8 @@ export class Catedral {
       instancias(sala, arco.geometry, arco.material, ramos.map(z => [0, altura - 0.02, z]));
     }
     const bancos = [-3.25, 3.25].flatMap(x => [-17, -9, -1, 3].map(z => [x, 0, z]));
-    for (const [l, a, p, y, dz] of [[2.6, 0.46, 0.5, 0.23, 0], [2.6, 0.37, 0.13, 0.645, 0.17]]) {
-      instancias('nave', caixa(l, a, p, m.madeiraEscura).geometry, m.madeiraEscura,
-        bancos.map(([x, , z]) => [x, y, z + dz]));
+    for (const peca of modeloBancoDaNave(m).children) {
+      instancias('nave', peca.geometry, peca.material, bancos);
     }
     for (const [x, , z] of bancos) this.colisores.adicionar(x, z, 2.6, 0.5, 0.83);
 
@@ -146,7 +144,7 @@ export class Catedral {
       ['ossario', -18, 3.68, -16.69, 1, 0],
       ['nave', 0, 6.9, 10.69, 1, Math.PI],
     ]) {
-      bloco(grupoDa(sala), vitrais[i], x, y, z, 2.75, 3.48, 0.06).rotation.y = rot;
+      grupoDa(sala).add(vitral(i, x, y, z, rot));
     }
     this.poeira = montarCenasCatedral(this, metal, C.feixes);
     this.posicionarEspolio = montarEspoliosCatedral(this);

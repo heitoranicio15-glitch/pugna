@@ -86,3 +86,33 @@ parede, uma tocha e um caixote no meio da rua e dois sacos na pista da estrada.
 
 Ainda repetidos em fila, de propósito: as três barracas do mercado (uma rua de
 feira) e as lápides do cemitério. A Fase 2 revê os dois junto com o plano da vila.
+
+## Acabamento das áreas existentes
+
+Para o PUGNA, a referência de qualidade é um trecho curto em que arte,
+controle e som tenham o mesmo nível de acabamento. A nave da Catedral
+serve como primeira referência. O modo PS1 pode ter formas legíveis,
+materiais distintos e boa animação com a baixa resolução que faz parte da
+identidade do jogo.
+
+| Frente | Trabalho a priorizar nas áreas prontas |
+| --- | --- |
+| Direção de arte | Fechar uma paleta por ambiente e construir contraste entre rotas, pontos de interesse e ameaças. |
+| Materiais e modelagem | Dar forma, escala, desgaste e juntas próprias a pedra, madeira, bronze e vidro. Variar construções repetidas e detalhar o que se vê de perto. |
+| Iluminação e efeitos | Fazer vitrais, lanternas e velas parecerem fontes do cenário. Testar a leitura de chão, silhuetas, portas e escadas em movimento. |
+| Personagens e combate | Revisar transições, apoio dos pés, peso de golpes, reação a impactos e leitura dos avisos. Validar o equilíbrio com pessoas jogando. |
+| Áudio e narrativa | Distinguir passos e impactos por superfície, acertar a distância e o volume dos sons e dar contexto às pistas nos próprios espaços. |
+| Interface e acessibilidade | Melhorar a leitura da bolsa, dos avisos e dos controles. Rever contraste, tamanho do texto, comandos e opções de movimento de câmera. |
+| Desempenho e estabilidade | Medir quadros e carregamento em máquinas diferentes. Percorrer as áreas em PS1 e HD, com atenção a câmera, colisão, atalhos e saves antigos. |
+
+A primeira etapa troca os blocos dos bancos por peças de marcenaria que
+cabem no volume de colisão existente. Os quatro vitrais internos usam um
+perfil ogival e duas texturas procedurais de 128 px. O próximo recorte é
+pedra, piso e iluminação da nave e do transepto. Em seguida vêm o aço e
+o tecido dos personagens e o acabamento das demais áreas prontas.
+
+Nas mesmas câmeras, PS1 e HD passaram de 50.232 para 51.397 triângulos
+na vista do banco e de 45.517 para 45.543 no Relicário. As chamadas de
+desenho ficaram em 83 e 79, respectivamente. São contagens de quadros
+isolados em Chrome com renderização por software. A madeira ainda perde
+detalhe nas sombras, especialmente no HD.
