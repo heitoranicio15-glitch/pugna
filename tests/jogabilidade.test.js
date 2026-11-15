@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../src/config.js';
-import { campoDeVisao } from '../src/nucleo/enquadramento.js';
+import { campoDeVisao, seguirPonto } from '../src/nucleo/enquadramento.js';
 import { Jogador } from '../src/entidades/Jogador.js';
 import { Eventos } from '../src/nucleo/Eventos.js';
 import { normalizarProgresso, SalvamentoLocal } from '../src/nucleo/Salvamento.js';
@@ -432,6 +432,105 @@ test('o giro da câmera fica no peito, ela não entra no chão olhando para cima
   colisores.adicionar(0, 1.2, 8, 0.4);
   jogador.atualizarCamera(0);
   assert.ok(jogador.distCamera < CONFIG.camera.sumirBoneco && jogador.distCamera >= 0.35);
+});
+
+// ---- Câmera com peso (spec 10, CAM2) ----
+const PESO = { seguirPlano: 6, seguirVertical: 3, atrasoMaxPlano: 0.6, atrasoMaxVertical: 0.4 };
+/** Anda o alvo em linha reta por `segundos`, a `qps` quadros por segundo, e devolve o ponto que o persegue. */
+function perseguir(qps, segundos, vel, limites = PESO) {
+  const ponto = { x: 0, y: 0, z: 0 }, alvo = { x: 0, y: 0, z: 0 }, antes = { x: 0, y: 0, z: 0 };
+  const quadros = Math.round(qps * segundos), dt = segundos / quadros;
+  for (let i = 0; i < quadros; i++) {
+    Object.assign(antes, alvo);
+    alvo.x += vel.x * dt; alvo.y += vel.y * dt; alvo.z += vel.z * dt;
+    seguirPonto(ponto, antes, alvo, dt, limites);
+  }
+  return { ponto, alvo };
+}
+
+test('o ponto de giro segue o caçador com atraso, mais lento na vertical, e encaixa na hora com dt 0', () => {
+  // Alvo parado: o ponto chega nele, mais devagar na vertical.
+  const ponto = { x: 0.5, y: 0.3, z: 0 }, alvo = { x: 0, y: 0, z: 0 };
+  seguirPonto(ponto, alvo, alvo, 0.1, PESO);
+  assert.ok(Math.abs(ponto.x - 0.5 * Math.exp(-0.6)) < 1e-12 && Math.abs(ponto.y - 0.3 * Math.exp(-0.3)) < 1e-12);
+  assert.ok(ponto.x / 0.5 < ponto.y / 0.3, 'a vertical deveria ser mais lenta');
+  for (let i = 0; i < 100; i++) seguirPonto(ponto, alvo, alvo, 0.05, PESO);
+  assert.ok(Math.hypot(ponto.x, ponto.y, ponto.z) < 1e-6);
+  // Andando a 2,9 m/s o ponto fica para trás velocidade / rapidez, sem passar do alvo.
+  const andando = perseguir(60, 3, { x: 2.9, y: 0, z: 0 });
+  assert.ok(Math.abs(andando.alvo.x - andando.ponto.x - 2.9 / 6) < 1e-3);
+  // dt 0 (teletransporte, pausa): encaixa no alvo.
+  const longe = { x: 40, y: 2, z: -30 };
+  assert.deepEqual(seguirPonto({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }, longe, 0, PESO), longe);
+});
+
+test('o ponto de giro respeita o atraso máximo no rolamento e na queda', () => {
+  // Rolamento a 9,5 m/s na diagonal e queda rápida: sem limite o atraso seria 1,6 m e 3,3 m.
+  const { ponto, alvo } = perseguir(60, 2, { x: 6.7, y: -10, z: 6.7 });
+  assert.ok(Math.abs(Math.hypot(alvo.x - ponto.x, alvo.z - ponto.z) - PESO.atrasoMaxPlano) < 1e-9);
+  assert.ok(Math.abs(ponto.y - alvo.y - PESO.atrasoMaxVertical) < 1e-9);
+  // Um salto de posição de um quadro para o outro também fica dentro do limite.
+  const salto = seguirPonto({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }, { x: 0, y: 5, z: 30 }, 1 / 60, PESO);
+  assert.ok(30 - salto.z <= PESO.atrasoMaxPlano + 1e-9 && 5 - salto.y <= PESO.atrasoMaxVertical + 1e-9);
+});
+
+test('o ponto de giro dá o mesmo resultado a 30 e a 144 quadros por segundo', () => {
+  for (const vel of [{ x: 2.9, y: 0, z: 0 }, { x: -1.5, y: 0.6, z: 2 }, { x: 9.5, y: 0, z: 0 }]) {
+    for (const segundos of [0.25, 1]) {
+      const a = perseguir(30, segundos, vel), b = perseguir(144, segundos, vel);
+      for (const eixo of ['x', 'y', 'z']) {
+        assert.ok(Math.abs(a.ponto[eixo] - b.ponto[eixo]) < 1e-6, `${eixo} difere: ${a.ponto[eixo]} e ${b.ponto[eixo]}`);
+      }
+    }
+  }
+});
+
+test('a câmera com peso: o caçador anda e a câmera vem atrás; teletransporte e parede não deixam atraso', () => {
+  const { colisores, jogador } = arena();
+  const camera = jogador.jogo.camera;
+  jogador.atualizarCamera(0);
+  const z0 = camera.position.z;
+  // O caçador dá um passo de 0,3 m para a frente num quadro: a câmera anda menos que ele.
+  jogador.pos.z -= 0.3;
+  jogador.atualizarCamera(1 / 60);
+  const andou = z0 - camera.position.z;
+  assert.ok(andou > 0 && andou < 0.1, `a câmera andou ${andou}`);
+  // Parado, ela alcança.
+  for (let i = 0; i < 240; i++) jogador.atualizarCamera(1 / 60);
+  assert.ok(Math.abs(z0 - 0.3 - camera.position.z) < 1e-3);
+  // Renascer longe (lanterna, Osso de Retorno, começar a partida) encaixa a câmera na hora.
+  jogador.reiniciar(30, -20, 0);
+  jogador.atualizarCamera(1 / 60);
+  assert.ok(Math.abs(camera.position.x - 30) < 1e-9 && Math.abs(jogador.pivo.z + 20) < 1e-9);
+  // Atravessar um portal muda a posição e chama atualizarCamera(0, 0): também encaixa.
+  jogador.pos.set(-12, 0, 7);
+  jogador.atualizarCamera(0, 0);
+  assert.deepEqual([jogador.pivo.x, jogador.pivo.z], [-12, 7]);
+  // Parede entre o caçador e o ponto atrasado: o ponto encosta no lado do caçador.
+  jogador.reiniciar(0, 0, 0);
+  jogador.atualizarCamera(0);
+  colisores.adicionar(0, -0.6, 8, 0.2);     // parede fina entre z -0,5 e -0,7
+  jogador.pos.z = -1.2;                      // o caçador passa para o outro lado num quadro
+  jogador.atualizarCamera(1 / 60);
+  assert.ok(jogador.pivo.z < -0.7 - CONFIG.camera.folga + 1e-9, `giro ficou em ${jogador.pivo.z}`);
+  // A rotação continua imediata: girar não depende do atraso.
+  jogador.yaw = 1;
+  jogador.atualizarCamera(1 / 60);
+  assert.equal(camera.rotation.y, 1);
+});
+
+test('depois de encostar numa parede a câmera se afasta devagar, e encurta na hora', () => {
+  const { colisores, jogador } = arena();
+  jogador.atualizarCamera(0);
+  const parede = colisores.adicionar(0, 2.5, 8, 1);
+  jogador.atualizarCamera(1 / 60);
+  const curta = jogador.distCamera;
+  assert.ok(curta < 2, 'encurta no mesmo quadro');
+  parede.ativa = false;
+  jogador.atualizarCamera(0.1);
+  const falta = CONFIG.camera.distancia - curta;
+  assert.ok(Math.abs(jogador.distCamera - (curta + falta * (1 - Math.exp(-0.1 * CONFIG.camera.voltaDistancia)))) < 1e-9);
+  assert.ok(CONFIG.camera.voltaDistancia < 6, 'mais lenta que antes da CAM2');
 });
 
 test('a primeira pessoa acompanha os olhos e usa o olhar para orientar o ataque sem trava', () => {

@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { alcancaPisada, pelasCostas } from './Furtividade.js';
+import { seguirPonto } from '../nucleo/enquadramento.js';
 
 const C = CONFIG.jogador;
 const CB = CONFIG.combate;
@@ -35,6 +36,7 @@ export class Jogador {
   /** Coloca o jogador num ponto, com vida e estamina cheias. */
   reiniciar(x, z, yaw) {
     this.pos.set(x, 0, z); this.vel.set(0, 0, 0);
+    this.pivo?.copy(this.pos); this.pivoAlvo?.copy(this.pos);   // teletransporte: a câmera não vem deslizando
     this.yaw = yaw; this.pitch = CAM.inclinacaoInicial; this.rumo = yaw;
     this.soltarMira();
     this.tSemVisao = 0; this.acumuloTroca = 0; this.tTroca = 0; this.recentrar = 0;
@@ -73,6 +75,8 @@ export class Jogador {
     // câmera
     this.fasePasso = 0; this.tremor = 0; this.afundar = 0; this.alturaOlhos = C.alturaOlhos;
     this.alturaPivo = CAM.alturaPivo; this.distCamera = CAM.distancia;
+    // Ponto de giro com peso (CAM2): persegue os pés do caçador com atraso. Renascer encaixa na hora.
+    this.pivo = this.pos.clone(); this.pivoAlvo = this.pos.clone(); this.distBoneco = CAM.distancia;
   }
 
   /** Direção para onde o corpo está virado, no plano do chão. */
@@ -765,28 +769,43 @@ export class Jogador {
       const tremor = (Math.random() - 0.5) * t * 0.22;
       cam.position.set(this.pos.x, this.pos.y + Math.max(0.35, this.alturaPivo - this.afundar), this.pos.z);
       cam.rotation.set(this.pitch + tremor, this.yaw, 0);
-      this.distCamera = 0;
+      this.distCamera = 0; this.distBoneco = 0;
+      this.pivo.copy(this.pos); this.pivoAlvo.copy(this.pos);   // ao voltar para a terceira pessoa, sem atraso acumulado
       return;
     }
     this.alturaPivo += ((this.morto ? 0.9 : CAM.alturaPivo) - this.alturaPivo) * suave(this.morto ? 2.5 : 12);
-    const py = this.pos.y + this.alturaPivo - this.afundar;
+
+    // Ponto de giro com peso: persegue o caçador com atraso (dt 0 encaixa na hora).
+    const pivo = seguirPonto(this.pivo, this.pivoAlvo, this.pos, dt, CAM);
+    this.pivoAlvo.copy(this.pos);
+    const py = pivo.y + this.alturaPivo - this.afundar;
+    // O ponto atrasado nunca fica dentro de uma parede: se há parede entre ele e o caçador, encosta no caçador.
+    const preso = col.interceptarTrecho(this.pos, pivo, py, CAM.folga, py, 0.8);
+    if (preso !== null) {
+      pivo.x = this.pos.x + (pivo.x - this.pos.x) * preso * 0.9;
+      pivo.z = this.pos.z + (pivo.z - this.pos.z) * preso * 0.9;
+    }
 
     // Direção para onde a câmera olha.
     const cp = Math.cos(this.pitch);
     const fx = -Math.sin(this.yaw) * cp, fy = Math.sin(this.pitch), fz = -Math.cos(this.yaw) * cp;
     let d = CAM.distancia;
-    if (fy > 0.01) d = Math.min(d, (this.alturaPivo - CAM.folgaDoChao) / fy);   // olhando para cima: não entra no chão
-    const parede = col.interceptarTrecho(this.pos, { x: this.pos.x - fx * d, z: this.pos.z - fz * d }, py, CAM.folga, py - fy * d, 0.8);
+    // Olhando para cima: não entra no chão (o chão é o dos pés do caçador, não o do ponto atrasado).
+    if (fy > 0.01) d = Math.min(d, (py - this.pos.y - CAM.folgaDoChao) / fy);
+    const parede = col.interceptarTrecho(pivo, { x: pivo.x - fx * d, z: pivo.z - fz * d }, py, CAM.folga, py - fy * d, 0.8);
     if (parede !== null) d *= parede;
     d = Math.max(0.35, d);
-    // Encurta na hora (nunca atravessa a parede) e volta devagar.
-    this.distCamera = d < this.distCamera ? d : this.distCamera + (d - this.distCamera) * suave(6);
+    // Encurta na hora (nunca atravessa a parede) e volta devagar, sem zoom brusco.
+    this.distCamera = d < this.distCamera ? d : this.distCamera + (d - this.distCamera) * suave(CAM.voltaDistancia);
 
     const D = this.distCamera;
+    const cx = pivo.x - fx * D, cy = py - fy * D, cz = pivo.z - fz * D;
+    // Distância real da câmera ao peito do caçador (com o atraso, difere um pouco de distCamera).
+    this.distBoneco = Math.hypot(cx - this.pos.x, cy - (this.pos.y + this.alturaPivo), cz - this.pos.z);
     cam.position.set(
-      this.pos.x - fx * D + (Math.random() - 0.5) * t,
-      py - fy * D + (Math.random() - 0.5) * t,
-      this.pos.z - fz * D + (Math.random() - 0.5) * t,
+      cx + (Math.random() - 0.5) * t,
+      cy + (Math.random() - 0.5) * t,
+      cz + (Math.random() - 0.5) * t,
     );
     cam.rotation.set(this.pitch + (Math.random() - 0.5) * t * 0.6, this.yaw, 0);
   }

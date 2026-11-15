@@ -264,7 +264,7 @@ export const CONFIG = {
     silencio: { abafar: 0.2, segura: 1.2, volta: 2.5 },   // o ambiente se cala quando um inimigo percebe
   },
 
-  // ---- Câmera em terceira pessoa (spec 10, fase CAM1: enquadramento estilo Souls) ----
+  // ---- Câmera em terceira pessoa (spec 10: CAM1 enquadramento estilo Souls, CAM2 câmera com peso) ----
   // Referência (Elden Ring / Souls): abertura 43°, distância 4,0 m, giro a 1,42 m (peito).
   // Com isso o caçador ocupa uns 57% da altura da tela; no PUGNA antigo ocupava uns 28%.
   camera: {
@@ -276,6 +276,14 @@ export const CONFIG = {
     folga: 0.3,              // distância mínima das paredes
     folgaDoChao: 0.25,       // olhando para cima, a câmera para a esta altura do chão (m)
     sumirBoneco: 1.25,       // câmera mais perto que isso do ponto de giro: o boneco some (antes 0,85; com o giro no peito, a 1 m as costas tapavam a tela)
+    // CAM2, câmera com peso: o ponto de giro persegue o caçador com atraso, em vez de andar grudado nele.
+    // Rapidez = fração do caminho vencida por segundo (maior = mais grudada). O Dark Souls usa uns 3 no plano.
+    // Antes da CAM2 não havia atraso nenhum (equivale a rapidez infinita e atraso máximo 0).
+    seguirPlano: 6,          // rapidez com que o giro alcança o caçador no chão (para os lados e para a frente)
+    seguirVertical: 3,       // rapidez na vertical: mais lenta, para pulo, degrau e pisada não sacudirem a tela
+    atrasoMaxPlano: 0.6,     // o giro nunca fica mais que isto (m) atrás do caçador no chão (rolamento a 9,5 m/s)
+    atrasoMaxVertical: 0.4,  // idem na vertical (m)
+    voltaDistancia: 3,       // rapidez com que a câmera se afasta de novo depois de encostar numa parede (antes 6: dava zoom brusco)
   },
 
   // ---- Travar a mira ----

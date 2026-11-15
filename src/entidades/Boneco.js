@@ -143,7 +143,7 @@ export class Boneco {
 
   atualizar(dt, j) {
     const g = this.grupo;
-    g.visible = j.distCamera > CONFIG.camera.sumirBoneco;   // câmera colada numa parede: não mostra o boneco por dentro
+    g.visible = j.distBoneco > CONFIG.camera.sumirBoneco;   // câmera colada numa parede: não mostra o boneco por dentro
     g.position.copy(j.pos);
     const difRumo = Math.atan2(Math.sin(j.rumo - this.rumo), Math.cos(j.rumo - this.rumo));
     this.rumo += difRumo * (dt > 0 ? 1 - Math.exp(-dt * 24) : 1);
