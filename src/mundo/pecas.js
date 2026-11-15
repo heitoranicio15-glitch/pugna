@@ -51,6 +51,8 @@ export function materiais() {
     cantariaUmidaVeu: familia(pedra({ map: t.cantariaVeu, color: 0x8a9690 }), 'pedra'),
     lajesNave: familia(registrarMaterialHd(lambert(t.lajesNave, { color: 0xb4b0c3 }), 'patterned_slate_tiles', 0.46), 'lajes'),
     corredorVeu: lambert(t.corredorVeu),
+    mosaicoOssario: lambert(t.mosaicoAlas, { color: 0xf0b18c }),
+    mosaicoRelicario: lambert(t.mosaicoAlas, { color: 0xadceff }),
     mosaicoChao: lambert(t.mosaico, { depthWrite: false }),
     telhado: familia(registrarMaterialHd(lambert(t.telhado, { color: 0xa2a8c0, side: THREE.DoubleSide }), 'roof_slates_02', 0.8), 'telhado'),
     madeira: familia(madeira(), 'madeira'),

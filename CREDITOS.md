@@ -88,3 +88,7 @@ Ao baixar um modelo, textura ou som com permissão de redistribuição, guarde e
 O kit da Catedral, o bosque, o sino, o cavalo, as três armas novas e o
 Portão Sul foram modelados em código. Reutilizam materiais do jogo; não
 incluem arquivos das referências visuais locais.
+
+Os pedestais, mesas, urnas, cofre, velas e estandartes do Ossário e do
+Relicário foram modelados no código do PUGNA. Os mosaicos e a trama
+dos estandartes são texturas procedurais do projeto.
