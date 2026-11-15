@@ -16,6 +16,9 @@ const browser = await chromium.launch({
 });
 try {
   const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
+  const erros = [];
+  page.on('pageerror', err => erros.push(err.message));
+  page.on('console', msg => { if (msg.type() === 'error' && /WebGL|shader/i.test(msg.text())) erros.push(msg.text()); });
   await page.addInitScript(() => { window.requestAnimationFrame = () => 0; });
   await page.goto(url, { waitUntil: 'load', timeout: 25000 });
   await page.waitForFunction(() => window.jogo, null, { polling: 100, timeout: 20000 });
@@ -36,7 +39,7 @@ try {
         jogo.jogador.reiniciar(x,z,yaw,y);
         jogo.jogador.atualizarCamera(0);
         jogo.boneco.atualizar(0,jogo.jogador);
-        area.atualizar(0,0,jogo.jogador.pos);
+        area.atualizar(0,0,jogo.jogador.pos,estilo);
         jogo.luzJogador.position.set(x,y+2.1,z);
         r.info.reset();
         jogo.desenharPartida(0);
@@ -46,6 +49,7 @@ try {
     }
     return { modelosCarregados: modelos.filter(Boolean).length, modelos: modelos.length, dados: saida };
   }, vistas.filter(([id]) => !filtro.length || filtro.includes(id)));
+  if (erros.length) throw new Error(erros.join('\n'));
   console.log(JSON.stringify(dados));
 } finally {
   await browser.close();

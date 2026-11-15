@@ -635,7 +635,7 @@ export class Jogo {
         this.hud.avisar(this.usarFrasco(), 1.8);
       }
     }
-    this.mundo.atualizar(dt, this.tempo, this.jogador.pos);
+    this.mundo.atualizar(dt, this.tempo, this.jogador.pos, this.render.estilo);
     const ambiente = this.mundo.somLocal?.(this.jogador.pos) ?? this.mundo.som;
     if (ambiente !== this.ultimoAmbiente) {
       this.ultimoAmbiente = ambiente;

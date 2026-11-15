@@ -18,6 +18,7 @@ export const uniformesRetro = {
   uBrumaPerto: { value: 3 },        // m: perto do caçador ela some (o chão aos pés fica nítido)
   uBrumaLonge: { value: 28 },       // m: daqui em diante ela está inteira
   uBrumaBandas: { value: 0 },       // PS1: degraus de névoa (0 = suave, como no HD)
+  uNevoaEmDegraus: { value: 0 },   // só estrada, floresta e exteriores que pedem o efeito
   uTempo: { value: 0 },
   uContornoCor: { value: new THREE.Color(0x4a66c8) },   // luz de contorno dos personagens
   uContornoForca: { value: 0.6 },
@@ -41,12 +42,24 @@ const VERTICE = /* glsl */ `
 `;
 
 const BRUMA = /* glsl */ `
-  #include <fog_fragment>
+  #if defined(USE_FOG) && defined(FOG_EXP2)
+    if (uNevoaEmDegraus > 0.0 && uBrumaBandas > 0.0) {
+      float d = fogDensity * vFogDepth;
+      float nevoa = 1.0 - exp(-d * d);
+      nevoa = floor(nevoa * uBrumaBandas + 0.5) / uBrumaBandas;
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, fogColor, nevoa);
+    } else {
+      #include <fog_fragment>
+    }
+  #else
+    #include <fog_fragment>
+  #endif
   if (uBrumaForca > 0.0) {
     float bAltura = 1.0 - smoothstep(0.0, uBrumaAltura, vMundoPos.y);
     float bDist = smoothstep(uBrumaPerto, uBrumaLonge, distance(vMundoPos, cameraPosition));
     // Ondula devagar com o vento: a névoa nunca fica parada.
-    float bOnda = 0.72 + 0.28 * sin(vMundoPos.x * 0.21 + uTempo * 0.35) * sin(vMundoPos.z * 0.17 - uTempo * 0.27);
+    float tempoBruma = uNevoaEmDegraus > 0.0 && uBrumaBandas > 0.0 ? 0.0 : uTempo;
+    float bOnda = 0.72 + 0.28 * sin(vMundoPos.x * 0.21 + tempoBruma * 0.35) * sin(vMundoPos.z * 0.17 - tempoBruma * 0.27);
     float b = clamp(bAltura * bDist * bOnda * uBrumaForca, 0.0, 1.0);
     if (uBrumaBandas > 0.0) b = floor(b * uBrumaBandas + 0.5) / uBrumaBandas;
     gl_FragColor.rgb = mix(gl_FragColor.rgb, uBrumaCor, b);
@@ -66,6 +79,7 @@ const DECLARAR_VERTICE = 'uniform vec2 uRetroRes;\nuniform float uTremor;\nvaryi
 const DECLARAR_FRAGMENTO = `varying vec3 vMundoPos;
 uniform vec3 uBrumaCor; uniform float uBrumaAltura; uniform float uBrumaForca;
 uniform float uBrumaPerto; uniform float uBrumaLonge; uniform float uBrumaBandas; uniform float uTempo;
+uniform float uNevoaEmDegraus;
 uniform vec3 uContornoCor; uniform float uContornoForca;
 `;
 

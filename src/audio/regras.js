@@ -23,7 +23,7 @@ export const TIPOS_DE_SOM = {
   vila: { vento: {}, grilo: { evento: 'grilo' }, sino: { evento: 'sino' } },
   pedra: { vento: {}, gotas: { evento: 'gotas' }, eco: {} },
   taverna: { fogo: { evento: 'estalo' }, murmurio: {} },
-  estrada: { vento: {}, madeira: { evento: 'madeira' }, agua: {} },
+  estrada: { vento: {}, madeira: { evento: 'madeira' }, agua: {}, sino: { evento: 'sino' } },
   floresta: { vento: {}, coruja: { evento: 'coruja' }, galhos: { evento: 'galho' } },
 };
 

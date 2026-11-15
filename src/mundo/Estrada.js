@@ -19,6 +19,7 @@ import { sombrasDeContato } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
 import { decorar } from './Decoracao.js';
 import { montarRio } from './Rio.js';
+import { faixaDeTrilha, paisagemExterior } from './PaisagemExterior.js';
 
 const C = CONFIG.areas.estrada;
 
@@ -47,9 +48,10 @@ export class Estrada {
     // ---------- chão: terra, pista de terra batida, sulcos de carroça e riacho ----------
     // Chão e pista não gravam profundidade e têm ordem fixa (veja o comentário em Vilarejo.js).
     planoDeChao(this, { x: meioX, z: meioZ, l: 420, p: 420, ladrilho: 7, material: m.terraChao, ordem: -6 });
-    planoDeChao(this, { x: 0, z: meioZ, l: C.larguraDaPista, p: maxZ - minZ - 2, ladrilho: 5, material: m.caminhoChao, ordem: -5 });
-    for (const x of [-1.5, 1.5]) {
-      planoDeChao(this, { x, z: meioZ, l: 0.55, p: maxZ - minZ - 4, ladrilho: 7, material: m.terraChao, ordem: -4.9, y: 0.01 });
+    faixaDeTrilha(this.grupo,C.eixo,C.larguraDaPista,m.caminhoChao);
+    faixaDeTrilha(this.grupo,C.desvio,3.2,m.caminhoChao,-5.1);
+    for (const deslocamento of [-1.5, 1.5]) {
+      faixaDeTrilha(this.grupo,C.eixo.map(([x,z])=>[x+deslocamento,z]),0.55,m.terraChao,-4.9,0.01);
     }
     const zPonte = C.ponte.z;
 
@@ -185,6 +187,8 @@ export class Estrada {
       this.grupo.add(morro);
     }
 
+    paisagemExterior(this,C,1839,[[-5.18,-39.2,2.45,5.4],[6.7,43,2.15,6.3]]);
+
     // ---------- bancos de névoa rasteira ----------
     const bruma = C.bruma;
     const matNevoa = new THREE.SpriteMaterial({
@@ -289,10 +293,10 @@ export class Estrada {
     this.portaDaTaverna = { x: T.x + frente + 1, z: T.z };
   }
 
-  atualizar(dt, tempo) {
+  atualizar(dt, tempo, pos, estilo) {
     animarTochas(this.tochas, tempo);
     this.animarRio(tempo);
-    for (const n of this.nevoas) {
+    if (estilo === 'hd') for (const n of this.nevoas) {
       n.sprite.position.x += n.vel * dt;
       if (n.sprite.position.x > this.limites.maxX + 20) n.sprite.position.x = this.limites.minX - 20;
     }

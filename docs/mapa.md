@@ -23,7 +23,29 @@ números em `src/config.js` (`CONFIG.vila` e `CONFIG.arte`) e são conferidas po
 | `taverna` | — | Estrada |
 | `floresta` | `floresta-clareira` | Estrada (norte); o sul fecha na barricada "Trilha interrompida" |
 
-Ainda pendente da spec 05: o portal trancado (`requer`) e os atalhos.
+Ainda pendente da spec 05: requisitos nos portais entre áreas.
+
+## Exterior — escala percebida (Prompt 8 / 2)
+
+A área jogável ainda mede **30 × 120 m** na estrada e **40 × 90 m** na mata.
+A pista da estrada mantém o eixo da ponte e faz curvas leves antes e depois.
+Seu desvio oeste volta à pista entre z −46 e −33. Na floresta o desvio leste
+contorna o xisto e reencontra a trilha entre z −27 e −11.
+
+| Área | Densidade anterior → nova | Distância a 90% de névoa | Névoa baixa (altura) |
+| --- | --- | ---: | ---: |
+| Vilarejo | 0,026 | 58 m | 2,4 m |
+| Estrada | 0,028 → 0,036 | 42 m | 2 → 2,5 m |
+| Floresta | 0,034 → 0,042 | 36 m | 2,6 → 3,25 m |
+
+As bordas têm xisto, troncos altos e luzes distantes em camadas; o sino da
+estrada e a coruja da mata soam em lados diferentes. PS1 usa névoa em
+degraus e bancos imóveis; HD usa distância contínua e bancos em movimento.
+O ritmo de movimento não mudou.
+
+Quadros isolados em PS1 e HD: Estrada **279.949 → 283.387 triângulos,
+252 → 257 chamadas**; Floresta na entrada **324.004 → 325.524 triângulos,
+190 → 191 chamadas**. O PC de teste usou renderização por software.
 
 ## Catedral do Véu — planta do Prompt 8
 

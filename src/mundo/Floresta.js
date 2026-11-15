@@ -19,13 +19,13 @@ import { materiais, caixa, arvoreSeca, planoDeChao, silhuetasColossais } from '.
 import { sombrasDeContato } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
 import { decorar } from './Decoracao.js';
+import { faixaDeTrilha, paisagemExterior, xEmZ } from './PaisagemExterior.js';
 
 const C = CONFIG.areas.floresta;
 
-/** Onde corre o eixo da trilha na altura z (o chão desenha em degraus; aqui é o mesmo degrau). */
+/** Onde corre o eixo da trilha na altura z, também usado pelas árvores. */
 export function xDaTrilha(z) {
-  for (const [z0, z1, x] of C.caminho) if (z >= z0 && z <= z1) return x;
-  return 0;
+  return xEmZ(C.caminho,z);
 }
 
 /** Distância de um ponto a um segmento (para manter árvores longe das patrulhas). */
@@ -82,9 +82,8 @@ export class Floresta {
     // ---------- chão: terra escura, trilha em degraus e sulcos ----------
     // Chão e trilha não gravam profundidade e têm ordem fixa (veja o comentário em Vilarejo.js).
     planoDeChao(this, { x: meioX, z: meioZ, l: 420, p: 420, ladrilho: 7, material: m.terraChao, ordem: -6 });
-    for (const [z0, z1, x] of C.caminho) {
-      planoDeChao(this, { x, z: (z0 + z1) / 2, l: C.larguraDoCaminho, p: z1 - z0 + 1.5, ladrilho: 5, material: m.caminhoChao, ordem: -5 });
-    }
+    faixaDeTrilha(this.grupo,C.caminho,C.larguraDoCaminho,m.caminhoChao);
+    faixaDeTrilha(this.grupo,C.desvio,3.2,m.caminhoChao,-5.1);
 
     // ---------- paredes invisíveis (os limites não prendem sozinhos) ----------
     this.colisores.adicionar(minX + 0.3, meioZ, 0.8, maxZ - minZ + 2);
@@ -158,6 +157,7 @@ export class Floresta {
     // e dos pontos de chegada, para sempre sobrar caminho.
     const livre = (x, z, folga) => {
       if (Math.abs(x - xDaTrilha(z)) < C.larguraDoCaminho / 2 + folga) return false;
+      if (z >= C.desvio[0][1] && z <= C.desvio.at(-1)[1] && Math.abs(x-xEmZ(C.desvio,z)) < 1.6 + folga) return false;
       for (const [px, pz, r] of pontosLivres) if (Math.hypot(x - px, z - pz) < r + folga) return false;
       for (const [px, pz, r] of ocupados) if (Math.hypot(x - px, z - pz) < r + folga) return false;
       for (const rota of rotas) if (distanciaAoSegmento(x, z, rota[0], rota[1]) < 3 + folga) return false;
@@ -196,6 +196,8 @@ export class Floresta {
       morro.rotation.y = sorteio() * 3;
       this.grupo.add(morro);
     }
+
+    paisagemExterior(this,C,7746,[[5.35,-21,2.0,5.6],[-6.6,10.6,2.4,6]]);
 
     // ---------- bancos de névoa rasteira ----------
     const bruma = C.bruma;
@@ -246,8 +248,8 @@ export class Floresta {
     cores.needsUpdate = true;
   }
 
-  atualizar(dt, tempo) {
-    for (const n of this.nevoas) {
+  atualizar(dt, tempo, pos, estilo) {
+    if (estilo === 'hd') for (const n of this.nevoas) {
       n.sprite.position.x += n.vel * dt;
       if (n.sprite.position.x > this.limites.maxX + 20) n.sprite.position.x = this.limites.minX - 20;
     }
