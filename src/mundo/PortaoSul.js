@@ -21,15 +21,15 @@ export function moradorDoPortao(ferreiro = false) {
   cil(0.24,0.36,0.89,0.71,tecido);
   cil(0.2,0.24,0.37,1.33,tecido);
   p.geometria(new THREE.IcosahedronGeometry(0.168,0).scale(0.92,1.12,0.92).translate(0,1.64,0.015),pele);
-  if (ferreiro) p.caixa(0.37,0.64,0.064,0,0.95,0.219,m.madeiraEscura);
+  if (ferreiro) p.caixa(0,0.95,0.219,0.37,0.64,0.064,m.madeiraEscura);
   else {
     cil(0.23,0.23,0.052,1.75,m.madeiraEscura);
     cil(0.10,0.175,0.23,1.86,tecido);
   }
   for (const lado of [-1,1]) {
-    p.caixa(0.12,0.54,0.15,lado*0.245,1.18,0.024,tecido);
-    p.caixa(0.095,0.1,0.1,lado*0.245,0.86,0.048,pele);
-    p.caixa(0.14,0.18,0.25,lado*0.155,0.10,0.07,m.madeiraEscura);
+    p.caixa(lado*0.245,1.18,0.024,0.12,0.54,0.15,tecido);
+    p.caixa(lado*0.245,0.86,0.048,0.095,0.1,0.1,pele);
+    p.caixa(lado*0.155,0.10,0.07,0.14,0.18,0.25,m.madeiraEscura);
   }
   p.montar(g,'Morador');
   return g;
