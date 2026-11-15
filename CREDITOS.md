@@ -92,3 +92,6 @@ incluem arquivos das referências visuais locais.
 Os pedestais, mesas, urnas, cofre, velas e estandartes do Ossário e do
 Relicário foram modelados no código do PUGNA. Os mosaicos e a trama
 dos estandartes são texturas procedurais do projeto.
+
+As lanternas da galeria foram modeladas no código do PUGNA. A pedra
+clara das bordas dos degraus e guarda-corpos é uma textura procedural.

@@ -53,6 +53,10 @@ export function materiais() {
     corredorVeu: lambert(t.corredorVeu),
     mosaicoOssario: lambert(t.mosaicoAlas, { color: 0xf0b18c }),
     mosaicoRelicario: lambert(t.mosaicoAlas, { color: 0xadceff }),
+    quinaGaleria: familia(lambert(t.quinaGaleria, {
+      color: 0xd4c4ad, emissiveMap: t.quinaGaleria, emissive: 0x947d64, emissiveIntensity: 0.34,
+    }), 'pedra'),
+    espelhoGaleria: familia(lambert(t.quinaGaleria, { color: 0x817d88 }), 'pedra'),
     mosaicoChao: lambert(t.mosaico, { depthWrite: false }),
     telhado: familia(registrarMaterialHd(lambert(t.telhado, { color: 0xa2a8c0, side: THREE.DoubleSide }), 'roof_slates_02', 0.8), 'telhado'),
     madeira: familia(madeira(), 'madeira'),

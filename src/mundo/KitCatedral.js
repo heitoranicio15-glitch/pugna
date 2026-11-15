@@ -37,6 +37,7 @@ export function facesDoKit(volumes) {
         const id = `${eixo}:${cota}`;
         if (!planos.has(id)) planos.set(id, [[], []]);
         const face = { eixo, sinal, cota, lote: v.lote, material: v.material,
+          tipo: v.tipo, topo: v.max[1], nariz: v.rumo > 0 ? v.min[2] : v.max[2], rumo: v.rumo,
           ret: [v.min[u], v.min[w], v.max[u], v.max[w]] };
         planos.get(id)[sinal > 0 ? 1 : 0].push(face);
       }
@@ -62,7 +63,46 @@ const MOSAICOS = {
 };
 const MOSAICO_POR_ALA = { ossario: 'mosaicoOssario', relicario: 'mosaicoRelicario' };
 
+function revestirTrecho(face, trecho, base, acabamento) {
+  const [u, v, U, V] = face.ret;
+  const [u0, v0, u1, v1] = trecho;
+  const centro = [Math.max(u, u0), Math.max(v, v0), Math.min(U, u1), Math.min(V, v1)];
+  if (centro[0] >= centro[2] || centro[1] >= centro[3]) return [{ ...face, material: base }];
+  return [
+    ...recortar(face.ret, centro).map(ret => ({ ...face, ret, material: base })),
+    { ...face, ret: centro, material: acabamento },
+  ];
+}
+
+function acabamentoDoNivel(face) {
+  const [u, v, U, V] = face.ret;
+  if (face.tipo === 'degrau') {
+    if (face.eixo === 2 && face.sinal === -face.rumo) {
+      return revestirTrecho(face, [u, face.topo - 0.045, U, face.topo], 'espelhoGaleria', 'quinaGaleria');
+    }
+    if (face.eixo !== 1 || face.sinal !== 1) return [{ ...face, material: 'cantariaUmidaVeu' }];
+    // O nariz é a extremidade voltada ao pé da escada. Usa o próprio
+    // piso de cada degrau, inclusive nas escadas que sobem para norte.
+    const frente = face.nariz;
+    const nariz = face.rumo > 0 ? [frente, v, frente + 0.13, V] : [frente - 0.13, v, frente, V];
+    return revestirTrecho(face, nariz, 'lajesNave', 'quinaGaleria');
+  }
+  if (face.tipo === 'patamar' && face.eixo === 1 && face.sinal === 1) {
+    return [{ ...face, material: 'lajesNave' }];
+  }
+  if (face.tipo !== 'parapeito') return [face];
+  if (face.eixo === 1 && face.sinal === 1) return [{ ...face, material: 'quinaGaleria' }];
+  // A fiada de coroamento continua pelas faces verticais dos guarda-corpos.
+  const quina = face.topo - 0.12;
+  if (face.eixo === 0) return revestirTrecho(face, [quina, v, face.topo, V], 'cantariaVeu', 'quinaGaleria');
+  if (face.eixo === 2) return revestirTrecho(face, [u, quina, U, face.topo], 'cantariaVeu', 'quinaGaleria');
+  return [face];
+}
+
 function acabamentoDoSetor(face) {
+  if (face.tipo === 'degrau' || face.tipo === 'patamar' || face.tipo === 'parapeito') {
+    return acabamentoDoNivel(face);
+  }
   const mosaico = MOSAICO_POR_ALA[face.lote];
   if (!mosaico && !['nave', 'nave-oeste', 'nave-leste', 'transepto'].includes(face.lote)) return [face];
   if (face.material === 'pedra') return [{ ...face, material: 'cantariaVeu' }];
@@ -74,14 +114,7 @@ function acabamentoDoSetor(face) {
 
   // Nas faces horizontais, u é Z e v é X. O corredor ocupa parte da face
   // original, no mesmo plano, sem sobrepor lajes nem criar outro colisor.
-  const [z, x, Z, X] = face.ret;
-  const [z0, x0, z1, x1] = faixa;
-  const centro = [Math.max(z, z0), Math.max(x, x0), Math.min(Z, z1), Math.min(X, x1)];
-  if (centro[0] >= centro[2] || centro[1] >= centro[3]) return [piso];
-  return [
-    ...recortar(face.ret, centro).map(ret => ({ ...piso, ret })),
-    { ...face, ret: centro, material: mosaico ?? 'corredorVeu' },
-  ];
+  return revestirTrecho(face, faixa, 'lajesNave', mosaico ?? 'corredorVeu');
 }
 
 export function montarKit(mundo, volumes, vaos) {

@@ -334,6 +334,15 @@ function estandarteDoVeu() {
   return tex;
 }
 
+function pedraDasQuinas() {
+  const r = criarSorteio(531);
+  return prepararPiso(pintarTextura(64, (x, y) => {
+    const poro = r();
+    const veio = 0.07 * Math.sin(x * Math.PI / 8 + 0.8 * Math.sin(y * Math.PI / 16));
+    return mult([137, 129, 116], 0.91 + poro * 0.17 + veio - (poro < 0.052 ? 0.2 : 0));
+  }));
+}
+
 /** Mancha redonda e suave: usada em brilhos, chamas e névoa. */
 function brilho() {
   return pintarTextura(32, () => [255, 255, 255], (x, y) => {
@@ -420,7 +429,7 @@ export function texturas() {
       janelaAcesa: janela(true), janelaApagada: janela(false), vitral: vitral(),
       vitralVeuAzul: vitralDoVeu(false), vitralVeuAmbar: vitralDoVeu(true),
       cantariaVeu: cantariaDoVeu(), lajesNave: lajesDaNave(), corredorVeu: corredorDoVeu(),
-      mosaicoAlas: mosaicoDasAlas(), estandarteVeu: estandarteDoVeu(),
+      mosaicoAlas: mosaicoDasAlas(), estandarteVeu: estandarteDoVeu(), quinaGaleria: pedraDasQuinas(),
       brilho: brilho(), nevoa: nevoa(), sombra: sombra(), riacho: riacho(), feixe: feixe(),
     };
     cache.assoalho = prepararPiso(cache.madeira.clone());
