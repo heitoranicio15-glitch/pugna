@@ -276,6 +276,9 @@ export const CONFIG = {
     folga: 0.3,              // distância mínima das paredes
     folgaDoChao: 0.25,       // olhando para cima, a câmera para a esta altura do chão (m)
     sumirBoneco: 1.25,       // câmera mais perto que isso do ponto de giro: o boneco some (antes 0,85; com o giro no peito, a 1 m as costas tapavam a tela)
+    // CAM3b: o caçador não some mais de uma vez; fica transparente aos poucos, com pontilhado (antes: visível ou invisível em sumirBoneco).
+    transparenteDe: 2.4,     // câmera mais perto que isto (m) do caçador: ele começa a ficar transparente; em sumirBoneco já sumiu
+    transparenciaRapidez: 8, // rapidez (por segundo) com que ele fica transparente ou volta quando tapa o alvo travado
     // CAM2, câmera com peso: o ponto de giro persegue o caçador com atraso, em vez de andar grudado nele.
     // Rapidez = fração do caminho vencida por segundo (maior = mais grudada). O Dark Souls usa uns 3 no plano.
     // Antes da CAM2 não havia atraso nenhum (equivale a rapidez infinita e atraso máximo 0).
@@ -307,6 +310,16 @@ export const CONFIG = {
     suavidade: 4,            // rapidez (por segundo) com que a inclinação vai para o valor da mira (não mudou: era um 4 solto no código)
     acomodar: 6,             // rapidez (por segundo) com que o foco e a distância extra entram e saem, como uma mola sem balanço (uns 0,8 s)
     entrada: 0.25,           // segundos em que o giro para o alvo "pega no tranco" ao travar ou trocar de alvo (antes 0: partia na velocidade máxima)
+    // CAM3b, alvo colado: a câmera inclina um pouco mais para baixo (e com isso sobe), para ver o inimigo
+    // por cima do ombro do caçador. Antes da CAM3b nada disto existia.
+    coladoDistancia: 2.5,    // alvo mais perto que isto (m): a inclinação extra começa a entrar
+    coladoCheio: 1.2,        // alvo a esta distância (m) ou menos: inclinação extra inteira
+    coladoInclinacao: -0.1,  // inclinação extra com o alvo colado, em radianos (uns 6°; sobe a câmera uns 0,5 m). Pouco de propósito: câmera alta demais de perto é a queixa dos Souls
+    // CAM3b: o caçador fica transparente quando tapa na tela o alvo travado (o ponto do marcador).
+    tapaOpacidade: 0.3,      // quanto do caçador continua desenhado quando tapa o alvo (0 = some, 1 = não muda)
+    tapaMargem: 0.05,        // faixa em volta da silhueta do caçador, em fração da altura da tela, em que a transparência entra aos poucos
+    tapaLargura: 0.42,       // meia largura (m) da silhueta do caçador usada na conta
+    tapaAltura: 1.95,        // altura (m) da silhueta do caçador, com o chapéu
     ajudaSemTrava: 3.2,      // sem trava e parado, o golpe se volta ao inimigo até esta distância
   },
 

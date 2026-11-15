@@ -119,6 +119,27 @@ ficam os dois no quadro. Tudo abaixo vale só na terceira pessoa; a primeira pes
 - Fotos de antes e depois em `docs/fotos/cam3/`. O `tests/fotos-camera.mjs` ganhou 7 fotos da mira (cavaleiro
   a 4 m e a 1,5 m, Guardião a 2 m e a 8 m, troca de alvo em 3 momentos).
 
+### CAM3b — alvo colado e caçador transparente (feita)
+
+Complemento da CAM3, para o "limite conhecido" dela (inimigo colado tapado pelo caçador). Só na terceira pessoa.
+
+- **Alvo colado** (`fatorColado`, dentro de `inclinacaoDaMira`): com o alvo a menos de `mira.coladoDistancia`
+  (2,5 m) a inclinação ganha um extra para baixo, que chega a `mira.coladoInclinacao` (−0,1 rad, uns 6°) em
+  `mira.coladoCheio` (1,2 m). Como a câmera gira em volta do foco, inclinar para baixo também a faz subir
+  (uns 0,4 m com o alvo a 1,5 m). Entra aos poucos, sem degrau. É pouco de propósito: nos Souls a queixa é a
+  câmera subir demais de perto.
+- **Caçador transparente** (`opacidadeDoCacador`, `coberturaDoAlvo`, `pontilhar`): o boneco não some mais de
+  uma vez. A transparência é pontilhada (matriz de Bayer 4 × 4: parte dos pixels deixa de ser desenhada), como
+  no PS1, e funciona nos dois modos gráficos; no HD o grão cresce com a resolução.
+  - Pela distância: inteiro a partir de `camera.transparenteDe` (2,4 m), invisível em `camera.sumirBoneco`
+    (1,25 m). Substitui o "aparece ou some" da CAM1.
+  - Tapando o alvo travado: quando o ponto do marcador (peito do alvo) cai dentro da silhueta do caçador na
+    tela (`mira.tapaLargura`, `mira.tapaAltura`), ele cai até `mira.tapaOpacidade` (30%). Entra numa faixa de
+    `mira.tapaMargem` em volta da borda e aos poucos no tempo (`camera.transparenciaRapidez` 8).
+- **Câmera de lado (estilo ombro): não entrou**, a pedido do Heitor.
+- Fotos em `docs/fotos/cam3b/`. `tests/fotos-camera.mjs` ganhou `--so=nome1,nome2` e `--hd`.
+- **Limite conhecido:** inimigo escuro atrás do caçador, na névoa, continua difícil de ler numa foto parada.
+
 ### CAM4 — opções em Configurações
 
 - Recentralizar sozinha (ligado ou desligado).
@@ -155,8 +176,13 @@ CAM2:
 CAM3:
 
 - [x] Com a mira travada, caçador e Guardião aparecem inteiros de 2 m a 8 m (fotos).
-- [ ] Inimigo do tamanho do caçador a 1,5 m: aparece só da cintura para cima (o caçador tapa o resto). Ver "Limite conhecido".
+- [x] Inimigo do tamanho do caçador a 1,5 m: a câmera sobe um pouco e o caçador fica transparente na frente dele (CAM3b).
 - [x] Travar, trocar de alvo, destravar e perder o alvo não dão tranco (teste: o primeiro quadro depois de cada um).
+
+CAM3b:
+
+- [x] Com o alvo a menos de 2,5 m a câmera inclina e sobe um pouco, sem salto.
+- [x] O caçador fica transparente aos poucos (pontilhado) perto da câmera e quando tapa o alvo travado, no PS1 e no HD.
 
 CAM4:
 
@@ -180,3 +206,8 @@ CAM4:
   2 m são as sugestões do Heitor, mantidas. Da IA: `pertoExtra` 1 m, `inclinacaoDistMin` 1 m, `acomodar` 6,
   `entrada` 0,25 s; `suavidade` 4 é o número que já estava solto no código.
 - CAM3: a distância é contada a partir do foco; o foco para antes de parede; o `mira.cone` não foi mexido.
+- CAM3b: `mira.coladoDistancia` 2,5 m é a sugestão do Heitor. Da IA: `coladoCheio` 1,2 m, `coladoInclinacao`
+  −0,1 rad, `tapaOpacidade` 0,3, `tapaMargem` 0,05, `tapaLargura` 0,42 m, `tapaAltura` 1,95 m,
+  `camera.transparenteDe` 2,4 m e `camera.transparenciaRapidez` 8. `camera.sumirBoneco` continua 1,25 m.
+- CAM3b: a câmera sobe só pela inclinação; "tapar o alvo" é medido pelo ponto do marcador, não pelo corpo
+  inteiro do alvo (senão o caçador ficaria transparente em quase toda luta travada).

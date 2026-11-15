@@ -675,7 +675,7 @@ export class Jogo {
       this.arma.atualizar(dt, this.jogador, this.render.proporcao);
       this.render.desenhar(this.cena, this.camera, this.arma.cena, this.arma.camera);
     } else {
-      this.boneco.grupo.visible = this.jogador.distBoneco > CONFIG.camera.sumirBoneco;
+      this.boneco.grupo.visible = this.boneco.visivel;   // transparência gradual: ver Boneco.atualizarTransparencia
       this.render.desenhar(this.cena, this.camera);
     }
   }
