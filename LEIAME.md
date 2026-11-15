@@ -139,7 +139,9 @@ por um site. O jogo pede confirmação antes de fechar se o Ctrl estiver apertad
 ou **Alt** para esquivar.
 
 ### Como o combate funciona
-- A câmera fica atrás do caçador. Ele anda na direção que você aponta em
+- A câmera fica atrás do caçador, girando em volta do peito dele, com o
+  enquadramento fechado dos Souls (o caçador ocupa mais ou menos metade da
+  altura da tela). Ele anda na direção que você aponta em
   relação à câmera e os golpes saem para onde o **corpo** está virado. Parado
   e sem mira travada, o golpe se volta sozinho ao inimigo que estiver colado.
 - **Mira travada:** a câmera acompanha o inimigo marcado, o caçador o encara e
@@ -472,8 +474,10 @@ pugna/
   `catedral`). Faixa diferente na área nova troca com crossfade; igual continua.
 - **mudar os tempos do crossfade ao atravessar portais:** `CONFIG.audio`
   (`crossfadeAmbiente` e `crossfadeTrilha`, em segundos).
-- **mudar a distância da câmera ou o alcance da mira:** blocos `camera` e `mira`
-  em `src/config.js`
+- **mudar a distância, a altura do giro ou a abertura da câmera em terceira pessoa, ou o
+  alcance da mira:** blocos `camera` e `mira` em `src/config.js`. A abertura da primeira
+  pessoa e do menu inicial é `render.campoDeVisao`. O plano da câmera estilo Souls está na
+  [spec 10](docs/specs/10-camera-souls.md)
 - **mudar a pistola** (balas, dano, alcance, janela do parry, tempo de
   desequilíbrio): bloco `combate.pistola` em `src/config.js`. A janela de cada
   tipo de golpe é multiplicada por `janelaAparar` em `combate.ataquesInimigos`.
@@ -600,7 +604,7 @@ pugna/
 
 - `npm test` verifica a janela de acerto, o custo da esquiva, o quickstep com a mira, o tiro de pistola
   (janela do parry, balas, parede, alcance), o golpe crítico, o visceral, a execução e a carga do forte, as fases e os tipos de ataque dos inimigos, o golpe inaparável e a fase final do Guardião, as fichas de ataque (no máximo 2 atacando juntos) e a punição do frasco, a interrupção ao apanhar,
-  a firmeza dos inimigos, o rally, o frasco interrompido, a mira travada, a câmera em terceira pessoa, colisões, navegação,
+  a firmeza dos inimigos, o rally, o frasco interrompido, a mira travada, a câmera em terceira pessoa (e a abertura de cada perspectiva), colisões, navegação,
   interação com objetos, inventário, Osso de Retorno e migração de saves. O
   `tests/areas.test.js` também monta as cinco áreas de verdade (sem navegador) e confere
   o contrato, os portais e chegadas, a estrada aberta até a trilha da floresta, a floresta (patrulhas e lanterna longe da chegada, caminho até a porta de volta e até cada patrulha, chegadas antigas inalteradas, save antigo), a lanterna, o bilhete e os NPCs
@@ -622,3 +626,6 @@ pugna/
   O `npm run test:celular` hoje falha porque ainda espera o bloqueio, que saiu
   na Etapa B (o celular está congelado; o teste fica como está).
   Para testar outro endereço, use `npm run test:browser -- <URL>`.
+- `node tests/fotos-camera.mjs <pasta> [prefixo]` não é um teste: tira sempre as mesmas 4 fotos da
+  câmera em terceira pessoa (vila, nave da catedral, estrada e Guardião com a mira travada), para
+  comparar antes e depois de mexer na câmera. Usa o mesmo navegador do `test:browser`.

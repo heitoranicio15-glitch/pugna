@@ -775,7 +775,7 @@ export class Jogador {
     const cp = Math.cos(this.pitch);
     const fx = -Math.sin(this.yaw) * cp, fy = Math.sin(this.pitch), fz = -Math.cos(this.yaw) * cp;
     let d = CAM.distancia;
-    if (fy > 0.01) d = Math.min(d, (this.alturaPivo - 0.25) / fy);   // olhando para cima: não entra no chão
+    if (fy > 0.01) d = Math.min(d, (this.alturaPivo - CAM.folgaDoChao) / fy);   // olhando para cima: não entra no chão
     const parede = col.interceptarTrecho(this.pos, { x: this.pos.x - fx * d, z: this.pos.z - fz * d }, py, CAM.folga, py - fy * d, 0.8);
     if (parede !== null) d *= parede;
     d = Math.max(0.35, d);

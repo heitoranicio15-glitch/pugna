@@ -16,3 +16,4 @@ O que estiver marcado **(decidido pela IA, o Heitor revisa)** não estava descri
 | [07](07-etapa-b-pistola.md) | Etapa B: pistola, visceral, quickstep | Opus ou Fable |
 | [08](08-etapa-c-chefe.md) | Etapa C: chefe e imprevisibilidade | Opus ou Fable |
 | [09](09-etapa-d-costas-e-pulo.md) | Etapa D: golpe pelas costas e pulo contra rasteira | Opus ou Fable |
+| [10](10-camera-souls.md) | Câmera estilo Souls (CAM1 a CAM4) | Opus ou Fable |

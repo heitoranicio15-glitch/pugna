@@ -10,7 +10,8 @@ export const CONFIG = {
   // ---- Filtro retrô (estilo PS1) ----
   render: {
     alturaInterna: 270,   // linhas de pixels da imagem interna no PS1 (menor = mais pixelado)
-    campoDeVisao: 72,     // abertura da câmera, em graus
+    campoDeVisao: 72,     // abertura vertical, em graus, da primeira pessoa e do menu inicial (a terceira pessoa usa camera.campoDeVisao)
+    campoDeVisaoCelularEmPe: 88, // celular na vertical (congelado): abertura bem larga
     // Estilos de imagem escolhidos em Configurações (preferência estiloGrafico).
     estiloPadrao: 'ps1',
     estilos: {
@@ -263,13 +264,18 @@ export const CONFIG = {
     silencio: { abafar: 0.2, segura: 1.2, volta: 2.5 },   // o ambiente se cala quando um inimigo percebe
   },
 
-  // ---- Câmera em terceira pessoa ----
+  // ---- Câmera em terceira pessoa (spec 10, fase CAM1: enquadramento estilo Souls) ----
+  // Referência (Elden Ring / Souls): abertura 43°, distância 4,0 m, giro a 1,42 m (peito).
+  // Com isso o caçador ocupa uns 57% da altura da tela; no PUGNA antigo ocupava uns 28%.
   camera: {
-    distancia: 4.4,          // afastamento atrás do caçador
-    alturaPivo: 2.3,         // ponto em volta do qual a câmera gira (acima da cabeça)
-    inclinacaoInicial: -0.2, // olhar levemente de cima
+    campoDeVisao: 48,        // abertura vertical em graus, só da terceira pessoa (antes 72, o mesmo da primeira pessoa)
+    distancia: 4.2,          // afastamento atrás do caçador, em metros (antes 4,4)
+    alturaPivo: 1.55,        // ponto em volta do qual a câmera gira: altura do peito (antes 2,3, acima da cabeça)
+    inclinacaoInicial: -0.2, // olhar levemente de cima, em radianos (não mudou: uns 11°)
     inclinacaoMin: -1.2, inclinacaoMax: 0.85,
     folga: 0.3,              // distância mínima das paredes
+    folgaDoChao: 0.25,       // olhando para cima, a câmera para a esta altura do chão (m)
+    sumirBoneco: 1.25,       // câmera mais perto que isso do ponto de giro: o boneco some (antes 0,85; com o giro no peito, a 1 m as costas tapavam a tela)
   },
 
   // ---- Travar a mira ----

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../src/config.js';
+import { campoDeVisao } from '../src/nucleo/enquadramento.js';
 import { Jogador } from '../src/entidades/Jogador.js';
 import { Eventos } from '../src/nucleo/Eventos.js';
 import { normalizarProgresso, SalvamentoLocal } from '../src/nucleo/Salvamento.js';
@@ -400,6 +401,37 @@ test('a câmera fica atrás do caçador, encurta na parede e ignora postes finos
   colisores.adicionar(0, 2.5, 8, 1);
   jogador.atualizarCamera(0);
   assert.ok(camera.position.z < 2 - CONFIG.camera.folga + 1e-6 && camera.position.z > 0.3);
+});
+
+test('a terceira pessoa tem abertura própria; primeira pessoa, menu inicial e celular em pé não mudam', () => {
+  assert.equal(campoDeVisao({}), CONFIG.camera.campoDeVisao);
+  assert.equal(campoDeVisao({ toque: true, proporcao: 16 / 9 }), CONFIG.camera.campoDeVisao);
+  assert.equal(campoDeVisao({ primeiraPessoa: true }), 72);
+  assert.equal(campoDeVisao({ titulo: true }), 72);
+  assert.equal(campoDeVisao({ titulo: true, primeiraPessoa: true }), 72);
+  assert.equal(campoDeVisao({ toque: true, proporcao: 0.5 }), 88);
+  assert.equal(campoDeVisao({ toque: true, proporcao: 0.5, titulo: true }), 88);
+  assert.ok(CONFIG.camera.campoDeVisao < CONFIG.render.campoDeVisao);
+});
+
+test('o giro da câmera fica no peito, ela não entra no chão olhando para cima e o boneco some de perto', () => {
+  const { colisores, jogador } = arena();
+  const camera = jogador.jogo.camera;
+  // Ponto de giro abaixo dos olhos (peito) e acima da cintura.
+  assert.ok(CONFIG.camera.alturaPivo < CONFIG.jogador.alturaOlhos && CONFIG.camera.alturaPivo > 1);
+  for (const pitch of [0.2, 0.5, CONFIG.camera.inclinacaoMax]) {
+    jogador.pitch = pitch;
+    jogador.distCamera = CONFIG.camera.distancia;
+    jogador.atualizarCamera(0);
+    assert.ok(camera.position.y >= jogador.pos.y + CONFIG.camera.folgaDoChao - 1e-9, `no chão com inclinação ${pitch}`);
+  }
+  // No limite de cima a câmera chega perto, mas o boneco ainda aparece.
+  assert.ok(jogador.distCamera > CONFIG.camera.sumirBoneco);
+  // Parede colada nas costas: a câmera encosta e o boneco deixa de ser desenhado.
+  jogador.pitch = CONFIG.camera.inclinacaoInicial;
+  colisores.adicionar(0, 1.2, 8, 0.4);
+  jogador.atualizarCamera(0);
+  assert.ok(jogador.distCamera < CONFIG.camera.sumirBoneco && jogador.distCamera >= 0.35);
 });
 
 test('a primeira pessoa acompanha os olhos e usa o olhar para orientar o ataque sem trava', () => {
