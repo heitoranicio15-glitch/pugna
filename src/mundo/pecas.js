@@ -54,6 +54,8 @@ export function materiais() {
     mosaicoOssario: lambert(t.mosaicoAlas, { color: 0xf0b18c }),
     mosaicoRelicario: lambert(t.mosaicoAlas, { color: 0xadceff }),
     mosaicoAltar: lambert(t.mosaicoAltar, { color: 0xe2e3f7 }),
+    mosaicoClaustro: lambert(t.mosaicoAlas, { color: 0xbabf9b }),
+    mosaicoSacristia: lambert(t.mosaicoAlas, { color: 0xd5b19d }),
     quinaGaleria: familia(lambert(t.quinaGaleria, {
       color: 0xd4c4ad, emissiveMap: t.quinaGaleria, emissive: 0x947d64, emissiveIntensity: 0.34,
     }), 'pedra'),

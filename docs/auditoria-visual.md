@@ -197,3 +197,22 @@ conferidos em PS1 e HD.
 Contagens de quadros isolados em PS1 e HD, no Chrome com renderização
 por software. As duas luzes são locais e sem sombras. Os painéis nas
 laterais do Coro ficam mais discretos que a faixa central e os arcos.
+
+Na sétima etapa, uma faixa de mosaico leva do Claustro ao arco
+da Cripta. A Sacristia ganhou uma porta com tábuas e ferragens,
+com uma arandela voltada para a entrada. As duas grades de atalho
+têm rebites e uma alavanca com indicador âmbar quando fechada
+e verde depois de aberta.
+
+| Vista | Chamadas antes → depois | Triângulos antes → depois |
+| --- | ---: | ---: |
+| Claustro rumo à Cripta | 48 → 60 | 5.622 → 6.078 |
+| Porta da Sacristia | 56 → 65 | 6.058 → 6.676 |
+| Grade de serviço | 154 → 175 | 58.152 → 59.034 |
+| Ferrolho da Cripta | 116 → 128 | 88.612 → 89.068 |
+
+Contagens de quadros isolados em PS1 e HD, no Chrome com renderização
+por software. A abertura com a chave e o acionamento dos atalhos foram
+conferidos nos dois modos, com os eventos gravados no save. A grade
+da Cripta continua na penumbra, com o indicador da alavanca como
+referência.
