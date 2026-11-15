@@ -338,6 +338,17 @@ onde você volta ao morrer ou reabrir o jogo.
 
 ## Estrada e taverna
 
+O **Portão Sul** começa selado. Leia o registro junto ao portão e procure as
+pistas na oficina e no cemitério. O Guardião deixa a Chave do Portão na arena.
+Recolha-a com **E** e use no portão. Depois da abertura, **E** leva à estrada.
+Se um save antigo já tinha vencido o Guardião ou descansado no exterior, o
+portão já estará aberto.
+
+Abra **I → Armas** para equipar a espada, a lâmina curta, a maça ou a lança
+depois de encontrá-las. A pistola continua na outra mão. Na bolsa também é
+possível repor as balas usando os cartuchos recolhidos. A relíquia atua
+enquanto estiver na bolsa, e o frasco maior dá uma dose extra.
+
 Saia pelo **Portão Sul** do vilarejo (aproxime-se do portão e pressione **E**) para
 chegar à **Estrada do Sul**: uma faixa de terra batida de uns 120 × 30 m, com cercas,
 árvores secas, um riacho com ponte de pedra e três inimigos em patrulha. O céu e a lua

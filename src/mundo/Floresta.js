@@ -9,6 +9,7 @@ import { montarAtmosfera } from './Atmosfera.js';
 import { faixaDeTrilha, paisagemExterior, xEmZ } from './PaisagemExterior.js';
 import { plantarBosque, recortarBosque } from './Bosque.js';
 import { ANOTACOES } from '../nucleo/Inventario.js';
+import { montarEspoliosFloresta } from './Espolios.js';
 
 const C = CONFIG.areas.floresta;
 export const xDaTrilha = z => xEmZ(C.caminho,z);
@@ -151,6 +152,7 @@ export class Floresta {
     this.colisores.adicionar(0,zS,maxX-minX,2.4);
     poste('Trilha interrompida',2.5,zS-2.55,Math.PI);
     this.objetos.push({x:0,y:1.55,z:zS-1.47,acao:'informar',mensagem:this.portalFuturo.textoTrancado});
+    montarEspoliosFloresta(this);
 
     const reservas=[
       [0,-39,7],[-4.4,-33.5,5.2],[-31,17,6.5],[-32.6,25,5],

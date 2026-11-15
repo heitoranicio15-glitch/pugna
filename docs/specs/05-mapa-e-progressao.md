@@ -17,14 +17,14 @@ Definir como as áreas se ligam. O PASSAGEM decidiu: **semi-linear**, com atalho
                                             \____atalho____/ (portão que abre por dentro)
 ```
 
-- **Caminho principal:** Vilarejo → Estrada → Floresta → Castelo.
-- **Ramos:** Catedral (pronta), Taverna (respiro), Caverna (opcional, entra pelo cemitério e sai na Floresta: vira atalho).
+- **Caminho principal publicado (Prompt 8):** Vilarejo → Catedral do Véu → Portão Sul do Vilarejo → Estrada → Floresta. A chave do Portão Sul cai junto ao Guardião. O Castelo vem depois.
+- **Ramos:** Taverna (respiro), Caverna (futura, opcional, entra pelo cemitério e sai na Floresta como atalho).
 - A primeira área nova (item S6 da fila) é uma destas três: castelo, floresta ou caverna. Recomendação: **floresta**, porque é a continuação natural da estrada.
 
 ## Regras
 
 - **Portais:** sempre nos dois sentidos, cada lado com `destino` e a `chegada` correspondente (o `montarAreas` da spec 00 já recusa portal sem volta).
-- **Portal trancado:** campo opcional `requer: 'area:evento'` e `textoTrancado`. Sem o evento no save, o portal mostra o texto e não abre.
+- **Portal trancado:** campo opcional `requer: 'area:evento'` e `textoTrancado`. Sem o evento no save, o portal mostra o texto e não abre. O Portão Sul grava ainda `eventoAoAbrir` quando a chave gira.
 - **Atalhos:** porta, grade ou elevador que só abre de um lado. Ao abrir, grava `area:atalho-<nome>` e fica aberto para sempre (mesmo padrão da grade de serviço da sacristia).
 - **Lanternas:** uma na entrada de cada área e uma antes de cada chefe; no máximo 3 por área. A Catedral é a exceção (até 6): são quatro níveis que compartilham o mesmo ID de área e precisam de um ponto por nível, além do ponto antes da arena do Guardião. O bom atalho devolve o jogador a uma lanterna já conhecida.
 - **IDs:** áreas e lanternas com `id` único, minúsculo, com hífen. Eventos `area:evento`. Nunca renomear o que já foi publicado.
@@ -36,6 +36,9 @@ Definir como as áreas se ligam. O PASSAGEM decidiu: **semi-linear**, com atalho
 1. `docs/mapa.md`: o grafo acima mantido atualizado, com a tabela de áreas, lanternas, portais e atalhos (IDs).
 2. Suporte a `requer`/`textoTrancado` nos portais (`Jogo.js`, trecho do portal, e `areas.js`).
 3. Teste que percorre o registro e confere: todo destino existe, toda ida tem volta, todo `requer` segue o formato `area:evento`, e toda área é alcançável a partir da inicial.
+
+As três entregas estão implementadas. O grafo simula os eventos disponíveis em
+cada área; a rota física entre selos, Guardião e atalhos tem testes separados.
 
 ## Critérios de aceite
 

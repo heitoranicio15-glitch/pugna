@@ -10,6 +10,7 @@ import { plantaTerreo, volumesTerreo } from './PlantaCatedral.js';
 import { fecharTetos, montarKit } from './KitCatedral.js';
 import { montarAtalhoCripta, volumesDosNiveis } from './NiveisCatedral.js';
 import { montarCenasCatedral, nivelCatedral, visivelNaCatedral } from './CenasCatedral.js';
+import { montarEspoliosCatedral } from './Espolios.js';
 
 const C = CONFIG.areas.catedral;
 
@@ -148,6 +149,8 @@ export class Catedral {
       bloco(grupoDa(sala), vitrais[i], x, y, z, 2.75, 3.48, 0.06).rotation.y = rot;
     }
     this.poeira = montarCenasCatedral(this, metal, C.feixes);
+    this.posicionarEspolio = montarEspoliosCatedral(this);
+    this.posicionarEspolio({});
     this.caixasDosSetores = new Map([...this.setores].map(([sala, g]) => [sala, new THREE.Box3().setFromObject(g)]));
 
     this.saida = { x: 0, z: 8.45 };
@@ -182,7 +185,9 @@ export class Catedral {
     return this.gruposPorNivel.get(y);
   }
 
-  aplicarProgresso({ selos }) {
+  aplicarProgresso(progresso) {
+    const { selos } = progresso;
+    this.posicionarEspolio(progresso);
     for (const [indice, selo] of this.selos.entries()) {
       const obtido = selos.includes(selo.id);
       selo.malha.visible = !obtido;

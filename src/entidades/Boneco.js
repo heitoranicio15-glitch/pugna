@@ -15,6 +15,8 @@ import { modeloPronto } from '../render/modelos.js';
 import { modeloDePersonagem } from './ModeloDePersonagem.js';
 import { pontilhar } from '../render/retro.js';
 import { coberturaDoAlvo, opacidadeDoCacador } from '../nucleo/enquadramento.js';
+import { fichaDeGolpe } from '../nucleo/Inventario.js';
+import { montarModelosDeArma, mostrarArma } from './ModelosDeArma.js';
 
 const CB = CONFIG.combate;
 const ALTURA_MIOLO = 0.95;   // centro do corpo: é em volta dele que o boneco rola
@@ -106,14 +108,17 @@ export class Boneco {
     // Espada na mão direita: com o braço abaixado, a lâmina aponta para a frente.
     this.espada = new THREE.Group();
     this.espada.position.set(0, -0.66, 0.03);
-    this.espada.add(
+    const espadaPadrao = new THREE.Group();
+    this.espada.add(espadaPadrao);
+    espadaPadrao.add(
       lamina(aco, 0.075, 0.98),
       cx(0.26, 0.045, 0.05, latao, 0, 0, 0.1),
       cx(0.04, 0.04, 0.2, couro, 0, 0, -0.02),
     );
-    modeloPronto(this.espada, 'Sword', { pos: [0,-0.031,0.43], tamanho: [0.26,0.062,1.2],
-      orientacao: [Math.PI / 2,0,0], reserva: [...this.espada.children],
+    modeloPronto(espadaPadrao, 'Sword', { pos: [0,-0.031,0.43], tamanho: [0.26,0.062,1.2],
+      orientacao: [Math.PI / 2,0,0], reserva: [...espadaPadrao.children],
       material: m => m.name === 'Metal' ? aco : m.name === 'Gold' ? latao : couro });
+    this.modelosArma = montarModelosDeArma(this.espada,espadaPadrao,[aco,latao,couro],Math.PI/2);
     this.bracoD.add(this.espada);
 
     // Pistola na mão esquerda (o parry do jogo). O cano segue o braço: abaixado,
@@ -190,6 +195,7 @@ export class Boneco {
   }
 
   atualizar(dt, j) {
+    mostrarArma(this.modelosArma,j.armaEquipada);
     const g = this.grupo;
     this.atualizarTransparencia(dt, j);
     g.position.copy(j.pos);
@@ -204,7 +210,7 @@ export class Boneco {
     let direto = false;                            // pose exata, sem suavizar (durante o corte)
     let altura = ALTURA_MIOLO, rolo = 0, escala = 1;
 
-    const golpe = CB[j.ataque];
+    const golpe = fichaDeGolpe(j.armaEquipada,j.ataque);
     if (j.morto) {
       this.queda = Math.min(1, this.queda + dt * 1.8);
       alvo.bdx = 0.5; alvo.bex = 0.5;
@@ -239,6 +245,11 @@ export class Boneco {
         const coice = Math.max(0, 1 - j.tAcao / (CB.pistola.recuperacao * 0.4));
         alvo.bex = -1.55 - 0.5 * coice; alvo.bez = 0; alvo.cy = -0.4; alvo.cx = -0.05 * coice; alvo.bdx = -0.2;
         direto = true;
+      } else if (golpe && j.armaEquipada === 'lanca') {
+        const p = j.acao === 'ativo' ? Math.sin(Math.PI * 0.8 * (j.contatoParede ?? j.tAcao / golpe.ativo)) : 0;
+        alvo.bdx = -0.87 - p * 0.76; alvo.esx = 1.55;
+        alvo.cx = -0.13 + 0.33 * p; alvo.cy = 0.39 - 0.52 * p;
+        direto = j.acao === 'ativo';
       } else if (golpe && j.ataque === 'forte') {
         // Golpe forte: de cima para baixo.
         if (j.acao === 'preparo') { alvo.bdx = -2.9; alvo.esx = 0; alvo.cx = -0.15; k = dt > 0 ? 1 - Math.exp(-dt * 30) : 1; }

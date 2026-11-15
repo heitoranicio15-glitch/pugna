@@ -50,10 +50,12 @@ export function atualizarObjetos(mundo, eventos) {
   let mudou = false;
   for (const objeto of mundo.objetos) {
     const ativo = eventos.includes(objeto.evento);
-    if (objeto.ativo === ativo) continue;
+    const liberado = !objeto.depois || eventos.includes(objeto.depois);
+    const oculto = !liberado || (ativo && ['recolher', 'abrir', 'informar'].includes(objeto.acao));
+    if (objeto.ativo === ativo && objeto.oculto === oculto) continue;
     objeto.ativo = ativo;
-    objeto.oculto = ativo && ['recolher', 'abrir', 'informar'].includes(objeto.acao);
-    objeto.atualizar?.(ativo);
+    objeto.oculto = oculto;
+    objeto.atualizar?.(ativo,liberado);
     if (objeto.acao === 'abrir' || objeto.acao === 'acionar') mudou = true;
   }
   if (mudou) mundo.navegacao?.invalidar();

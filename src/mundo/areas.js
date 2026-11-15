@@ -19,6 +19,8 @@ export const REGISTRO = [
   { id: 'floresta', criar: (cena, ceu) => new Floresta(cena, ceu.direcaoLua) },
 ];
 
+import { areasAlcancaveis, ID_EVENTO } from '../nucleo/Progressao.js';
+
 const CAMPOS_LISTA = ['portais', 'pontosDeDescanso', 'inimigos', 'objetos'];
 
 // Confere os campos obrigatórios e devolve a lista de problemas (vazia = ok).
@@ -90,7 +92,21 @@ export function montarAreas(lista) {
       if (!destino.chegadas[area.id]) {
         throw new Error(`Área "${destino.id}" não tem \`chegadas\` para quem vem de "${area.id}"`);
       }
+      if (!destino.portais.some(p => p.destino === area.id)) {
+        throw new Error(`Portal de "${area.id}" para "${destino.id}" sem portal de volta.`);
+      }
+      if (portal.requer !== undefined && (typeof portal.requer !== 'string' || !ID_EVENTO.test(portal.requer)
+          || typeof portal.textoTrancado !== 'string' || !portal.textoTrancado.trim())) {
+        throw new Error(`Portal de "${area.id}": requer deve ser area:evento com textoTrancado.`);
+      }
+      if (portal.eventoAoAbrir !== undefined && !ID_EVENTO.test(portal.eventoAoAbrir)) {
+        throw new Error(`Portal de "${area.id}": eventoAoAbrir deve ser area:evento.`);
+      }
     }
+  }
+  const acessiveis = areasAlcancaveis(porId,lista[0].id).areas;
+  if (acessiveis.size !== lista.length) {
+    throw new Error('Áreas inalcançáveis: ' + lista.filter(a=>!acessiveis.has(a.id)).map(a=>a.id).join(', '));
   }
   return { areas: [...lista], porId, inicial: lista[0], checkpoints };
 }

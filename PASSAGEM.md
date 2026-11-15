@@ -51,7 +51,22 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
-- **Prompt 8 — 3, Floresta Seca ampliada:** a trilha em S liga claro de
+- **Prompt 8 — 4, progressão e arsenal:** Portão Sul selado até recolher a
+  chave do Guardião. Quatro pistas (registro, oficina/ferreiro, lápide e
+  vigia); chave gira, corda cai, bronze cala e o portão fica aberto.
+  Migração para a versão de progressão 2 mantém acesso de quem já tinha
+  ido ao exterior ou vencido o Guardião. Bolsa equipa as três armas
+  novas, mostra itens e repõe balas de reserva. Local e IDs em `docs/mapa.md`.
+  **Decidido pela IA:** abertura em 1,32 s; de 1 para 4 armas primárias,
+  com fichas de golpe em CONFIG; relíquia de 0% → 6% de regeneração extra,
+  capacidade de cura básica mantida em 42 por dose; dois pacotes de 3 e 2
+  cartuchos; um frasco maior de uma dose extra. Vitória e equipamento são
+  salvos sem alterar preferências.
+  **Validação:** E1 rodada com todas as armas (60 lutas por cenário e
+  estratégia); os resultados e limites da simulação estão em `docs/mapa.md`.
+  Falta jogar o percurso completo e ajustar ritmo/FPS no PC do Heitor.
+
+- **Prompt 8 — 3, Floresta Seca ampliada:** a trilha em S liga clareira de
   descanso, ruína, grota, cabana, ponte de toras, poço e barricada; dois
   desvios retornam ao eixo. Três anotações, cavalo sem cavaleiro e urnas
   vazias estendem a história do toque. O Castelo ainda não é uma área.
@@ -369,7 +384,7 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 - [x] **Prompt 8 / 1C:** história das salas, clima e visibilidade.
 - [x] **Prompt 8 / 2:** névoa exterior e profundidade visual.
 - [x] **Prompt 8 / 3:** floresta maior e pontos narrativos.
-- [ ] **Prompt 8 / 4:** progressão com chave, armas e itens.
+- [x] **Prompt 8 / 4:** progressão com chave, armas e itens.
 
 - [x] **1. Salvamento estilo Souls + Osso de Retorno** (ver "Decisões")
 - [x] **2. Base dos ataques:** máquina de estados única para todos os inimigos humanos, com 3 fases e 3 tipos de golpe, aviso visual e sonoro por tipo.

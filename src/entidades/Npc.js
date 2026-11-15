@@ -95,6 +95,7 @@ export class Npc {
     this.postura = def.postura || { tronco: 0, cabeca: 0 };
     this.aoAnimar = def.aoAnimar || null;
     this.conversa = criarConversa(def.falas);
+    this.resposta = def.resposta;
     this.corpo = 0;     // giro atual do corpo e da cabeça, relativos ao `olhar`
     this.cabeca = 0;
     this.respiracao = 0;
@@ -106,9 +107,9 @@ export class Npc {
     this.grupo.rotation.y = this.olhar;
     area.grupo.add(this.grupo);
     if (def.corpo) this.grupo.add(def.corpo);
-    this.modelo = modeloDePersonagem(this.grupo, def.modelo, {
+    this.modelo = def.modelo ? modeloDePersonagem(this.grupo, def.modelo, {
       reserva: def.corpo ? [def.corpo] : [], armas: def.armas, tinta: def.tinta,
-    });
+    }) : def.corpo ?? this.grupo;
 
     // Colisor pequeno: o caçador não atravessa. O topo fica abaixo do ponto de interação (y),
     // para o "E" não ser barrado pelo próprio NPC.
@@ -124,7 +125,7 @@ export class Npc {
   }
 
   falar() {
-    return proximaFala(this.conversa);
+    return this.resposta?.() ?? proximaFala(this.conversa);
   }
 
   /** Respira, olha de lado de vez em quando e vira devagar para o jogador quando ele chega perto. */
@@ -139,6 +140,7 @@ export class Npc {
     this.grupo.rotation.y = this.olhar + this.corpo;
 
     const rig = this.modelo.userData.pose;
+    if (!rig && !this.modelo.userData.pronto && this.modelo !== this.grupo) this.modelo.scale.y = 1 + this.respiracao * 0.12;
     if (rig) {
       rig.tronco(this.respiracao + this.postura.tronco, 0, 0);
       rig.cabeca(0.05 + this.postura.cabeca, this.cabeca, 0);

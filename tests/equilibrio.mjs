@@ -38,6 +38,7 @@ import { Jogador } from '../src/entidades/Jogador.js';
 import { Inimigo } from '../src/entidades/Inimigo.js';
 import { Fichas } from '../src/entidades/Fichas.js';
 import { Eventos } from '../src/nucleo/Eventos.js';
+import { fichaDeGolpe } from '../src/nucleo/Inventario.js';
 import { CURA_FRASCO } from '../src/nucleo/Inventario.js';
 import { Colisores } from '../src/mundo/Colisores.js';
 import { Navegacao } from '../src/mundo/Navegacao.js';
@@ -206,9 +207,10 @@ function cerebroHabil(r, respostas = 'certa') {
     // Distância: nem longe demais para bater, nem colado.
     const d = distancia(alvo, jogador);
     const seguro = proximoImpacto - t > 0.6;
-    if (d > 2.3 && seguro) entrada.seguradas.add('KeyW');
+    const L = fichaDeGolpe(jogador.armaEquipada,'leve'), E = CONFIG.combate.quickstep;
+    const ideal = jogador.armaEquipada === 'espada' ? 2.3 : L.alcance - 0.12;
+    if (d > ideal && seguro) entrada.seguradas.add('KeyW');
     else if (d < 1.3) entrada.seguradas.add('KeyS');
-    const L = CONFIG.combate.leve, E = CONFIG.combate.quickstep;
     if (seguro && d <= L.alcance + alvo.raio && !jogador.exausto && jogador.estamina >= L.custo + E.custo) {
       entrada.botoesApertados[0] = true;
     }
@@ -219,11 +221,12 @@ function cerebroHabil(r, respostas = 'certa') {
  * Uma luta inteira. Devolve { venceu, vida, tempo, mortos, frascos }.
  * jogador: 'spam' | 'habil' | 'esquiva'.
  */
-export function lutar({ cenario, jogador: tipoJogador, semente, passo = PASSO, limite = LIMITE }) {
+export function lutar({ cenario, jogador: tipoJogador, semente, passo = PASSO, limite = LIMITE, arma = 'espada' }) {
   const original = Math.random;
   Math.random = geradorComSemente(semente);   // o sorteio dos inimigos fica fixo
   try {
     const { jogador, entrada, eventos, inimigos } = montarArena(cenario);
+    jogador.armaEquipada = arma;
     let curas = 0;
     const conta = { aparou: 0, ferido: 0, visceral: 0, esquiva: 0, pulou: 0 };
     eventos.em('jogador:aparou', () => conta.aparou++);
@@ -261,9 +264,9 @@ const mediana = (lista) => {
 };
 
 /** Roda as sementes 1..lutas de um cenário e resume. */
-export function rodarCenario(cenario, tipoJogador, lutas = 60) {
+export function rodarCenario(cenario, tipoJogador, lutas = 60, arma = 'espada') {
   const resultados = [];
-  for (let semente = 1; semente <= lutas; semente++) resultados.push(lutar({ cenario, jogador: tipoJogador, semente }));
+  for (let semente = 1; semente <= lutas; semente++) resultados.push(lutar({ cenario, jogador: tipoJogador, semente, arma }));
   const vitorias = resultados.filter((x) => x.venceu);
   return {
     cenario, jogador: tipoJogador, lutas,
@@ -283,12 +286,13 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const lutas = Number(arg('lutas', 60));
   const cenarios = arg('cenario', null)?.split(',') ?? Object.keys(CENARIOS);
   const jogadores = arg('jogador', null)?.split(',') ?? JOGADORES;
-  console.log(`Equilíbrio: ${lutas} lutas por cenário, passo de ${PASSO.toFixed(4)} s, limite de ${LIMITE} s`);
+  const arma = arg('arma','espada');
+  console.log(`Equilíbrio (${arma}): ${lutas} lutas por cenário, passo de ${PASSO.toFixed(4)} s, limite de ${LIMITE} s`);
   console.log('cenário      jogador   vitórias   mediana de vida   tempo médio');
   for (const c of cenarios) {
     for (const j of jogadores) {
       const inicio = Date.now();
-      const s = rodarCenario(c, j, lutas);
+      const s = rodarCenario(c, j, lutas, arma);
       console.log(`${c.padEnd(12)} ${j.padEnd(9)} ${`${s.vitorias}/${lutas}`.padStart(7)} (${String(Math.round(s.taxa * 100)).padStart(3)}%)` +
         `   ${String(s.medianaVida).padStart(6)}            ${String(s.tempoMedio).padStart(6)} s   [${((Date.now() - inicio) / 1000).toFixed(1)} s]`);
     }

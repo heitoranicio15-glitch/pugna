@@ -21,6 +21,11 @@ export class Som {
     };
     eventos.em('area:entrou', (d) => mudarAmbiente(d?.som));
     eventos.em('area:ambiente', mudarAmbiente);
+    eventos.em('portao:abriu', () => {
+      this.metal(0.13,0.24);
+      this.ruido({ volume:0.17, duracao:1.14, de:145, ate:380, q:2, ataque:0.23 });
+      this.tom({ volume:0.06, duracao:1, de:88, ate:42, forma:'triangle' });
+    });
     // Liga cada aviso do jogo ao seu som.
     // Passos pesados (direção de arte): mais graves e um pouco mais longos.
     eventos.em('jogador:passo', (d) => this.passo(d?.correndo ? 0.5 : d?.agachado ? 0.14 : 0.32, 0.8, 0.14));

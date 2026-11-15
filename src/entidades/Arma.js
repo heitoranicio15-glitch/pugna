@@ -8,6 +8,8 @@ import { texturas } from '../render/texturas.js';
 import { CONFIG } from '../config.js';
 import { caixa, materialDePersonagem, parte } from './formas.js';
 import { modeloPronto } from '../render/modelos.js';
+import { fichaDeGolpe } from '../nucleo/Inventario.js';
+import { montarModelosDeArma, mostrarArma } from './ModelosDeArma.js';
 
 // Poses: posição [x, y, z] e rotação [x, y, z] da espada em relação à câmera.
 const POSES = {
@@ -70,9 +72,13 @@ export class Arma {
       this.espada.add(dedo);
     }
     this.espada.scale.setScalar(0.66);
-    modeloPronto(this.espada, 'Sword', { pos: [0,-0.13,0], tamanho: [0.24,1.32,0.067],
+    const espadaPadrao = new THREE.Group();
+    espadaPadrao.add(...reservaEspada);
+    this.espada.add(espadaPadrao);
+    modeloPronto(espadaPadrao, 'Sword', { pos: [0,-0.13,0], tamanho: [0.24,1.32,0.067],
       material: m => m.name === 'Metal' ? aco : m.name === 'Gold' ? escuro : couro,
       reserva: reservaEspada });
+    this.modelosArma = montarModelosDeArma(this.espada,espadaPadrao,[aco,escuro,couro]);
     this.cena.add(this.espada);
 
     this.pistola = new THREE.Group();
@@ -98,6 +104,7 @@ export class Arma {
   }
 
   atualizar(dt, jogador, proporcao) {
+    mostrarArma(this.modelosArma,jogador.armaEquipada);
     // Mantém as armas nas bordas em janelas estreitas e monitores ultrawide.
     this.camera.aspect = Math.max(1.35, proporcao);
     this.camera.updateProjectionMatrix();
@@ -108,12 +115,17 @@ export class Arma {
     const forte = jogador.ataque === 'forte';
     const inicio = forte ? POSES.carregar : (alt ? POSES.leveErguer : POSES.leveErguer2);
     const fim = forte ? POSES.forteFim : (alt ? POSES.leveFim : POSES.leveFim2);
-    const golpe = CONFIG.combate[jogador.ataque];
+    const golpe = fichaDeGolpe(jogador.armaEquipada,jogador.ataque);
     const emCorte = !jogador.morto && (jogador.acao === 'ativo' ||
       (jogador.acao === 'recuperacao' && jogador.tAcao < 0.075));
     if (jogador.morto || jogador.acao === 'atordoado') { pose = POSES.atordoado; rapidez = 10; }
     else if (jogador.tEsquiva > 0) { pose = POSES.esquiva; rapidez = 14; }
     else if (jogador.acao === 'visceral') { pose = POSES.visceral; rapidez = 32; }
+    else if (golpe && jogador.armaEquipada === 'lanca') {
+      const p = jogador.acao === 'ativo' ? Math.sin(Math.PI * 0.8 * (jogador.contatoParede ?? jogador.tAcao / golpe.ativo)) : 0;
+      pose = { p: [0.37,-0.36,-0.66-0.36*p], r: [-Math.PI*0.48,0.12,0.12] };
+      rapidez = jogador.acao === 'recuperacao' ? 7 : 22;
+    }
     else if (jogador.acao === 'preparo') { pose = inicio; rapidez = 42; }
     else if (emCorte) {
       const progresso = jogador.contatoParede ?? (jogador.acao === 'ativo' ? jogador.tAcao / golpe.ativo : 1);

@@ -41,7 +41,8 @@ import { Menu } from '../interface/Menu.js';
 import { Bolsa } from '../interface/Bolsa.js';
 import { Pressagios } from '../mundo/Pressagios.js';
 import { Toque } from '../interface/Toque.js';
-import { ANOTACOES, CURA_FRASCO, FRASCOS, contarFrascos } from './Inventario.js';
+import { ANOTACOES, ARMAS, CURA_FRASCO, FRASCOS, MUNICOES, armaDisponivel, contarFrascos, contarMunicao } from './Inventario.js';
+import { avisoPortal, RELIQUIA } from './Progressao.js';
 import { alvoProximo, atualizarObjetos } from '../mundo/Interacoes.js';
 
 export class Jogo {
@@ -183,10 +184,11 @@ export class Jogo {
     });
     this.eventos.em('guardiao:fase-final', () => this.hud.avisar('O Guardião investe com mais fúria.'));
     this.eventos.em('inimigo:morreu', (inimigo) => {
+      if (inimigo === this.guardiao) this.progresso.quedaGuardiao = { x:inimigo.pos.x,z:inimigo.pos.z };
       if (inimigo.eventoDeDerrota) this.registrarEvento(inimigo.eventoDeDerrota);
       if (inimigo !== this.guardiao) return;
       this.atualizarAudio();
-      this.hud.avisar('Guardião do Véu derrotado', 4);
+      this.hud.avisar('Guardião do Véu derrotado · o bronze caiu junto dele.', 4);
     });
   }
 
@@ -343,6 +345,28 @@ export class Jogo {
     this.avisarCura('Frasco usado. Vida recuperada.');
   }
 
+  trocarArma(id) {
+    if (!armaDisponivel(id,this.progresso.eventos)) return 'Você ainda não tem essa arma.';
+    if (!this.podeInteragir()) return 'Espere o fim da ação para trocar de arma.';
+    this.progresso.arma = id;
+    this.jogador.armaEquipada = id;
+    this.salvamento.salvar(this.progresso);
+    return ARMAS[id].nome + ' equipada.';
+  }
+
+  usarMunicao() {
+    if (!this.podeInteragir() || this.tDescanso) return 'Espere o fim da ação para repor as balas.';
+    const j=this.jogador, falta=CONFIG.combate.pistola.balasMax-j.balas;
+    if (falta<=0) return 'A pistola já está carregada.';
+    const n=Math.min(falta,contarMunicao(this.progresso));
+    if (n<=0) return 'Não há munição de reserva.';
+    this.progresso.municaoUsada += n;
+    j.balas += n;
+    this.hud.mostrarBalas(j.balas);
+    this.salvamento.salvar(this.progresso);
+    return 'Balas repostas: ' + n + '.';
+  }
+
   /** O caçador apanhou no meio do gole: não cura (e o frasco só é gasto se o config mandar). */
   interromperCura() {
     if (CONFIG.combate.frasco.perdeAoSerInterrompido) {
@@ -419,6 +443,8 @@ export class Jogo {
       area.aplicarProgresso?.(this.progresso);
       atualizarObjetos(area, this.progresso.eventos);
     }
+    this.jogador.armaEquipada = this.progresso.arma;
+    this.jogador.temReliquia = this.progresso.eventos.includes(RELIQUIA);
     this.hud.mostrarFrascos(contarFrascos(this.progresso));
   }
 
@@ -514,6 +540,17 @@ export class Jogo {
 
     const portal = this.mundo.portais.find((p) => perto(p, p.raio));
     if (portal) {
+      const trancado = avisoPortal(portal,this.progresso.eventos,pos.x);
+      if (trancado) return [trancado];
+      if (portal.eventoAoAbrir && !this.progresso.eventos.includes(portal.eventoAoAbrir)) {
+        return ['E — girar a Chave do Portão', () => {
+          this.mundo.portaoSul?.iniciar();
+          this.registrarEvento(portal.eventoAoAbrir);
+          this.eventos.emitir('portao:abriu');
+          this.hud.avisar('O bronze cala. A corda cai do ferrolho.', 3);
+        }];
+      }
+      if (portal.eventoAoAbrir && this.mundo.portaoSul?.animando) return ['O Portão Sul range e abre…'];
       const destino = this.areasPorId.get(portal.destino);
       const chegada = destino.chegadas[this.mundo.id];
       return [portal.texto, () => this.atravessar(destino, chegada, destino.nome)];
@@ -548,15 +585,16 @@ export class Jogo {
     }];
     if (ativo) return [acao === 'bau' ? 'O baú está vazio.' : 'A grade de serviço está aberta.'];
     if (chave && !this.progresso.eventos.includes(chave)) {
-      return ['Trancada · chave na oficina perto do poço'];
+      return [objeto.textoTrancado ?? 'Trancada · chave na oficina perto do poço'];
     }
     const verbo = { abrir: 'abrir', bau: 'abrir', acionar: 'acionar', recolher: 'recolher' }[acao];
     return [`E — ${verbo} ${nome}`, () => {
       this.registrarEvento(evento);
       this.eventos.emitir('objeto:interagiu', acao);
-      if (FRASCOS[evento]) this.hud.avisar(`Frascos de cura +${FRASCOS[evento]}${this.entrada.toque ? '' : ' · R para usar'}`);
+      if (MUNICOES[evento]) this.hud.avisar('Munição de reserva +' + MUNICOES[evento] + ' · I para abrir a bolsa');
+      else if (FRASCOS[evento]) this.hud.avisar(`Frascos de cura +${FRASCOS[evento]}${this.entrada.toque ? '' : ' · R para usar'}`);
       else if (acao === 'acionar') this.hud.avisar('Atalho aberto para a nave.');
-      else if (acao === 'recolher') this.hud.avisar(this.entrada.toque ? 'Chave da sacristia recolhida' : 'Chave da sacristia recolhida · I para abrir a bolsa');
+      else if (acao === 'recolher') this.hud.avisar(nome + (this.entrada.toque ? ' · na bolsa' : ' · I para abrir a bolsa'));
       else this.hud.avisar('Passagem aberta.');
     }];
   }

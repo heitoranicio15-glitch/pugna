@@ -19,6 +19,7 @@ import { montarBairrosVilarejo } from './BairrosVilarejo.js';
 import { decorarVilarejo } from './Decoracao.js';
 import { montarQuadras } from './QuadrasVilarejo.js';
 import { modeloPronto } from '../render/modelos.js';
+import { montarPortaoSul, moradorDoPortao, PORTAL_SUL } from './PortaoSul.js';
 
 const C = CONFIG.areas.vilarejo;
 
@@ -40,6 +41,7 @@ export class Vilarejo {
 
     // ---------- névoa e luzes gerais ----------
     montarAtmosfera(this, C, direcaoLua);
+    this.somSemSino = { ...this.som, sino: 0 };
 
     // ---------- chão e ruas ----------
     // IMPORTANTE: o chão e as ruas são superfícies enormes e quase coladas. Com a
@@ -82,7 +84,7 @@ export class Vilarejo {
     ];
     this.chegadas = { catedral: { x: porta.x, z: porta.z + 4, yaw: Math.PI } };
     // Portão Sul: leva à estrada. Quem volta da estrada chega logo dentro do portão, olhando para o norte.
-    this.portais.push({ x: 0, z: 55.4, raio: 1.6, destino: 'estrada', texto: 'E — sair pelo Portão Sul' });
+    this.portais.push({ ...PORTAL_SUL });
     this.chegadas.estrada = { x: 0, z: 52.6, yaw: 0 };
 
     // ---------- torres ----------
@@ -102,8 +104,14 @@ export class Vilarejo {
     torre(this, { x: -6.2, z: ZS, lado: 4.4, a: 11, tipo: 'ameias' });
     torre(this, { x: 6.2, z: ZS, lado: 4.4, a: 11, tipo: 'ameias' });
     const arco = caixa(8, 3, 2, m.pedraEscura); arco.position.set(0, 6.5, ZS); this.grupo.add(arco);
-    const portao = caixa(8, 5, 0.4, m.madeira, 1.6); portao.position.set(0, 2.5, ZS); this.grupo.add(portao);
-    this.colisores.adicionar(0, ZS, 8, 1.5);
+    this.portaoSul = montarPortaoSul(this,ZS);
+    this.npcs = [
+      { id:'vigia-do-portao', nome:'o vigia', corpo:moradorDoPortao(), x:4.2, z:52.85, olhar:-1.3,
+        falas:['— Deixei minha casa do outro lado. Quando a corda cair do ferrolho, volto para lá.'],
+        resposta: () => this.portaoSul.pronto ? '— Agora ouço a trilha. Não lembrava que o vento era tão baixo.' : null },
+      { id:'ferreiro-do-poco', nome:'o ferreiro', corpo:moradorDoPortao(true), x:-11.2, z:-8.39, olhar:0.55,
+        falas:['— As limas ainda estão lá. Só não cortei o dente em forma de sino.'] },
+    ];
 
     // ---------- poço da praça ----------
     const poçoOriginal = new THREE.Group();
@@ -231,7 +239,15 @@ export class Vilarejo {
     this.casas = montarQuadras(this);
   }
 
+  aplicarProgresso(progresso) {
+    this.portaoSul.aplicar(progresso);
+    this.bronzeCalado=progresso.guardiaoDerrotado || this.portaoSul.aberto;
+  }
+
+  somLocal() { return this.bronzeCalado ? this.somSemSino : this.som; }
+
   atualizar(dt, tempo) {
+    this.portaoSul.atualizar(dt);
     animarTochas(this.tochas, tempo);
     // Névoa deslizando com o vento.
     for (const n of this.nevoas) {

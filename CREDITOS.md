@@ -83,3 +83,8 @@ Ao baixar um modelo, textura ou som com permissão de redistribuição, guarde e
 | Arquivo | Autor / site | Link | Licença |
 |---|---|---|---|
 | _exemplo: public/assets/modelos/barril.glb_ | _Kenney_ | _https://kenney.nl/..._ | _CC0_ |
+## Modelos procedurais do Prompt 8
+
+O kit da Catedral, o bosque, o sino, o cavalo, as três armas novas e o
+Portão Sul foram modelados em código. Reutilizam materiais do jogo; não
+incluem arquivos das referências visuais locais.
