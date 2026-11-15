@@ -8,7 +8,7 @@ import { montarSacristia } from './Sacristia.js';
 import { montarAtmosfera } from './Atmosfera.js';
 import { plantaTerreo, volumesTerreo } from './PlantaCatedral.js';
 import { fecharTetos, montarKit } from './KitCatedral.js';
-import { montarAtalhoCripta, volumesDosNiveis } from './NiveisCatedral.js';
+import { montarAtalhoCripta, montarLuzesDaGaleria, volumesDosNiveis } from './NiveisCatedral.js';
 import { montarCenasCatedral, nivelCatedral, visivelNaCatedral } from './CenasCatedral.js';
 import { montarEspoliosCatedral } from './Espolios.js';
 import { criarVitraisDoVeu, modeloBancoDaNave, montarLuzesDaNave } from './AcabamentoCatedral.js';
@@ -45,6 +45,7 @@ export class Catedral {
     const vitral = criarVitraisDoVeu();
     const grupoDa = sala => this.setores.get(sala);
     montarLuzesDaNave(grupoDa('nave'), grupoDa('transepto'), m, metal, C.luzesDaNave);
+    montarLuzesDaGaleria(this, m, metal, C.luzesDaGaleria);
     const movel = (sala, x, z, l, a, p, mat) => {
       bloco(grupoDa(sala), mat, x, a / 2, z, l, a, p);
       this.colisores.adicionar(x, z, l, p, a);

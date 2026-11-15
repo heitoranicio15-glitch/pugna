@@ -147,3 +147,20 @@ As contagens são de quadros isolados em PS1 e HD, em Chrome com
 renderização por software. Os detalhes nas mesas ainda ficam discretos
 à distância. Ainda falta medir a fluidez ao atravessar as alas em
 computadores com GPUs diferentes.
+
+Na quarta etapa, a pedra clara contorna a frente e o topo dos degraus
+e acompanha a borda superior dos guarda-corpos. O material compartilha
+as faces com o kit. As duas lanternas de bronze iluminam pontos do
+percurso com luzes sem sombras. As escadas, os patamares e seus
+colisores conservam a forma original.
+
+| Vista | Chamadas antes → depois | Triângulos antes → depois |
+| --- | ---: | ---: |
+| Subida da galeria | 10 → 24 | 1.320 → 1.600 |
+| Passarela oeste | 94 → 103 | 88.460 → 88.588 |
+| Ponte da galeria | 105 → 114 | 93.237 → 93.365 |
+
+Contagens de quadros isolados em PS1 e HD, no Chrome com GPU por
+software. O percurso foi conferido em movimento nos dois modos,
+incluindo as escadas da Torre e da Cripta. Nas partes distantes das
+lanternas, as paredes e o piso continuam escuros.

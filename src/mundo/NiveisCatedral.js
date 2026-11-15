@@ -17,7 +17,7 @@ const PASSOS = 16;
 
 export function volumesDosNiveis() {
   const volumes = [];
-  const por = (tipo, lote, material, min, max) => volumes.push({ tipo, lote, material, min, max });
+  const por = (tipo, lote, material, min, max, rumo) => volumes.push({ tipo, lote, material, min, max, rumo });
   const patamar = (lote, x, X, z, Z, y) => por('patamar', lote, 'lajes', [x,y-0.25,z], [X,y,Z]);
   for (const [lote, x, X, z, Z, y] of [
     ['galeria-oeste', -10, -6, -21, 11, 4], ['galeria-leste', 6, 10, -21, 11, 4],
@@ -31,7 +31,7 @@ export function volumesDosNiveis() {
   for (const { lote, x, z, rumo, base, alto } of ESCADAS) for (let i = 0; i < PASSOS; i++) {
     const z0 = z + rumo * i * 0.5, z1 = z0 + rumo * 0.5;
     const y = base + (alto - base) * (i + 1) / PASSOS;
-    por('degrau', lote, 'lajes', [x-1.75,base,Math.min(z0,z1)], [x+1.75,y,Math.max(z0,z1)]);
+    por('degrau', lote, 'lajes', [x-1.75,base,Math.min(z0,z1)], [x+1.75,y,Math.max(z0,z1)], rumo);
   }
 
   const guarda = (lote, x, X, z, Z, y, Y) => por('parapeito', lote, 'pedraEscura', [x,y,z], [X,Y,Z]);
@@ -47,6 +47,35 @@ export function volumesDosNiveis() {
   guarda('torre', 18.25, 21.75, 22.75, 23, 4, 5.22);
   guarda('escada-da-cripta', -18.25, -17.75, 15, 23, -4, 1.22);
   return volumes;
+}
+
+export function montarLuzesDaGaleria(mundo, m, bronze, luzes) {
+  for (const { lote, x, y, z, parede, cor, intensidade, alcance } of luzes) {
+    const lanterna = new THREE.Group();
+    lanterna.position.set(x, y, z);
+    const pecas = juntarPorMaterial();
+    if (parede) {
+      lanterna.rotation.y = -Math.PI / 2;
+      pecas.caixa(0, -0.04, 0.04, 0.24, 0.38, 0.08, m.pedraEscura);
+      pecas.caixa(0, -0.12, 0.19, 0.07, 0.07, 0.33, bronze);
+    }
+    const dz = parede ? 0.35 : 0;
+    pecas.geometria(new THREE.CylinderGeometry(0.128, 0.097, 0.13, 6).translate(0, 0.065, dz), bronze);
+    pecas.geometria(new THREE.ConeGeometry(0.132, 0.13, 6).translate(0, 0.47, dz), bronze);
+    for (const dx of [-0.082, 0.082]) for (const pz of [-0.064, 0.064]) {
+      pecas.caixa(dx, 0.276, dz + pz, 0.021, 0.28, 0.021, bronze);
+    }
+    pecas.caixa(0, 0.214, dz, 0.066, 0.168, 0.066, m.cantariaVeu);
+    const chama = new THREE.OctahedronGeometry(0.055).scale(0.7, 1.35, 0.7);
+    pecas.geometria(chama.translate(0, 0.33, dz), m.chama);
+    pecas.montar(lanterna, 'Lanterna da galeria');
+
+    // A luz fica à frente da armação para iluminar os degraus e o caminho.
+    const luz = new THREE.PointLight(cor, intensidade, alcance);
+    luz.position.set(0, 0.38, parede ? 0.76 : 0.16);
+    lanterna.add(luz);
+    mundo.setores.get(lote).add(lanterna);
+  }
 }
 
 export function montarAtalhoCripta(mundo) {

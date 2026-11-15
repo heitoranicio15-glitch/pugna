@@ -109,6 +109,10 @@ export const CONFIG = {
         ossario: { cor: 0xffb680, intensidade: 20, alcance: 10.5, y: 2.12, z: -7.6 },
         relicario: { cor: 0x9cc8ff, intensidade: 22, alcance: 11.5, y: 2.8, z: -10.68 },
       },
+      luzesDaGaleria: [
+        { lote: 'escada-da-galeria', x: 13.73, y: 3.47, z: 19.2, parede: true, cor: 0xffbd8f, intensidade: 14, alcance: 8.5 },
+        { lote: 'galeria-ponte', x: 0, y: 5.22, z: -24.875, cor: 0xffcf9f, intensidade: 17, alcance: 10 },
+      ],
       feixes: [
         { origem: [18, 4.85, -16.61], destino: [13, 0.08, -11.8], largura: 1.25, cor: 0xa2bfff, opacidade: 0.125 },
         { origem: [0, 6.55, -64.61], destino: [-6.8, 0.08, -58.3], largura: 2.5, cor: 0xb391ee, opacidade: 0.08 },
