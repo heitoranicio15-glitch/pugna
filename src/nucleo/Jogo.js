@@ -20,6 +20,7 @@ import { Eventos } from './Eventos.js';
 import { Entrada } from './Entrada.js';
 import { SalvamentoLocal, normalizarProgresso, SELOS_DO_VEU } from './Salvamento.js';
 import { carregarPreferencias, salvarPreferencias } from './Preferencias.js';
+import { campoDeVisao } from './enquadramento.js';
 import { RenderizadorRetro } from '../render/RenderizadorRetro.js';
 import { MateriaisHd } from '../render/materiaisHd.js';
 import { Ceu } from '../mundo/Ceu.js';
@@ -580,7 +581,11 @@ export class Jogo {
 
   atualizar(dt) {
     this.camera.aspect = this.render.proporcao;
-    this.camera.fov = this.entrada.toque && this.camera.aspect < 1 ? 88 : CONFIG.render.campoDeVisao;
+    // Recalculada a cada quadro: trocar de perspectiva em Configurações vale na hora.
+    this.camera.fov = campoDeVisao({
+      titulo: this.estado === 'titulo', primeiraPessoa: this.jogador.primeiraPessoa,
+      toque: this.entrada.toque, proporcao: this.camera.aspect,
+    });
     this.camera.updateProjectionMatrix();
 
     if (this.estado === 'titulo') {
@@ -670,7 +675,7 @@ export class Jogo {
       this.arma.atualizar(dt, this.jogador, this.render.proporcao);
       this.render.desenhar(this.cena, this.camera, this.arma.cena, this.arma.camera);
     } else {
-      this.boneco.grupo.visible = this.jogador.distCamera > 0.85;
+      this.boneco.grupo.visible = this.jogador.distCamera > CONFIG.camera.sumirBoneco;
       this.render.desenhar(this.cena, this.camera);
     }
   }

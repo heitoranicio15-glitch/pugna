@@ -77,6 +77,9 @@ async function tecla(nome) {
 }
 
 async function andar(nome, n) {
+  // Os passos foram contados com a velocidade de combate. Fora de combate o caçador
+  // anda mais devagar (ritmoExploracao), então precisa de mais passos para o mesmo trecho.
+  if (!(await page.evaluate(() => jogo.jogador.emCombate()))) n = Math.round(n / (CONFIG.jogador.ritmoExploracao ?? 1));
   await page.keyboard.down(nome);
   await passos(n);
   await page.keyboard.up(nome);
@@ -151,6 +154,36 @@ async function validarEstradaETaverna() {
   await comecar();
   assert.equal((await estado()).area, 'estrada');
   assert.ok(Math.abs((await estado()).pos[2] + 10.6) < 1.5);
+}
+
+// Spec 10 (CAM1): a terceira pessoa tem abertura própria; a primeira pessoa e o menu inicial ficam com a larga.
+async function validarCamera() {
+  const camera = () => page.evaluate(() => {
+    jogo.atualizar(0.001);
+    return { fov: jogo.camera.fov, dist: jogo.jogador.distCamera, boneco: jogo.boneco.grupo.visible, estado: jogo.estado };
+  });
+  const trocar = (valor) => page.evaluate((valor) => {
+    const campo = document.querySelector('select[name="perspectiva"]');
+    campo.value = valor;
+    campo.dispatchEvent(new Event('input', { bubbles: true }));
+  }, valor);
+  await prepararCombate();
+  await posicionar(0, -34, Math.PI);
+  await passos(4);
+  let c = await camera();
+  assert.equal(c.fov, CONFIG.camera.campoDeVisao);
+  assert.ok(Math.abs(c.dist - CONFIG.camera.distancia) < 0.01 && c.boneco);
+  // Trocar a câmera em Configurações, com o jogo pausado, já vale no quadro seguinte.
+  await page.evaluate(() => jogo.pausar());
+  await trocar('primeira');
+  c = await camera();
+  assert.deepEqual([c.estado, c.fov, c.dist, c.boneco], ['pausado', CONFIG.render.campoDeVisao, 0, false]);
+  await trocar('terceira');
+  c = await camera();
+  assert.deepEqual([c.estado, c.fov, c.boneco], ['pausado', CONFIG.camera.campoDeVisao, true]);
+  await page.evaluate(() => jogo.voltarAoTitulo());
+  c = await camera();
+  assert.deepEqual([c.estado, c.fov], ['titulo', CONFIG.render.campoDeVisao]);
 }
 
 async function validarExploracao() {
@@ -577,8 +610,9 @@ try {
   assert.ok((await estado()).pos[2] > 50);
   await validarExploracao();
   await validarEstradaETaverna();
+  await validarCamera();
   assert.deepEqual(erros, []);
-  console.log('Passou: Catedral, navegação, combate, saves antigos, mira, baú, frasco com tempo, rally, bolsa sem pausa, osso de retorno, chave, sacristia, atalho após recarregar, estrada, taverna e a lanterna nova.');
+  console.log('Passou: Catedral, navegação, combate, saves antigos, mira, baú, frasco com tempo, rally, bolsa sem pausa, osso de retorno, chave, sacristia, atalho após recarregar, estrada, taverna, a lanterna nova e a abertura da câmera por perspectiva.');
   if (testarCelular) {
     await validarMobile(browser, url);
     console.log('Passou: cenário de celular (congelado, fora dos testes obrigatórios).');
