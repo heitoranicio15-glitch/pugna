@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../src/config.js';
-import { campoDeVisao, seguirPonto, inclinacaoDaMira, focoDaMira, distanciaDaMira, acomodar } from '../src/nucleo/enquadramento.js';
+import {
+  campoDeVisao, seguirPonto, inclinacaoDaMira, focoDaMira, distanciaDaMira, acomodar,
+  fatorColado, coberturaDoAlvo, opacidadeDoCacador,
+} from '../src/nucleo/enquadramento.js';
+import { pontilhar } from '../src/render/retro.js';
 import { Jogador } from '../src/entidades/Jogador.js';
 import { Eventos } from '../src/nucleo/Eventos.js';
 import { normalizarProgresso, SalvamentoLocal } from '../src/nucleo/Salvamento.js';
@@ -1768,4 +1772,85 @@ test('CAM3: com a mira travada a câmera continua sem atravessar parede, e a pri
   const esperado = Math.atan2(1.25 * 1.65 - jogador.alturaOlhos, 1.2);
   assert.ok(Math.abs(jogador.pitch - esperado) < 1e-3);
   assert.ok(camera.position.distanceTo(new THREE.Vector3(jogador.pos.x, jogador.pos.y + jogador.alturaOlhos, jogador.pos.z)) < 1e-6);
+});
+
+// ---------------------------------------------------------------------------
+//  CAM3b: alvo colado e caçador transparente (spec 10)
+// ---------------------------------------------------------------------------
+test('CAM3b: com o alvo colado a câmera inclina um pouco mais para baixo, aos poucos e sem exagero', () => {
+  const COLADO = { ...MIRA, coladoDistancia: 2.5, coladoCheio: 1.2, coladoInclinacao: -0.1 };
+  assert.equal(fatorColado(2.5, COLADO), 0);
+  assert.equal(fatorColado(8, COLADO), 0);
+  assert.equal(fatorColado(1.2, COLADO), 1);
+  assert.equal(fatorColado(0.3, COLADO), 1);
+  assert.ok(Math.abs(fatorColado(1.85, COLADO) - 0.5) < 1e-9);
+  // Sem degrau: de 2,6 m a 1 m, em passos de 1 cm, o fator nunca pula mais que 2%.
+  for (let d = 2.6; d > 1; d -= 0.01) assert.ok(Math.abs(fatorColado(d, COLADO) - fatorColado(d - 0.01, COLADO)) < 0.02);
+  // Longe, a inclinação é a da CAM3; colado, soma só a inclinação extra.
+  assert.equal(inclinacaoDaMira(1.55, 1.55, 4, COLADO, LIMITES), inclinacaoDaMira(1.55, 1.55, 4, MIRA, LIMITES));
+  assert.ok(Math.abs(inclinacaoDaMira(1.55, 1.55, 1.2, COLADO, LIMITES) - (-0.27 - 0.1)) < 1e-9);
+  assert.ok(inclinacaoDaMira(1.55, 1.25, 1.5, COLADO, LIMITES) < inclinacaoDaMira(1.55, 1.25, 1.5, MIRA, LIMITES));
+  // Os valores do jogo: começa perto de 2,5 m e sobe pouco (a queixa dos Souls é câmera alta demais de perto).
+  assert.ok(CONFIG.mira.coladoDistancia >= 2 && CONFIG.mira.coladoDistancia <= 3);
+  assert.ok(CONFIG.mira.coladoInclinacao < 0 && CONFIG.mira.coladoInclinacao >= -0.15);
+});
+
+test('CAM3b: o caçador fica transparente aos poucos perto da câmera e quando tapa o alvo travado', () => {
+  const CAMERA = { sumirBoneco: 1.25, transparenteDe: 2.4 }, TAPA = { tapaOpacidade: 0.3 };
+  const perto = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} ≠ ${b}`);
+  // Pela distância: inteiro de 2,4 m para cima, invisível de 1,25 m para baixo, gradual no meio.
+  assert.equal(opacidadeDoCacador(4.2, 0, CAMERA, TAPA), 1);
+  assert.equal(opacidadeDoCacador(2.4, 0, CAMERA, TAPA), 1);
+  assert.equal(opacidadeDoCacador(1.25, 0, CAMERA, TAPA), 0);
+  assert.equal(opacidadeDoCacador(0.4, 0, CAMERA, TAPA), 0);
+  perto(opacidadeDoCacador(1.825, 0, CAMERA, TAPA), 0.5);
+  for (let d = 2.6; d > 1; d -= 0.01) {
+    assert.ok(opacidadeDoCacador(d, 0, CAMERA, TAPA) - opacidadeDoCacador(d - 0.01, 0, CAMERA, TAPA) < 0.01, 'sem degrau');
+  }
+  // Tapando o alvo: cai até 30%, na proporção da cobertura; vale o menor dos dois motivos.
+  perto(opacidadeDoCacador(4.2, 1, CAMERA, TAPA), 0.3);
+  perto(opacidadeDoCacador(4.2, 0.5, CAMERA, TAPA), 0.65);
+  perto(opacidadeDoCacador(4.2, 7, CAMERA, TAPA), 0.3);
+  perto(opacidadeDoCacador(1.4, 1, CAMERA, TAPA), opacidadeDoCacador(1.4, 0, CAMERA, TAPA));
+  // Sem a faixa de transparência no config, volta a ser "aparece ou some".
+  assert.equal(opacidadeDoCacador(1.3, 0, { sumirBoneco: 1.25 }, TAPA), 1);
+  assert.equal(opacidadeDoCacador(1.2, 0, { sumirBoneco: 1.25 }, TAPA), 0);
+  // Os valores do jogo.
+  assert.ok(CONFIG.camera.transparenteDe > CONFIG.camera.sumirBoneco && CONFIG.camera.transparenteDe < CONFIG.camera.distancia);
+  assert.ok(CONFIG.mira.tapaOpacidade > 0 && CONFIG.mira.tapaOpacidade < 1);
+
+  // Cobertura: o ponto do marcador dentro da silhueta do caçador na tela (unidades: fração da altura da tela).
+  const silhueta = { x0: -0.1, x1: 0.1, y0: -0.6, y1: 0.1 };
+  assert.equal(coberturaDoAlvo({ x: 0, y: -0.2 }, silhueta, 0.05), 1);      // bem atrás do caçador
+  assert.equal(coberturaDoAlvo({ x: 0, y: 0.3 }, silhueta, 0.05), 0);       // acima do chapéu
+  assert.equal(coberturaDoAlvo({ x: 0.4, y: -0.2 }, silhueta, 0.05), 0);    // ao lado
+  perto(coberturaDoAlvo({ x: 0, y: 0.1 }, silhueta, 0.05), 0.5);            // na borda: metade
+  perto(coberturaDoAlvo({ x: 0, y: 0.125 }, silhueta, 0.05), 0.25);         // um pouco fora: já começa
+  assert.equal(coberturaDoAlvo({ x: 0, y: 0.09 }, silhueta, 0), 1);
+  assert.equal(coberturaDoAlvo({ x: 0, y: 0.11 }, silhueta, 0), 0);
+});
+
+test('CAM3b: o pontilhado entra no material sem tirar o que ele já fazia, uma vez só', () => {
+  const chamadas = [];
+  const material = new THREE.MeshLambertMaterial();
+  material.onBeforeCompile = (shader) => { chamadas.push('antes'); shader.fragmentShader = `// retro\n${shader.fragmentShader}`; };
+  material.customProgramCacheKey = () => 'retro';
+  const uSumir = { value: 1 };
+  assert.equal(pontilhar(material, uSumir), material);
+  const gancho = material.onBeforeCompile;
+  pontilhar(material, { value: 0.2 });                 // de novo: não empilha
+  assert.equal(material.onBeforeCompile, gancho);
+  assert.equal(material.customProgramCacheKey(), 'retro|pontilhado');
+
+  const shader = { uniforms: {}, vertexShader: '', fragmentShader: 'uniform float x;\nvoid main() {\n  gl_FragColor = vec4(1.0);\n}' };
+  material.onBeforeCompile(shader);
+  assert.deepEqual(chamadas, ['antes']);
+  assert.equal(shader.uniforms.uSumir, uSumir);        // o mesmo objeto: mudar o valor não recompila nada
+  assert.ok(shader.fragmentShader.includes('// retro') && shader.fragmentShader.includes('discard'));
+  assert.ok(shader.fragmentShader.indexOf('discard') > shader.fragmentShader.indexOf('void main() {'));
+  // Material sem "void main() {" (não é dos prontos do Three): fica como estava.
+  const estranho = { uniforms: {}, vertexShader: '', fragmentShader: 'void main(){}' };
+  material.onBeforeCompile(estranho);
+  assert.equal(estranho.fragmentShader, '// retro\nvoid main(){}');
+  assert.equal(pontilhar(null, uSumir), null);
 });

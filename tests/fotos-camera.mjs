@@ -4,7 +4,7 @@
 // travada) e os 7 da mira travada (cavaleiro a 4 m e a 1,5 m, Guardião de perto e de longe e a troca
 // de alvo entre dois cavaleiros, em 3 momentos).
 //
-// Uso: node tests/fotos-camera.mjs <pasta-de-saída> [prefixo] [--conferencia]
+// Uso: node tests/fotos-camera.mjs <pasta-de-saída> [prefixo] [--conferencia] [--so=nome1,nome2] [--hd]
 // --conferencia tira também as fotos dos casos de borda (parede colada nas costas,
 // olhar para cima, taverna com e sem teto à vista).
 // Não faz parte dos testes: é só uma ferramenta. Usa o mesmo navegador do test:browser.
@@ -15,6 +15,8 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 
 const conferencia = process.argv.includes('--conferencia');
+// --so=nome1,nome2 tira só as fotos com esses nomes (de qualquer um dos grupos).
+const so = process.argv.find((a) => a.startsWith('--so='))?.slice(5).split(',');
 const [pasta = 'fotos-camera', prefixo = ''] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 mkdirSync(pasta, { recursive: true });
 const porta = 5187;
@@ -34,6 +36,8 @@ const FOTOS = [
   // CAM3, mira travada: os mesmos pontos antes e depois.
   { nome: 'mira-cavaleiro-4m', area: 'vilarejo', jogador: [0, 14, 0], inimigos: [{ tipo: 'cavaleiro', x: 0, z: 10 }], travar: 0 },
   { nome: 'mira-cavaleiro-1m5', area: 'vilarejo', jogador: [0, 14, 0], inimigos: [{ tipo: 'cavaleiro', x: 0, z: 12.5 }], travar: 0 },
+  // CAM3b: inimigo do tamanho do caçador (escala 1) colado.
+  { nome: 'mira-cacador-1m5', area: 'estrada', jogador: [0, -34, Math.PI], inimigos: [{ tipo: 'cacador', x: 0, z: -32.5 }], travar: 0 },
   { nome: 'mira-guardiao-perto', area: 'catedral', jogador: [0, -19, 0], inimigos: [{ tipo: 'guardiao', x: 0, z: -21 }], travar: 0 },
   { nome: 'mira-guardiao-longe', area: 'catedral', jogador: [0, -19, 0], inimigos: [{ tipo: 'guardiao', x: 0, z: -27 }], travar: 0 },
   {
@@ -45,7 +49,7 @@ const FOTOS = [
     ],
   },
 ];
-if (conferencia) FOTOS.push(
+if (conferencia || so) FOTOS.push(
   { nome: 'taverna', area: 'taverna', jogador: [0, -1, 0] },
   { nome: 'taverna-de-cima', area: 'taverna', jogador: [0, -1, 0], pitch: -0.9 },
   { nome: 'parede-a-1m6', area: 'taverna', jogador: [0, 2.6, 0] },
@@ -53,6 +57,10 @@ if (conferencia) FOTOS.push(
   { nome: 'parede-colada', area: 'taverna', jogador: [0, 3.7, 0] },
   { nome: 'olhando-para-cima', area: 'estrada', jogador: [0, -34, Math.PI], pitch: 0.85 },
 );
+
+// --hd tira as fotos no modo gráfico HD (o padrão é o PS1).
+const hd = process.argv.includes('--hd');
+if (so) FOTOS.splice(0, FOTOS.length, ...FOTOS.filter((f) => so.includes(f.nome)));
 
 let browser;
 try {
@@ -77,6 +85,7 @@ try {
     jogo.atualizar = () => jogo.desenharPartida(0);
   });
 
+  if (hd) await page.evaluate(() => { jogo.preferencias.estiloGrafico = 'hd'; jogo.aplicarPreferencias(); });
   const fotografar = async (nome, dados) => {
     await page.waitForTimeout(1500);
     const arquivo = join(pasta, `${prefixo}${nome}.jpg`);

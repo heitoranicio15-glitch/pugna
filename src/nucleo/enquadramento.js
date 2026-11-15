@@ -53,7 +53,9 @@ export function seguirPonto(ponto, alvoAnterior, alvo, dt, limites = CONFIG.came
  */
 export function inclinacaoDaMira(alturaGiro, alturaAlvo, distancia, mira = CONFIG.mira, camera = CONFIG.camera) {
   const angulo = Math.atan2(alturaAlvo - alturaGiro, Math.max(distancia, mira.inclinacaoDistMin ?? 0));
-  const inclinacao = mira.inclinacao + (mira.inclinacaoFracao ?? 0) * angulo;
+  // CAM3b: com o alvo colado, um pouco mais para baixo (a câmera sobe e vê por cima do ombro).
+  const inclinacao = mira.inclinacao + (mira.inclinacaoFracao ?? 0) * angulo
+    + (mira.coladoInclinacao ?? 0) * fatorColado(distancia, mira);
   return Math.max(camera.inclinacaoMin, Math.min(camera.inclinacaoMax, inclinacao));
 }
 
@@ -93,4 +95,46 @@ export function acomodar(estado, alvo, dt, rapidez) {
   estado.vel = (estado.vel - rapidez * impulso) * resto;
   estado.valor = alvo + (falta + impulso) * resto;
   return estado;
+}
+
+// ---------------------------------------------------------------------------
+//  CAM3b: alvo colado e caçador transparente.
+// ---------------------------------------------------------------------------
+const entre0e1 = (v) => Math.max(0, Math.min(1, v));
+
+/**
+ * Quanto o alvo travado está "colado" no caçador: 0 a partir de `coladoDistancia`, 1 em `coladoCheio`
+ * ou mais perto, com entrada e saída macias (sem degrau).
+ */
+export function fatorColado(distancia, mira = CONFIG.mira) {
+  const de = mira.coladoDistancia, cheio = mira.coladoCheio ?? 0;
+  if (!(de > cheio)) return 0;
+  const t = entre0e1((de - distancia) / (de - cheio));
+  return t * t * (3 - 2 * t);
+}
+
+/**
+ * Quanto o caçador tapa o alvo travado na tela, de 0 (não tapa) a 1 (o ponto do marcador está bem dentro
+ * da silhueta). `ponto` é { x, y } e `silhueta` é { x0, x1, y0, y1 }, todos na mesma unidade
+ * (fração da altura da tela). A transparência entra aos poucos numa faixa de `margem` em volta da borda.
+ */
+export function coberturaDoAlvo(ponto, silhueta, margem = CONFIG.mira.tapaMargem) {
+  const dentro = Math.min(ponto.x - silhueta.x0, silhueta.x1 - ponto.x, ponto.y - silhueta.y0, silhueta.y1 - ponto.y);
+  if (!(margem > 0)) return dentro >= 0 ? 1 : 0;
+  return entre0e1((dentro + margem) / (2 * margem));
+}
+
+/**
+ * Quanto do caçador é desenhado, de 0 (invisível) a 1 (inteiro).
+ * - Pela distância: inteiro a partir de `camera.transparenteDe`, some em `camera.sumirBoneco`
+ *   (câmera encostada nele por causa de uma parede).
+ * - Pela cobertura (0 a 1): quando ele tapa o alvo travado, cai até `mira.tapaOpacidade`.
+ * Vale o menor dos dois.
+ */
+export function opacidadeDoCacador(distancia, cobertura = 0, camera = CONFIG.camera, mira = CONFIG.mira) {
+  const de = camera.transparenteDe ?? camera.sumirBoneco;
+  const perto = de > camera.sumirBoneco
+    ? entre0e1((distancia - camera.sumirBoneco) / (de - camera.sumirBoneco))
+    : (distancia > camera.sumirBoneco ? 1 : 0);
+  return Math.min(perto, 1 - entre0e1(cobertura) * (1 - (mira.tapaOpacidade ?? 1)));
 }

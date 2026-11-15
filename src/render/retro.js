@@ -89,3 +89,41 @@ export function retro(material, { contorno = false } = {}) {
   material.customProgramCacheKey = () => (contorno ? 'retro-contorno' : 'retro');
   return material;
 }
+
+// ---------------------------------------------------------------------------
+//  Transparência pontilhada (CAM3b): em vez de misturar cores, deixa de desenhar parte dos pixels
+//  num padrão fixo (matriz de Bayer 4 × 4), como o PS1 fazia. Vale no PS1 e no HD: no HD o grão do
+//  padrão cresce com a resolução, para continuar visível.
+// ---------------------------------------------------------------------------
+const DECLARAR_PONTILHADO = /* glsl */ `
+uniform float uSumir; uniform vec2 uSumirRes;
+float pugnaBayer2(vec2 a) { a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
+float pugnaBayer4(vec2 a) { return pugnaBayer2(0.5 * a) * 0.25 + pugnaBayer2(a); }
+`;
+const PONTILHADO = /* glsl */ `
+  if (uSumir < 0.999) {
+    float grao = max(1.0, floor(uSumirRes.y / 300.0));
+    if (pugnaBayer4(floor(gl_FragCoord.xy / grao)) + 0.03 > uSumir) discard;
+  }
+`;
+const pontilhados = new WeakSet();
+
+/**
+ * Faz o material obedecer a `uSumir` ({ value: 0 a 1 }): 1 desenha tudo, 0,5 metade dos pixels, 0 nada.
+ * Mantém o que o material já fazia (tremida, névoa baixa, contorno). Chamar de novo não faz nada.
+ */
+export function pontilhar(material, uSumir) {
+  if (!material || pontilhados.has(material)) return material;
+  pontilhados.add(material);
+  const antes = material.onBeforeCompile, chave = material.customProgramCacheKey;
+  material.onBeforeCompile = (shader, renderizador) => {
+    antes?.call(material, shader, renderizador);
+    if (!shader.fragmentShader.includes('void main() {')) return;
+    shader.uniforms.uSumir = uSumir;
+    shader.uniforms.uSumirRes = uniformesRetro.uRetroRes;
+    shader.fragmentShader = DECLARAR_PONTILHADO + shader.fragmentShader.replace('void main() {', `void main() {${PONTILHADO}`);
+  };
+  material.customProgramCacheKey = () => `${chave ? chave.call(material) : ''}|pontilhado`;
+  material.needsUpdate = true;
+  return material;
+}

@@ -13,6 +13,8 @@ import { texturas } from '../render/texturas.js';
 import { caixa as cx, corpoFacetado, lamina, manto, materialDePersonagem, parte } from './formas.js';
 import { modeloPronto } from '../render/modelos.js';
 import { modeloDePersonagem } from './ModeloDePersonagem.js';
+import { pontilhar } from '../render/retro.js';
+import { coberturaDoAlvo, opacidadeDoCacador } from '../nucleo/enquadramento.js';
 
 const CB = CONFIG.combate;
 const ALTURA_MIOLO = 0.95;   // centro do corpo: é em volta dele que o boneco rola
@@ -138,12 +140,58 @@ export class Boneco {
     this.rumo = 0;
     this.queda = 0;
     this.agacho = 0;   // 0 = em pé, 1 = agachado (Etapa D)
+    // CAM3b: transparência pontilhada (1 = inteiro, 0 = invisível).
+    this.uSumir = { value: 1 }; this.opacidade = 1; this.cobertura = 0; this.visivel = true;
+    this.contagemPontilhado = 0; this.pontoTela = new THREE.Vector3();
     cena.add(this.grupo);
+  }
+
+  /**
+   * CAM3b: o caçador fica transparente (pontilhado) aos poucos quando a câmera encosta nele
+   * e quando ele tapa na tela o alvo da mira travada. Só some de vez com a câmera dentro dele.
+   */
+  atualizarTransparencia(dt, j) {
+    const CAM = CONFIG.camera, M = CONFIG.mira, cam = j.jogo?.camera;
+    let cobertura = 0;
+    if (j.alvo && !j.primeiraPessoa && !j.morto && cam) {
+      const a = j.alvo, p = this.pontoTela;
+      cam.updateMatrixWorld();
+      const proporcao = cam.aspect || 1;
+      // Silhueta do caçador na tela: dos pés ao chapéu, com meia largura fixa (em fração da altura da tela).
+      const altura = M.tapaAltura * (1 - 0.3 * this.agacho);
+      const pes = p.set(j.pos.x, j.pos.y, j.pos.z).project(cam), pesX = pes.x * proporcao, pesY = pes.y;
+      const topo = p.set(j.pos.x, j.pos.y + altura, j.pos.z).project(cam), topoX = topo.x * proporcao, topoY = topo.y;
+      const lado = p.set(j.pos.x + Math.cos(j.yaw) * M.tapaLargura, j.pos.y + altura / 2, j.pos.z - Math.sin(j.yaw) * M.tapaLargura).project(cam);
+      const meio = (pesX + topoX) / 2, largura = Math.abs(lado.x * proporcao - meio);
+      const marcador = p.set(a.pos.x, a.pos.y + 1.25 * (a.cfg?.escala ?? 1), a.pos.z);
+      const maisLonge = marcador.distanceTo(cam.position) > Math.hypot(cam.position.x - j.pos.x, cam.position.z - j.pos.z);
+      marcador.project(cam);
+      if (maisLonge && marcador.z < 1) {
+        cobertura = coberturaDoAlvo(
+          { x: marcador.x * proporcao, y: marcador.y },
+          { x0: meio - largura, x1: meio + largura, y0: Math.min(pesY, topoY), y1: Math.max(pesY, topoY) },
+          M.tapaMargem,
+        );
+      }
+    }
+    // A parte da mira entra e sai aos poucos; a da distância vale na hora (a câmera já se move suave).
+    this.cobertura += (cobertura - this.cobertura) * (dt > 0 ? 1 - Math.exp(-dt * CAM.transparenciaRapidez) : 1);
+    this.opacidade = opacidadeDoCacador(j.distBoneco, this.cobertura, CAM, M);
+    this.uSumir.value = this.opacidade;
+    this.visivel = this.opacidade > 0.03;
+    this.grupo.visible = this.visivel;
+    // Os modelos chegam depois (e o HD troca materiais): de tempos em tempos, prepara os que faltam.
+    if (this.contagemPontilhado-- <= 0) {
+      this.contagemPontilhado = 30;
+      this.grupo.traverse((malha) => {
+        if (malha.isMesh) for (const material of [malha.material].flat()) pontilhar(material, this.uSumir);
+      });
+    }
   }
 
   atualizar(dt, j) {
     const g = this.grupo;
-    g.visible = j.distBoneco > CONFIG.camera.sumirBoneco;   // câmera colada numa parede: não mostra o boneco por dentro
+    this.atualizarTransparencia(dt, j);
     g.position.copy(j.pos);
     const difRumo = Math.atan2(Math.sin(j.rumo - this.rumo), Math.cos(j.rumo - this.rumo));
     this.rumo += difRumo * (dt > 0 ? 1 - Math.exp(-dt * 24) : 1);

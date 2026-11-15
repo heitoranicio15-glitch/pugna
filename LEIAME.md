@@ -152,6 +152,9 @@ ou **Alt** para esquivar.
   os dois caberem na tela, levanta ou abaixa o olhar conforme a altura do alvo e
   se afasta um pouco para alvos grandes (o Guardião) ou colados. Travar, trocar
   de alvo e destravar mudam a câmera aos poucos; ao destravar, ela fica onde está.
+  Com o alvo colado (menos de 2,5 m) a câmera sobe um pouco para ver por cima do ombro.
+  O caçador fica transparente, com pontilhado, quando tapa o alvo travado ou quando a
+  câmera encosta nele por causa de uma parede (antes ele sumia de uma vez).
 - **Pistola (o parry do jogo):** o clique direito (ou **C**) dá um tiro na
   hora, de curto alcance (uns 9 metros), sem bala voando. Ele vai no inimigo da
   mira travada ou, sem trava, no mais próximo à frente; parede no meio segura o
@@ -636,4 +639,5 @@ pugna/
 - `node tests/fotos-camera.mjs <pasta> [prefixo]` não é um teste: tira sempre as mesmas 11 fotos da
   câmera em terceira pessoa (vila, nave da catedral, estrada, Guardião com a mira travada e mais 7 da mira:
   cavaleiro a 4 m e a 1,5 m, Guardião de perto e de longe e a troca de alvo em 3 momentos), para
-  comparar antes e depois de mexer na câmera. Usa o mesmo navegador do `test:browser`.
+  comparar antes e depois de mexer na câmera. Usa o mesmo navegador do `test:browser`. `--so=nome1,nome2` tira só as fotos
+  com esses nomes e `--hd` tira no modo gráfico HD.
