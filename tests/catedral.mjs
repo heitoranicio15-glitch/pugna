@@ -178,9 +178,41 @@ async function validarCamera() {
   await trocar('primeira');
   c = await camera();
   assert.deepEqual([c.estado, c.fov, c.dist, c.boneco], ['pausado', CONFIG.render.campoDeVisao, 0, false]);
+  // CAM4: na primeira pessoa as três opções da câmera ficam cinza (desativadas).
+  const opcoes = () => page.evaluate(() => {
+    const f = document.getElementById('preferencias').elements;
+    return {
+      desativadas: [f.cameraRecentrar.disabled, f.cameraDesviar.disabled, f.cameraAbertura.disabled],
+      valores: [f.cameraRecentrar.checked, f.cameraDesviar.checked, Number(f.cameraAbertura.value)],
+      faixa: [Number(f.cameraAbertura.min), Number(f.cameraAbertura.max)],
+      salvo: JSON.parse(localStorage.getItem('pugna-preferencias-v1')),
+    };
+  });
+  assert.deepEqual((await opcoes()).desativadas, [true, true, true]);
   await trocar('terceira');
   c = await camera();
   assert.deepEqual([c.estado, c.fov, c.boneco], ['pausado', CONFIG.camera.campoDeVisao, true]);
+  // CAM4: padrões, faixa do controle, vale na hora (até pausado) e fica salvo nas preferências.
+  let o = await opcoes();
+  assert.deepEqual(o.desativadas, [false, false, false]);
+  assert.deepEqual(o.valores, [false, true, CONFIG.camera.campoDeVisao]);
+  assert.deepEqual(o.faixa, [CONFIG.camera.aberturaMin, CONFIG.camera.aberturaMax]);
+  await page.evaluate(() => {
+    const f = document.getElementById('preferencias').elements;
+    f.cameraAbertura.value = 58; f.cameraAbertura.dispatchEvent(new Event('input', { bubbles: true }));
+    f.cameraRecentrar.checked = true; f.cameraRecentrar.dispatchEvent(new Event('input', { bubbles: true }));
+    f.cameraDesviar.checked = false; f.cameraDesviar.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  c = await camera();
+  assert.equal(c.fov, 58);
+  o = await opcoes();
+  assert.deepEqual([o.salvo.cameraRecentrar, o.salvo.cameraDesviar, o.salvo.cameraAbertura], [true, false, 58]);
+  assert.equal(await page.locator('output[for="cameraAbertura"]').textContent(), '58°');
+  // "Apagar progresso" não apaga as preferências da câmera.
+  await page.evaluate(() => jogo.apagarProgresso());
+  o = await opcoes();
+  assert.deepEqual([o.salvo.cameraRecentrar, o.salvo.cameraDesviar, o.salvo.cameraAbertura], [true, false, 58]);
+  assert.deepEqual(await page.evaluate(() => [jogo.preferencias.cameraRecentrar, jogo.preferencias.cameraDesviar, jogo.preferencias.cameraAbertura]), [true, false, 58]);
   await page.evaluate(() => jogo.voltarAoTitulo());
   c = await camera();
   assert.deepEqual([c.estado, c.fov], ['titulo', CONFIG.render.campoDeVisao]);
@@ -612,7 +644,7 @@ try {
   await validarEstradaETaverna();
   await validarCamera();
   assert.deepEqual(erros, []);
-  console.log('Passou: Catedral, navegação, combate, saves antigos, mira, baú, frasco com tempo, rally, bolsa sem pausa, osso de retorno, chave, sacristia, atalho após recarregar, estrada, taverna, a lanterna nova e a abertura da câmera por perspectiva.');
+  console.log('Passou: Catedral, navegação, combate, saves antigos, mira, baú, frasco com tempo, rally, bolsa sem pausa, osso de retorno, chave, sacristia, atalho após recarregar, estrada, taverna, a lanterna nova, a abertura da câmera por perspectiva e as opções da câmera.');
   if (testarCelular) {
     await validarMobile(browser, url);
     console.log('Passou: cenário de celular (congelado, fora dos testes obrigatórios).');

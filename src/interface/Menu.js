@@ -1,3 +1,5 @@
+import { CONFIG } from '../config.js';
+
 const el = (id) => document.getElementById(id);
 
 export class Menu {
@@ -38,6 +40,9 @@ export class Menu {
       this.exibirPreferencias();
       jogo.aplicarPreferencias();
     });
+    // A faixa da abertura da câmera vem do config (CAM4).
+    this.form.elements.cameraAbertura.min = CONFIG.camera.aberturaMin;
+    this.form.elements.cameraAbertura.max = CONFIG.camera.aberturaMax;
     this.exibirPreferencias();
   }
 
@@ -53,13 +58,16 @@ export class Menu {
       if (campo.type === 'checkbox') campo.checked = valor;
       else campo.value = valor;
       const saida = campo.parentElement.querySelector('output');
-      if (saida) saida.value = `${valor}%`;
+      if (saida) saida.value = campo.name === 'cameraAbertura' ? `${valor}°` : `${valor}%`;
     }
     // No HD a pixelização e o tremor não valem: ficam cinza, guardando o valor do PS1.
     const hd = this.jogo.preferencias.estiloGrafico === 'hd';
     for (const nome of ['resolucao', 'tremor']) this.form.elements[nome].disabled = hd;
     this.form.elements.resolucaoHd.disabled = !hd;
     this.form.elements.perspectiva.disabled = this.jogo.entrada.toque;
+    // As opções da câmera em terceira pessoa (CAM4) não valem na primeira pessoa: ficam cinza, guardando o valor.
+    const primeira = this.jogo.preferencias.perspectiva === 'primeira' && !this.jogo.entrada.toque;
+    for (const nome of ['cameraRecentrar', 'cameraDesviar', 'cameraAbertura']) this.form.elements[nome].disabled = primeira;
   }
 
   atualizarProgresso(progresso, nome) {

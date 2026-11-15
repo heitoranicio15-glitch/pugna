@@ -23,6 +23,8 @@ Ação e exploração num mundo medieval gótico, vazio e triste, à noite, no e
 
 - **Câmera:** terceira pessoa é o padrão. O computador também tem primeira
   pessoa opcional em Configurações. A mira travada usa Tab ou o botão do meio.
+  A terceira pessoa tem três opções em Configurações (recentralizar sozinha,
+  desviar de paredes e abertura), que são preferências.
 - **Sem o gigante encapuzado:** ele foi excluído. A lua é a presença no céu.
 - **Salvamento estilo Souls:** o jogo salva sozinho o tempo todo. Ao morrer, o jogador renasce na última lanterna em que descansou, e os inimigos comuns voltam. Não existe salvar manualmente. O "voltar ao checkpoint" vira o Osso de Retorno: item único, de uso ilimitado. A penalidade por usar (como perder as almas nos Souls) será decidida mais para a frente.
 - **Escopo:** semi-linear (vilarejo, catedral, depois áreas ligadas por atalhos). Nada de mundo aberto. Os inimigos são humanos de armadura, que reaproveitam o mesmo esqueleto e as mesmas animações.
@@ -48,6 +50,18 @@ Cada resposta do jogador precisa ser a melhor contra algum tipo de ataque. Se n�
 O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (PR B3) já funcionam.
 
 ## Estado atual
+
+- **Câmera estilo Souls, fase CAM4: opções em Configurações (pronto). Com isso a câmera estilo Souls (CAM1 a CAM4) está completa.** Spec 10, seção CAM4. Só na terceira pessoa.
+  - **Três opções novas** em Configurações (tela inicial e pausa), logo abaixo de "Câmera". Valem na hora, ficam salvas e ficam cinza na primeira pessoa:
+    1. **Recentralizar sozinha** (desligada por padrão): andando ou correndo sem mexer o mouse por 1,5 s, o olhar volta devagar para trás do corpo. Mexer o mouse cancela na hora. Não vale com a mira travada.
+    2. **Desviar de paredes** (ligada por padrão): a câmera "tateia" um pouco para cada lado; com parede só de um lado, o olhar gira devagar para o lado livre. Desligada, vale só o encurtar da CAM2.
+    3. **Abertura da câmera**: controle de 40° a 60°, padrão 48° (`CONFIG.camera.campoDeVisao`).
+  - **São preferências**, na chave `pugna-preferencias-v1` (`cameraRecentrar`, `cameraDesviar`, `cameraAbertura` em `src/nucleo/Preferencias.js`), com padrão para valor ausente ou inválido e faixa para a abertura. O save de progresso não mudou e "Apagar progresso" não as apaga (o teste de navegador confere).
+  - **Não mudou:** primeira pessoa, câmera do menu inicial, regras de combate, mira travada, save, IDs e `Toque.js` (nenhum botão de toque novo).
+  - **Código:** funções puras `recentralizar` e `desvioDeParede` em `src/nucleo/enquadramento.js`; `campoDeVisao` aceita a `abertura` escolhida; `Jogador.atualizar` (recentralizar) e `Jogador.atualizarCamera` (desvio); `Menu.js` e `index.html` (os três campos).
+  - **Decidido pela IA (o Heitor revisa):** todos em `CONFIG.camera`. Recentralizar: `recentrarEspera` **1,5 s** (pedido do Heitor), `recentrarEntrada` **0,5 s** (começa devagar), `recentrarRapidez` **1,2**, `recentrarVelMax` **0,7 rad/s** (uns 40° por segundo), `recentrarSemVolta` **2,6 rad** (uns 150°). Desviar: `desviarAngulo` **0,3 rad** (uns 17° para cada lado), `desviarVel` **0,6 rad/s**, `desviarMargem` **0,08**, `desviarEspera` **0,5 s**, `desviarSuavidade` **4**. Abertura: `aberturaMin` **40** e `aberturaMax` **60** (pedido do Heitor), de 1 em 1 grau. Escolhas minhas: (1) parar de andar zera a espera do recentralizar; (2) andando de frente para a câmera ela não gira (senão daria meia-volta sem parar); (3) o recentralizar só mexe no giro para os lados, não na inclinação; (4) como o caçador anda em relação à câmera, o recentralizar aparece principalmente ao andar de lado: a câmera vai girando e o caçador faz uma curva, como nos Souls; (5) o desvio de parede espera 0,5 s depois do último movimento do mouse e não age com a mira travada; (6) parede bem atrás da câmera (igual dos dois lados) ou beco estreito não gira nada, só encurta; (7) as três opções também valem no celular deitado (congelado), sem nada novo no `Toque.js`.
+  - **Ninguém sentiu jogando ainda:** se o desvio de parede incomodar (a vista "foge" sozinha perto de muro), baixar `desviarVel` ou `desviarAngulo`, ou trocar o padrão para desligado; se o recentralizar parecer lento, subir `recentrarVelMax`.
+  - `npm test` (150), `npm run build` e `npm run test:browser` passam. 5 testes novos em `tests/jogabilidade.test.js`; o `validarCamera` do teste de navegador confere as três opções.
 
 - **Câmera estilo Souls, CAM3b: alvo colado e caçador transparente (pronto).** Spec 10, seção CAM3b. Só na terceira pessoa.
   - **Alvo colado:** com a mira travada e o alvo a menos de 2,5 m, a câmera inclina um pouco mais para baixo (até −0,1 rad, uns 6°, inteiro a 1,2 m) e com isso sobe uns 0,4 a 0,5 m, para ver o inimigo por cima do ombro. Entra aos poucos (mesma suavidade da inclinação da CAM3). É pouco de propósito: câmera alta demais de perto é a queixa dos Souls.
@@ -317,7 +331,7 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 - [x] **C. Chefe e imprevisibilidade** (C1, C2 e C3 feitos): pequena variação no tempo do aviso, golpes atrasados, sequências mais longas, e uma fase final do Guardião com golpes que não podem ser aparados (a fase 2 não pode ser vencida só com parry). Inimigos punem quem usa frasco perto deles. Limite de quantos inimigos atacam ao mesmo tempo. Rasteira mais frequente.
 - [x] **D. Golpe pelas costas e pulo contra rasteira:** agachar (anda devagar, menos barulho), cone de visão, execução silenciosa por trás, alerta dos vizinhos se o jogador for visto (sem botão de toque). No ar durante o golpe ativo da rasteira, não leva dano; cair perto abre o contra-ataque pisando; pular contra ataque alto leva dano extra.
 - [ ] **E. Ajuste fino com os amigos.** (E1, equilíbrio por simulação, feito; falta o ajuste jogando)
-- [ ] **Câmera estilo Souls (CAM1 a CAM4)** (spec 10): CAM1 (enquadramento), CAM2 (câmera com peso), CAM3 (mira travada estilo Souls) e CAM3b (alvo colado e caçador transparente) feitas. Falta CAM4 (opções em Configurações).
+- [x] **Câmera estilo Souls (CAM1 a CAM4)** (spec 10): CAM1 (enquadramento), CAM2 (câmera com peso), CAM3 (mira travada estilo Souls), CAM3b (alvo colado e caçador transparente) e CAM4 (opções em Configurações) feitas. Falta só o Heitor sentir jogando e ajustar os números.
 - [ ] **Depois:** broquel como item ou mão secundária alternativa (bloqueio), celular de volta se fizer sentido, golpes em sequência, armas com ritmos diferentes, interior de mais casas, sons gravados, Supabase (login e progresso), multiplayer para uns 5 amigos, mapa maior (floresta, castelo, caverna), modelos e animações de verdade.
 
 ## Fila do Gabriel (uma por vez, cada uma num chat novo)

@@ -7,7 +7,9 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { alcancaPisada, pelasCostas } from './Furtividade.js';
-import { seguirPonto, inclinacaoDaMira, focoDaMira, distanciaDaMira, acomodar } from '../nucleo/enquadramento.js';
+import {
+  seguirPonto, inclinacaoDaMira, focoDaMira, distanciaDaMira, acomodar, difAngulo, recentralizar, desvioDeParede,
+} from '../nucleo/enquadramento.js';
 
 const C = CONFIG.jogador;
 const CB = CONFIG.combate;
@@ -15,8 +17,6 @@ const CAM = CONFIG.camera;
 const M = CONFIG.mira;
 const F = CONFIG.combate.furtividade;
 
-/** Menor diferença entre dois ângulos (a - b), entre -PI e PI. */
-const difAngulo = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
 /** Ângulo (na convenção do yaw) que aponta de um ponto para outro. */
 const anguloPara = (de, para) => Math.atan2(de.x - para.x, de.z - para.z);
 
@@ -43,6 +43,8 @@ export class Jogador {
     this.focoMiraX = { valor: 0, vel: 0 }; this.focoMiraZ = { valor: 0, vel: 0 }; this.extraMiraMola = { valor: 0, vel: 0 };
     this.soltarMira();
     this.tSemVisao = 0; this.acumuloTroca = 0; this.tTroca = 0; this.recentrar = 0;
+    // Opções de câmera (CAM4): espera do recentralizar, tempo sem mexer o mouse e giro do desvio de parede.
+    this.autoCentro = { tempo: 0 }; this.tSemMouse = 0; this.velDesvio = 0;
     this.entradaDir = null;
     this.vida = C.vidaMax; this.estamina = C.estaminaMax;
     this.morto = false;
@@ -101,6 +103,14 @@ export class Jogador {
 
     // ---------- câmera ----------
     this.atualizarMira(dt, e);
+    const mouse = e.mouseDX !== 0 || e.mouseDY !== 0;
+    this.tSemMouse = mouse ? 0 : this.tSemMouse + dt;
+    // Recentralizar sozinha (CAM4, opção): andando sem mexer o mouse, o olhar volta para trás do corpo.
+    this.yaw = recentralizar(this.autoCentro, {
+      yaw: this.yaw, rumo: this.rumo, mouse, travada: !!this.alvo,
+      andando: this.entradaDir != null && Math.hypot(this.vel.x, this.vel.z) > 0.6,
+      ligada: this.jogo.preferencias.cameraRecentrar === true && !this.primeiraPessoa,
+    }, dt, CAM);
     if (this.alvo) {
       const alvo = this.alvo;
       const alturaAlvo = alvo.pos.y + 1.25 * (alvo.cfg?.escala ?? 1);   // peito do alvo: o mesmo ponto do marcador
@@ -812,12 +822,24 @@ export class Jogador {
     }
 
     // Direção para onde a câmera olha.
-    const cp = Math.cos(this.pitch);
-    const fx = -Math.sin(this.yaw) * cp, fy = Math.sin(this.pitch), fz = -Math.cos(this.yaw) * cp;
+    const cp = Math.cos(this.pitch), fy = Math.sin(this.pitch);
     // A distância é contada a partir do foco: soma o desvio, para a câmera não chegar mais perto do caçador.
     let d = CAM.distancia + this.extraMira + Math.hypot(foco.x - pivo.x, foco.z - pivo.z);
     // Olhando para cima: não entra no chão (o chão é o dos pés do caçador, não o do ponto atrasado).
     if (fy > 0.01) d = Math.min(d, (py - this.pos.y - CAM.folgaDoChao) / fy);
+    // Desviar de paredes (CAM4, opção): tateia um pouco para cada lado; com parede só de um lado, o olhar
+    // gira devagar para o lado livre. Não vale com a mira travada, nem logo depois de mexer o mouse.
+    let desvio = 0;
+    if (dt > 0 && this.jogo.preferencias.cameraDesviar === true && !this.alvo && !this.morto
+      && this.tSemMouse >= CAM.desviarEspera) {
+      const livre = (yaw) => col.interceptarTrecho(
+        foco, { x: foco.x + Math.sin(yaw) * cp * d, z: foco.z + Math.cos(yaw) * cp * d }, py, CAM.folga, py - fy * d, 0.8,
+      ) ?? 1;
+      desvio = desvioDeParede(livre(this.yaw + CAM.desviarAngulo), livre(this.yaw - CAM.desviarAngulo), CAM);
+    }
+    this.velDesvio = dt > 0 ? this.velDesvio + (desvio - this.velDesvio) * suave(CAM.desviarSuavidade) : 0;
+    this.yaw += this.velDesvio * dt;
+    const fx = -Math.sin(this.yaw) * cp, fz = -Math.cos(this.yaw) * cp;
     const parede = col.interceptarTrecho(foco, { x: foco.x - fx * d, z: foco.z - fz * d }, py, CAM.folga, py - fy * d, 0.8);
     if (parede !== null) d *= parede;
     d = Math.max(0.35, d);

@@ -6,6 +6,8 @@ const PADRAO = {
   resolucao: CONFIG.render.alturaInterna, tremor: true,
   resolucaoHd: CONFIG.render.estilos.hd.resolucoes[0],
   estiloGrafico: CONFIG.render.estiloPadrao,
+  // Opções da câmera em terceira pessoa (spec 10, CAM4).
+  cameraRecentrar: false, cameraDesviar: true, cameraAbertura: CONFIG.camera.campoDeVisao,
 };
 
 function faixa(valor, minimo, maximo, padrao) {
@@ -28,6 +30,10 @@ export function carregarPreferencias() {
     // Preferência antiga (sem o campo) ou valor desconhecido: fica no PS1.
     estiloGrafico: Object.hasOwn(CONFIG.render.estilos, salvo?.estiloGrafico ?? '')
       ? salvo.estiloGrafico : PADRAO.estiloGrafico,
+    // Preferência antiga (sem os campos) ou valor inválido: fica no padrão.
+    cameraRecentrar: typeof salvo?.cameraRecentrar === 'boolean' ? salvo.cameraRecentrar : PADRAO.cameraRecentrar,
+    cameraDesviar: typeof salvo?.cameraDesviar === 'boolean' ? salvo.cameraDesviar : PADRAO.cameraDesviar,
+    cameraAbertura: faixa(salvo?.cameraAbertura, CONFIG.camera.aberturaMin, CONFIG.camera.aberturaMax, PADRAO.cameraAbertura),
   };
 }
 

@@ -140,12 +140,33 @@ Complemento da CAM3, para o "limite conhecido" dela (inimigo colado tapado pelo 
 - Fotos em `docs/fotos/cam3b/`. `tests/fotos-camera.mjs` ganhou `--so=nome1,nome2` e `--hd`.
 - **Limite conhecido:** inimigo escuro atrás do caçador, na névoa, continua difícil de ler numa foto parada.
 
-### CAM4 — opções em Configurações
+### CAM4 — opções em Configurações (feita)
 
-- Recentralizar sozinha (ligado ou desligado).
-- Desviar de paredes (ligado ou desligado).
-- Abertura da câmera (controle deslizante em volta do padrão).
-- São preferências (`pugna-preferencias-v1`), não progresso. Sem botões de toque novos (celular congelado).
+Os jogos da FromSoftware têm opções de câmera (no PC muita gente desliga "Camera Auto-Rotate" e "Camera Auto
+Wall Recovery"). O PUGNA ganhou três, em Configurações (tela inicial e pausa), logo abaixo de "Câmera". Valem só
+na terceira pessoa (ficam cinza na primeira), valem na hora e ficam salvas.
+
+- **Recentralizar sozinha** (`cameraRecentrar`, desligada por padrão; função pura `recentralizar`): andando ou
+  correndo sem mexer o mouse por `camera.recentrarEspera` (1,5 s), o yaw volta para trás do corpo (`rumo`).
+  O giro começa parado e chega à rapidez cheia em `recentrarEntrada` (0,5 s); a rapidez é `recentrarRapidez`
+  (1,2 por segundo), nunca acima de `recentrarVelMax` (0,7 rad/s). Mexer o mouse, parar, travar a mira ou
+  desligar a opção zera a espera na hora. Com o corpo virado mais que `recentrarSemVolta` (2,6 rad) em relação
+  ao olhar (andando de frente para a câmera) ela não gira. A inclinação não é mexida.
+- **Desviar de paredes** (`cameraDesviar`, ligada por padrão; função pura `desvioDeParede`): a cada quadro a
+  câmera mede quanto do caminho até ela estaria livre com o yaw `camera.desviarAngulo` (0,3 rad) maior e menor.
+  Se um lado está mais livre que o outro (diferença acima de `desviarMargem`, 0,08), o yaw gira para o lado
+  livre, até `desviarVel` (0,6 rad/s), entrando e saindo com `desviarSuavidade` (4). Só age `desviarEspera`
+  (0,5 s) depois do último movimento do mouse e nunca com a mira travada. Lados iguais (parede bem atrás, beco
+  estreito, campo aberto): não gira, vale só o encurtar da CAM2. Desligada: só o encurtar da CAM2.
+- **Abertura da câmera** (`cameraAbertura`): controle de `camera.aberturaMin` (40°) a `aberturaMax` (60°), de 1
+  em 1 grau; o padrão é `camera.campoDeVisao` (48°). A função `campoDeVisao` recebe a abertura escolhida e a
+  prende na faixa; primeira pessoa, menu inicial e celular em pé não mudam.
+- **Preferências, não progresso:** os três campos ficam em `pugna-preferencias-v1` (`src/nucleo/Preferencias.js`).
+  Valor ausente (preferência antiga) ou inválido vira o padrão; abertura fora da faixa fica na ponta. O save de
+  progresso não mudou e "Apagar progresso" não apaga as opções.
+- **Celular congelado:** nada novo no `Toque.js` nem botões de toque.
+- **Fotos:** a CAM4 não muda o enquadramento com as opções no padrão (abertura 48°; sem parede ao lado o
+  desvio não age), então não há fotos novas de antes e depois.
 
 ## Critérios de aceite
 
@@ -186,7 +207,8 @@ CAM3b:
 
 CAM4:
 
-- [ ] As três opções aparecem em Configurações (tela inicial e pausa), valem na hora e ficam salvas.
+- [x] As três opções aparecem em Configurações (tela inicial e pausa), valem na hora e ficam salvas.
+- [x] Ficam cinza na primeira pessoa; "Apagar progresso" não as apaga; valor velho ou inválido vira o padrão.
 
 ## Decidido pela IA (o Heitor revisa)
 
@@ -211,3 +233,11 @@ CAM4:
   `camera.transparenteDe` 2,4 m e `camera.transparenciaRapidez` 8. `camera.sumirBoneco` continua 1,25 m.
 - CAM3b: a câmera sobe só pela inclinação; "tapar o alvo" é medido pelo ponto do marcador, não pelo corpo
   inteiro do alvo (senão o caçador ficaria transparente em quase toda luta travada).
+- CAM4: `recentrarEspera` 1,5 s e a faixa de 40° a 60° são os pedidos do Heitor. Da IA: `recentrarEntrada` 0,5 s,
+  `recentrarRapidez` 1,2, `recentrarVelMax` 0,7 rad/s, `recentrarSemVolta` 2,6 rad, `desviarAngulo` 0,3 rad,
+  `desviarVel` 0,6 rad/s, `desviarMargem` 0,08, `desviarEspera` 0,5 s, `desviarSuavidade` 4 e o passo de 1 grau.
+- CAM4: parar de andar zera a espera do recentralizar; andando de frente para a câmera ela não gira; a
+  inclinação não é recentralizada. Como o caçador anda em relação à câmera, o efeito aparece principalmente
+  ao andar de lado (a câmera gira e o caçador faz uma curva, como nos Souls).
+- CAM4: o desvio de parede espera 0,5 s depois do mouse, não age com a mira travada e não gira quando os dois
+  lados estão iguais (parede bem atrás ou beco estreito). As opções também valem no celular deitado (congelado).

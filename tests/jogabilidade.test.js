@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { CONFIG } from '../src/config.js';
 import {
   campoDeVisao, seguirPonto, inclinacaoDaMira, focoDaMira, distanciaDaMira, acomodar,
-  fatorColado, coberturaDoAlvo, opacidadeDoCacador,
+  fatorColado, coberturaDoAlvo, opacidadeDoCacador, recentralizar, desvioDeParede,
 } from '../src/nucleo/enquadramento.js';
+import { carregarPreferencias, salvarPreferencias } from '../src/nucleo/Preferencias.js';
 import { pontilhar } from '../src/render/retro.js';
 import { Jogador } from '../src/entidades/Jogador.js';
 import { Eventos } from '../src/nucleo/Eventos.js';
@@ -1853,4 +1854,139 @@ test('CAM3b: o pontilhado entra no material sem tirar o que ele já fazia, uma v
   material.onBeforeCompile(estranho);
   assert.equal(estranho.fragmentShader, '// retro\nvoid main(){}');
   assert.equal(pontilhar(null, uSumir), null);
+});
+
+// ---------------------------------------------------------------------------
+//  CAM4: opções de câmera em Configurações (spec 10)
+// ---------------------------------------------------------------------------
+function comPreferenciasSalvas(texto, fn) {
+  const antes = globalThis.localStorage;
+  const dados = new Map(texto === undefined ? [] : [['pugna-preferencias-v1', texto]]);
+  globalThis.localStorage = {
+    getItem: (chave) => (dados.has(chave) ? dados.get(chave) : null),
+    setItem: (chave, valor) => dados.set(chave, String(valor)),
+  };
+  try { return fn(dados); } finally { globalThis.localStorage = antes; }
+}
+
+test('CAM4: as opções da câmera são preferências com padrão, faixa e proteção contra valor inválido', () => {
+  const CAM = CONFIG.camera;
+  const padrao = { cameraRecentrar: false, cameraDesviar: true, cameraAbertura: CAM.campoDeVisao };
+  const opcoes = (p) => ({ cameraRecentrar: p.cameraRecentrar, cameraDesviar: p.cameraDesviar, cameraAbertura: p.cameraAbertura });
+  assert.ok(CAM.aberturaMin === 40 && CAM.aberturaMax === 60 && CAM.campoDeVisao >= 40 && CAM.campoDeVisao <= 60);
+  // Nada salvo, texto quebrado e preferência antiga (de antes da CAM4): tudo no padrão.
+  comPreferenciasSalvas(undefined, () => assert.deepEqual(opcoes(carregarPreferencias()), padrao));
+  comPreferenciasSalvas('{quebrado', () => assert.deepEqual(opcoes(carregarPreferencias()), padrao));
+  comPreferenciasSalvas(JSON.stringify({ musica: 10, perspectiva: 'primeira' }), () => {
+    const p = carregarPreferencias();
+    assert.deepEqual(opcoes(p), padrao);
+    assert.deepEqual([p.musica, p.perspectiva], [10, 'primeira']);   // os campos antigos continuam valendo
+  });
+  // Valor inválido volta ao padrão; abertura fora da faixa fica na ponta da faixa.
+  comPreferenciasSalvas(JSON.stringify({ cameraRecentrar: 'sim', cameraDesviar: 0, cameraAbertura: 'larga' }),
+    () => assert.deepEqual(opcoes(carregarPreferencias()), padrao));
+  comPreferenciasSalvas(JSON.stringify({ cameraAbertura: 20 }), () => assert.equal(carregarPreferencias().cameraAbertura, 40));
+  comPreferenciasSalvas(JSON.stringify({ cameraAbertura: 999 }), () => assert.equal(carregarPreferencias().cameraAbertura, 60));
+  comPreferenciasSalvas(JSON.stringify({ cameraAbertura: 52.4 }), () => assert.equal(carregarPreferencias().cameraAbertura, 52));
+  // Salvar e carregar devolve o que foi escolhido, só na chave de preferências (o progresso tem outra chave).
+  comPreferenciasSalvas(undefined, (dados) => {
+    salvarPreferencias({ ...carregarPreferencias(), cameraRecentrar: true, cameraDesviar: false, cameraAbertura: 57 });
+    assert.deepEqual([...dados.keys()], ['pugna-preferencias-v1']);
+    assert.deepEqual(opcoes(carregarPreferencias()), { cameraRecentrar: true, cameraDesviar: false, cameraAbertura: 57 });
+  });
+});
+
+test('CAM4: a abertura escolhida vale só na terceira pessoa e fica dentro da faixa', () => {
+  assert.equal(campoDeVisao({ abertura: 55 }), 55);
+  assert.equal(campoDeVisao({ abertura: 10 }), 40);
+  assert.equal(campoDeVisao({ abertura: 200 }), 60);
+  assert.equal(campoDeVisao({ abertura: undefined }), CONFIG.camera.campoDeVisao);
+  assert.equal(campoDeVisao({ abertura: NaN }), CONFIG.camera.campoDeVisao);
+  assert.equal(campoDeVisao({ abertura: 55, primeiraPessoa: true }), CONFIG.render.campoDeVisao);
+  assert.equal(campoDeVisao({ abertura: 55, titulo: true }), CONFIG.render.campoDeVisao);
+  assert.equal(campoDeVisao({ abertura: 55, toque: true, proporcao: 0.5 }), CONFIG.render.campoDeVisaoCelularEmPe);
+});
+
+test('CAM4: recentralizar sozinha espera 1,5 s andando sem mouse, volta devagar e o mouse cancela na hora', () => {
+  const CAM = CONFIG.camera;
+  const rodar = (segundos, s, fps = 60, estado = { tempo: 0 }) => {
+    let yaw = s.yaw;
+    for (let i = 0; i < Math.round(segundos * fps); i++) yaw = recentralizar(estado, { ...s, yaw }, 1 / fps, CAM);
+    return { yaw, estado };
+  };
+  const andando = { yaw: 0, rumo: 1, andando: true, mouse: false, travada: false, ligada: true };
+  // Antes da espera não gira; depois gira na direção do corpo, sem passar da velocidade máxima, e chega lá.
+  assert.equal(rodar(CAM.recentrarEspera - 0.1, andando).yaw, 0);
+  const meio = rodar(CAM.recentrarEspera + 1, andando).yaw;
+  assert.ok(meio > 0.05 && meio <= CAM.recentrarVelMax * 1 + 1e-9, `yaw ${meio}`);
+  assert.ok(Math.abs(rodar(12, andando).yaw - 1) < 0.01);
+  // Começa devagar: no primeiro quadro depois da espera o giro é quase nada.
+  const estado = { tempo: CAM.recentrarEspera };
+  assert.ok(recentralizar(estado, andando, 1 / 60, CAM) < CAM.recentrarVelMax / 60 * 0.1);
+  // Vai pelo caminho mais curto (corpo à direita: o yaw diminui) e dá quase o mesmo a 30 e a 144 quadros.
+  assert.ok(rodar(4, { ...andando, rumo: -1 }).yaw < -0.3);
+  assert.ok(Math.abs(rodar(4, andando, 30).yaw - rodar(4, andando, 144).yaw) < 0.02);
+  // Desligada, parado, mira travada ou mouse mexendo: não gira nunca.
+  for (const troca of [{ ligada: false }, { andando: false }, { travada: true }, { mouse: true }]) {
+    assert.equal(rodar(6, { ...andando, ...troca }).yaw, 0, JSON.stringify(troca));
+  }
+  // Mexer o mouse cancela na hora e a espera recomeça do zero.
+  const girando = rodar(3, andando);
+  assert.ok(girando.yaw > 0);
+  assert.equal(recentralizar(girando.estado, { ...andando, yaw: girando.yaw, mouse: true }, 1 / 60, CAM), girando.yaw);
+  assert.equal(girando.estado.tempo, 0);
+  assert.equal(rodar(CAM.recentrarEspera - 0.1, { ...andando, yaw: girando.yaw }, 60, girando.estado).yaw, girando.yaw);
+  // Andando de frente para a câmera (corpo virado ao contrário do olhar): ela não gira.
+  assert.equal(rodar(6, { ...andando, rumo: Math.PI }).yaw, 0);
+  assert.equal(rodar(6, { ...andando, rumo: 3 }).yaw, 0);
+  // Pausa (dt 0) não mexe em nada.
+  assert.equal(recentralizar({ tempo: 9 }, andando, 0, CAM), 0);
+});
+
+test('CAM4: desviar de paredes gira para o lado livre, devagar, e fica parado com os lados iguais', () => {
+  const CAM = CONFIG.camera;
+  assert.equal(desvioDeParede(1, 1, CAM), 0);              // campo aberto
+  assert.equal(desvioDeParede(0.4, 0.4, CAM), 0);          // parede bem atrás: só o encurtar da CAM2
+  assert.equal(desvioDeParede(1, 1 - CAM.desviarMargem / 2, CAM), 0);   // diferença pequena demais
+  assert.ok(desvioDeParede(1, 0.5, CAM) > 0 && desvioDeParede(0.5, 1, CAM) < 0);   // vai para o lado mais livre
+  assert.equal(desvioDeParede(1, 0.5, CAM), -desvioDeParede(0.5, 1, CAM));
+  assert.ok(desvioDeParede(1, 0.2, CAM) > desvioDeParede(1, 0.6, CAM));            // parede mais perto: mais rápido
+  assert.ok(Math.abs(desvioDeParede(1, 0, CAM) - CAM.desviarVel) < 1e-9);          // nunca passa do máximo
+  assert.ok(Math.abs(desvioDeParede(5, -3, CAM) - CAM.desviarVel) < 1e-9);
+});
+
+test('CAM4: na partida, a câmera se afasta da parede ao lado só com a opção ligada, sem mira e sem mouse', () => {
+  const montar = (preferencias) => {
+    const { jogador, colisores, entrada, alvo } = arena();
+    Object.assign(jogador.jogo.preferencias, preferencias);
+    alvo.pos.set(0, 0, -30);
+    colisores.adicionar(1.8, 3, 1, 12);            // parede comprida à direita da câmera (x de 1,3 a 2,3)
+    jogador.reiniciar(0, 0, 0);
+    return { jogador, entrada, alvo };
+  };
+  const rodar = (jogador, quadros = 240) => { for (let i = 0; i < quadros; i++) jogador.atualizar(1 / 60); };
+
+  const ligada = montar({ cameraDesviar: true });
+  rodar(ligada.jogador, 1);
+  assert.equal(ligada.jogador.yaw, 0);              // espera um instante antes de agir
+  rodar(ligada.jogador);
+  assert.ok(ligada.jogador.yaw < -0.02 && ligada.jogador.yaw > -CONFIG.camera.desviarAngulo, `yaw ${ligada.jogador.yaw}`);
+  assert.ok(ligada.jogador.jogo.camera.position.x < 0);   // a câmera foi para o lado livre
+  const parou = ligada.jogador.yaw;
+  rodar(ligada.jogador, 120);
+  assert.ok(Math.abs(ligada.jogador.yaw - parou) < 0.01); // gira "um pouco" e para
+
+  const desligada = montar({ cameraDesviar: false });
+  rodar(desligada.jogador);
+  assert.equal(desligada.jogador.yaw, 0);
+
+  const comMira = montar({ cameraDesviar: true });
+  comMira.alvo.pos.set(0, 0, -4);
+  comMira.jogador.travar(comMira.alvo);
+  rodar(comMira.jogador);
+  assert.ok(Math.abs(comMira.jogador.yaw) < 1e-6);
+
+  const primeira = montar({ cameraDesviar: true, cameraRecentrar: true, perspectiva: 'primeira' });
+  rodar(primeira.jogador);
+  assert.equal(primeira.jogador.yaw, 0);
 });

@@ -287,6 +287,21 @@ export const CONFIG = {
     atrasoMaxPlano: 0.6,     // o giro nunca fica mais que isto (m) atrás do caçador no chão (rolamento a 9,5 m/s)
     atrasoMaxVertical: 0.4,  // idem na vertical (m)
     voltaDistancia: 3,       // rapidez com que a câmera se afasta de novo depois de encostar numa parede (antes 6: dava zoom brusco)
+    // CAM4, opções de câmera em Configurações (preferências; só na terceira pessoa). Antes da CAM4 nada disto existia.
+    // "Abertura da câmera": o jogador escolhe dentro desta faixa, em graus; o padrão é o campoDeVisao acima.
+    aberturaMin: 40, aberturaMax: 60,
+    // "Recentralizar sozinha" (desligada por padrão): andando sem mexer o mouse, a câmera volta para trás do corpo.
+    recentrarEspera: 1.5,    // segundos andando ou correndo sem mexer o mouse até a câmera começar a voltar
+    recentrarEntrada: 0.5,   // segundos em que a volta "pega no tranco" (começa parada e chega à rapidez cheia)
+    recentrarRapidez: 1.2,   // rapidez (por segundo) com que o olhar vai para trás do corpo...
+    recentrarVelMax: 0.7,    // ...sem nunca girar mais rápido que isto (radianos por segundo; uns 40° por segundo)
+    recentrarSemVolta: 2.6,  // corpo virado mais que isto (radianos, uns 150°) em relação ao olhar = andando para a câmera: ela não gira
+    // "Desviar de paredes" (ligada por padrão): com parede de um lado da câmera, o olhar gira um pouco para o lado livre.
+    desviarAngulo: 0.3,      // a câmera "tateia" a esta distância angular (radianos, uns 17°) para cada lado
+    desviarVel: 0.6,         // giro máximo para longe da parede (radianos por segundo; uns 35° por segundo)
+    desviarMargem: 0.08,     // diferença mínima entre os dois lados para girar (parede bem atrás, igual dos dois lados: só encurta)
+    desviarEspera: 0.5,      // segundos sem mexer o mouse até o desvio agir (a mão do jogador sempre ganha)
+    desviarSuavidade: 4,     // rapidez (por segundo) com que o giro do desvio entra e sai, para não dar tranco
   },
 
   // ---- Travar a mira ----

@@ -584,7 +584,7 @@ export class Jogo {
     // Recalculada a cada quadro: trocar de perspectiva em Configurações vale na hora.
     this.camera.fov = campoDeVisao({
       titulo: this.estado === 'titulo', primeiraPessoa: this.jogador.primeiraPessoa,
-      toque: this.entrada.toque, proporcao: this.camera.aspect,
+      toque: this.entrada.toque, proporcao: this.camera.aspect, abertura: this.preferencias.cameraAbertura,
     });
     this.camera.updateProjectionMatrix();
 

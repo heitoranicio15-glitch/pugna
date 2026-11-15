@@ -3,13 +3,16 @@ import { CONFIG } from '../config.js';
 /**
  * Abertura vertical da câmera, em graus, para a situação atual.
  * - Menu inicial e primeira pessoa: larga (CONFIG.render.campoDeVisao).
- * - Terceira pessoa: fechada, estilo Souls (CONFIG.camera.campoDeVisao).
+ * - Terceira pessoa: fechada, estilo Souls (CONFIG.camera.campoDeVisao), ou a `abertura` escolhida
+ *   em Configurações (CAM4), presa entre CONFIG.camera.aberturaMin e aberturaMax.
  * - Celular em pé: bem larga, senão a tela estreita não mostra os lados.
  */
-export function campoDeVisao({ titulo = false, primeiraPessoa = false, toque = false, proporcao = 16 / 9 } = {}) {
+export function campoDeVisao({ titulo = false, primeiraPessoa = false, toque = false, proporcao = 16 / 9, abertura } = {}) {
   if (toque && proporcao < 1) return CONFIG.render.campoDeVisaoCelularEmPe;
   if (titulo || primeiraPessoa) return CONFIG.render.campoDeVisao;
-  return CONFIG.camera.campoDeVisao;
+  const C = CONFIG.camera;
+  if (!Number.isFinite(abertura)) return C.campoDeVisao;
+  return Math.max(C.aberturaMin ?? C.campoDeVisao, Math.min(C.aberturaMax ?? C.campoDeVisao, abertura));
 }
 
 /**
@@ -137,4 +140,42 @@ export function opacidadeDoCacador(distancia, cobertura = 0, camera = CONFIG.cam
     ? entre0e1((distancia - camera.sumirBoneco) / (de - camera.sumirBoneco))
     : (distancia > camera.sumirBoneco ? 1 : 0);
   return Math.min(perto, 1 - entre0e1(cobertura) * (1 - (mira.tapaOpacidade ?? 1)));
+}
+
+// ---------------------------------------------------------------------------
+//  CAM4: opções de câmera (recentralizar sozinha e desviar de paredes). Só na terceira pessoa.
+// ---------------------------------------------------------------------------
+/** Menor diferença entre dois ângulos (a - b), entre -PI e PI. */
+export const difAngulo = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
+
+/**
+ * "Recentralizar sozinha": devolve o novo yaw (para onde a câmera olha).
+ * Andando ou correndo sem mexer o mouse por `recentrarEspera` segundos, o olhar volta devagar para
+ * trás do corpo (`rumo`). Mexer o mouse, parar, travar a mira ou desligar a opção zera a espera na hora.
+ * Andando de frente para a câmera (corpo virado mais que `recentrarSemVolta`) ela não gira.
+ * `estado` é { tempo } (segundos andando sem mexer o mouse); `s` é { yaw, rumo, andando, mouse, travada, ligada }.
+ */
+export function recentralizar(estado, s, dt, camera = CONFIG.camera) {
+  if (!(dt > 0)) return s.yaw;
+  if (!s.ligada || s.travada || s.mouse || !s.andando) { estado.tempo = 0; return s.yaw; }
+  estado.tempo += dt;
+  const passou = estado.tempo - camera.recentrarEspera;
+  if (passou <= 0) return s.yaw;
+  const falta = difAngulo(s.rumo, s.yaw);
+  if (Math.abs(falta) > (camera.recentrarSemVolta ?? Math.PI)) return s.yaw;
+  const entrada = camera.recentrarEntrada > 0 ? Math.min(1, passou / camera.recentrarEntrada) : 1;
+  const passo = Math.min(Math.abs(falta) * (1 - Math.exp(-dt * camera.recentrarRapidez)), camera.recentrarVelMax * dt);
+  return s.yaw + Math.sign(falta) * passo * entrada;
+}
+
+/**
+ * "Desviar de paredes": velocidade de giro do yaw (radianos por segundo) para afastar a câmera de uma parede.
+ * `livreMais` e `livreMenos` dizem quanto do caminho até a câmera está livre (0 = parede colada, 1 = livre)
+ * se o yaw fosse um pouco maior ou um pouco menor. O giro vai para o lado mais livre, mais rápido quanto
+ * maior a diferença. Lados iguais (campo aberto, ou parede bem atrás): 0, vale só o encurtar da CAM2.
+ */
+export function desvioDeParede(livreMais, livreMenos, camera = CONFIG.camera) {
+  const diferenca = entre0e1(livreMais) - entre0e1(livreMenos), margem = camera.desviarMargem ?? 0;
+  if (Math.abs(diferenca) <= margem) return 0;
+  return Math.sign(diferenca) * (Math.abs(diferenca) - margem) / (1 - margem) * camera.desviarVel;
 }
