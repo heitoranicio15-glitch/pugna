@@ -65,6 +65,8 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
   **Validação:** E1 rodada com todas as armas (60 lutas por cenário e
   estratégia); os resultados e limites da simulação estão em `docs/mapa.md`.
   Falta jogar o percurso completo e ajustar ritmo/FPS no PC do Heitor.
+  A revisão após a fase 4 corrigiu o encaixe dos braços, botas e avental
+  dos dois moradores novos, mantendo as mesmas malhas e posições no mapa.
 
 - **Prompt 8 — 3, Floresta Seca ampliada:** a trilha em S liga clareira de
   descanso, ruína, grota, cabana, ponte de toras, poço e barricada; dois
