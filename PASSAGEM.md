@@ -51,6 +51,11 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Polimento da Catedral, primeira etapa.** A nave ganhou bancos com pés,
+  assento, encosto e encaixes visíveis. Os vitrais existentes ganharam
+  silhueta ogival, rosácea e juntas de chumbo. Esta etapa foi escolhida
+  como referência visual para os próximos ambientes.
+
 - **Prompt 8 — 4, progressão e arsenal:** Portão Sul selado até recolher a
   chave do Guardião. Quatro pistas (registro, oficina/ferreiro, lápide e
   vigia); chave gira, corda cai, bronze cala e o portão fica aberto.
@@ -380,6 +385,14 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 - **Pendente para o Heitor decidir:** a penalidade ao morrer (como as almas e os ecos de sangue; ela casa com o rally) e a penalidade do Osso de Retorno. Até lá, morrer e usar o osso não custam nada.
 
 ## Plano (fazer um por vez, cada um num chat novo)
+
+O pedido atual prioriza acabamento das áreas existentes antes de expandir
+o mapa. A [auditoria](docs/auditoria-visual.md#acabamento-das-áreas-existentes)
+registra o que falta e a ordem sugerida.
+
+- [x] **Polimento 1:** bancos e vitrais da Catedral.
+- [ ] **Polimento 2:** pedra, piso e luz da nave, com leitura clara do corredor.
+- [ ] **Polimento 3:** aplicar o padrão visual aos demais ambientes já jogáveis.
 
 - [x] **Prompt 8 / 1A:** kit modular e planta maior do térreo.
 - [x] **Prompt 8 / 1B:** galeria, torre, cripta, escadas e atalhos.

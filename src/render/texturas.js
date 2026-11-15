@@ -212,6 +212,39 @@ function vitral() {
   });
 }
 
+/** Rosácea, painéis longos e juntas de chumbo pintados em uma textura só. */
+function vitralDoVeu(ambar) {
+  const tamanho = 128;
+  const r = criarSorteio(ambar ? 388 : 387);
+  const [fundo, petala, filete] = ambar
+    ? [[105, 54, 64], [233, 160, 73], [253, 208, 114]]
+    : [[31, 65, 124], [88, 164, 206], [252, 191, 113]];
+  const chumbo = [27, 23, 37];
+  const tex = pintarTextura(tamanho, (x, y) => {
+    const u = (x + 0.5) / tamanho - 0.5;
+    const v = (y + 0.5) / tamanho;
+    const borda = Math.min(0.5 - Math.abs(u), 1 - v, (Math.sqrt(1 - 2 * Math.abs(u)) * 0.47 + v - 0.47) * 1.3);
+    const d = Math.hypot(u, (v - 0.40) * 1.27);
+    const angulo = Math.atan2((v - 0.40) * 1.27, u);
+    const raioPetala = 0.131 + 0.044 * Math.cos(angulo * 8);
+    const vao = Math.abs(Math.sin(angulo * 4)) * d;
+    const ruido = 0.88 + 0.19 * r() + 0.08 * Math.sin(x * 0.37 + y * 0.31);
+    if (borda < 0.031 || Math.abs(d - 0.218) < 0.01 || Math.abs(d - raioPetala) < 0.008) return chumbo;
+    if (borda < 0.051 || d < 0.025 || (d > 0.192 && d < 0.209)) return mult(filete, ruido);
+    if (d < raioPetala && vao < 0.009) return chumbo;
+    if (d < raioPetala) return mult(petala, ruido);
+    if (v > 0.61) {
+      const junta = Math.min(Math.abs(u), Math.abs(Math.abs(u) - 0.23));
+      if (junta < 0.011 || Math.abs(v - 0.65) < 0.009 || Math.abs(v - 0.89) < 0.009) return chumbo;
+      const losango = Math.abs((Math.abs(u) % 0.23) - 0.115) + Math.abs(v - 0.77) * 0.8;
+      if (losango < 0.051) return mult(losango < 0.029 ? filete : petala, ruido * 0.8);
+    }
+    return mult(fundo, ruido);
+  });
+  tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+  return prepararPiso(tex);
+}
+
 /** Mancha redonda e suave: usada em brilhos, chamas e névoa. */
 function brilho() {
   return pintarTextura(32, () => [255, 255, 255], (x, y) => {
@@ -296,6 +329,7 @@ export function texturas() {
       mosaico: prepararPiso(mosaico()), tapete: prepararPiso(tapete()), telhado: telhado(), madeira: madeira(),
       terra: prepararPiso(terra()), metal: metal(), tecido: tecido(), trama: trama(),
       janelaAcesa: janela(true), janelaApagada: janela(false), vitral: vitral(),
+      vitralVeuAzul: vitralDoVeu(false), vitralVeuAmbar: vitralDoVeu(true),
       brilho: brilho(), nevoa: nevoa(), sombra: sombra(), riacho: riacho(), feixe: feixe(),
     };
     cache.assoalho = prepararPiso(cache.madeira.clone());
