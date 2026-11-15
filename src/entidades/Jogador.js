@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { alcancaPisada, pelasCostas } from './Furtividade.js';
-import { seguirPonto } from '../nucleo/enquadramento.js';
+import { seguirPonto, inclinacaoDaMira, focoDaMira, distanciaDaMira, acomodar } from '../nucleo/enquadramento.js';
 
 const C = CONFIG.jogador;
 const CB = CONFIG.combate;
@@ -38,6 +38,9 @@ export class Jogador {
     this.pos.set(x, 0, z); this.vel.set(0, 0, 0);
     this.pivo?.copy(this.pos); this.pivoAlvo?.copy(this.pos);   // teletransporte: a câmera não vem deslizando
     this.yaw = yaw; this.pitch = CAM.inclinacaoInicial; this.rumo = yaw;
+    // Mira travada (CAM3): desvio do foco da câmera, distância extra e tempo desde que travou.
+    this.focoMira = { x: 0, z: 0 }; this.extraMira = 0; this.tMira = 0;
+    this.focoMiraX = { valor: 0, vel: 0 }; this.focoMiraZ = { valor: 0, vel: 0 }; this.extraMiraMola = { valor: 0, vel: 0 };
     this.soltarMira();
     this.tSemVisao = 0; this.acumuloTroca = 0; this.tTroca = 0; this.recentrar = 0;
     this.entradaDir = null;
@@ -99,17 +102,18 @@ export class Jogador {
     // ---------- câmera ----------
     this.atualizarMira(dt, e);
     if (this.alvo) {
-      // A mira em primeira pessoa acompanha a altura do ponto marcado no alvo.
-      this.yaw += difAngulo(anguloPara(this.pos, this.alvo.pos), this.yaw) * (1 - Math.exp(-dt * M.giroCamera));
-      let inclinacao = M.inclinacao;
-      if (this.primeiraPessoa) {
-        const alvo = this.alvo;
-        const alturaAlvo = alvo.pos.y + 1.25 * alvo.cfg.escala;
-        const distancia = Math.hypot(alvo.pos.x - this.pos.x, alvo.pos.z - this.pos.z);
-        inclinacao = THREE.MathUtils.clamp(Math.atan2(alturaAlvo - this.pos.y - this.alturaOlhos, distancia),
-          CAM.inclinacaoMin, CAM.inclinacaoMax);
-      }
-      this.pitch += (inclinacao - this.pitch) * (1 - Math.exp(-dt * 4));
+      const alvo = this.alvo;
+      const alturaAlvo = alvo.pos.y + 1.25 * (alvo.cfg?.escala ?? 1);   // peito do alvo: o mesmo ponto do marcador
+      const distancia = Math.hypot(alvo.pos.x - this.pos.x, alvo.pos.z - this.pos.z);
+      // Terceira pessoa (CAM3): o giro e a inclinação "pegam no tranco" nos primeiros instantes, sem salto.
+      this.tMira += dt;
+      const entrada = this.primeiraPessoa || !(M.entrada > 0) ? 1 : Math.min(1, this.tMira / M.entrada);
+      this.yaw += difAngulo(anguloPara(this.pos, alvo.pos), this.yaw) * (1 - Math.exp(-dt * M.giroCamera * entrada));
+      // Primeira pessoa: mira na altura do ponto marcado. Terceira: base + parte da altura do alvo.
+      const inclinacao = this.primeiraPessoa
+        ? THREE.MathUtils.clamp(Math.atan2(alturaAlvo - this.pos.y - this.alturaOlhos, distancia), CAM.inclinacaoMin, CAM.inclinacaoMax)
+        : inclinacaoDaMira(this.pos.y + CAM.alturaPivo, alturaAlvo, distancia, M, CAM);
+      this.pitch += (inclinacao - this.pitch) * (1 - Math.exp(-dt * M.suavidade * entrada));
     } else {
       const sensibilidade = C.sensibilidadeMouse * this.jogo.preferencias.sensibilidade / 100;
       this.yaw -= e.mouseDX * sensibilidade;
@@ -264,7 +268,7 @@ export class Jogador {
   // ---------------------------------------------------------------------------
   travar(inimigo) {
     this.alvo = inimigo;
-    this.tSemVisao = 0; this.acumuloTroca = 0;
+    this.tSemVisao = 0; this.acumuloTroca = 0; this.tMira = 0;
     if (inimigo.barra && inimigo.tipo !== 'guardiao') inimigo.barra.visible = true;
     this.jogo.eventos.emitir('mira:travou', inimigo);
   }
@@ -786,20 +790,42 @@ export class Jogador {
       pivo.z = this.pos.z + (pivo.z - this.pos.z) * preso * 0.9;
     }
 
+    // Mira travada (CAM3): a câmera olha para um ponto entre o caçador e o alvo e se afasta para
+    // alvos grandes ou colados. Tudo muda aos poucos; sem alvo, volta a zero (dt 0 encaixa na hora).
+    let focoX = 0, focoZ = 0, extra = 0;
+    if (this.alvo && !this.morto) {
+      const a = this.alvo, foco = focoDaMira(this.pos, a.pos, M);
+      focoX = foco.x; focoZ = foco.z;
+      extra = distanciaDaMira(a.cfg?.escala ?? 1, Math.hypot(a.pos.x - this.pos.x, a.pos.z - this.pos.z), M);
+    }
+    acomodar(this.focoMiraX, focoX, dt, M.acomodar);
+    acomodar(this.focoMiraZ, focoZ, dt, M.acomodar);
+    acomodar(this.extraMiraMola, extra, dt, M.acomodar);
+    this.focoMira.x = this.focoMiraX.valor; this.focoMira.z = this.focoMiraZ.valor;
+    this.extraMira = Math.max(0, this.extraMiraMola.valor);
+    const foco = { x: pivo.x + this.focoMira.x, z: pivo.z + this.focoMira.z };
+    // O foco também não entra em parede: para antes dela.
+    const barrado = col.interceptarTrecho(pivo, foco, py, CAM.folga, py, 0.8);
+    if (barrado !== null) {
+      foco.x = pivo.x + (foco.x - pivo.x) * barrado * 0.9;
+      foco.z = pivo.z + (foco.z - pivo.z) * barrado * 0.9;
+    }
+
     // Direção para onde a câmera olha.
     const cp = Math.cos(this.pitch);
     const fx = -Math.sin(this.yaw) * cp, fy = Math.sin(this.pitch), fz = -Math.cos(this.yaw) * cp;
-    let d = CAM.distancia;
+    // A distância é contada a partir do foco: soma o desvio, para a câmera não chegar mais perto do caçador.
+    let d = CAM.distancia + this.extraMira + Math.hypot(foco.x - pivo.x, foco.z - pivo.z);
     // Olhando para cima: não entra no chão (o chão é o dos pés do caçador, não o do ponto atrasado).
     if (fy > 0.01) d = Math.min(d, (py - this.pos.y - CAM.folgaDoChao) / fy);
-    const parede = col.interceptarTrecho(pivo, { x: pivo.x - fx * d, z: pivo.z - fz * d }, py, CAM.folga, py - fy * d, 0.8);
+    const parede = col.interceptarTrecho(foco, { x: foco.x - fx * d, z: foco.z - fz * d }, py, CAM.folga, py - fy * d, 0.8);
     if (parede !== null) d *= parede;
     d = Math.max(0.35, d);
     // Encurta na hora (nunca atravessa a parede) e volta devagar, sem zoom brusco.
     this.distCamera = d < this.distCamera ? d : this.distCamera + (d - this.distCamera) * suave(CAM.voltaDistancia);
 
     const D = this.distCamera;
-    const cx = pivo.x - fx * D, cy = py - fy * D, cz = pivo.z - fz * D;
+    const cx = foco.x - fx * D, cy = py - fy * D, cz = foco.z - fz * D;
     // Distância real da câmera ao peito do caçador (com o atraso, difere um pouco de distCamera).
     this.distBoneco = Math.hypot(cx - this.pos.x, cy - (this.pos.y + this.alturaPivo), cz - this.pos.z);
     cam.position.set(

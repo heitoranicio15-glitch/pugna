@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../src/config.js';
-import { campoDeVisao, seguirPonto } from '../src/nucleo/enquadramento.js';
+import { campoDeVisao, seguirPonto, inclinacaoDaMira, focoDaMira, distanciaDaMira, acomodar } from '../src/nucleo/enquadramento.js';
 import { Jogador } from '../src/entidades/Jogador.js';
 import { Eventos } from '../src/nucleo/Eventos.js';
 import { normalizarProgresso, SalvamentoLocal } from '../src/nucleo/Salvamento.js';
@@ -1614,4 +1614,158 @@ test('pular contra golpe alto custa dano extra; no chão, ou contra o pesado, n�
   assert.equal(caso(alto, 0), alto.dano);
   assert.equal(caso(alto, X.alturaMin / 2), alto.dano);
   assert.equal(caso(pesado, 0.6), pesado.dano);
+});
+
+// ---------------------------------------------------------------------------
+//  CAM3: mira travada estilo Souls (spec 10)
+// ---------------------------------------------------------------------------
+const MIRA = {
+  inclinacao: -0.27, inclinacaoFracao: 0.6, inclinacaoDistMin: 1, focoFracao: 0.3, focoMax: 1.5,
+  distPorEscala: 0.5, pertoDistancia: 2, pertoExtra: 1,
+};
+const LIMITES = { inclinacaoMin: -1.2, inclinacaoMax: 0.85 };
+
+test('CAM3: a inclinação da mira parte da base e acompanha 60% da altura do alvo, dentro dos limites', () => {
+  const perto = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} ≠ ${b}`);
+  // Peito do alvo na altura do ponto de giro: fica na base.
+  perto(inclinacaoDaMira(1.55, 1.55, 4, MIRA, LIMITES), -0.27);
+  // Alvo mais alto levanta o olhar; mais baixo, abaixa. Sempre 60% do ângulo.
+  perto(inclinacaoDaMira(1.55, 5.55, 4, MIRA, LIMITES), -0.27 + 0.6 * Math.PI / 4);
+  perto(inclinacaoDaMira(1.55, -2.45, 4, MIRA, LIMITES), -0.27 - 0.6 * Math.PI / 4);
+  // O Guardião (peito a 1,25 × 1,65) levanta o olhar mais de perto que de longe.
+  const peito = 1.25 * CONFIG.inimigos.guardiao.escala;
+  assert.ok(inclinacaoDaMira(1.55, peito, 2, MIRA, LIMITES) > inclinacaoDaMira(1.55, peito, 8, MIRA, LIMITES));
+  assert.ok(inclinacaoDaMira(1.55, peito, 8, MIRA, LIMITES) > -0.27);
+  // Alvo colado: a distância conta como 1 m, o ângulo não dispara.
+  perto(inclinacaoDaMira(1.55, 1.25, 0.05, MIRA, LIMITES), inclinacaoDaMira(1.55, 1.25, 1, MIRA, LIMITES));
+  // Nunca passa dos limites da câmera.
+  assert.equal(inclinacaoDaMira(0, 500, 1, { ...MIRA, inclinacaoFracao: 1 }, LIMITES), 0.85);
+  assert.equal(inclinacaoDaMira(0, -500, 1, { ...MIRA, inclinacaoFracao: 1 }, LIMITES), -1.2);
+  // Os valores do jogo: fração entre 0 e 1 e a base de sempre.
+  assert.ok(CONFIG.mira.inclinacaoFracao > 0 && CONFIG.mira.inclinacaoFracao < 1);
+  assert.equal(CONFIG.mira.inclinacao, -0.27);
+});
+
+test('CAM3: o foco fica a 30% do caminho até o alvo, no máximo a 1,5 m', () => {
+  const perto = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} ≠ ${b}`);
+  let foco = focoDaMira({ x: 0, z: 0 }, { x: 0, z: -4 }, MIRA);
+  perto(foco.x, 0); perto(foco.z, -1.2);
+  foco = focoDaMira({ x: 1, z: 1 }, { x: 4, z: 5 }, MIRA);          // 5 m na diagonal: 1,5 m na mesma direção
+  perto(foco.x, 0.9); perto(foco.z, 1.2);
+  foco = focoDaMira({ x: 0, z: 0 }, { x: 12, z: 0 }, MIRA);         // longe: para em 1,5 m
+  perto(foco.x, 1.5); perto(foco.z, 0);
+  foco = focoDaMira({ x: 2, z: 3 }, { x: 2, z: 3 }, MIRA);          // em cima do alvo: sem direção, sem desvio
+  assert.deepEqual(foco, { x: 0, z: 0 });
+  // Reaproveita o objeto de saída, se vier.
+  const saida = { x: 9, z: 9 };
+  assert.equal(focoDaMira({ x: 0, z: 0 }, { x: 0, z: 2 }, MIRA, saida), saida);
+  perto(saida.z, 0.6);
+});
+
+test('CAM3: a câmera se afasta com o tamanho do alvo e um pouco com o alvo colado', () => {
+  const perto = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} ≠ ${b}`);
+  perto(distanciaDaMira(1, 4, MIRA), 0);                       // alvo comum, longe: nada muda
+  perto(distanciaDaMira(0.8, 4, MIRA), 0);                     // alvo pequeno não aproxima a câmera
+  perto(distanciaDaMira(1.65, 5, MIRA), 0.325);                // Guardião: +0,5 m por ponto de escala
+  perto(distanciaDaMira(1, 2, MIRA), 0);                       // a 2 m ainda não conta como colado
+  perto(distanciaDaMira(1, 1.5, MIRA), 0.25);
+  perto(distanciaDaMira(1, 1, MIRA), 0.5);
+  perto(distanciaDaMira(1.65, 1, MIRA), 0.825);                // as duas coisas somam
+  perto(distanciaDaMira(undefined, 0, MIRA), 1);
+});
+
+test('CAM3: travar, trocar de alvo e destravar movem a câmera sem salto, e destravar não volta para as costas', () => {
+  const { jogador, entrada, alvo, colisores } = arena();
+  const camera = jogador.jogo.camera;
+  alvo.pos.set(3, 0, -3); alvo.cfg = { escala: 1.65 }; alvo.receberDano = () => {};
+  const outro = { pos: new THREE.Vector3(-3, 0, -3), raio: 0.44, cfg: { escala: 1 } };
+  jogador.jogo.inimigos.push(outro);
+  jogador.atualizar(0.01);
+  const antes = camera.position.clone();
+  // Anda n quadros de 1/60 s e devolve o maior passo da câmera (m) e do olhar (rad) num quadro.
+  const quadros = (n) => {
+    let passo = 0, giro = 0;
+    for (let i = 0; i < n; i++) {
+      antes.copy(camera.position);
+      const yaw = jogador.yaw, pitch = jogador.pitch;
+      jogador.atualizar(1 / 60);
+      passo = Math.max(passo, antes.distanceTo(camera.position));
+      giro = Math.max(giro, Math.abs(jogador.yaw - yaw), Math.abs(jogador.pitch - pitch));
+    }
+    return { passo, giro };
+  };
+  // O primeiro quadro depois de cada mudança é o que daria o tranco: tem de ser pequeno.
+  // (Sem a entrada suave, travar 45° ao lado girava 0,09 rad e andava mais de 0,4 m logo no primeiro quadro.)
+  const semTranco = (nome) => {
+    const { passo, giro } = quadros(1);
+    assert.ok(passo < 0.1 && giro < 0.02, `${nome}: ${passo.toFixed(3)} m e ${giro.toFixed(4)} rad no primeiro quadro`);
+  };
+  jogador.travar(alvo);
+  semTranco('travar');
+  quadros(240);
+  // Assentou: atrás do caçador, na linha do alvo, mais longe que o normal (alvo grande) e olhando para o foco.
+  const paraAlvo = Math.atan2(-alvo.pos.x, -alvo.pos.z);
+  assert.ok(Math.abs(jogador.yaw - paraAlvo) < 1e-3);
+  const dist = Math.hypot(3, 3);
+  const esperada = CONFIG.camera.distancia + distanciaDaMira(1.65, dist) + Math.hypot(...Object.values(focoDaMira(jogador.pos, alvo.pos)));
+  assert.ok(Math.abs(jogador.distCamera - esperada) < 1e-3, `distância ${jogador.distCamera}`);
+  assert.ok(Math.abs(jogador.pitch - inclinacaoDaMira(CONFIG.camera.alturaPivo, 1.25 * 1.65, dist)) < 1e-3);
+  assert.ok(camera.position.x < 0 && camera.position.z > 0, 'a câmera fica do lado oposto ao alvo');
+  // A câmera não chega mais perto do caçador do que sem a mira.
+  assert.ok(jogador.distBoneco >= CONFIG.camera.distancia - 1e-6);
+
+  jogador.travar(outro);            // troca de alvo: 90° para o lado
+  semTranco('trocar de alvo');
+  quadros(240);
+  assert.ok(Math.abs(jogador.yaw - Math.atan2(3, 3)) < 1e-3);
+  assert.ok(camera.position.x > 0, 'passou para trás do caçador em relação ao novo alvo');
+
+  const yaw = jogador.yaw, pitch = jogador.pitch;
+  jogador.soltarMira();             // destravar: o olhar fica onde está, só a posição se acomoda
+  semTranco('destravar');
+  quadros(240);
+  assert.equal(jogador.yaw, yaw); assert.equal(jogador.pitch, pitch);
+  assert.ok(Math.abs(jogador.distCamera - CONFIG.camera.distancia) < 1e-3);
+  assert.ok(Math.hypot(jogador.focoMira.x, jogador.focoMira.z) < 1e-3 && jogador.extraMira < 1e-3);
+
+  // Perder o alvo atrás de uma parede (mira.semVisao) também não dá tranco.
+  jogador.travar(outro);
+  quadros(240);
+  colisores.adicionar(-1.5, -1.5, 3, 0.2);
+  let pior = 0;
+  for (let i = 0; i < (CONFIG.mira.semVisao + 0.5) * 60; i++) pior = Math.max(pior, quadros(1).passo);
+  assert.equal(jogador.alvo, null);
+  assert.ok(pior < 0.1, `perder o alvo: ${pior.toFixed(3)} m num quadro`);
+  assert.ok(Math.abs(jogador.yaw - yaw) < 1e-6, 'o olhar não volta para as costas');
+  void entrada;
+});
+
+test('CAM3: a mola do foco e da distância sai e chega devagar e não depende dos quadros por segundo', () => {
+  const lenta = { valor: 0, vel: 0 }, rapida = { valor: 0, vel: 0 };
+  acomodar(lenta, 1, 1 / 60, 6);
+  assert.ok(lenta.valor > 0 && lenta.valor < 0.01, 'sai devagar');
+  for (let i = 1; i < 30; i++) acomodar(lenta, 1, 1 / 60, 6);
+  for (let i = 0; i < 72; i++) acomodar(rapida, 1, 1 / 144, 6);
+  assert.ok(Math.abs(lenta.valor - rapida.valor) < 1e-9 && lenta.valor > 0.7 && lenta.valor < 1, 'sem passar do alvo');
+  for (let i = 0; i < 300; i++) acomodar(lenta, 1, 1 / 60, 6);
+  assert.ok(Math.abs(lenta.valor - 1) < 1e-6 && Math.abs(lenta.vel) < 1e-6);
+  // dt 0 encaixa na hora (teletransporte).
+  assert.deepEqual(acomodar({ valor: 3, vel: 9 }, -2, 0, 6), { valor: -2, vel: 0 });
+});
+
+test('CAM3: com a mira travada a câmera continua sem atravessar parede, e a primeira pessoa não muda', () => {
+  const { jogador, alvo, colisores } = arena();
+  const camera = jogador.jogo.camera;
+  alvo.pos.set(0, 0, -1.2); alvo.cfg = { escala: 1.65 }; alvo.receberDano = () => {};
+  colisores.adicionar(0, 2.5, 8, 1);            // parede atrás do caçador, de z 2 a z 3
+  jogador.travar(alvo);
+  for (let i = 0; i < 200; i++) jogador.atualizar(1 / 60);
+  assert.ok(camera.position.z < 2 - CONFIG.camera.folga + 1e-6, `câmera em z ${camera.position.z}`);
+
+  // Primeira pessoa: mira na altura do ponto marcado, câmera nos olhos, sem desvio nem distância extra.
+  jogador.jogo.preferencias.perspectiva = 'primeira';
+  for (let i = 0; i < 300; i++) jogador.atualizar(1 / 60);
+  const esperado = Math.atan2(1.25 * 1.65 - jogador.alturaOlhos, 1.2);
+  assert.ok(Math.abs(jogador.pitch - esperado) < 1e-3);
+  assert.ok(camera.position.distanceTo(new THREE.Vector3(jogador.pos.x, jogador.pos.y + jogador.alturaOlhos, jogador.pos.z)) < 1e-6);
 });

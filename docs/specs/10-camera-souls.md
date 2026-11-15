@@ -87,13 +87,37 @@ alcança em alguns décimos de segundo), e é isso que dá peso.
 - **Ficou de fora (IA):** o boneco sumir de uma vez (trocar por transparência gradual) e a câmera muito perto
   ao olhar para o céu. Não estavam no pedido da CAM2; seguem como pendência.
 
-### CAM3 — mira travada estilo Souls
+### CAM3 — mira travada estilo Souls (feita)
 
-- A inclinação segue cerca de 60% da altura do alvo (hoje é fixa, `mira.inclinacao`).
-- Caçador e alvo cabem os dois no quadro.
-- A câmera se afasta para alvos grandes (Guardião) e quando o alvo está muito perto.
-- Travar e destravar é suave (sem tranco de giro nem de inclinação).
-- Rever o cone de travar para combinar com a tela mais fechada.
+Antes, com a mira travada, a câmera girava para o alvo e a inclinação ia para um valor fixo (`mira.inclinacao`).
+No Elden Ring a inclinação acompanha 60% da altura do alvo (`lockRotXShiftRatio` 0,6) e o personagem e o alvo
+ficam os dois no quadro. Tudo abaixo vale só na terceira pessoa; a primeira pessoa já mirava na altura do alvo.
+
+- **Inclinação** (`inclinacaoDaMira`): `mira.inclinacao` (−0,27) mais `mira.inclinacaoFracao` (0,6) do ângulo
+  entre o ponto de giro (peito do caçador) e o peito do alvo (`alvo.pos.y + 1,25 × escala`, o mesmo ponto do
+  marcador), dentro de `camera.inclinacaoMin` e `inclinacaoMax`. Alvo a menos de `mira.inclinacaoDistMin` (1 m)
+  conta como a 1 m, para o ângulo não disparar. Exemplos: cavaleiro a 4 m, −0,274; Guardião a 8 m, −0,23;
+  a 5 m, −0,21; a 2 m, −0,12 (a câmera desce e olha mais para cima: a cabeça dele entra na tela).
+- **Foco** (`focoDaMira`): a câmera olha para um ponto no caminho entre o caçador e o alvo: `mira.focoFracao`
+  (30%) do caminho, no máximo `mira.focoMax` (1,5 m). A distância da câmera é contada a partir desse ponto e soma
+  o desvio, então a câmera nunca fica mais perto do caçador do que sem a mira. O foco para antes de parede.
+- **Distância** (`distanciaDaMira`): `mira.distPorEscala` (0,5 m) por ponto de escala do alvo acima de 1
+  (Guardião 1,65: +0,33 m; cavaleiro 1,22: +0,11 m) e até `mira.pertoExtra` (1 m) quando o alvo está a menos de
+  `mira.pertoDistancia` (2 m): +0,25 m a 1,5 m, +0,5 m a 1 m. A colisão da CAM2 continua valendo (encurta na
+  hora ao bater em parede).
+- **Transições.** O foco e a distância extra entram e saem por uma mola sem balanço (`acomodar`, rapidez
+  `mira.acomodar` 6: uns 0,8 s, saindo e chegando devagar). O giro e a inclinação começam devagar e chegam à
+  rapidez normal em `mira.entrada` (0,25 s) depois de travar ou de trocar de alvo; antes o giro partia na
+  velocidade máxima. Ao destravar ou perder o alvo (`mira.semVisao`), o olhar fica onde está: só o foco e a
+  distância voltam ao normal.
+- **Combate igual.** A direção dos golpes, o quickstep, a escolha e a troca de alvo não mudaram.
+- **Cone de travar (`mira.cone`): não mudou (IA).** O plano era revê-lo, mas o pedido da CAM3 foi manter a
+  escolha de alvo como está. Continua dando para travar num inimigo um pouco fora da tela.
+- **Limite conhecido:** com um inimigo do tamanho do caçador colado (1,5 m), o caçador ainda tapa o corpo
+  dele, porque a câmera fica atrás do caçador na linha do alvo. Uma câmera um pouco de lado ou mais alta nesse
+  caso resolveria; fica como ideia.
+- Fotos de antes e depois em `docs/fotos/cam3/`. O `tests/fotos-camera.mjs` ganhou 7 fotos da mira (cavaleiro
+  a 4 m e a 1,5 m, Guardião a 2 m e a 8 m, troca de alvo em 3 momentos).
 
 ### CAM4 — opções em Configurações
 
@@ -130,8 +154,9 @@ CAM2:
 
 CAM3:
 
-- [ ] Com a mira travada, caçador e alvo aparecem inteiros nos 4 inimigos e no Guardião, de 1,5 m a 10 m.
-- [ ] Travar e destravar não dão tranco.
+- [x] Com a mira travada, caçador e Guardião aparecem inteiros de 2 m a 8 m (fotos).
+- [ ] Inimigo do tamanho do caçador a 1,5 m: aparece só da cintura para cima (o caçador tapa o resto). Ver "Limite conhecido".
+- [x] Travar, trocar de alvo, destravar e perder o alvo não dão tranco (teste: o primeiro quadro depois de cada um).
 
 CAM4:
 
@@ -151,3 +176,7 @@ CAM4:
 - CAM2: quando há parede entre o caçador e o ponto de giro, o ponto é puxado até antes da parede (em vez de
   pular para cima do caçador), para não dar tranco.
 - CAM2: o limite do chão usa os pés do caçador; o boneco some pela distância real ao caçador.
+- CAM3: `mira.inclinacaoFracao` 0,6, `focoFracao` 0,3, `focoMax` 1,5 m, `distPorEscala` 0,5 m e `pertoDistancia`
+  2 m são as sugestões do Heitor, mantidas. Da IA: `pertoExtra` 1 m, `inclinacaoDistMin` 1 m, `acomodar` 6,
+  `entrada` 0,25 s; `suavidade` 4 é o número que já estava solto no código.
+- CAM3: a distância é contada a partir do foco; o foco para antes de parede; o `mira.cone` não foi mexido.

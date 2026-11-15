@@ -294,7 +294,19 @@ export const CONFIG = {
     cone: 0.2,               // cosseno mínimo entre a câmera e o alvo ao travar
     trocaMouse: 240,         // deslocamento rápido do mouse/dedo que troca de alvo
     giroCamera: 7,           // rapidez com que a câmera acompanha o alvo
-    inclinacao: -0.27,
+    inclinacao: -0.27,       // inclinação de base com a mira travada (antes da CAM3 era a inclinação fixa)
+    // CAM3, mira travada estilo Souls (só na terceira pessoa). Antes da CAM3 nada disto existia:
+    // a inclinação era fixa, a câmera girava em volta do caçador e a distância não mudava.
+    inclinacaoFracao: 0.6,   // a inclinação soma esta fração do ângulo entre o ponto de giro e o peito do alvo (Elden Ring: 0,6)
+    inclinacaoDistMin: 1,    // alvo mais perto que isto (m) conta como se estivesse a esta distância, para o ângulo não disparar
+    focoFracao: 0.3,         // a câmera olha para um ponto a esta fração do caminho entre o caçador e o alvo...
+    focoMax: 1.5,            // ...no máximo a esta distância do caçador (m)
+    distPorEscala: 0.5,      // metros a mais de distância por ponto de escala do alvo acima de 1 (Guardião 1,65: +0,33 m)
+    pertoDistancia: 2,       // alvo mais perto que isto (m): a câmera se afasta um pouco
+    pertoExtra: 1,           // metros a mais com o alvo colado (cresce aos poucos: +0,25 m a 1,5 m, +0,5 m a 1 m)
+    suavidade: 4,            // rapidez (por segundo) com que a inclinação vai para o valor da mira (não mudou: era um 4 solto no código)
+    acomodar: 6,             // rapidez (por segundo) com que o foco e a distância extra entram e saem, como uma mola sem balanço (uns 0,8 s)
+    entrada: 0.25,           // segundos em que o giro para o alvo "pega no tranco" ao travar ou trocar de alvo (antes 0: partia na velocidade máxima)
     ajudaSemTrava: 3.2,      // sem trava e parado, o golpe se volta ao inimigo até esta distância
   },
 
