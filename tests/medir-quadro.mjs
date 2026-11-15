@@ -9,6 +9,7 @@ const vistas = [
   ['catedral','arena',0,0,-42,0],
   ['vilarejo','rua',0,0,52,0], ['taverna','salão',0,0,2,0],
   ['estrada','estrada',0,0,8,Math.PI], ['floresta','entrada',0,0,-38.5,Math.PI],
+  ['floresta','cabana',26,0,44,-Math.PI/2], ['floresta','poço',4,0,83,-Math.PI/2],
 ];
 const browser = await chromium.launch({
   executablePath: process.env.PUGNA_CHROME,

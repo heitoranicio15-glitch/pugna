@@ -150,8 +150,7 @@ export const CONFIG = {
         ],
       },
     },
-    // Floresta ao sul da estrada (40 x 90 m, corre de norte a sul; a estrada fica no norte, em z = -45).
-    // Primeira área nova (S6, escolha da IA; o Heitor revisa). Sem tochas: a única luz fixa é a lanterna.
+    // Floresta ao sul da estrada (80 x 150 m); a chegada norte permanece onde era.
     floresta: {
       luzJogador: 5, corLuzJogador: 0x9fd6c8,
       nevoa: { cor: 0x142737, densidade: 0.042 },   // antes 0x10221f / 0,034 (S6: 0,027)
@@ -165,13 +164,16 @@ export const CONFIG = {
       som: { tipo: 'floresta', base: 1, vento: 0.63, coruja: 0.52, galhos: 0.45 },
       // Trilha decidida pela IA: a mesma do vilarejo (continuidade com a estrada; só há 2 faixas de área).
       trilha: 'vilarejo',
-      limites: { minX: -20, maxX: 20, minZ: -45, maxZ: 45 },
-      larguraDoCaminho: 4.5,
-      caminho: [[0,-45],[0,-34],[3,-27],[-1,-11],[-3,0],[4,19],[0,34],[-1,41.5]],
-      desvio: [[3,-27],[9.6,-23],[9,-16],[-1,-11]],
+      limites: { minX: -40, maxX: 40, minZ: -45, maxZ: 105 }, // antes 40 × 90 m
+      larguraDoCaminho: 5.2, // antes 4,5 m
+      caminho: [[0,-45],[0,-34],[4,-22],[-9,-7],[-17,9],[-7,28],[9,42],[15,57],[1,75],[-10,84],[0,101]],
+      desvio: [[-17,9],[-26,16],[-27,22],[-7,28]],
+      desvioLeste: [[-7,28],[10,34],[26,44],[22,51],[15,57]],
       portaNorte: { z: -42.4 },       // portal de volta à estrada
-      barricadaSul: { z: 41.8 },      // a trilha acaba aqui (o Castelo virá depois)
+      barricadaSul: { z: 101.4 },     // antes 41,8; o Castelo virá depois
       lanterna: { x: -4.4, z: -33.5 },   // 'floresta-clareira', perto da chegada
+      lanternaDaCabana: { x: 29, z: 48 }, // segunda lanterna, sem chefe nesta versão
+      vegetacao: { semente: 8642, passo: 4.7, setor: 24, recorte: 39 },
       vagalumes: { quantidade: 26 },
     },
     // Interior da taverna (12 x 9 m). Sem inimigos.

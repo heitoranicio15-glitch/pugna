@@ -102,6 +102,18 @@ export const ANOTACOES = Object.freeze({
     nome: 'Nomes na passarela',
     texto: 'Olhei da galeria e contei os leitores. Havia um a mais junto à coluna. Falei o nome dele em voz baixa. Todos na nave ergueram a cabeça ao mesmo tempo.',
   },
+  'floresta:urnas-do-mato': {
+    nome: 'As urnas do mato',
+    texto: 'Enterramos as tampas separadas dos recipientes, para sabermos de onde vinha o som. À noite ouvimos uma tampa rolar. Pela manhã, todas as urnas estavam de boca para a trilha.',
+  },
+  'floresta:bilhete-do-mateiro': {
+    nome: 'Bilhete do mateiro',
+    texto: 'O cavalo passou pela cabana com o arreio virado. Não vinha fugindo de um homem. Virava a cabeça a cada toque, sempre para a árvore que havia deixado para trás.',
+  },
+  'floresta:fitas-do-coro': {
+    nome: 'Fitas do coro',
+    texto: 'Não amarrem a última fita. As outras dizem quem saiu da vila. A última só deve ser presa quando a mesma pessoa voltar para dizer o nome da primeira.',
+  },
 });
 
 export function totalFrascos(eventos) {

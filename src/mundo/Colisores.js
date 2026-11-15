@@ -17,6 +17,10 @@ export class Colisores {
     return caixa;
   }
 
+  adicionarCilindro(x,z,raio,topo = Infinity,base = 0) {
+    return Object.assign(this.adicionar(x,z,raio*2,raio*2,topo,base,false),{ x,z,raio });
+  }
+
   /**
    * Empurra um círculo (jogador ou inimigo) para fora das caixas.
    * pos: objeto com x e z (é alterado). peY: altura dos pés. degrau: altura que sobe sozinho.
@@ -24,6 +28,16 @@ export class Colisores {
   resolver(pos, raio, peY = 0, degrau = 0, corpo = 1.75) {
     for (const c of this.caixas) {
       if (!c.ativa || c.topo <= peY + (c.piso ? degrau : 0) || c.base >= peY + corpo) continue;
+      if (c.raio) {
+        const dx = pos.x-c.x, dz = pos.z-c.z, limite=raio+c.raio;
+        const d2 = dx*dx+dz*dz;
+        if (d2 < limite*limite) {
+          const d = Math.sqrt(d2);
+          pos.x = c.x+(d>1e-8 ? dx/d : 1)*limite;
+          pos.z = c.z+(d>1e-8 ? dz/d : 0)*limite;
+        }
+        continue;
+      }
       const px = Math.max(c.minX, Math.min(pos.x, c.maxX));
       const pz = Math.max(c.minZ, Math.min(pos.z, c.maxZ));
       let dx = pos.x - px, dz = pos.z - pz;
@@ -85,7 +99,19 @@ export class Colisores {
       const minZ = c.minZ - margem, maxZ = c.maxZ + margem;
       if (trechoMaxX < minX || trechoMinX > maxX || trechoMaxZ < minZ || trechoMinZ > maxZ) continue;
       let entrada = 0, saida = 1;
-      for (const [inicio, delta, min, max] of [
+      if (c.raio) {
+        const x=origem.x-c.x, z=origem.z-c.z, r=c.raio+margem;
+        const A=dx*dx+dz*dz, B=x*dx+z*dz, C=x*x+z*z-r*r;
+        if (A < 1e-12) {
+          if (C > 0) continue;
+        } else {
+          const det=B*B-A*C;
+          if (det < 0) continue;
+          const delta=Math.sqrt(det);
+          entrada=Math.max(0,(-B-delta)/A);
+          saida=Math.min(1,(-B+delta)/A);
+        }
+      } else for (const [inicio, delta, min, max] of [
         [origem.x, dx, minX, maxX], [origem.z, dz, minZ, maxZ],
       ]) {
         if (Math.abs(delta) < 1e-8) {
