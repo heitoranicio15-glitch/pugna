@@ -287,8 +287,9 @@ A mesma sequência de golpes nunca sai três vezes seguidas.
 Aproxime-se do portal ao norte do vilarejo e pressione **E**. A nave tem uma
 lanterna à direita da entrada. Explore o **Ossário**, a oeste, e o **Relicário**,
 a leste. Recolha com **E** o selo de cada ala para abrir a grade do **Santuário**.
-A **Galeria dos Nomes** liga o lado oeste da entrada ao fundo do Ossário e
-permite voltar à nave por outra arcada. No Santuário, dois degraus levam ao altar.
+A **Galeria dos Nomes**, no claustro, liga o lado oeste da entrada ao Ossário e
+permite voltar à nave por outra arcada. Pelo corredor central, a grade de bronze
+fica no fim do transepto; depois do coro e da arena, três degraus levam ao altar.
 O Ossário e o Relicário têm, cada um, duas passagens na parede externa.
 As de oeste levam à **Capela do Último Nome** e as de leste ao **Arquivo das Vigílias**.
 O **Guardião do Véu** usa golpes altos, pesados e rasteiras. Quando perde

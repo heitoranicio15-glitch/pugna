@@ -46,6 +46,7 @@ export function materiais() {
     caminhoChao: terra({ color: 0xcdb89a, depthWrite: false }),
     madeiraChao: familia(registrarMaterialHd(lambert(t.assoalho, { color: 0xb59a86, depthWrite: false }), 'old_planks_02', 0.7), 'assoalho'),
     lajesChao: familia(registrarMaterialHd(lambert(t.lajes, { depthWrite: false }), 'patterned_slate_tiles', 0.55), 'lajes'),
+    lajes: familia(registrarMaterialHd(lambert(t.lajes), 'patterned_slate_tiles', 0.55), 'lajes'),
     mosaicoChao: lambert(t.mosaico, { depthWrite: false }),
     telhado: familia(registrarMaterialHd(lambert(t.telhado, { color: 0xa2a8c0, side: THREE.DoubleSide }), 'roof_slates_02', 0.8), 'telhado'),
     madeira: familia(madeira(), 'madeira'),

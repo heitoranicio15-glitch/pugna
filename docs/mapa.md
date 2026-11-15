@@ -25,6 +25,30 @@ números em `src/config.js` (`CONFIG.vila` e `CONFIG.arte`) e são conferidas po
 
 Ainda pendente da spec 05: o portal trancado (`requer`) e os atalhos.
 
+## Catedral do Véu — planta do Prompt 8
+
+Malha de 4 m em X/Z, com origem em (−2; −1). Norte = −Z. Os limites da planta
+interior passam de 70 × 42 m para 76 × 76 m; as paredes ocupam 0,5 m.
+As coordenadas abaixo são as bordas dos ambientes, em metros.
+
+| Andar | Cota | Planta e percurso |
+| --- | --- | --- |
+| Térreo (1A) | 0 | Entrada em (0; 6) → nave central (x −6 a 6, z −21 a 11) e naves laterais (x ±6 a ±10) → transepto (x −22 a 22, z −29 a −21) → grade → coro (x −10 a 10, z −37 a −29) → arena (x −14 a 14, z −57 a −37) → abside/altar (x −10 a 10, z −65 a −57). |
+| Térreo, desvios (1A) | 0 | Ossário e Relicário nos lados (x ±10 a ±22, z −17 a 3); Capela e Arquivo nos extremos (x ±22 a ±38, z −17 a 3); claustro e sacristia a sul (x ±10 a ±22, z 3 a 11); refeitório e escritório a norte das capelas (x ±22 a ±30, z −29 a −17). |
+| Galeria alta (1B, planejada) | +4 | Duas passarelas no eixo da nave e retorno ao transepto. Deixa livre o vão central para olhar a nave de cima. |
+| Torre do sino (1B, planejada) | +8 | Acima do braço leste, subida com patamares e sala do bronze. |
+| Cripta (1B, planejada) | −4 | Sob o braço oeste, com ossário e retorno por ferrolho ao claustro. |
+
+A entrada, saída e lanterna publicadas mantêm posição e ID. Os dois selos
+continuam sendo recolhidos no térreo para abrir o caminho principal. A porta
+da sacristia mantém a chave antiga, e a grade continua abrindo por dentro.
+
+Medição do cenário sem WebGL, com `node tests/medir-cenario.mjs catedral`
+(sem personagem, modelos externos, recorte de câmera ou pós-processamento):
+8.216 → 13.312 triângulos, 396 → 130 chamadas estimadas e 65 instâncias novas.
+O kit tem a mesma geometria em PS1 e HD. Ainda faltam as leituras reais por
+quadro nos dois modos, incluindo o custo de materiais e modelos carregados.
+
 ## O vilarejo (132 × 184 m)
 
 ### Eixo, praça e ponto focal
