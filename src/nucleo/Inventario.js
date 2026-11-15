@@ -78,6 +78,30 @@ export const ANOTACOES = Object.freeze({
     nome: 'Juramento do Véu',
     texto: 'Selamos os ossos a oeste e os nomes a leste. Eu vigio entre os dois. Enquanto o sino soar, quem subir ainda poderá descer. Se um dia ouvirem a minha voz no poço, deixem a grade fechada. — Guardião',
   },
+  'catedral:conta-da-mesa': {
+    nome: 'Conta da mesa',
+    texto: 'Seis lugares postos para a ceia. A sineira não desceu. Retirei o prato dela e serviram mais uma porção no lugar vazio. De manhã só a água tinha peso.',
+  },
+  'catedral:ata-do-cabido': {
+    nome: 'Ata do cabido',
+    texto: 'Por três votos, a lista do coro não será lida na ordem em que foi escrita. O Guardião não votou. Pediu que preferíssemos os nomes que ainda respondiam por outra voz.',
+  },
+  'catedral:contagem-da-cripta': {
+    nome: 'Contagem da cripta',
+    texto: 'As urnas que desceram vazias são as mais pesadas agora. Não sabem dizer por quê. Algumas retêm o calor de uma mão até depois de apagarmos as velas.',
+  },
+  'catedral:caderno-da-sineira': {
+    nome: 'Caderno da sineira',
+    texto: 'Pedi a cela de baixo porque daqui não vejo o bronze. Pela primeira vez ouvi o sino antes de sentir a corda. Na próxima vigília não haverá corda para me desmentir.',
+  },
+  'catedral:inventario-do-bronze': {
+    nome: 'Inventário do bronze',
+    texto: 'Abaixo do badalo há duas cordas e um corte limpo. Passamos a noite vigiando a cicatriz. O toque seguinte fez pensar que o metal se lembrava de como era ser movido.',
+  },
+  'catedral:nomes-na-passarela': {
+    nome: 'Nomes na passarela',
+    texto: 'Olhei da galeria e contei os leitores. Havia um a mais junto à coluna. Falei o nome dele em voz baixa. Todos na nave ergueram a cabeça ao mesmo tempo.',
+  },
 });
 
 export function totalFrascos(eventos) {

@@ -194,14 +194,15 @@ export class Inimigo {
     Object.assign(this, montarCorpo(tipo, MODELOS[tipo]));
     this.grupo.scale.setScalar(this.cfg.escala);
     this.grupo.rotation.order = 'YXZ'; // assim ele cai "para trás" seja qual for o lado em que olha
-    mundo.grupo.add(this.grupo);
+    const grupoDoNivel = mundo.grupoParaNivel?.(y) ?? mundo.grupo;
+    grupoDoNivel.add(this.grupo);
     jogo.eventos.em('jogador:bebendo', () => this.ouvirFrasco());
 
     // Barrinha de vida (só aparece depois de apanhar).
     this.barra = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xd2343f, fog: false }));
     this.barra.center.set(0, 0.5);
     this.barra.visible = false;
-    mundo.grupo.add(this.barra);
+    grupoDoNivel.add(this.barra);
 
     this.reiniciar();
   }
@@ -598,7 +599,7 @@ export class Inimigo {
       rig.pernaE(-passo, 0, 0);
       this.modelo.scale.y = 1 + this.corpo.position.y * 0.46;
     }
-    this.grupo.position.set(this.pos.x, Math.abs(Math.sin(this.fase)) * 0.04, this.pos.z);
+    this.grupo.position.set(this.pos.x, this.pos.y + Math.abs(Math.sin(this.fase)) * 0.04, this.pos.z);
     this.grupo.rotation.y = this.angulo;
 
     // ---------- barrinha de vida ----------
@@ -606,7 +607,7 @@ export class Inimigo {
       const l = 0.9 * (this.vida / c.vida);
       this.barra.scale.set(Math.max(0.001, l), 0.07, 1);
       this.jogo.camera.getWorldDirection(v2); // alinha a barra à esquerda na tela
-      this.barra.position.set(this.pos.x + v2.z * 0.45, 2.35 * c.escala, this.pos.z - v2.x * 0.45);
+      this.barra.position.set(this.pos.x + v2.z * 0.45, this.pos.y + 2.35 * c.escala, this.pos.z - v2.x * 0.45);
     }
   }
 

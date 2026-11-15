@@ -443,6 +443,7 @@ export class Jogo {
 
   ativarArea(area, transicao = false) {
     this.mundo = area;
+    this.ultimoAmbiente = area.som;
     this.inimigos = area.entidades;
     area.fichas.limpar();
     this.lanternas = area.lanternas;
@@ -635,6 +636,11 @@ export class Jogo {
       }
     }
     this.mundo.atualizar(dt, this.tempo, this.jogador.pos);
+    const ambiente = this.mundo.somLocal?.(this.jogador.pos) ?? this.mundo.som;
+    if (ambiente !== this.ultimoAmbiente) {
+      this.ultimoAmbiente = ambiente;
+      this.eventos.emitir('area:ambiente', ambiente);
+    }
     for (const npc of this.mundo.personagens) npc.atualizar(dt, this.tempo, this.jogador.pos);
     if (this.mundo.usaCeu) this.ceu.atualizar(dt, this.tempo, this.camera, this.jogador.pos);
     this.boneco.atualizar(dt, this.jogador);

@@ -31,7 +31,7 @@ export function montarSacristia(mundo) {
   bloco(g, m.metal, 10.37, 1.45, 7.1, 0.22, 0.59, 0.36);
   const haste = bloco(g, m.metal, 10.67, 1.53, 7.1, 0.38, 0.085, 0.105);
   const punho = bloco(g, m.madeira, 10.91, 1.53, 7.1, 0.1, 0.14, 0.18);
-  const indicador = new THREE.PointLight(0xffad65, 6, 3.5, 1.8);
+  const indicador = new THREE.Mesh(new THREE.OctahedronGeometry(0.105), m.chama.clone());
   indicador.position.set(10.96, 1.8, 7.1);
   g.add(indicador);
   mundo.objetos.push({
@@ -42,7 +42,7 @@ export function montarSacristia(mundo) {
       colGrade.ativa = !aberta;
       haste.rotation.z = aberta ? -0.55 : 0.24;
       punho.position.y = aberta ? 1.32 : 1.53;
-      indicador.color.setHex(aberta ? 0xa4dc8c : 0xffad65);
+      indicador.material.color.setHex(aberta ? 0xa4dc8c : 0xffad65);
     },
   });
   mundo.objetos.push({

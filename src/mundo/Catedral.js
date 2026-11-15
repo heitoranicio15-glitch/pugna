@@ -5,11 +5,11 @@ import { animarTochas, arcoOgival, caixa, colunaFacetada, juntarPorMaterial, mat
 import { retro } from '../render/retro.js';
 import { bloco, placa } from './Aderecos.js';
 import { montarSacristia } from './Sacristia.js';
-import { feixeDeLuz } from './efeitosCenario.js';
 import { montarAtmosfera } from './Atmosfera.js';
 import { plantaTerreo, volumesTerreo } from './PlantaCatedral.js';
 import { fecharTetos, montarKit } from './KitCatedral.js';
 import { montarAtalhoCripta, volumesDosNiveis } from './NiveisCatedral.js';
+import { montarCenasCatedral, nivelCatedral, visivelNaCatedral } from './CenasCatedral.js';
 
 const C = CONFIG.areas.catedral;
 
@@ -24,7 +24,9 @@ export class Catedral {
     this.tochas = [];
     this.objetos = [];
     this.setores = new Map();
+    this.gruposPorNivel = new Map();
     montarAtmosfera(this, C);
+    this.som = C.somPorNivel.nave;
     cena.add(this.grupo);
 
     this.planta = plantaTerreo();
@@ -81,8 +83,11 @@ export class Catedral {
     const entrada = grupoDa('nave');
     bloco(entrada, m.madeiraEscura, 0, 2.25, 10.67, 3.5, 4.5, 0.12);
     bloco(entrada, luar, 0, 0.13, 10.58, 3.2, 0.14, 0.035);
-    for (const [x, z] of [[-4.6, 7.15], [4.6, -17.7], [-17, -23], [17, -23], [7.8, -61.5]]) {
-      tocha(this, { x, z, altura: 1.8 });
+    for (const [sala, x, z] of [
+      ['nave',-4.6,7.15], ['nave',4.6,-17.7], ['transepto',-17,-23],
+      ['transepto',17,-23], ['abside',7.8,-61.5],
+    ]) {
+      grupoDa(sala).add(tocha(this, { x, z, altura: 1.8, luz: false }));
     }
     this.passagens = [{ x: -9.6, z: -3, nome: 'Ossário' }, { x: 9.6, z: -3, nome: 'Relicário' }];
 
@@ -103,17 +108,15 @@ export class Catedral {
     });
 
     const nichos = {
-      ossario: [-19, -8, brasa, 0xff824a],
-      relicario: [19, -8, luar, 0x88baff],
+      ossario: [-19, -8, brasa],
+      relicario: [19, -8, luar],
     };
-    this.selos = Object.entries(nichos).map(([id, [x, z, material, cor]], i) => {
+    this.selos = Object.entries(nichos).map(([id, [x, z, material]], i) => {
       movel(id, x, z, 1.1, 1.05, 1.1, m.pedraEscura);
       const malha = new THREE.Mesh(new THREE.OctahedronGeometry(0.39), material);
       malha.position.set(x, 1.65, z);
-      const luz = new THREE.PointLight(cor, 15, 8, 1.7);
-      luz.position.set(x, 2.05, z);
-      grupoDa(id).add(malha, luz);
-      return { id, x, z, nome: ['Selo do Ossário', 'Selo do Relicário'][i], material, malha, luz };
+      grupoDa(id).add(malha);
+      return { id, x, z, nome: ['Selo do Ossário', 'Selo do Relicário'][i], material, malha };
     });
     for (const [sala, x, z, a, largura] of [
       ['ossario', -19, -15, 0.84, 3.4], ['relicario', 19, -15, 0.84, 3.4],
@@ -144,7 +147,8 @@ export class Catedral {
     ]) {
       bloco(grupoDa(sala), vitrais[i], x, y, z, 2.75, 3.48, 0.06).rotation.y = rot;
     }
-    for (const feixe of C.feixes) feixeDeLuz(this.grupo, feixe);
+    this.poeira = montarCenasCatedral(this, metal, C.feixes);
+    this.caixasDosSetores = new Map([...this.setores].map(([sala, g]) => [sala, new THREE.Box3().setFromObject(g)]));
 
     this.saida = { x: 0, z: 8.45 };
     this.entrada = { x: 0, z: 6, yaw: 0 };
@@ -154,24 +158,34 @@ export class Catedral {
     this.altar = { x: 0, z: -62.2 };
     this.pontosDeDescanso = [
       { id: 'nave-do-veu', nome: 'Nave do Véu', x: 4.55, z: 6.55, olhar: Math.PI },
-      { id: 'catedral-galeria', nome: 'Passarela das Vigílias', x: -8.7, y: 4, z: -9, olhar: 0 },
-      { id: 'catedral-torre', nome: 'Sala do Bronze', x: 20, y: 8, z: 13.9, olhar: 0 },
-      { id: 'catedral-cripta', nome: 'Cripta das Urnas', x: -23, y: -4, z: 31.7, olhar: 0 },
+      { id: 'catedral-galeria', nome: 'Passarela das Vigílias', x: -8.7, y: 4, z: -9, olhar: 0, ilumina: false },
+      { id: 'catedral-torre', nome: 'Sala do Bronze', x: 20, y: 8, z: 13.9, olhar: 0, ilumina: false },
+      { id: 'catedral-cripta', nome: 'Cripta das Urnas', x: -23, y: -4, z: 31.7, olhar: 0, ilumina: false },
       { id: 'catedral-coro', nome: 'Coro do Véu', x: 3.8, z: -34.65, olhar: 0 },
     ];
     this.inimigos = [
-      { tipo: 'penitente', rota: [[-14, -8], [-16, -11], [-16, -4.8]] },
-      { tipo: 'penitente', rota: [[15, -7], [18, -4], [18, -11]] },
-      { tipo: 'cacador', rota: [[13, -12], [13, -6]] },
+      { tipo: 'penitente', rota: [[13, -13], [15, -10], [13, -5]] },
+      { tipo: 'penitente', y: -4, rota: [[-23, 29], [-17, 31], [-12.4, 30]] },
+      { tipo: 'cacador', y: 4, rota: [[-3, -23], [3, -23], [8, -19], [8, -13]] },
       { tipo: 'guardiao', rota: [[0, -47], [0, -52]], limiteZ: -37.45, eventoDeDerrota: 'catedral:guardiao-derrotado' },
     ];
+  }
+
+  somLocal(pos) { return C.somPorNivel[nivelCatedral(pos)]; }
+
+  grupoParaNivel(y) {
+    if (!this.gruposPorNivel.has(y)) {
+      const grupo = new THREE.Group();
+      this.grupo.add(grupo);
+      this.gruposPorNivel.set(y, grupo);
+    }
+    return this.gruposPorNivel.get(y);
   }
 
   aplicarProgresso({ selos }) {
     for (const [indice, selo] of this.selos.entries()) {
       const obtido = selos.includes(selo.id);
       selo.malha.visible = !obtido;
-      selo.luz.intensity = obtido ? 4 : 15;
       this.indicadores[indice].material = selo.material;
       this.indicadores[indice].visible = obtido;
     }
@@ -181,8 +195,21 @@ export class Catedral {
     this.grade.visible = bloqueada;
   }
 
-  atualizar(dt, tempo) {
+  atualizar(dt, tempo, pos) {
+    if (pos) {
+      for (const [sala, grupo] of this.setores) grupo.visible = visivelNaCatedral(sala,pos,this.caixasDosSetores.get(sala));
+      const nivel = nivelCatedral(pos);
+      for (const [y, grupo] of this.gruposPorNivel) {
+        grupo.visible = nivel === 'cripta' && pos.z > 24 ? y === -4
+          : nivel === 'torre' && pos.y >= 7.8 && pos.z < 15.5 ? y === 8
+          : y === 0 || y === 4 || (y === -4 ? pos.z > 15 : pos.z > 18);
+      }
+    }
     animarTochas(this.tochas, tempo);
+    for (const [i, camada] of this.poeira.entries()) {
+      camada.position.y = Math.sin(tempo*0.41+i)*0.24;
+      camada.position.z = Math.cos(tempo*0.28+i)*0.17;
+    }
     for (const selo of this.selos) {
       selo.malha.rotation.y = tempo * 1.7;
       selo.malha.position.y = 1.65 + Math.sin(tempo * 2.5) * 0.13;

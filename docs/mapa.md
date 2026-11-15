@@ -37,7 +37,7 @@ As coordenadas abaixo são as bordas dos ambientes, em metros.
 | Térreo, desvios (1A) | 0 | Ossário e Relicário nos lados (x ±10 a ±22, z −17 a 3); Capela e Arquivo nos extremos (x ±22 a ±38, z −17 a 3); claustro e sacristia a sul (x ±10 a ±22, z 3 a 11); refeitório e escritório a norte das capelas (x ±22 a ±30, z −29 a −17). |
 | Galeria alta (1B) | +4 | Acesso pela nave leste (x 8, z 11). A escada corre em x 12, z 15 a 23; o patamar vira a oeste e volta à passarela. Passarelas em x ±6 a ±10, z −21 a 11, ligadas pela ponte em z −25 a −21. |
 | Torre do sino (1B) | +8 | Do patamar leste (x 14, z 25), entre na torre e suba de z 23 a 15 em x 16. Sala do Bronze em x 14 a 22, z 11 a 15. |
-| Cripta (1B) | −4 | Acesso pelo claustro em x −16, z 11; desce de z 15 a 23, chega à câmara das urnas em x −30 a −10, z 27 a 35. O lance paralelo em x −20 tem ferrolho aberto do lado de baixo. |
+| Cripta (1B/1C) | −4 | Acesso pelo claustro em x −16, z 11; desce de z 15 a 23, chega à câmara das urnas em x −26 a −10, z 27 a 35. Cela da sineira a oeste (x −30 a −26); ferrolho do lado de baixo em x −20. |
 
 A entrada, saída e lanterna publicadas mantêm posição e ID. Os dois selos
 continuam sendo recolhidos no térreo para abrir o caminho principal. A porta
@@ -52,6 +52,29 @@ O kit tem a mesma geometria em PS1 e HD. Ainda faltam as leituras reais por
 quadro nos dois modos, incluindo o custo de materiais e modelos carregados.
 Com os novos níveis (1B), a mesma contagem passa a **16.576 triângulos, 155
 chamadas e 65 instâncias**.
+
+### Salas da vigília (1C)
+
+O refeitório guarda a conta da ceia; o cabido, a ata da última leitura; a cripta,
+as urnas pesadas e a cela da sineira. Na galeria há uma lista de leitores, e na
+torre, o bronze com a corda cortada. O Relicário conserva o selo azul. Um
+Penitente guarda o Relicário, um ronda a cripta e um Caçador cobre a ponte alta.
+
+Contagem de quadros isolados (`tests/medir-quadro.mjs`, 640 × 360, Chrome
+com SwiftShader, modelos carregados e pós-processamento incluídos).
+PS1 e HD enviaram as mesmas contagens nestas vistas, com materiais distintos:
+
+| Vista | Triângulos 1B → 1C | Chamadas 1B → 1C |
+| --- | ---: | ---: |
+| Nave | 216.473 → 175.927 | 145 → 136 |
+| Galeria | 133.993 → 173.367 | 105 → 94 |
+| Torre | 217.477 → 47.730 | 160 → 26 |
+| Cripta | 48.038 → 88.262 | 24 → 33 |
+| Arena | 86.529 → 86.625 | 40 → 43 |
+
+A cripta e a ponte agora têm patrulhas; isso pesa nos triângulos mesmo com
+menos setores desenhados. A tabela não mede FPS: medir no PC do Heitor ao
+andar, lutar e girar a câmera em PS1/HD, particularmente na ponte e na cripta.
 
 ## O vilarejo (132 × 184 m)
 

@@ -106,6 +106,12 @@ export const CONFIG = {
         { origem: [0, 6.55, -64.61], destino: [-6.8, 0.08, -58.3], largura: 2.5, cor: 0xb391ee, opacidade: 0.08 },
       ],
       som: { tipo: 'pedra', base: 0.6, vento: 0.25, gotas: 0.5, eco: 0.7 },
+      somPorNivel: {
+        nave: { tipo: 'pedra', base: 0.6, vento: 0.16, gotas: 0.14, eco: 0.88 },
+        galeria: { tipo: 'pedra', base: 0.5, vento: 0.36, gotas: 0.08, eco: 0.72 },
+        torre: { tipo: 'pedra', base: 0.52, vento: 0.88, gotas: 0, eco: 0.22 },
+        cripta: { tipo: 'pedra', base: 0.52, vento: 0.05, gotas: 0.95, eco: 0.58 },
+      },
       trilha: 'catedral',
     },
     // Estrada ao sul do vilarejo (120 x 30 m, corre de norte a sul; o vilarejo fica no norte).
