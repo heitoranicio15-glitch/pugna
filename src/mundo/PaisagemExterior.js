@@ -81,8 +81,8 @@ export function paisagemExterior(mundo,C,sementes,oclusores) {
   instanciar(mundo.grupo,tronco,m.tronco,troncos,'Troncos do horizonte');
   instanciar(mundo.grupo,copa,folha,copas,'Copas do horizonte');
   const longes=[];
-  for (const [x,z,a,r] of [[-22,91,48,5],[-32,96,38,6],[-15,97,32,5],[34,86,41,8],[43,102,59,12]]) {
-    longes.push([x,a*0.44,z,r,a,r,rng()*6]);
+  for (const [x,z,a,r] of [[-22,31,48,5],[-32,36,38,6],[-15,37,32,5],[34,26,41,8],[43,42,59,12]]) {
+    longes.push([x,a*0.44,maxZ+z,r,a,r,rng()*6]);
   }
   const longe=retro(new THREE.MeshBasicMaterial({
     color:new THREE.Color(C.nevoa.cor).lerp(new THREE.Color(0x070b1d),0.42), fog:false,

@@ -21,13 +21,13 @@ números em `src/config.js` (`CONFIG.vila` e `CONFIG.arte`) e são conferidas po
 | `catedral` | `nave-do-veu`, `catedral-galeria`, `catedral-torre`, `catedral-cripta`, `catedral-coro` | Vilarejo (z 8,45) |
 | `estrada` | `taverna-da-estrada` | Vilarejo (norte), Taverna (porta), Floresta (sul) |
 | `taverna` | — | Estrada |
-| `floresta` | `floresta-clareira` | Estrada (norte); o sul fecha na barricada "Trilha interrompida" |
+| `floresta` | `floresta-clareira`, `floresta-cabana` | Estrada (norte); o sul fecha na barricada "Trilha interrompida" |
 
 Ainda pendente da spec 05: requisitos nos portais entre áreas.
 
 ## Exterior — escala percebida (Prompt 8 / 2)
 
-A área jogável ainda mede **30 × 120 m** na estrada e **40 × 90 m** na mata.
+A fase 2 manteve **30 × 120 m** na estrada e **40 × 90 m** na mata.
 A pista da estrada mantém o eixo da ponte e faz curvas leves antes e depois.
 Seu desvio oeste volta à pista entre z −46 e −33. Na floresta o desvio leste
 contorna o xisto e reencontra a trilha entre z −27 e −11.
@@ -46,6 +46,29 @@ O ritmo de movimento não mudou.
 Quadros isolados em PS1 e HD: Estrada **279.949 → 283.387 triângulos,
 252 → 257 chamadas**; Floresta na entrada **324.004 → 325.524 triângulos,
 190 → 191 chamadas**. O PC de teste usou renderização por software.
+
+## Floresta Seca — expansão jogável (Prompt 8 / 3)
+
+**80 × 150 m** (x −40 a 40, z −45 a 105). A chegada (0; −38,5) e a
+`floresta-clareira` (−4,4; −33,5) mantêm posição. A trilha em S tem 5,2 m
+de largura. Desvio oeste (z 9 a 28) passa pela ruína e pela grota; desvio
+leste (z 28 a 57) passa pela cabana e pelo cavalo. A segunda lanterna fica
+em (29; 48), ID `floresta-cabana`. Ao sul da ponte de toras (z 75,8),
+o poço e as fitas ficam em (9; 85). A barricada em z 101,4 encerra o mapa;
+`floresta:passagem-do-castelo` é reservado, sem destino ativo no grafo.
+
+São 316 árvores com colisão cilíndrica, 8 monumentais, 5 formas e 24 setores.
+Contagem completa de cenário em Node: 117.324 triângulos, 245 chamadas
+estimadas e 838 instâncias (antes do recorte). Quadros isolados em ambos os modos:
+
+| Vista | Triângulos | Chamadas |
+| --- | ---: | ---: |
+| Entrada (2 → 3) | 325.524 → 251.732 | 191 → 182 |
+| Cabana (nova) | 73.976 | 93 |
+| Poço (novo) | 82.714 | 119 |
+
+No PC do Heitor, medir FPS e tempo por quadro em PS1/HD ao caminhar da clareira
+à cabana e ao atravessar a ponte com uma patrulha na névoa.
 
 ## Catedral do Véu — planta do Prompt 8
 

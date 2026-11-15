@@ -1,258 +1,196 @@
-// =============================================================================
-//  A FLORESTA
-//  Clareira e trilha de 40 x 90 m ao sul da estrada. O NORTE é o lado -Z: o caçador entra
-//  pela ponta norte (vindo da estrada) e anda para o sul (+Z). Árvores secas e altas dos
-//  dois lados, troncos caídos e rochas no meio, vagalumes fracos, névoa verde-azulada
-//  densa e a lua por cima. Três patrulhas longe da chegada. A trilha acaba numa barricada
-//  de troncos (o Castelo vem depois, veja docs/specs/05-mapa-e-progressao.md).
-//
-//  Os limites NÃO prendem o jogador sozinhos: as paredes invisíveis dos quatro lados são
-//  colisores. Valores (tamanhos, posições, névoa, som) em CONFIG.areas.floresta.
-// =============================================================================
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { Colisores } from './Colisores.js';
 import { criarSorteio, texturas } from '../render/texturas.js';
 import { retro } from '../render/retro.js';
-import { placa } from './Aderecos.js';
-import { materiais, caixa, arvoreSeca, planoDeChao, silhuetasColossais } from './pecas.js';
-import { sombrasDeContato } from './efeitosCenario.js';
+import { bloco, placa } from './Aderecos.js';
+import { materiais, planoDeChao, silhuetasColossais, telhado } from './pecas.js';
 import { montarAtmosfera } from './Atmosfera.js';
-import { decorar } from './Decoracao.js';
 import { faixaDeTrilha, paisagemExterior, xEmZ } from './PaisagemExterior.js';
+import { plantarBosque, recortarBosque } from './Bosque.js';
+import { ANOTACOES } from '../nucleo/Inventario.js';
 
 const C = CONFIG.areas.floresta;
-
-/** Onde corre o eixo da trilha na altura z, também usado pelas árvores. */
-export function xDaTrilha(z) {
-  return xEmZ(C.caminho,z);
-}
-
-/** Distância de um ponto a um segmento (para manter árvores longe das patrulhas). */
-function distanciaAoSegmento(px, pz, [ax, az], [bx, bz]) {
-  const dx = bx - ax, dz = bz - az;
-  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / (dx * dx + dz * dz || 1)));
-  return Math.hypot(px - (ax + t * dx), pz - (az + t * dz));
-}
+export const xDaTrilha = z => xEmZ(C.caminho,z);
 
 export class Floresta {
-  constructor(cena, direcaoLua) {
-    this.id = 'floresta';
-    this.nome = 'Floresta Seca';
-    this.usaCeu = true; // céu e lua visíveis por entre as copas
-    this.limites = { ...C.limites };
-    this.grupo = new THREE.Group();
-    this.colisores = new Colisores();
-    this.objetos = [];
+  constructor(cena,direcaoLua) {
+    this.id='floresta';
+    this.nome='Floresta Seca';
+    this.usaCeu=true;
+    this.limites={...C.limites};
+    this.grupo=new THREE.Group();
+    this.colisores=new Colisores();
+    this.objetos=[];
     cena.add(this.grupo);
+    const {minX,maxX,minZ,maxZ}=this.limites, meioZ=(minZ+maxZ)/2;
+    const m=materiais(), r=criarSorteio(2179);
+    const zN=C.portaNorte.z, zS=C.barricadaSul.z;
+    montarAtmosfera(this,C,direcaoLua);
+    silhuetasColossais(this.grupo,direcaoLua,{x:0,z:meioZ});
 
-    const m = materiais();
-    const sorteio = criarSorteio(8642); // mesma semente = floresta sempre igual
-    const { minX, maxX, minZ, maxZ } = this.limites;
-    const meioX = (minX + maxX) / 2, meioZ = (minZ + maxZ) / 2;
-    const zN = C.portaNorte.z, zS = C.barricadaSul.z;
+    this.portais=[{x:0,z:zN,raio:2.2,destino:'estrada',texto:'E — voltar à estrada'}];
+    this.chegadas={estrada:{x:0,z:zN+3.9,yaw:Math.PI}};
+    this.pontosDeDescanso=[
+      {id:'floresta-clareira',nome:'Clareira da Floresta',...C.lanterna,olhar:0},
+      {id:'floresta-cabana',nome:'Cabana do Mateiro',...C.lanternaDaCabana,olhar:0,ilumina:false},
+    ];
+    this.inimigos=[
+      {tipo:'cacador',rota:[[-9,-7],[-14,0],[-17,7]]},
+      {tipo:'cavaleiro',rota:[[-6,29],[0,35],[8,41]]},
+      {tipo:'penitente',rota:[[3,71],[1,73],[-6,80],[-9,85]]},
+    ];
+    // Apenas reserva do mapa: não é um portal do registro até o destino existir.
+    this.portalFuturo={x:0,z:zS-1.45,destino:'castelo',requer:'floresta:passagem-do-castelo',
+      textoTrancado:'A madeira cedeu para dentro. Do outro lado, ainda não.'};
 
-    // ---------- névoa e luzes gerais ----------
-    montarAtmosfera(this, C, direcaoLua);
-    silhuetasColossais(this.grupo, direcaoLua);   // as mesmas torres colossais no horizonte
-
-    // ---------- pontos e rotas (decididos antes, para as árvores saberem o que evitar) ----------
-    this.portais = [
-      { x: 0, z: zN, raio: 2.2, destino: 'estrada', texto: 'E — voltar à estrada' },
-    ];
-    this.chegadas = {
-      estrada: { x: 0, z: zN + 3.9, yaw: Math.PI },   // olhando para o sul, para dentro da floresta
-    };
-    this.pontosDeDescanso = [
-      { id: 'floresta-clareira', nome: 'Clareira da Floresta', x: C.lanterna.x, z: C.lanterna.z, olhar: 0 },
-    ];
-    this.inimigos = [
-      { tipo: 'cacador', rota: [[3.5, -14], [-3.5, -6]] },
-      { tipo: 'cavaleiro', rota: [[-3, 8], [4, 17]] },
-      { tipo: 'penitente', rota: [[-3, 30], [3, 36]] },
-    ];
-    const pontosLivres = [
-      [0, zN, 4.5], [this.chegadas.estrada.x, this.chegadas.estrada.z, 4], [C.lanterna.x, C.lanterna.z, 4.5],
-      [C.lanterna.x, C.lanterna.z - 1.2, 3], [3.8, zN + 1.2, 2], [3, zS - 2.4, 3],
-    ];
-    const rotas = this.inimigos.map((i) => i.rota);
-    // Obstáculos: [x, z, raio de folga] ocupados por tronco caído ou rocha (as árvores desviam).
-    const ocupados = [];
-
-    // ---------- chão: terra escura, trilha em degraus e sulcos ----------
-    // Chão e trilha não gravam profundidade e têm ordem fixa (veja o comentário em Vilarejo.js).
-    planoDeChao(this, { x: meioX, z: meioZ, l: 420, p: 420, ladrilho: 7, material: m.terraChao, ordem: -6 });
+    planoDeChao(this,{x:0,z:meioZ,l:420,p:420,ladrilho:7,material:m.terraChao,ordem:-6});
     faixaDeTrilha(this.grupo,C.caminho,C.larguraDoCaminho,m.caminhoChao);
-    faixaDeTrilha(this.grupo,C.desvio,3.2,m.caminhoChao,-5.1);
+    for (const desvio of [C.desvio,C.desvioLeste]) faixaDeTrilha(this.grupo,desvio,4.1,m.caminhoChao,-5.1);
 
-    // ---------- paredes invisíveis (os limites não prendem sozinhos) ----------
-    this.colisores.adicionar(minX + 0.3, meioZ, 0.8, maxZ - minZ + 2);
-    this.colisores.adicionar(maxX - 0.3, meioZ, 0.8, maxZ - minZ + 2);
-    this.colisores.adicionar(meioX, minZ + 0.4, maxX - minX + 2, 0.8);
-    this.colisores.adicionar(meioX, maxZ - 0.4, maxX - minX + 2, 0.8);
+    this.colisores.adicionar(minX+0.3,meioZ,0.8,maxZ-minZ+2);
+    this.colisores.adicionar(maxX-0.3,meioZ,0.8,maxZ-minZ+2);
+    this.colisores.adicionar(0,minZ+0.4,maxX-minX+2,0.8);
+    this.colisores.adicionar(0,maxZ-0.4,maxX-minX+2,0.8);
 
-    // ---------- boca da trilha (ponta norte): duas árvores grandes, um vão escuro e a placa ----------
-    for (const lado of [-1, 1]) arvoreSeca(this, { x: lado * 5.4, z: zN - 1.3, altura: 11.5, sorteio });
-    const vao = new THREE.Mesh(new THREE.BoxGeometry(10.6, 5.5, 0.4), retro(new THREE.MeshBasicMaterial({ color: 0x03090a })));
-    vao.position.set(0, 2.75, minZ + 1.1); this.grupo.add(vao);
-    const posteN = caixa(0.16, 1.7, 0.16, m.madeira, 1); posteN.position.set(3.8, 0.85, zN + 1.2); this.grupo.add(posteN);
-    this.colisores.adicionar(3.8, zN + 1.2, 0.3, 0.3);
-    placa(this.grupo, 'Estrada do Sul', 3.8, 1.55, zN + 1.2 + 0.1, 1.6, 0);
-
-    // ---------- barricada de troncos (ponta sul): a trilha acaba aqui ----------
-    for (const [y, rot] of [[0.55, 0.02], [1.45, -0.03], [2.3, 0.025]]) {
-      for (const [x0, x1] of [[minX, -3], [-3, 5], [5, maxX]]) {
-        const c = x1 - x0 + 0.8;
-        const tronco = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.7, c, 6), m.tronco);
-        tronco.rotation.z = Math.PI / 2 + rot;
-        tronco.position.set((x0 + x1) / 2, y, zS + (sorteio() - 0.5) * 0.5);
-        this.grupo.add(tronco);
-      }
-    }
-    this.colisores.adicionar(meioX, zS, maxX - minX, 2.4);
-    decorar(this.grupo, [
-      ['Willow_Dead_3', -11, 0, zS + 3.2, 0.4, 1.1], ['Willow_Dead_3', 10, 0, zS + 3.4, -0.7, 1.2],
-      ['Rock_Moss_2', -6, 0, zS - 1.7, 0.3], ['Plant_3', 7, 0, zS - 1.5, 1.2], ['Grass_2', -2.4, 0, zS - 1.6, 0.5, 1.3],
-    ]);
-    const posteS = caixa(0.16, 1.7, 0.16, m.madeira, 1); posteS.position.set(3, 0.85, zS - 2.4); this.grupo.add(posteS);
-    this.colisores.adicionar(3, zS - 2.4, 0.3, 0.3);
-    placa(this.grupo, 'Trilha interrompida', 3, 1.55, zS - 2.4 - 0.1, 1.7, Math.PI);
-
-    // ---------- troncos caídos (colisores baixos: dá para pular em cima) ----------
-    const toras = [   // [x, z, comprimento, eixo] (eixo 'x' = deitado ao longo de X)
-      [-8, -24, 4.6, 'x'], [8, -10, 5, 'z'], [-9, 14, 4.2, 'x'], [9, 26, 4.6, 'z'], [-10, -1, 3.6, 'z'],
-    ];
-    const sombras = [];
-    for (const [x, z, comp, eixo] of toras) {
-      const tora = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.42, comp, 6), m.tronco);
-      tora.rotation.set(eixo === 'z' ? Math.PI / 2 : 0, 0, eixo === 'x' ? Math.PI / 2 : 0);
-      tora.position.set(x, 0.38, z);
-      this.grupo.add(tora);
-      const [l, p] = eixo === 'x' ? [comp, 0.8] : [0.8, comp];
-      this.colisores.adicionar(x, z, l, p, 0.7);
-      ocupados.push([x, z, comp / 2 + 1.2]);
-      sombras.push([x, z, l + 0.8, p + 0.8]);
-    }
-    sombrasDeContato(this.grupo, sombras);
-    decorar(this.grupo, [['WoodLog_Moss', 11.5, 0, -19, 0.4], ['WoodLog_Moss', -12.5, 0, 22, 1.3]]);
-
-    // ---------- rochas (colisores baixos, dão cobertura e dá para subir pulando) ----------
-    const rochas = [   // [modelo, x, z, escala]; tamanhos do acervo em Decoracao.js (sem giro)
-      ['Rock_Moss_2', 11, -28, 1.3, [1.9, 1.2]], ['Rock_Moss_4', -11, -18, 1.4, [1.2, 0.95]],
-      ['Rock_Moss_2', -12, 4, 1.2, [1.9, 1.2]], ['Rock_Moss_4', 12, 12, 1.5, [1.2, 0.95]],
-      ['Rock_Moss_2', 11, 33, 1.3, [1.9, 1.2]], ['Rock_Moss_4', -10, 31, 1.4, [1.2, 0.95]],
-    ];
-    for (const [id, x, z, esc, [l, p]] of rochas) {
-      decorar(this.grupo, [[id, x, 0, z, 0, esc]]);
-      this.colisores.adicionar(x, z, l * esc * 0.85, p * esc * 0.85, 0.7);
-      ocupados.push([x, z, Math.max(l, p) * esc * 0.5 + 1.2]);
-    }
-    decorar(this.grupo, [
-      ['Plant_3', -3.1, 0, -37.6, 0.4], ['Grass_2', 4.2, 0, -36.2, 1.1, 1.3], ['Plant_3', 6.8, 0, -4, 2, 1.2],
-      ['Grass_2', -6.5, 0, 9, 0.7, 1.2], ['Plant_3', 7.5, 0, 19, 0.2], ['Grass_2', -5.6, 0, 27.5, 1.9, 1.3],
-    ]);
-
-    // ---------- árvores secas e altas ----------
-    // Nas bordas formam uma parede; no meio ficam afastadas da trilha, dos obstáculos, das patrulhas
-    // e dos pontos de chegada, para sempre sobrar caminho.
-    const livre = (x, z, folga) => {
-      if (Math.abs(x - xDaTrilha(z)) < C.larguraDoCaminho / 2 + folga) return false;
-      if (z >= C.desvio[0][1] && z <= C.desvio.at(-1)[1] && Math.abs(x-xEmZ(C.desvio,z)) < 1.6 + folga) return false;
-      for (const [px, pz, r] of pontosLivres) if (Math.hypot(x - px, z - pz) < r + folga) return false;
-      for (const [px, pz, r] of ocupados) if (Math.hypot(x - px, z - pz) < r + folga) return false;
-      for (const rota of rotas) if (distanciaAoSegmento(x, z, rota[0], rota[1]) < 3 + folga) return false;
-      return true;
+    const gravar=(id,x,y,z,giro=0) => {
+      const evento='floresta:'+id;
+      placa(this.grupo,ANOTACOES[evento].nome,x,y,z,1.52,giro);
+      this.objetos.push({x,y,z,acao:'ler',evento});
     };
-    const plantadas = [];
-    const plantar = (x, z, altura) => {
-      plantadas.push([x, z]);
-      arvoreSeca(this, { x, z, altura, sorteio });
+    const pedra=(x,z,l,a,p) => {
+      bloco(this.grupo,m.pedraMusgo,x,a/2,z,l,a,p);
+      this.colisores.adicionar(x,z,l,p,a);
     };
-    for (const lado of [-1, 1]) {
-      for (let z = minZ + 6; z < zS - 3; z += 6.5) {
-        const x = lado * (maxX - 2.4 - sorteio() * 2.4), zz = z + (sorteio() - 0.5) * 3;
-        if (livre(x, zz, 0)) plantar(x, zz, 8.5 + sorteio() * 3.5);
-      }
-    }
-    for (let tentativa = 0; tentativa < 140 && plantadas.length < 40; tentativa++) {
-      const lado = tentativa % 2 ? 1 : -1;
-      const x = lado * (6.5 + sorteio() * 8), z = minZ + 7 + sorteio() * (zS - minZ - 11);
-      if (!livre(x, z, 1.5) || plantadas.some(([px, pz]) => Math.hypot(x - px, z - pz) < 4.2)) continue;
-      plantar(x, z, 7 + sorteio() * 4.5);
-    }
-    this.arvores = plantadas.length;
-    for (let i = 0; i < 28; i++) {   // fora das paredes: só paisagem
-      const lado = i % 2 ? 1 : -1;
-      const x = lado * (maxX + 3 + sorteio() * 26), z = minZ - 6 + sorteio() * (maxZ - minZ + 12);
-      arvoreSeca(this, { x, z, altura: 8 + sorteio() * 6, sorteio, colide: false });
-    }
+    const poste=(texto,x,z,ry=0) => {
+      bloco(this.grupo,m.madeiraEscura,x,0.77,z,0.14,1.54,0.14);
+      this.colisores.adicionar(x,z,0.24,0.24);
+      placa(this.grupo,texto,x,1.46,z+(ry ? -0.1:0.1),1.65,ry);
+    };
+    poste('Estrada do Sul',3.8,zN+1.2);
+    poste('Cabana · Grota',9.8,36.25,Math.PI);
 
-    // ---------- morros em volta (só paisagem) ----------
-    for (let i = 0; i < 14; i++) {
-      const ang = (i / 14) * Math.PI * 2 + sorteio() * 0.2, dist = 85 + sorteio() * 60;
-      const alt = 14 + sorteio() * 28, raio = 26 + sorteio() * 26;
-      const morro = new THREE.Mesh(new THREE.ConeGeometry(raio, alt, 6, 1), m.morro);
-      morro.position.set(meioX + Math.cos(ang) * dist * 0.9, alt / 2 - 2, meioZ + Math.sin(ang) * dist * 1.2);
-      morro.rotation.y = sorteio() * 3;
-      this.grupo.add(morro);
+    // Clareira e ruína: a lua aparece entre as copas, sobre as urnas sem tampa.
+    pedra(-8.35,-33.2,2.5,0.6,1.1);
+    pedra(-31.6,17.6,0.65,2.9,7.3);
+    pedra(-29.2,14.4,4.15,2.15,0.65);
+    pedra(-29.4,20.9,3.6,0.82,0.68);
+    const urna=new THREE.LatheGeometry([[0,0],[0.29,0],[0.54,0.48],[0.28,0.77],[0.38,0.84],[0.3,0.91],[0.21,0.86],[0.2,0.23]]
+      .map(([x,y])=>new THREE.Vector2(x,y)),9);
+    const urnas=new THREE.InstancedMesh(urna,m.pedraEscura,5), matriz=new THREE.Matrix4();
+    for (const [i,[x,z]] of [[-7.5,-31.2],[-30.8,16.8],[-30.3,18.8],[12.2,85.7],[14.8,86.6]].entries()) {
+      urnas.setMatrixAt(i,matriz.makeTranslation(x,0,z));
+      this.colisores.adicionarCilindro(x,z,0.44,0.91);
     }
+    this.grupo.add(urnas);
+    gravar('urnas-do-mato',-31.22,1.49,19.65,Math.PI/2);
 
-    paisagemExterior(this,C,7746,[[5.35,-21,2.0,5.6],[-6.6,10.6,2.4,6]]);
+    // Vala rasa com uma ponte de toras, parte do corredor do poço.
+    const agua=retro(new THREE.MeshBasicMaterial({color:0x102335,depthWrite:false}));
+    planoDeChao(this,{x:2,z:75.8,l:16,p:2.15,ladrilho:null,material:agua,ordem:-4.8,y:0.02});
+    const toraGeo=new THREE.CylinderGeometry(0.18,0.2,3.1,6).rotateX(Math.PI/2);
+    const ponte=new THREE.InstancedMesh(toraGeo,m.tronco,12);
+    for (let i=0;i<12;i++) ponte.setMatrixAt(i,matriz.makeTranslation(-2+i*0.4,0.16,75.8));
+    this.grupo.add(ponte);
+    this.colisores.adicionar(0.2,75.8,4.8,3.1,0.34);
 
-    // ---------- bancos de névoa rasteira ----------
-    const bruma = C.bruma;
-    const matNevoa = new THREE.SpriteMaterial({
-      map: texturas().nevoa, color: bruma.cor, transparent: true, opacity: bruma.opacidade, depthWrite: false,
+    // Cabana aberta para a trilha leste; a lanterna fica do lado de fora.
+    const cx=33.15, cz=46.15;
+    const parede=(x,z,l,a,p)=>{
+      bloco(this.grupo,m.madeiraEscura,x,a/2,z,l,a,p);
+      this.colisores.adicionar(x,z,l,p,a);
+    };
+    parede(cx+2.4,cz,0.35,3,5.5);
+    parede(cx,cz-2.6,4.45,3,0.30);
+    parede(cx,cz+2.6,4.45,3,0.30);
+    const teto=telhado(5.65,1.28,6.3,m.telhado,m.pedraEscura);
+    teto.position.set(cx,3.02,cz); this.grupo.add(teto);
+    parede(cx+1.52,cz+1.45,0.75,0.87,1.75);
+    gravar('bilhete-do-mateiro',cx+1.15,1.37,cz+1.45,-Math.PI/2);
+    // A montaria ficou junto da cabana; fita escura no pescoço, sela sem dono.
+    const cavalo=new THREE.Group();
+    cavalo.position.set(33,0,55); cavalo.rotation.y=-0.85; this.grupo.add(cavalo);
+    const pelo=retro(new THREE.MeshLambertMaterial({color:0x2b272d}));
+    const oval=(y,z,l,a,p,mat=pelo) => {
+      const forma=new THREE.Mesh(new THREE.IcosahedronGeometry(1,0),mat);
+      forma.position.set(0,y,z); forma.scale.set(l,a,p); cavalo.add(forma);
+      return forma;
+    };
+    oval(1.29,0,0.46,0.48,1.07);
+    oval(1.68,0.68,0.26,0.63,0.32).rotation.x=0.5;
+    oval(2.12,1.01,0.23,0.31,0.39);
+    oval(1.59,-0.13,0.48,0.19,0.37,m.madeiraEscura);
+    for (const x of [-0.29,0.29]) for (const z of [-0.61,0.61]) bloco(cavalo,pelo,x,0.48,z,0.16,0.97,0.19);
+    for (const x of [-0.12,0.12]) bloco(cavalo,pelo,x,2.43,0.89,0.075,0.27,0.12);
+    this.colisores.adicionarCilindro(33,55,0.91,2.35);
+
+    // Poço, fitas do coro e uma carroça tombada para dentro da trilha.
+    for (const [x,z,l,a,p] of [[12.9,83.5,1.8,0.65,2.8],[-32.6,25,6.3,4.1,4.9]]) pedra(x,z,l,a,p);
+    const aro=new THREE.LatheGeometry([[1.22,0],[1.62,0],[1.63,0.88],[1.22,0.88],[1.22,0]]
+      .map(([x,y])=>new THREE.Vector2(x,y)),10);
+    const poco=new THREE.Mesh(aro,m.pedraMusgo);
+    poco.position.set(8.9,0,85); this.grupo.add(poco);
+    this.colisores.adicionarCilindro(8.9,85,1.63,0.88);
+    gravar('fitas-do-coro',10.59,0.78,85,Math.PI/2);
+    const fita=retro(new THREE.MeshLambertMaterial({color:0x5c2e45}));
+    for(const [x,z,h] of [[6.8,83.7,2.5],[11.2,83.4,3.2],[-8.31,-32.6,1.54]]) {
+      bloco(this.grupo,m.madeiraEscura,x,h/2,z,0.14,h,0.14);
+      bloco(this.grupo,fita,x+0.22,h-0.32,z,0.3,0.6,0.045);
+    }
+    const carroca=bloco(this.grupo,m.madeiraEscura,13.85,0.72,83.5,1.95,0.28,2.6);
+    carroca.rotation.z=0.66;
+    const roda=new THREE.Mesh(new THREE.TorusGeometry(0.54,0.105,5,9),m.metal);
+    roda.position.set(16.2,0.57,84.7); this.grupo.add(roda);
+
+    // A barricada fecha a ponta inteira. O ponto central tem texto de lore,
+    // mas não aparece no grafo até existir o retorno da área futura.
+    const tronco=new THREE.CylinderGeometry(0.52,0.64,10.4,6).rotateZ(Math.PI/2);
+    const barricada=new THREE.InstancedMesh(tronco,m.tronco,20);
+    for(let i=0;i<20;i++) barricada.setMatrixAt(i,matriz.makeTranslation(-36+(i%10)*8,0.53+Math.floor(i/10)*1.02,zS-0.1+r()*0.52));
+    this.grupo.add(barricada);
+    this.colisores.adicionar(0,zS,maxX-minX,2.4);
+    poste('Trilha interrompida',2.5,zS-2.55,Math.PI);
+    this.objetos.push({x:0,y:1.55,z:zS-1.47,acao:'informar',mensagem:this.portalFuturo.textoTrancado});
+
+    const reservas=[
+      [0,-39,7],[-4.4,-33.5,5.2],[-31,17,6.5],[-32.6,25,5],
+      [33.15,46.15,6.5],[29,48,3.2],[33,55,2.8],[2,75.8,5],[10.5,85,7.5],[0,zS-2.6,5.4],
+      ...this.inimigos.flatMap(i=>i.rota.map(([x,z])=>[x,z,1.9])),
+    ];
+    paisagemExterior(this,C,7746,[[8.7,-27,2.5,7.3],[-21.2,-5.5,4.6,9.5],[30.5,63.1,4.4,9.3]]);
+    const bosque=plantarBosque(this,C,reservas);
+    this.arvores=bosque.arvores.length;
+    this.troncos=bosque.arvores;
+    this.setores=bosque.setores;
+
+    // Bruma barata: poucos bancos próximos e fungos discretos em uma só malha.
+    this.nevoas=[];
+    const matNevoa=new THREE.SpriteMaterial({
+      map:texturas().nevoa,color:C.bruma.cor,transparent:true,opacity:C.bruma.opacidade,depthWrite:false,
     });
-    this.nevoas = [];
-    for (let i = 0; i < 22; i++) {
-      const s = new THREE.Sprite(matNevoa);
-      const esc = 8 + sorteio() * 10;
-      s.scale.set(esc * 1.8, esc * 0.5, 1);
-      s.position.set(minX + sorteio() * (maxX - minX), bruma.altura + sorteio() * bruma.variacao, minZ + sorteio() * (maxZ - minZ));
+    for(let i=0;i<28;i++) {
+      const s=new THREE.Sprite(matNevoa), z=minZ+3+r()*(maxZ-minZ-5), w=7+r()*9;
+      s.position.set(xDaTrilha(z)+(r()-0.5)*22,C.bruma.altura+r()*C.bruma.variacao,z);
+      s.scale.set(w*1.7,w*0.4,1);
       this.grupo.add(s);
-      this.nevoas.push({ sprite: s, vel: (0.2 + sorteio() * 0.4) * bruma.velocidade });
+      this.nevoas.push({s,centro:xDaTrilha(z),vel:(0.22+r()*0.35)*C.bruma.velocidade});
     }
-
-    // ---------- vagalumes: uma única malha de pontos que vagueia devagar ----------
-    const n = C.vagalumes.quantidade;
-    this.vagalumes = Array.from({ length: n }, () => ({
-      x: minX + 3 + sorteio() * (maxX - minX - 6), y: 0.7 + sorteio() * 1.9, z: minZ + 4 + sorteio() * (maxZ - minZ - 8),
-      fase: sorteio() * 100,
-    }));
-    const posicao = new THREE.Float32BufferAttribute(new Float32Array(n * 3), 3);
-    const cores = new THREE.Float32BufferAttribute(new Float32Array(n * 3), 3);
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', posicao);
-    geo.setAttribute('color', cores);
-    const pontos = new THREE.Points(geo, new THREE.PointsMaterial({
-      map: texturas().brilho, size: 0.16, vertexColors: true,
-      blending: THREE.AdditiveBlending, transparent: true, depthWrite: false,
-    }));
-    pontos.name = 'Vagalumes';
-    pontos.frustumCulled = false;
-    this.grupo.add(pontos);
-    this.malhaVagalumes = { posicao, cores };
-    this.atualizarVagalumes(0);
+    const fungos=new THREE.BufferGeometry(), pontos=[];
+    for (const [x,z] of [[-8,-30],[-31,22],[17,59],[9,89],[3,76.5]]) {
+      for(let i=0;i<9;i++) pontos.push(x+(r()-0.5)*3,0.07+r()*0.27,z+(r()-0.5)*2.8);
+    }
+    fungos.setAttribute('position',new THREE.Float32BufferAttribute(pontos,3));
+    this.grupo.add(new THREE.Points(fungos,new THREE.PointsMaterial({
+      map:texturas().brilho,color:0x6198df,size:0.28,opacity:0.64,transparent:true,
+      depthWrite:false,blending:THREE.AdditiveBlending,
+    })));
   }
 
-  atualizarVagalumes(tempo) {
-    const { posicao, cores } = this.malhaVagalumes;
-    this.vagalumes.forEach((v, i) => {
-      const t = tempo + v.fase;
-      posicao.setXYZ(i, v.x + Math.sin(t * 0.31) * 1.6, v.y + Math.sin(t * 0.53) * 0.45, v.z + Math.cos(t * 0.27) * 1.6);
-      const brilho = Math.max(0, Math.sin(t * 0.9)) ** 3 * 0.8;
-      cores.setXYZ(i, brilho * 0.7, brilho, brilho * 0.3);
-    });
-    posicao.needsUpdate = true;
-    cores.needsUpdate = true;
-  }
-
-  atualizar(dt, tempo, pos, estilo) {
-    if (estilo === 'hd') for (const n of this.nevoas) {
-      n.sprite.position.x += n.vel * dt;
-      if (n.sprite.position.x > this.limites.maxX + 20) n.sprite.position.x = this.limites.minX - 20;
+  atualizar(dt,tempo,pos,estilo) {
+    if (pos) recortarBosque(this.setores,pos,C.vegetacao.recorte);
+    if (estilo==='hd') for (const {s,centro,vel} of this.nevoas) {
+      s.position.x+=vel*dt;
+      if (s.position.x>centro+14) s.position.x=centro-14;
     }
-    this.atualizarVagalumes(tempo);
   }
 }

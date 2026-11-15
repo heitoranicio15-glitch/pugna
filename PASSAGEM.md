@@ -51,6 +51,16 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Prompt 8 — 3, Floresta Seca ampliada:** a trilha em S liga claro de
+  descanso, ruína, grota, cabana, ponte de toras, poço e barricada; dois
+  desvios retornam ao eixo. Três anotações, cavalo sem cavaleiro e urnas
+  vazias estendem a história do toque. O Castelo ainda não é uma área.
+  **Decidido pela IA:** 40 × 90 → 80 × 150 m, trilha 4,5 → 5,2 m,
+  barricada z 41,8 → 101,4. Cerca de 40 → 316 árvores jogáveis, 8
+  monumentais, 5 formas próprias e setores de 24 m recortados a 39 m.
+  A chegada e a lanterna antiga conservam posições; 1 → 2 lanternas.
+  Três inimigos, tipos e dano mantidos, patrulhas separadas pelo bosque.
+
 - **Prompt 8 — 2, névoa do exterior:** estrada e floresta têm curvas,
   desvios que voltam, xisto e silhuetas em camadas. Limites e portais
   permanecem. O PS1 usa bandas de névoa imóveis e o HD usa névoa contínua
@@ -358,7 +368,7 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 - [x] **Prompt 8 / 1B:** galeria, torre, cripta, escadas e atalhos.
 - [x] **Prompt 8 / 1C:** história das salas, clima e visibilidade.
 - [x] **Prompt 8 / 2:** névoa exterior e profundidade visual.
-- [ ] **Prompt 8 / 3:** floresta maior e pontos narrativos.
+- [x] **Prompt 8 / 3:** floresta maior e pontos narrativos.
 - [ ] **Prompt 8 / 4:** progressão com chave, armas e itens.
 
 - [x] **1. Salvamento estilo Souls + Osso de Retorno** (ver "Decisões")

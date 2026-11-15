@@ -108,7 +108,7 @@ test('as áreas de verdade passam em validarArea e em montarAreas', () => {
   for (const id of ['portao-sul', 'adro-da-igreja', 'nave-do-veu', 'taverna-da-estrada', 'floresta-clareira']) assert.ok(checkpoints.has(id), id);
   assert.equal(checkpoints.get('taverna-da-estrada').area.id, 'estrada');
   assert.equal(checkpoints.get('floresta-clareira').area.id, 'floresta');
-  assert.equal(checkpoints.size, 9);
+  assert.equal(checkpoints.size, 10);
   for (const [id, y] of [['catedral-galeria', 4], ['catedral-torre', 8], ['catedral-cripta', -4], ['catedral-coro', 0]]) {
     const { area, ponto } = checkpoints.get(id);
     assert.equal(area.id, 'catedral');
@@ -394,7 +394,7 @@ const livreEm = (area, x, z, raio = 0.5) => {
   return Math.hypot(p.x - x, p.z - z) < 0.01;
 };
 
-test('a floresta declara o contrato: 40 x 90 m, céu, luz própria, névoa, som e trilha conhecidos', () => {
+test('a floresta declara o contrato: 80 x 150 m, céu, luz própria, névoa, som e trilha conhecidos', () => {
   const { porId } = montarAsAreasReais();
   const floresta = porId.get('floresta');
   assert.deepEqual(validarArea(floresta), []);
@@ -402,14 +402,18 @@ test('a floresta declara o contrato: 40 x 90 m, céu, luz própria, névoa, som 
   assert.equal(floresta.usaCeu, true);
   assert.equal(floresta.luzJogador, CONFIG.areas.floresta.luzJogador);
   const l = floresta.limites;
-  assert.equal(l.maxX - l.minX, 40);
-  assert.equal(l.maxZ - l.minZ, 90);
+  assert.equal(l.maxX - l.minX, 80);
+  assert.equal(l.maxZ - l.minZ, 150);
   assert.ok(floresta.nevoa && floresta.fundo && floresta.paletaDoCeu);
   assert.ok(floresta.nevoa.density > CONFIG.areas.estrada.nevoa.densidade, 'mais densa que a da estrada');
   assert.equal(floresta.som.tipo, 'floresta');
   assert.equal(floresta.trilha, 'vilarejo');
   assert.equal(floresta.npcs, undefined);
-  assert.ok(floresta.arvores >= 25, `árvores no meio da clareira: ${floresta.arvores}`);
+  assert.ok(floresta.arvores >= 200, `árvores no bosque: ${floresta.arvores}`);
+  assert.equal(new Set(floresta.troncos.map(a=>a.v)).size,5);
+  for (const {x,z,raio} of floresta.troncos) {
+    assert.ok(floresta.colisores.caixas.some(c=>c.x===x && c.z===z && c.raio===raio));
+  }
   assert.ok(floresta.colisores.caixas.length > floresta.arvores, 'árvores, troncos, rochas e paredes são colisores');
 });
 
@@ -570,5 +574,28 @@ test('os desvios voltam à trilha principal e têm o centro livre nas curvas', (
       const p={x:xEmZ(desvio,z),z};
       assert.ok(!porId.get(id).colisores.bloqueiaTrecho(p,p,0,CONFIG.jogador.raio),JSON.stringify({id,...p}));
     }
+  }
+});
+
+
+test('da clareira à barricada se percorre a trilha, inclusive pelo tabuleiro baixo', () => {
+  const f=montarAsAreasReais().porId.get('floresta'), cfg=CONFIG.areas.floresta;
+  const pos={x:0,y:0,z:-38.5};
+  for (let z=pos.z;z<99;z+=0.2) {
+    pos.x=xEmZ(cfg.caminho,z); pos.z=z;
+    const esperado={...pos};
+    f.colisores.resolver(pos,RAIO,pos.y,0.4);
+    assert.ok(Math.hypot(pos.x-esperado.x,pos.z-esperado.z)<0.08,JSON.stringify(pos));
+    const altura=f.colisores.alturaDoChao(pos.x,pos.z,pos.y,0.4);
+    assert.ok(Math.abs(altura-pos.y)<=0.4);
+    pos.y=altura;
+  }
+  const l=f.pontosDeDescanso.find(l=>l.id==='floresta-cabana');
+  assert.ok(livreEm(f,l.x,l.z-1.2,0.75));
+  assert.ok(f.objetos.some(o=>o.mensagem===f.portalFuturo.textoTrancado));
+  assert.ok(f.portais.every(p=>p.destino!==f.portalFuturo.destino));
+  for (const o of f.objetos.filter(o=>o.acao==='ler')) {
+    assert.ok(ANOTACOES[o.evento]?.texto);
+    assert.ok(!f.colisores.bloqueiaTrecho(o,o,o.y),o.evento);
   }
 });

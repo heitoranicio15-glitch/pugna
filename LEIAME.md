@@ -361,11 +361,12 @@ ficam em `CONFIG.areas.estrada` e `CONFIG.areas.taverna` (`src/config.js`).
 
 Primeira área nova depois da estrada (**decidido pela IA, o Heitor revisa**). Como chegar: ande
 até a **ponta sul da Estrada do Sul** (depois da ponte) e aperte **E — seguir pela trilha da
-floresta**. É uma clareira com trilha de 40 × 90 m, árvores secas e altas dos dois lados, troncos
-caídos e rochas (dá para pular em cima), vagalumes fracos, névoa verde-azulada densa e a lua por
-cima. Logo na chegada fica a lanterna **Clareira da Floresta** (descanse com **E**; ao morrer ou
-recarregar a página, o caçador volta a ela). Há três inimigos em patrulha (caçador, cavaleiro
-e Penitente), todos longe da chegada e da lanterna. A trilha acaba numa barricada de troncos
+floresta**. A mata mede 80 × 150 m. A trilha em S tem desvios para a ruína
+e a cabana, além de uma ponte de toras e um poço com fitas do coro.
+Na chegada fica a lanterna **Clareira da Floresta**; há outra junto à
+**Cabana do Mateiro**. Descanse com **E** para voltar à última lanterna
+ao morrer ou recarregar. Três inimigos patrulham trechos diferentes da
+trilha. A trilha acaba numa barricada de troncos
 ("Trilha interrompida"): o Castelo virá depois. **E — voltar à estrada**, na ponta norte,
 devolve o caçador à ponta sul da estrada. Entrar na floresta não grava nada no save.
 
