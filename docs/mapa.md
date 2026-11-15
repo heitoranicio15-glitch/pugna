@@ -23,7 +23,58 @@ números em `src/config.js` (`CONFIG.vila` e `CONFIG.arte`) e são conferidas po
 | `taverna` | — | Estrada |
 | `floresta` | `floresta-clareira`, `floresta-cabana` | Estrada (norte); o sul fecha na barricada "Trilha interrompida" |
 
-Ainda pendente da spec 05: requisitos nos portais entre áreas.
+## Progressão do toque (Prompt 8 / 4)
+
+Para sair pelo Portão Sul, entre na Catedral, abra a grade com os dois selos,
+derrote o Guardião e pegue a chave na arena. De volta ao portão, gire a chave;
+depois que as folhas se abrirem, aperte **E** para seguir para a estrada.
+
+| Portal ou atalho | Requisito | Evento salvo |
+| --- | --- | --- |
+| Vilarejo ↔ Catedral | Livre | — |
+| Grade do coro | Selos do Ossário e do Relicário | `catedral:selo-ossario`, `catedral:selo-relicario` |
+| Sacristia → nave | Acionar por dentro | `catedral:atalho-sacristia` |
+| Cripta → claustro | Acionar por baixo | `catedral:atalho-cripta` |
+| Vilarejo → Estrada | `catedral:chave-do-portao` (espólio do Guardião) | `vilarejo:portao-sul-aberto` |
+| Estrada → Vilarejo; Estrada ↔ Taverna; Estrada ↔ Floresta | Livres | — |
+| Floresta → Castelo | Reservado; sem ligação ativa | — |
+
+| Prêmio | Onde | ID |
+| --- | --- | --- |
+| Lâmina de Vigília | Mesa do Relicário | `catedral:lamina-de-vigilia` |
+| Maça e Chave do Portão | Junto ao Guardião | `catedral:maca-do-guardiao`, `catedral:chave-do-portao` |
+| Frasco maior e relíquia | Sacristia, cela da sineira | `catedral:frasco-maior`, `catedral:reliquia-do-veu` |
+| Cartuchos | Coro (3), cabana (2) | `catedral:municao-do-coro`, `floresta:municao-do-mateiro` |
+| Chave do Mateiro e lança | Ruína, cofre da cabana | `floresta:chave-do-mateiro`, `floresta:lanca-do-mateiro` |
+
+Saves antigos com o Guardião vencido ou com descanso no exterior recebem a
+chave e o evento de abertura na migração. Saves novos precisam recolher a
+chave da arena. Equipamento, munição gasta e posição do espólio são salvos.
+
+| Arma | Dano leve/forte | Custo leve/forte | Alcance leve/forte | Recuperação leve/forte |
+| --- | ---: | ---: | ---: | ---: |
+| Espada (existente) | 22 / 58 | 18 / 32 | 2,45 / 2,65 m | 0,27 / 0,52 s |
+| Lâmina de Vigília | 16 / 40 | 13 / 25 | 1,72 / 1,88 m | 0,19 / 0,39 s |
+| Maça do Guardião | 28 / 63 | 23 / 37 | 2,20 / 2,35 m | 0,39 / 0,69 s |
+| Lança do Mateiro | 19 / 51 | 20 / 33 | 3,15 / 3,50 m | 0,29 / 0,55 s |
+
+E1: 60 lutas por arma, estratégia e cenário (2.880). Contra o Guardião,
+o jogador hábil venceu 60/60 com todas as armas, enquanto apertar ataque
+leve sem reagir venceu 4/60 com espada, 0/60 com lâmina, 2/60 com maça e
+0/60 com lança. Contra três inimigos mistos, o hábil venceu 56–59/60.
+A E1 é em arena vazia e usa ataques leves e viscerais; não valida as salas,
+o peso da recuperação dos golpes fortes em mãos humanas ou o FPS.
+
+Quadros isolados (fase 3 → 4), em PS1 e HD. Os dois moradores do vilarejo
+usam modelos simples em código, para manter a vista do portão leve.
+
+| Área e vista | Triângulos | Chamadas |
+| --- | ---: | ---: |
+| Vilarejo, Portão Sul | 630.042 → 630.442 | 846 → 855 |
+| Catedral, nave | 175.927 → 176.035 | 136 → 144 |
+| Estrada, antes da ponte | 283.387 → 283.387 | 257 → 257 |
+| Taverna, salão | 116.738 → 116.738 | 131 → 131 |
+| Floresta, entrada | 251.732 → 251.964 | 182 → 189 |
 
 ## Exterior — escala percebida (Prompt 8 / 2)
 

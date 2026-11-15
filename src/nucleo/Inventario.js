@@ -1,3 +1,6 @@
+import { CONFIG } from '../config.js';
+import { CHAVE_MATEIRO, CHAVE_PORTAO, RELIQUIA } from './Progressao.js';
+
 export const CURA_FRASCO = 42;
 
 export const CHAVE_SACRISTIA = 'vilarejo:chave-sacristia';
@@ -7,7 +10,44 @@ export const ATALHO_SACRISTIA = 'catedral:atalho-sacristia';
 export const FRASCOS = Object.freeze({
   'vilarejo:bau-casa': 2,
   'catedral:frasco-sacristia': 1,
+  'catedral:frasco-maior': 1,
 });
+
+export const ARMAS = Object.freeze({
+  espada: { nome: 'Espada do Caçador', descricao: 'Alcance e ritmo médios. A arma de sempre.' },
+  lamina: { nome: 'Lâmina de Vigília', descricao: 'Corta depressa e poupa estamina; exige ficar perto.', evento: 'catedral:lamina-de-vigilia' },
+  maca: { nome: 'Maça do Guardião', descricao: 'Pesada e lenta para recuperar. A carga completa desequilibra inimigos comuns.', evento: 'catedral:maca-do-guardiao' },
+  lanca: { nome: 'Lança do Mateiro', descricao: 'Estocada estreita e longa. Errar deixa uma abertura.', evento: 'floresta:lanca-do-mateiro' },
+});
+
+export const MUNICOES = Object.freeze({
+  'catedral:municao-do-coro': 3,
+  'floresta:municao-do-mateiro': 2,
+});
+
+export const ITENS = Object.freeze({
+  [CHAVE_SACRISTIA]: { nome: 'Chave da sacristia', descricao: 'Abre a porta ao sul do Relicário.', chave: true },
+  [CHAVE_PORTAO]: { nome: 'Chave do Portão', descricao: 'Bronze com o selo do Guardião do Véu.', chave: true },
+  [CHAVE_MATEIRO]: { nome: 'Chave do Mateiro', descricao: 'Abre o cofre da lança na cabana.', chave: true },
+  [RELIQUIA]: { nome: 'Relíquia do Véu', descricao: 'Enquanto na bolsa, recupera estamina 6% mais depressa.' },
+  'catedral:frasco-maior': { nome: 'Frasco maior', descricao: 'Traz uma dose extra de 42 de vida, com o tempo de cura habitual.' },
+});
+
+export function armaDisponivel(id,eventos) {
+  return Object.hasOwn(ARMAS,id) && (!ARMAS[id].evento || eventos.includes(ARMAS[id].evento));
+}
+
+export function fichaDeGolpe(arma,tipo) {
+  return CONFIG.combate.armas[arma]?.[tipo] ?? CONFIG.combate[tipo];
+}
+
+export function totalMunicao(eventos) {
+  return Object.entries(MUNICOES).reduce((s,[id,n])=>s+(eventos.includes(id)?n:0),0);
+}
+
+export function contarMunicao(progresso) {
+  return totalMunicao(progresso.eventos) - (progresso.municaoUsada ?? 0);
+}
 
 export const ANOTACOES = Object.freeze({
   'vilarejo:livro-dos-estabulos': {
@@ -44,11 +84,15 @@ export const ANOTACOES = Object.freeze({
   },
   'vilarejo:registro-da-oficina': {
     nome: 'Registro da oficina',
-    texto: 'Entreguei a grade da sacristia. A chave pequena ficou na bancada, junto às limas. É da porta ao sul do Relicário. A grade da nave tem uma alavanca do lado de dentro. O aprendiz pôs o próprio nome no molde. De manhã só restava a marca do cinzel.',
+    texto: 'A chave pequena ficou na bancada, junto às limas. É da sacristia, ao sul do Relicário; a grade abre por dentro. O outro molde, o do portão, esfriou sozinho antes de receber a marca do aprendiz.',
+  },
+  'vilarejo:registro-do-portao': {
+    nome: 'Registro do Portão Sul',
+    texto: 'Fechado ao segundo toque, por ordem do Guardião do Véu. O lacre leva o seu selo. A chave não sai da mão de quem a guarda enquanto durar a vigília.',
   },
   'vilarejo:lapide-sineira': {
     nome: 'Lápide da sineira',
-    texto: 'À sineira que cortou as cordas para poupar a vila do segundo toque. O bronze tornou a soar. Foi o primeiro toque que o povo ouviu vindo do poço.',
+    texto: 'À sineira que cortou as cordas e ainda ouviu o bronze no fundo do poço. Dizia: “Deixaram a chave bater no cinturão dele, junto ao altar. Não a procurem na parede da vila.”',
   },
   'vilarejo:lapide-aprendiz': {
     nome: 'Lápide do aprendiz',

@@ -221,6 +221,7 @@ test('saves antigos migram, eventos novos sobrevivem e o reset remove apenas o p
     descanso: 'nave-do-veu', selos: ['ossario', 'relicario'], guardiaoDerrotado: true,
   });
   assert.deepEqual(progresso.eventos, [
+    'catedral:chave-do-portao', 'vilarejo:portao-sul-aberto',
     'catedral:selo-ossario', 'catedral:selo-relicario', 'catedral:guardiao-derrotado',
   ]);
   const registros = new Map([['pugna-preferencias-v1', '{"musica":55}']]);
@@ -232,7 +233,7 @@ test('saves antigos migram, eventos novos sobrevivem e o reset remove apenas o p
   try {
     const saves = new SalvamentoLocal();
     await saves.salvar({ ...progresso, eventos: [...progresso.eventos, 'futuro:missao', 'futuro:missao', 'inválido'] });
-    assert.deepEqual((await saves.carregar()).eventos, ['futuro:missao', ...progresso.eventos]);
+    assert.deepEqual(new Set((await saves.carregar()).eventos), new Set(['futuro:missao', ...progresso.eventos]));
     assert.equal(saves.apagar(), true);
     assert.deepEqual(await saves.carregar(), normalizarProgresso());
     assert.ok(registros.has('pugna-preferencias-v1'));

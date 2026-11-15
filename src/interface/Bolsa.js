@@ -1,4 +1,4 @@
-import { ANOTACOES, CHAVE_SACRISTIA, contarFrascos } from '../nucleo/Inventario.js';
+import { ANOTACOES, ARMAS, ITENS, armaDisponivel, contarFrascos, contarMunicao } from '../nucleo/Inventario.js';
 
 const el = (id) => document.getElementById(id);
 
@@ -7,6 +7,7 @@ export class Bolsa {
     this.jogo = jogo;
     this.usar = el('usar-frasco');
     this.usarOsso = el('usar-osso');
+    this.usarMunicao = el('usar-municao');
     this.fechar = el('fechar-bolsa');
     this.fecharLeitura = el('fechar-leitura');
     el('abrir-bolsa').addEventListener('click', () => jogo.abrirBolsa());
@@ -19,6 +20,7 @@ export class Bolsa {
     this.usarOsso.addEventListener('click', () => {
       el('bolsa-estado').textContent = jogo.usarOsso();
     });
+    this.usarMunicao.addEventListener('click', () => this.informar(jogo.usarMunicao()));
   }
 
   exibir() {
@@ -40,10 +42,40 @@ export class Bolsa {
     const total = contarFrascos(progresso);
     el('bolsa-frascos').textContent = total ? `${total} × Frasco de cura` : 'Nenhum frasco de cura';
     this.usar.disabled = total === 0;
-    const chaves = el('bolsa-chaves');
-    const item = document.createElement('li');
-    item.textContent = progresso.eventos.includes(CHAVE_SACRISTIA) ? 'Chave da sacristia' : 'Nenhum item-chave';
-    chaves.replaceChildren(item);
+    const reserva = contarMunicao(progresso);
+    el('bolsa-municao').textContent = reserva ? 'Munição de reserva: ' + reserva : 'Sem munição de reserva';
+    this.usarMunicao.disabled = reserva === 0;
+    const item = texto => {
+      const linha = document.createElement('li');
+      linha.textContent = texto;
+      return linha;
+    };
+    for (const [id,chave,vazio] of [
+      ['bolsa-chaves',true,'Nenhum item-chave'], ['bolsa-reliquias',false,'Nenhuma relíquia ou melhoria'],
+    ]) {
+      const linhas = Object.entries(ITENS)
+        .filter(([id,d])=>!!d.chave===chave && progresso.eventos.includes(id))
+        .map(([,d])=>item(d.nome+' · '+d.descricao));
+      el(id).replaceChildren(...(linhas.length ? linhas : [item(vazio)]));
+    }
+    const armas=el('bolsa-armas');
+    armas.replaceChildren();
+    for (const [id,arma] of Object.entries(ARMAS)) {
+      if (!armaDisponivel(id,progresso.eventos)) continue;
+      const linha=document.createElement('li'), botao=document.createElement('button');
+      botao.type='button';
+      botao.id='bolsa-arma-'+id;
+      botao.textContent=arma.nome+(progresso.arma===id ? ' · equipada' : '');
+      botao.setAttribute('aria-pressed',String(progresso.arma===id));
+      const desc=document.createElement('p');
+      desc.className='descricao-item';
+      desc.textContent=arma.descricao;
+      botao.addEventListener('click',()=>{
+        this.informar(this.jogo.trocarArma(id));
+        el(botao.id)?.focus();
+      });
+      linha.append(botao,desc); armas.append(linha);
+    }
     const anotacoes = el('bolsa-anotacoes');
     anotacoes.replaceChildren();
     for (const [id, nota] of Object.entries(ANOTACOES)) {

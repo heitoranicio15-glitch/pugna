@@ -354,6 +354,21 @@ export const CONFIG = {
   combate: {
     leve: { dano: 22, custo: 18, preparo: 0.055, ativo: 0.15, recuperacao: 0.27, empurrao: 2.5, alcance: 2.45, arco: 0.94, liberarEsquiva: 0.07 },
     forte: { dano: 58, custo: 32, preparo: 0.11, ativo: 0.19, recuperacao: 0.52, empurrao: 6.5, alcance: 2.65, arco: 0.36, liberarEsquiva: 0.23 },
+    armas: {
+      lamina: {
+        leve: { dano: 16, custo: 13, preparo: 0.044, ativo: 0.115, recuperacao: 0.19, empurrao: 1.7, alcance: 1.72, arco: 1.05, liberarEsquiva: 0.06 },
+        forte: { dano: 40, custo: 25, preparo: 0.09, ativo: 0.15, recuperacao: 0.39, empurrao: 3.8, alcance: 1.88, arco: 0.44, liberarEsquiva: 0.16 },
+      },
+      maca: {
+        leve: { dano: 28, custo: 23, preparo: 0.13, ativo: 0.17, recuperacao: 0.39, empurrao: 3.8, alcance: 2.20, arco: 0.73, liberarEsquiva: 0.16 },
+        forte: { dano: 63, custo: 37, preparo: 0.23, ativo: 0.20, recuperacao: 0.69, empurrao: 8.2, alcance: 2.35, arco: 0.38, liberarEsquiva: 0.32, quebraFirmeza: true },
+      },
+      lanca: {
+        leve: { dano: 19, custo: 20, preparo: 0.103, ativo: 0.17, recuperacao: 0.29, empurrao: 2.1, alcance: 3.15, arco: 0.16, liberarEsquiva: 0.14 },
+        forte: { dano: 51, custo: 33, preparo: 0.18, ativo: 0.20, recuperacao: 0.55, empurrao: 5.5, alcance: 3.50, arco: 0.11, liberarEsquiva: 0.30 },
+      },
+    },
+    reliquiaBonusEstamina: 0.06,
     tempoSegurarForte: 0.32, // segurar o clique por mais que isso vira ataque forte
     tempoMaximoCarga: 1.4,
     filaAtaque: 0.22,

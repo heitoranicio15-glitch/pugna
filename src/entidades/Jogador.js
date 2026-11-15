@@ -6,6 +6,7 @@
 // =============================================================================
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
+import { fichaDeGolpe } from '../nucleo/Inventario.js';
 import { alcancaPisada, pelasCostas } from './Furtividade.js';
 import {
   seguirPonto, inclinacaoDaMira, focoDaMira, distanciaDaMira, acomodar, difAngulo, recentralizar, desvioDeParede,
@@ -35,6 +36,7 @@ export class Jogador {
 
   /** Coloca o jogador num ponto, com vida e estamina cheias. */
   reiniciar(x, z, yaw, y = 0) {
+    this.armaEquipada ??= 'espada';
     this.pos.set(x, y, z); this.vel.set(0, 0, 0);
     this.pivo?.copy(this.pos); this.pivoAlvo?.copy(this.pos);   // teletransporte: a câmera não vem deslizando
     this.yaw = yaw; this.pitch = CAM.inclinacaoInicial; this.rumo = yaw;
@@ -149,7 +151,7 @@ export class Jogador {
     this.esquivaNaFila -= dt;
     if (querEsquivar) this.esquivaNaFila = CB.filaEsquiva;
     // A esquiva corta o fim de um golpe ou do tiro, depois de "liberarEsquiva".
-    const podeCancelar = (this.acao === 'recuperacao' && this.tAcao + dt >= CB[this.ataque].liberarEsquiva) ||
+    const podeCancelar = (this.acao === 'recuperacao' && this.tAcao + dt >= fichaDeGolpe(this.armaEquipada,this.ataque).liberarEsquiva) ||
       (this.acao === 'tiro' && this.tAcao + dt >= CB.pistola.liberarEsquiva);
     // Com a mira travada a esquiva vira quickstep: passo curto, mais barato, com
     // menos invencibilidade e recuperação curta. Sem mira, é o rolamento.
@@ -266,7 +268,8 @@ export class Jogador {
     // ---------- estamina volta com o tempo ----------
     this.esperaEstamina -= dt;
     if (this.esperaEstamina <= 0 && !this.carregando) {
-      this.estamina = Math.min(C.estaminaMax, this.estamina + C.estaminaRegen * dt);
+      const fator = this.temReliquia ? 1 + CB.reliquiaBonusEstamina : 1;
+      this.estamina = Math.min(C.estaminaMax, this.estamina + C.estaminaRegen * fator * dt);
     }
     if (this.exausto && this.estamina > 25) this.exausto = false;
 
@@ -378,7 +381,7 @@ export class Jogador {
     this.tAcao += dt;
     this.ataqueNaFila -= dt;
     if (this.ataque) {
-      const a = CB[this.ataque];
+      const a = fichaDeGolpe(this.armaEquipada,this.ataque);
       if (this.acao === 'preparo' && this.tAcao >= a.preparo) {
         this.acao = 'ativo';
         this.tAcao -= a.preparo;
@@ -519,7 +522,8 @@ export class Jogador {
     const desatento = this.alvoDasCostas();
     if (desatento) { this.iniciarVisceral(desatento, true); return; }
     this.agachado = false;
-    if (this.exausto || this.estamina < CB[tipo].custo) {
+    const golpe = fichaDeGolpe(this.armaEquipada,tipo);
+    if (this.exausto || this.estamina < golpe.custo) {
       this.jogo.eventos.emitir('jogador:sem-estamina');
       return;
     }
@@ -529,7 +533,7 @@ export class Jogador {
     this.yawGolpe = this.rumo;
     this.contatoParede = null;
     this.alvosDoGolpe.clear();
-    this.gastar(CB[tipo].custo);
+    this.gastar(golpe.custo);
     // Carga do forte: 0 ao soltar logo depois de virar forte, 1 na carga máxima.
     this.cargaGolpe = tipo === 'forte'
       ? THREE.MathUtils.clamp((this.tCarga - CB.tempoSegurarForte) / (CB.tempoMaximoCarga - CB.tempoSegurarForte), 0, 1)
@@ -641,7 +645,9 @@ export class Jogador {
         const dano = forte ? a.dano * (1 + (K.multiplicadorMax - 1) * this.cargaGolpe) : a.dano;
         const critico = i.receberDano(dano, { x, z }, a.empurrao, forte) === 'critico';
         // Carga completa pelas costas: o inimigo fica desequilibrado e abre o visceral.
-        if (forte && K.abrePelasCostas && !critico && this.cargaGolpe >= K.completa && !i.morto &&
+        if (a.quebraFirmeza && i.estado === 'atordoado' && !i.cfg?.chefe && !i.morto && this.cargaGolpe >= K.completa) {
+          i.desequilibrar?.();
+        } else if (forte && K.abrePelasCostas && !critico && this.cargaGolpe >= K.completa && !i.morto &&
             typeof i.desequilibrar === 'function' &&
             (Math.sin(i.angulo) * dx + Math.cos(i.angulo) * dz) / (Math.hypot(dx, dz) || 1e-4) > -K.costas) {
           i.desequilibrar({ pelasCostas: true });
@@ -702,7 +708,7 @@ export class Jogador {
     if (!curando && !atacando) return false;
     if (atacando && this.ataque === 'forte' && dano <= I.armaduraForte.danoMax) {
       const firme = this.acao === 'ativo' ||
-        (this.acao === 'preparo' && this.tAcao >= CB.forte.preparo * I.armaduraForte.aPartirDe);
+        (this.acao === 'preparo' && this.tAcao >= fichaDeGolpe(this.armaEquipada,'forte').preparo * I.armaduraForte.aPartirDe);
       if (firme) { this.jogo.eventos.emitir('jogador:aguentou'); return false; }
     }
     this.acao = 'atordoado'; this.tAcao = 0; this.tAtordoado = I.cambaleio;

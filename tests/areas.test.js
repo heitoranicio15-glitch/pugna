@@ -11,6 +11,7 @@ import { Navegacao } from '../src/mundo/Navegacao.js';
 import { xEmZ } from '../src/mundo/PaisagemExterior.js';
 import { alvoProximo } from '../src/mundo/Interacoes.js';
 import { criarNpcs } from '../src/entidades/Npc.js';
+import { CHAVE_PORTAO, PORTAO_SUL_ABERTO } from '../src/nucleo/Progressao.js';
 
 // Área "de mentira": objeto simples que segue o contrato.
 function areaFalsa(id, outra, pontos) {
@@ -541,7 +542,9 @@ test('save antigo (sem a floresta) carrega e renasce onde renascia; a lanterna n
     });
     assert.equal(antigo.descanso, descanso);
     assert.equal(checkpoints.get(antigo.descanso).area.id, area, descanso);
-    assert.deepEqual(antigo.eventos.sort(), ['catedral:selo-ossario', 'taverna:bilhete-da-mesa']);
+    const esperados=['catedral:selo-ossario', 'taverna:bilhete-da-mesa'];
+    if(area==='estrada') esperados.push(CHAVE_PORTAO,PORTAO_SUL_ABERTO);
+    assert.deepEqual(antigo.eventos.sort(), esperados.sort());
     assert.ok(!antigo.eventos.some((e) => e.startsWith('floresta:')), 'o save antigo não ganha nada da floresta');
   }
   // Formato mais antigo ainda: sem `eventos` nem `descanso`.
@@ -551,7 +554,7 @@ test('save antigo (sem a floresta) carrega e renasce onde renascia; a lanterna n
   // Quem descansou na clareira da floresta renasce lá.
   const novo = normalizarProgresso({ descanso: 'floresta-clareira' });
   assert.equal(checkpoints.get(novo.descanso).area.id, 'floresta');
-  assert.deepEqual(novo.eventos, [], 'entrar na floresta não grava evento nenhum (o save não muda de formato)');
+  assert.deepEqual(novo.eventos, [CHAVE_PORTAO,PORTAO_SUL_ABERTO], 'a migração preserva o acesso exterior');
 });
 
 test('a ponta sul da estrada tem a trilha, as placas e a pista livre; a carroça virou cenário', () => {

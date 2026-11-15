@@ -118,6 +118,12 @@ async function validarEstradaETaverna() {
   await prepararCombate();
   await posicionar(0, 54.6);
   await passos();
+  assert.match((await estado()).aviso, /selo do Guardião/);
+  await page.evaluate(() => jogo.registrarEvento('catedral:chave-do-portao'));
+  await passos();
+  assert.match((await estado()).aviso, /girar a Chave/);
+  await tecla('e');
+  await passos(29);
   assert.match((await estado()).aviso, /sair pelo Portão Sul/);
   await tecla('e');
   assert.equal((await estado()).area, 'estrada');
@@ -615,11 +621,17 @@ try {
   assert.equal((await estado()).area, 'catedral');
   assert.equal((await estado()).grade, false);
   assert.equal((await estado()).guardiao.morto, true);
-  assert.deepEqual(await page.evaluate((chave) => JSON.parse(localStorage.getItem(chave)), chave), {
+  const salvo = await page.evaluate((chave) => JSON.parse(localStorage.getItem(chave)), chave);
+  assert.deepEqual({
+    descanso:salvo.descanso, selos:salvo.selos, guardiaoDerrotado:salvo.guardiaoDerrotado,
+    frascosUsados:salvo.frascosUsados, eventos:salvo.eventos,
+  }, {
     descanso: 'nave-do-veu', selos: ['ossario', 'relicario'], guardiaoDerrotado: true,
     frascosUsados: 0,
     eventos: ['catedral:selo-ossario', 'catedral:selo-relicario', 'catedral:guardiao-derrotado'],
   });
+  assert.equal(salvo.versaoProgressao,2);
+  assert.ok(Number.isFinite(salvo.quedaGuardiao?.z));
 
   await page.evaluate((chave) => localStorage.setItem(chave, JSON.stringify({ descanso: 'adro-da-igreja' })), chave);
   await comecar();
