@@ -343,6 +343,34 @@ function pedraDasQuinas() {
   }));
 }
 
+function bronzeDoSino() {
+  const r = criarSorteio(532);
+  return prepararPiso(pintarTextura(128, (x, y) => {
+    const angulo = x * Math.PI / 64;
+    const manchas = Math.sin(7 * angulo + y * 0.17) * Math.cos(3 * angulo - y * 0.23);
+    const escorrido = Math.sin(19 * angulo + 0.48 * Math.sin(y * 0.09)) * 0.09;
+    const poro = r();
+    const grao = 0.91 + 0.17 * poro + escorrido;
+    const patina = THREE.MathUtils.smoothstep(manchas + poro * 0.21 + escorrido, 0.34, 0.91);
+    const fundicao = y % 21 < 2 ? [146, 106, 64] : [129, 95, 62];
+    const oxidado = [79, 103, 84];
+    return fundicao.map((canal, i) => THREE.MathUtils.lerp(canal, oxidado[i], patina) * grao);
+  }));
+}
+
+function ceramicaDaCripta() {
+  const r = criarSorteio(533);
+  return prepararPiso(pintarTextura(128, (x, y) => {
+    const poro = r();
+    const veio = 0.054 * Math.cos(x * Math.PI / 16 - y * 0.39);
+    const grao = 0.92 + poro * 0.21 + veio - (poro < 0.033 ? 0.24 : 0);
+    const losango = Math.abs(x % 16 - 7.5) + Math.abs(y - 51);
+    if (y === 39 || y === 63 || Math.abs(losango - 6.5) < 1.5) return mult([183, 151, 125], grao);
+    if ((y > 40 && y < 63) || y === 23 || y === 85) return mult([101, 77, 65], grao);
+    return mult([144, 119, 103], grao * (y > 96 ? 0.87 : 1));
+  }));
+}
+
 /** Mancha redonda e suave: usada em brilhos, chamas e névoa. */
 function brilho() {
   return pintarTextura(32, () => [255, 255, 255], (x, y) => {
@@ -430,6 +458,7 @@ export function texturas() {
       vitralVeuAzul: vitralDoVeu(false), vitralVeuAmbar: vitralDoVeu(true),
       cantariaVeu: cantariaDoVeu(), lajesNave: lajesDaNave(), corredorVeu: corredorDoVeu(),
       mosaicoAlas: mosaicoDasAlas(), estandarteVeu: estandarteDoVeu(), quinaGaleria: pedraDasQuinas(),
+      bronzeSino: bronzeDoSino(), ceramicaCripta: ceramicaDaCripta(),
       brilho: brilho(), nevoa: nevoa(), sombra: sombra(), riacho: riacho(), feixe: feixe(),
     };
     cache.assoalho = prepararPiso(cache.madeira.clone());

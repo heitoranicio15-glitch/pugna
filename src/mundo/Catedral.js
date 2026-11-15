@@ -13,6 +13,7 @@ import { montarCenasCatedral, nivelCatedral, visivelNaCatedral } from './CenasCa
 import { montarEspoliosCatedral } from './Espolios.js';
 import { criarVitraisDoVeu, modeloBancoDaNave, montarLuzesDaNave } from './AcabamentoCatedral.js';
 import { montarAlasDosSelos } from './AlasDosSelos.js';
+import { montarBronzeECripta } from './BronzeECripta.js';
 
 const C = CONFIG.areas.catedral;
 
@@ -150,7 +151,8 @@ export class Catedral {
     ]) {
       grupoDa(sala).add(vitral(i, x, y, z, rot));
     }
-    this.poeira = montarCenasCatedral(this, metal, C.feixes);
+    montarBronzeECripta(this, m, metal, C.luzesDoBronzeECripta);
+    this.poeira = montarCenasCatedral(this, C.feixes);
     this.posicionarEspolio = montarEspoliosCatedral(this);
     this.posicionarEspolio({});
     this.caixasDosSetores = new Map([...this.setores].map(([sala, g]) => [sala, new THREE.Box3().setFromObject(g)]));
