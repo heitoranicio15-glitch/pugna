@@ -14,7 +14,7 @@ const MESAS = [
   ['galeria-oeste', 'nomes-na-passarela', -9.66, 5.52, -14.2, Math.PI / 2],
 ];
 
-export function montarCenasCatedral(mundo, bronze, feixes) {
+export function montarCenasCatedral(mundo, feixes) {
   const m = materiais();
   for (const [sala, id, x, y, z, giro] of MESAS) {
     const evento = 'catedral:' + id;
@@ -32,41 +32,16 @@ export function montarCenasCatedral(mundo, bronze, feixes) {
   for (const [sala,x,y,z] of [
     ['capela',-34,1,-13], ['arquivo',34,1,-13], ['refeitorio',-26,0.86,-26.8],
     ['cabido',26,0.86,-26.8], ['abside',1.5,1.5,-63.75], ['abside',-1.5,1.5,-63.75],
-    ['cela',-28,-3.48,31], ['cripta',-23,-3.2,33.5],
+    ['cela',-28,-3.48,31],
   ]) {
     porVela(sala,x,y,z);
     porVela(sala,x+0.21,y,z-0.13);
   }
   for (const [sala,p] of velas) p.montar(mundo.setores.get(sala),'velas de vigília');
 
-  const cripta = mundo.setores.get('cripta');
-  const urnaGeo = new THREE.LatheGeometry([
-    [0,0],[0.27,0],[0.48,0.29],[0.38,0.59],[0.31,0.66],[0.39,0.68],[0.31,0.8],[0,0.8],
-  ].map(([x,y])=>new THREE.Vector2(x,y)),10);
-  const urnas = new THREE.InstancedMesh(urnaGeo,m.pedraEscura,5), matriz = new THREE.Matrix4();
-  for (let i=0;i<5;i++) {
-    const x=-23+i*2, z=33.5+(i%2)*0.25;
-    urnas.setMatrixAt(i,matriz.makeTranslation(x,-4,z));
-    mundo.colisores.adicionar(x,z,0.9,0.9,-3.2,-4);
-  }
-  cripta.add(urnas);
-
   const cela = mundo.setores.get('cela');
   bloco(cela,m.madeiraEscura,-28, -3.74, 31, 1.05,0.52,2.1);
   mundo.colisores.adicionar(-28,31,1.05,2.1,-3.48,-4);
-
-  // O bronze ocupa o alto da torre, com a corda cortada ainda presa ao badalo.
-  const torre = mundo.setores.get('torre');
-  const sino = new THREE.Mesh(new THREE.LatheGeometry([
-    [0.81,0],[0.95,0],[0.91,0.15],[0.71,0.28],[0.46,0.93],
-    [0.37,1.13],[0.19,1.26],[0,1.28],[0,1.14],[0.35,1.08],[0.48,0.53],[0.73,0.12],[0.81,0],
-  ].map(([x,y])=>new THREE.Vector2(x,y)),20),bronze);
-  sino.position.set(18.8,10.28,13.1);
-  torre.add(sino);
-  bloco(torre,m.madeiraEscura,18.8,11.97,13.1,0.24,0.8,0.24);
-  bloco(torre,m.madeiraEscura,18.8,12.75,13.1,7.45,0.36,0.27);
-  bloco(torre,bronze,18.8,10.29,13.1,0.18,0.48,0.18);
-  bloco(torre,m.madeiraEscura,18.8,9.93,13.1,0.045,0.24,0.042);
 
   const poeira = [];
   for (const [i,feixe] of feixes.entries()) {

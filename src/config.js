@@ -113,6 +113,10 @@ export const CONFIG = {
         { lote: 'escada-da-galeria', x: 13.73, y: 3.47, z: 19.2, parede: true, cor: 0xffbd8f, intensidade: 14, alcance: 8.5 },
         { lote: 'galeria-ponte', x: 0, y: 5.22, z: -24.875, cor: 0xffcf9f, intensidade: 17, alcance: 10 },
       ],
+      luzesDoBronzeECripta: {
+        torre: { x: 17.08, y: 10.29, z: 11.26, cor: 0xffc696, intensidade: 12, alcance: 6.5 },
+        cripta: { x: -20.65, y: -2.83, z: 34.71, cor: 0xffc18d, intensidade: 17, alcance: 8.7 },
+      },
       feixes: [
         { origem: [18, 4.85, -16.61], destino: [13, 0.08, -11.8], largura: 1.25, cor: 0xa2bfff, opacidade: 0.125 },
         { origem: [0, 6.55, -64.61], destino: [-6.8, 0.08, -58.3], largura: 2.5, cor: 0xb391ee, opacidade: 0.08 },

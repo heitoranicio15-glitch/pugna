@@ -95,3 +95,7 @@ dos estandartes são texturas procedurais do projeto.
 
 As lanternas da galeria foram modeladas no código do PUGNA. A pedra
 clara das bordas dos degraus e guarda-corpos é uma textura procedural.
+
+O sino, a suspensão, as cordas, as urnas e o friso da Cripta foram
+modelados no código do PUGNA. A pátina do sino e as faixas de
+cerâmica das urnas são texturas procedurais do projeto.

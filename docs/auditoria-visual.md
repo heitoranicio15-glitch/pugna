@@ -164,3 +164,19 @@ Contagens de quadros isolados em PS1 e HD, no Chrome com GPU por
 software. O percurso foi conferido em movimento nos dois modos,
 incluindo as escadas da Torre e da Cripta. Nas partes distantes das
 lanternas, as paredes e o piso continuam escuros.
+
+Na quinta etapa, o sino ganha pátina, frisos, badalo e cordas cortadas.
+As vigas e ferragens mostram a ligação do sino com as paredes da torre.
+Na Cripta, as cinco urnas mantêm seus colisores. Dois perfis de cerâmica
+usam a mesma textura e variam em cor. Um friso de cantaria e um grupo
+de velas marcam a fileira sem encobrir a placa do registro.
+
+| Vista | Chamadas antes → depois | Triângulos antes → depois |
+| --- | ---: | ---: |
+| Sala do Bronze | 18 → 23 | 1.510 → 3.114 |
+| Cripta das Urnas | 25 → 31 | 41.692 → 43.604 |
+| Fileira de urnas de perto | 24 → 30 | 41.460 → 43.372 |
+
+Contagens de quadros isolados em PS1 e HD no Chrome com GPU por
+software. Cada sala usa uma luz local sem sombras. As urnas no
+extremo da fileira recebem menos luz direta.

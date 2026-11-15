@@ -51,6 +51,12 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Polimento da Catedral, quinta etapa.** O sino da Sala do Bronze
+  tem boca espessa, frisos, pátina, badalo e duas pontas de corda.
+  Vigas, escoras e ferragens mostram como ele se prende à torre. As
+  cinco urnas da Cripta variam em altura e cor, com tampas e faixas
+  geométricas. Um friso de cantaria e velas de parede destacam a fileira.
+
 - **Polimento da Catedral, quarta etapa.** A galeria ganhou degraus
   com bordas de pedra clara e guarda-corpos com coroamento contínuo.
   Duas lanternas de bronze marcam a subida e a travessia da ponte.
@@ -414,7 +420,8 @@ registra o que falta e a ordem sugerida.
 - [x] **Polimento 2:** pedra, piso e luz da nave e do transepto, com leitura clara do corredor.
 - [x] **Polimento 3:** materiais, iluminação e mobiliário do Ossário e do Relicário.
 - [x] **Polimento 4:** melhorar a leitura da galeria, das passarelas e das escadas existentes.
-- [ ] **Polimento 5:** detalhar a Sala do Bronze e a Cripta das Urnas.
+- [x] **Polimento 5:** detalhar a Sala do Bronze e a Cripta das Urnas.
+- [ ] **Polimento 6:** refinar o Coro e a Abside, incluindo o entorno do altar.
 - [ ] Aplicar o padrão visual aos demais ambientes já jogáveis.
 
 - [x] **Prompt 8 / 1A:** kit modular e planta maior do térreo.
