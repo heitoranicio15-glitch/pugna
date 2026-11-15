@@ -55,3 +55,38 @@ export function criarVitraisDoVeu() {
     return vitral;
   };
 }
+
+export function montarLuzesDaNave(nave, transepto, m, metal, { candelabro, grade }) {
+  const suspenso = juntarPorMaterial();
+  const { y, z } = candelabro;
+  const aro = new THREE.TorusGeometry(0.78, 0.035, 5, 20).rotateX(Math.PI / 2);
+  suspenso.geometria(aro.translate(0, y, z), metal);
+  suspenso.caixa(0, (y + 10) / 2, z, 0.045, 10 - y, 0.045, metal);
+  for (let i = 0; i < 6; i++) {
+    const angulo = (i / 6) * Math.PI * 2;
+    const x = Math.cos(angulo) * 0.78;
+    const dz = z + Math.sin(angulo) * 0.78;
+    suspenso.caixa(x / 2, y, (z + dz) / 2, 0.8, 0.028, 0.03, metal, -angulo);
+    suspenso.caixa(x, y + 0.105, dz, 0.07, 0.17, 0.07, m.pedraEscura);
+    const chama = new THREE.OctahedronGeometry(0.052).scale(0.64, 1.25, 0.64);
+    suspenso.geometria(chama.translate(x, y + 0.24, dz), m.chama);
+  }
+  suspenso.montar(nave, 'Candelabro da nave');
+
+  const arandelas = juntarPorMaterial();
+  for (const x of [-2.25, 2.25]) {
+    arandelas.caixa(x, grade.y - 0.09, grade.z, 0.19, 0.14, 0.29, metal);
+    arandelas.caixa(x, grade.y + 0.04, grade.z + 0.13, 0.075, 0.13, 0.075, m.pedraEscura);
+    const chama = new THREE.OctahedronGeometry(0.048).scale(0.65, 1.3, 0.65);
+    arandelas.geometria(chama.translate(x, grade.y + 0.16, grade.z + 0.13), m.chama);
+  }
+  arandelas.montar(transepto, 'Velas da grade');
+
+  // Uma luz por conjunto de velas. As demais chamas são emissivas.
+  const luzNave = new THREE.PointLight(candelabro.cor, candelabro.intensidade, candelabro.alcance);
+  luzNave.position.set(0, y - 0.16, z);
+  nave.add(luzNave);
+  const luzGrade = new THREE.PointLight(grade.cor, grade.intensidade, grade.alcance);
+  luzGrade.position.set(0, grade.y, grade.z + 0.65);
+  transepto.add(luzGrade);
+}

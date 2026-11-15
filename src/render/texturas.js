@@ -245,6 +245,55 @@ function vitralDoVeu(ambar) {
   return prepararPiso(tex);
 }
 
+function cantariaDoVeu() {
+  const r = criarSorteio(509);
+  const tons = Array.from({ length: 12 }, () => 0.82 + r() * 0.28);
+  return prepararPiso(pintarTextura(128, (x, y) => {
+    const fiada = Math.floor(y / 32);
+    const deslocado = (x + (fiada % 2) * 19) % 128;
+    const bloco = Math.floor(deslocado / 43);
+    const linha = y % 32;
+    const borda = deslocado % 43;
+    const relevo = Math.sin(x * 0.43 + y * 0.27) * Math.cos(y * 0.51);
+    const poro = r();
+    if (linha < 2 || borda < 2) return mult([43, 41, 48], 0.89 + poro * 0.24);
+    const quina = linha < 4 || borda < 4 ? 1.14 : linha > 28 || borda > 39 ? 0.76 : 1;
+    const grao = 0.94 + poro * 0.15 + relevo * 0.09 - (poro < 0.045 ? 0.16 : 0);
+    return mult([118, 113, 119], tons[fiada * 3 + bloco] * quina * grao);
+  }));
+}
+
+function lajesDaNave() {
+  const r = criarSorteio(510);
+  return prepararPiso(pintarTextura(128, (x, y) => {
+    const linha = y % 32;
+    const borda = (x + (Math.floor(y / 32) % 2) * 32) % 64;
+    const grao = 0.87 + r() * 0.16 + 0.08 * Math.sin(x * 0.2 - y * 0.19);
+    if (linha < 2 || borda < 2) return mult([39, 39, 51], grao);
+    const quina = linha < 4 || borda < 4 ? 1.15 : linha > 28 || borda > 59 ? 0.72 : 1;
+    return mult([89, 91, 107], grao * quina);
+  }));
+}
+
+function corredorDoVeu() {
+  const r = criarSorteio(511);
+  const tex = prepararPiso(pintarTextura(128, (x, y) => {
+    const distanciaDaBorda = Math.min(x, 127 - x);
+    const junta = y % 32;
+    const grao = 0.88 + r() * 0.16 + 0.07 * Math.sin((x - y) * 0.29);
+    if (distanciaDaBorda < 2 || junta < 2) return mult([43, 38, 45], grao);
+    if (distanciaDaBorda === 5 || distanciaDaBorda === 11) return mult([157, 115, 76], grao);
+    if (distanciaDaBorda > 5 && distanciaDaBorda < 11) {
+      const losango = Math.abs(junta % 16 - 8) + Math.abs(distanciaDaBorda - 8);
+      return mult(losango <= 3 ? [179, 145, 101] : [64, 52, 63], grao);
+    }
+    const bisel = junta < 4 ? 1.12 : junta > 29 ? 0.8 : 1;
+    return mult([121, 116, 122], grao * bisel);
+  }));
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  return tex;
+}
+
 /** Mancha redonda e suave: usada em brilhos, chamas e névoa. */
 function brilho() {
   return pintarTextura(32, () => [255, 255, 255], (x, y) => {
@@ -330,6 +379,7 @@ export function texturas() {
       terra: prepararPiso(terra()), metal: metal(), tecido: tecido(), trama: trama(),
       janelaAcesa: janela(true), janelaApagada: janela(false), vitral: vitral(),
       vitralVeuAzul: vitralDoVeu(false), vitralVeuAmbar: vitralDoVeu(true),
+      cantariaVeu: cantariaDoVeu(), lajesNave: lajesDaNave(), corredorVeu: corredorDoVeu(),
       brilho: brilho(), nevoa: nevoa(), sombra: sombra(), riacho: riacho(), feixe: feixe(),
     };
     cache.assoalho = prepararPiso(cache.madeira.clone());

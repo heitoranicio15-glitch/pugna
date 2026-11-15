@@ -53,6 +53,29 @@ export function facesDoKit(volumes) {
   return faces;
 }
 
+const MEIA_LARGURA_CORREDOR = 1.4;
+const FAIXA_CORREDOR = [-29, -MEIA_LARGURA_CORREDOR, 11, MEIA_LARGURA_CORREDOR];
+
+function acabamentoDaNave(face) {
+  if (!['nave', 'nave-oeste', 'nave-leste', 'transepto'].includes(face.lote)) return [face];
+  if (face.material === 'pedra') return [{ ...face, material: 'cantariaVeu' }];
+  if (face.material === 'pedraMusgo') return [{ ...face, material: 'cantariaUmidaVeu' }];
+  if (face.material !== 'lajes' || face.eixo !== 1 || face.sinal !== 1 || face.cota !== 0) return [face];
+  const piso = { ...face, material: 'lajesNave' };
+  if (face.lote !== 'nave' && face.lote !== 'transepto') return [piso];
+
+  // Nas faces horizontais, u é Z e v é X. O corredor ocupa parte da face
+  // original, no mesmo plano, sem sobrepor lajes nem criar outro colisor.
+  const [z, x, Z, X] = face.ret;
+  const [z0, x0, z1, x1] = FAIXA_CORREDOR;
+  const centro = [Math.max(z, z0), Math.max(x, x0), Math.min(Z, z1), Math.min(X, x1)];
+  if (centro[0] >= centro[2] || centro[1] >= centro[3]) return [piso];
+  return [
+    ...recortar(face.ret, centro).map(ret => ({ ...piso, ret })),
+    { ...face, ret: centro, material: 'corredorVeu' },
+  ];
+}
+
 export function montarKit(mundo, volumes, vaos) {
   const m = materiais(), lotes = new Map();
   const pegar = (sala) => {
@@ -61,7 +84,7 @@ export function montarKit(mundo, volumes, vaos) {
   };
   // UV em coordenadas globais: a mesma pedra continua no módulo vizinho.
   const malhas = new Map();
-  for (const { eixo, sinal, cota, lote, material, ret: [u0, v0, u1, v1] } of facesDoKit(volumes)) {
+  for (const { eixo, sinal, cota, lote, material, ret: [u0, v0, u1, v1] } of facesDoKit(volumes).flatMap(acabamentoDaNave)) {
     const id = `${lote}:${material}`;
     if (!malhas.has(id)) malhas.set(id, { lote, material, pos: [], uv: [] });
     const { pos, uv } = malhas.get(id);
@@ -71,7 +94,11 @@ export function montarKit(mundo, volumes, vaos) {
       const [u, v] = cantos[i], p = [];
       p[eixo] = cota; p[(eixo + 1) % 3] = u; p[(eixo + 2) % 3] = v;
       pos.push(...p);
-      uv.push(...(eixo === 0 ? [v / ladrilho, u / ladrilho] : [u / ladrilho, v / ladrilho]));
+      if (material === 'corredorVeu') {
+        uv.push((v + MEIA_LARGURA_CORREDOR) / (2 * MEIA_LARGURA_CORREDOR), u / 2.8);
+      } else {
+        uv.push(...(eixo === 0 ? [v / ladrilho, u / ladrilho] : [u / ladrilho, v / ladrilho]));
+      }
     }
   }
   for (const { lote, material, pos, uv } of malhas.values()) {
