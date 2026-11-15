@@ -51,6 +51,12 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Polimento da Catedral, sexta etapa.** A faixa de pedra da nave
+  continua pelo Coro. Painéis de madeira e arandelas marcam a passagem
+  para o Santuário. Na Abside, um mosaico antecede o estrado, com
+  degraus de quinas claras e altar de cantaria, tecido bordado e
+  castiçais. O Juramento fica no ponto de leitura original.
+
 - **Polimento da Catedral, quinta etapa.** O sino da Sala do Bronze
   tem boca espessa, frisos, pátina, badalo e duas pontas de corda.
   Vigas, escoras e ferragens mostram como ele se prende à torre. As
@@ -421,7 +427,8 @@ registra o que falta e a ordem sugerida.
 - [x] **Polimento 3:** materiais, iluminação e mobiliário do Ossário e do Relicário.
 - [x] **Polimento 4:** melhorar a leitura da galeria, das passarelas e das escadas existentes.
 - [x] **Polimento 5:** detalhar a Sala do Bronze e a Cripta das Urnas.
-- [ ] **Polimento 6:** refinar o Coro e a Abside, incluindo o entorno do altar.
+- [x] **Polimento 6:** refinar o Coro e a Abside, incluindo o entorno do altar.
+- [ ] **Polimento 7:** detalhar o Claustro e a Sacristia, incluindo os atalhos existentes.
 - [ ] Aplicar o padrão visual aos demais ambientes já jogáveis.
 
 - [x] **Prompt 8 / 1A:** kit modular e planta maior do térreo.

@@ -180,3 +180,20 @@ de velas marcam a fileira sem encobrir a placa do registro.
 Contagens de quadros isolados em PS1 e HD no Chrome com GPU por
 software. Cada sala usa uma luz local sem sombras. As urnas no
 extremo da fileira recebem menos luz direta.
+
+Na sexta etapa, a faixa central continua no Coro e leva ao arco do
+meio. As arandelas marcam a passagem, enquanto os painéis de madeira
+ficam nas laterais. Um mosaico de rosácea ocupa parte do piso da Abside
+antes dos três degraus. O altar ganhou cantaria, tecido e castiçais.
+O percurso, as alturas do estrado e a leitura do Juramento foram
+conferidos em PS1 e HD.
+
+| Vista | Chamadas antes → depois | Triângulos antes → depois |
+| --- | ---: | ---: |
+| Coro em direção ao Santuário | 51 → 63 | 41.056 → 42.450 |
+| Chegada à Abside | 26 → 30 | 2.613 → 3.375 |
+| Altar de perto | 23 → 26 | 2.574 → 3.332 |
+
+Contagens de quadros isolados em PS1 e HD, no Chrome com renderização
+por software. As duas luzes são locais e sem sombras. Os painéis nas
+laterais do Coro ficam mais discretos que a faixa central e os arcos.

@@ -371,6 +371,34 @@ function ceramicaDaCripta() {
   }));
 }
 
+function mosaicoDoAltar() {
+  const r = criarSorteio(534);
+  return prepararPiso(pintarTextura(128, (x, y) => {
+    const u = x - 63.5, v = y - 63.5;
+    const raio = Math.hypot(u, v);
+    const angulo = Math.atan2(v, u);
+    const junta = x % 8 === 0 || y % 8 === 0;
+    const filete = Math.abs(raio - 46) < 1.4 || Math.abs(raio - 39) < 1.35;
+    const flor = raio < 35 && raio > 12 && Math.abs(raio - 25 - 9 * Math.cos(angulo * 8)) < 2.35;
+    const canto = Math.max(Math.abs(u), Math.abs(v));
+    const base = canto > 57 && canto < 60 || filete || flor || raio < 7
+      ? [167, 140, 101] : raio < 46 ? [89, 103, 123] : [68, 73, 86];
+    return mult(base, (junta ? 0.68 : 0.92) + r() * 0.19);
+  }));
+}
+
+function tecidoDoAltar() {
+  const r = criarSorteio(535);
+  return prepararPiso(pintarTextura(128, (x, y) => {
+    const raio = Math.hypot((x - 63.5) * 3.4, y - 60);
+    const borda = Math.min(x * 3.4, (127 - x) * 3.4, y, 127 - y);
+    const cruz = (Math.abs(x - 63.5) < 1 || Math.abs(y - 60) < 1.5) && raio < 20;
+    const dourado = Math.abs(raio - 32) < 2 || Math.abs(raio - 24) < 1.3 || cruz || (borda > 5 && borda < 8);
+    const trama = 0.85 + r() * 0.19 + (y % 2) * 0.05 + Math.cos(x * 0.36) * 0.07;
+    return mult(dourado ? [180, 146, 102] : [105, 47, 58], trama);
+  }));
+}
+
 /** Mancha redonda e suave: usada em brilhos, chamas e névoa. */
 function brilho() {
   return pintarTextura(32, () => [255, 255, 255], (x, y) => {
@@ -459,6 +487,7 @@ export function texturas() {
       cantariaVeu: cantariaDoVeu(), lajesNave: lajesDaNave(), corredorVeu: corredorDoVeu(),
       mosaicoAlas: mosaicoDasAlas(), estandarteVeu: estandarteDoVeu(), quinaGaleria: pedraDasQuinas(),
       bronzeSino: bronzeDoSino(), ceramicaCripta: ceramicaDaCripta(),
+      mosaicoAltar: mosaicoDoAltar(), tecidoAltar: tecidoDoAltar(),
       brilho: brilho(), nevoa: nevoa(), sombra: sombra(), riacho: riacho(), feixe: feixe(),
     };
     cache.assoalho = prepararPiso(cache.madeira.clone());
