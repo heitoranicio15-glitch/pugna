@@ -14,6 +14,7 @@ import { montarEspoliosCatedral } from './Espolios.js';
 import { criarVitraisDoVeu, modeloBancoDaNave, montarLuzesDaNave } from './AcabamentoCatedral.js';
 import { montarAlasDosSelos } from './AlasDosSelos.js';
 import { montarBronzeECripta } from './BronzeECripta.js';
+import { montarCoroEAbside } from './CoroEAbside.js';
 
 const C = CONFIG.areas.catedral;
 
@@ -136,12 +137,7 @@ export class Catedral {
     montarSacristia(this);
     montarAtalhoCripta(this);
 
-    // Degraus disjuntos e com espelho baixo, de frente para a abside.
-    for (const [z, p, a] of [[-60.5, 1, 0.18], [-61.5, 1, 0.36], [-63.3, 2.6, 0.54]]) {
-      movel('abside', 0, z, 11.5, a, p, m.pedraEscura);
-    }
-    bloco(grupoDa('abside'), m.pedra, 0, 1.02, -63.75, 4.9, 0.96, 1.4);
-    this.colisores.adicionar(0, -63.75, 4.9, 1.4, 1.5);
+    montarCoroEAbside(this, m, metal, C.luzesDoCoroEAbside);
     ler('abside', 'Juramento do Véu', 'juramento-do-veu', 0, 1.42, -62.96);
     for (const [sala, x, y, z, i, rot] of [
       ['abside', 0, 5.7, -64.69, 0, 0],

@@ -31,7 +31,7 @@ export function montarCenasCatedral(mundo, feixes) {
   };
   for (const [sala,x,y,z] of [
     ['capela',-34,1,-13], ['arquivo',34,1,-13], ['refeitorio',-26,0.86,-26.8],
-    ['cabido',26,0.86,-26.8], ['abside',1.5,1.5,-63.75], ['abside',-1.5,1.5,-63.75],
+    ['cabido',26,0.86,-26.8],
     ['cela',-28,-3.48,31],
   ]) {
     porVela(sala,x,y,z);

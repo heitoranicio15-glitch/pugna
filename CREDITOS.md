@@ -99,3 +99,7 @@ clara das bordas dos degraus e guarda-corpos é uma textura procedural.
 O sino, a suspensão, as cordas, as urnas e o friso da Cripta foram
 modelados no código do PUGNA. A pátina do sino e as faixas de
 cerâmica das urnas são texturas procedurais do projeto.
+
+Os painéis e as arandelas do Coro, o altar, o estrado e os castiçais
+da Abside foram modelados no código do PUGNA. O mosaico e o tecido
+do altar são texturas procedurais do projeto.

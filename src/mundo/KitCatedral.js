@@ -55,13 +55,15 @@ export function facesDoKit(volumes) {
 }
 
 const MEIA_LARGURA_CORREDOR = 1.4;
-const FAIXA_CORREDOR = [-29, -MEIA_LARGURA_CORREDOR, 11, MEIA_LARGURA_CORREDOR];
+const FAIXA_CORREDOR = [-37, -MEIA_LARGURA_CORREDOR, 11, MEIA_LARGURA_CORREDOR];
 
 const MOSAICOS = {
   mosaicoOssario: [-14.25, -20.65, 0, -17.35],
   mosaicoRelicario: [-14.25, 17.35, 0, 20.65],
+  mosaicoAltar: [-60, -1.5, -57, 1.5],
 };
-const MOSAICO_POR_ALA = { ossario: 'mosaicoOssario', relicario: 'mosaicoRelicario' };
+const MOSAICO_POR_SETOR = { ossario: 'mosaicoOssario', relicario: 'mosaicoRelicario', abside: 'mosaicoAltar' };
+const SETORES_DO_CORREDOR = ['nave', 'transepto', 'coro'];
 
 function revestirTrecho(face, trecho, base, acabamento) {
   const [u, v, U, V] = face.ret;
@@ -103,14 +105,15 @@ function acabamentoDoSetor(face) {
   if (face.tipo === 'degrau' || face.tipo === 'patamar' || face.tipo === 'parapeito') {
     return acabamentoDoNivel(face);
   }
-  const mosaico = MOSAICO_POR_ALA[face.lote];
-  if (!mosaico && !['nave', 'nave-oeste', 'nave-leste', 'transepto'].includes(face.lote)) return [face];
+  const mosaico = MOSAICO_POR_SETOR[face.lote];
+  const corredor = SETORES_DO_CORREDOR.includes(face.lote);
+  if (!mosaico && !corredor && !['nave-oeste', 'nave-leste'].includes(face.lote)) return [face];
   if (face.material === 'pedra') return [{ ...face, material: 'cantariaVeu' }];
   if (face.material === 'pedraMusgo') return [{ ...face, material: 'cantariaUmidaVeu' }];
   if (face.material !== 'lajes' || face.eixo !== 1 || face.sinal !== 1 || face.cota !== 0) return [face];
   const piso = { ...face, material: 'lajesNave' };
   const faixa = mosaico ? MOSAICOS[mosaico] : FAIXA_CORREDOR;
-  if (!mosaico && face.lote !== 'nave' && face.lote !== 'transepto') return [piso];
+  if (!mosaico && !corredor) return [piso];
 
   // Nas faces horizontais, u é Z e v é X. O corredor ocupa parte da face
   // original, no mesmo plano, sem sobrepor lajes nem criar outro colisor.
@@ -138,8 +141,9 @@ export function montarKit(mundo, volumes, vaos) {
       if (material === 'corredorVeu') {
         uv.push((v + MEIA_LARGURA_CORREDOR) / (2 * MEIA_LARGURA_CORREDOR), u / 2.8);
       } else if (MOSAICOS[material]) {
-        const [, inicio, , fim] = MOSAICOS[material];
-        uv.push((v - inicio) / (fim - inicio), u / 3.3);
+        const [z0, x0, z1, x1] = MOSAICOS[material];
+        const longitudinal = material === 'mosaicoAltar' ? (u - z0) / (z1 - z0) : u / 3.3;
+        uv.push((v - x0) / (x1 - x0), longitudinal);
       } else {
         uv.push(...(eixo === 0 ? [v / ladrilho, u / ladrilho] : [u / ladrilho, v / ladrilho]));
       }
