@@ -49,6 +49,15 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Câmera estilo Souls, fase CAM2: câmera com peso (pronto).** Spec 10, seção CAM2.
+  - **O que mudou:** a câmera em terceira pessoa não anda mais grudada no caçador. Ela gira em volta de um ponto que persegue o caçador com um pequeno atraso (mais lento na vertical), então rolamento, quickstep, pulo, degrau e pisada não sacodem mais a imagem: o caçador se desloca um pouco no quadro e a câmera o alcança. Depois de encostar numa parede, a câmera se afasta de novo mais devagar (sem zoom brusco).
+  - **Não mudou:** girar com o mouse continua imediato; a câmera ainda encurta na hora ao bater em parede; tremor de tela e "afundar"; a primeira pessoa; o enquadramento parado (as 4 fotos fixas saem iguais às da CAM1); save, IDs e `Toque.js`.
+  - **Teletransporte encaixa na hora:** começar a partida, renascer na lanterna e Osso de Retorno (`Jogador.reiniciar`) e atravessar portal (`atualizarCamera(0, 0)`).
+  - **Código:** função pura `seguirPonto` em `src/nucleo/enquadramento.js` (exata para o alvo em linha reta: mesmo resultado a 30 e a 144 quadros por segundo); `Jogador.atualizarCamera` usa `jogador.pivo`. Parede entre o caçador e o ponto atrasado puxa o ponto para o lado do caçador. O limite do chão usa os pés do caçador. O boneco some pela distância real da câmera ao caçador (`jogador.distBoneco`).
+  - **Decidido pela IA (o Heitor revisa):** `camera.seguirPlano` **6** e `camera.seguirVertical` **3** (rapidez do atraso, por segundo; antes não havia atraso); `camera.atrasoMaxPlano` **0,6 m** e `camera.atrasoMaxVertical` **0,4 m**; `camera.voltaDistancia` **3** (antes 6, número solto no código) — todos são as sugestões do Heitor, mantidas. Escolhas minhas: puxar o ponto até antes da parede em vez de pular para o caçador; limite do chão pelos pés do caçador; boneco some pela distância real. **Ninguém sentiu jogando ainda:** se parecer "mole" ou enjoar, subir `seguirPlano` (8 a 10) ou baixar `atrasoMaxPlano`; se parecer duro, baixar `seguirPlano` para perto de 3 (o valor do Dark Souls).
+  - **Ficou de fora:** o boneco sumir de uma vez (transparência gradual) e a câmera perto demais ao olhar para o céu.
+  - `npm test` (136), `npm run build` e `npm run test:browser` passam. 5 testes novos em `tests/jogabilidade.test.js`.
+
 - **Câmera estilo Souls, fase CAM1: enquadramento (pronto).** Spec 10 (`docs/specs/10-camera-souls.md`), com o plano das 4 fases (CAM1 a CAM4), os números de referência do Elden Ring e os critérios de aceite.
   - **O que mudou:** a terceira pessoa ganhou abertura própria e mais fechada, a câmera gira em volta do peito do caçador (antes girava acima da cabeça) e ficou um pouco mais perto. O caçador ocupa uns 50% da altura da tela (antes uns 28%; no Souls uns 57%). Fotos de antes e depois em `docs/fotos/cam1/`.
   - **Não mudou:** a primeira pessoa (72°), a câmera do menu inicial, o celular em pé (88°), `inclinacaoInicial` (−0,2), `mira.inclinacao` (−0,27), `mira.cone`, save, IDs e `Toque.js`.
@@ -288,7 +297,7 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 - [x] **C. Chefe e imprevisibilidade** (C1, C2 e C3 feitos): pequena variação no tempo do aviso, golpes atrasados, sequências mais longas, e uma fase final do Guardião com golpes que não podem ser aparados (a fase 2 não pode ser vencida só com parry). Inimigos punem quem usa frasco perto deles. Limite de quantos inimigos atacam ao mesmo tempo. Rasteira mais frequente.
 - [x] **D. Golpe pelas costas e pulo contra rasteira:** agachar (anda devagar, menos barulho), cone de visão, execução silenciosa por trás, alerta dos vizinhos se o jogador for visto (sem botão de toque). No ar durante o golpe ativo da rasteira, não leva dano; cair perto abre o contra-ataque pisando; pular contra ataque alto leva dano extra.
 - [ ] **E. Ajuste fino com os amigos.** (E1, equilíbrio por simulação, feito; falta o ajuste jogando)
-- [ ] **Câmera estilo Souls (CAM1 a CAM4)** (spec 10): CAM1, enquadramento, feita. Faltam CAM2 (câmera com peso), CAM3 (mira travada estilo Souls) e CAM4 (opções em Configurações).
+- [ ] **Câmera estilo Souls (CAM1 a CAM4)** (spec 10): CAM1 (enquadramento) e CAM2 (câmera com peso) feitas. Faltam CAM3 (mira travada estilo Souls) e CAM4 (opções em Configurações).
 - [ ] **Depois:** broquel como item ou mão secundária alternativa (bloqueio), celular de volta se fizer sentido, golpes em sequência, armas com ritmos diferentes, interior de mais casas, sons gravados, Supabase (login e progresso), multiplayer para uns 5 amigos, mapa maior (floresta, castelo, caverna), modelos e animações de verdade.
 
 ## Fila do Gabriel (uma por vez, cada uma num chat novo)

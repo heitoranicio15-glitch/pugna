@@ -390,7 +390,9 @@ trilha é a mesma do vilarejo.
   a estrada puxa para o azul-esverdeado, os vitrais da catedral projetam feixes
   e a taverna tem luz quente e fagulhas na lareira.
 - Movimento com colisão; dá para subir em caixotes e degraus. A câmera em terceira
-  pessoa encurta ao encostar em paredes. A primeira pessoa acompanha os olhos.
+  pessoa encurta ao encostar em paredes e se afasta de novo devagar. Ela tem peso: segue o
+  caçador com um pequeno atraso, então rolar, pular e subir degraus não sacodem a imagem.
+  A primeira pessoa acompanha os olhos.
 - Caçador com chapéu, capa com pregas, espada e pistola animados no código.
   Os inimigos têm armaduras facetadas e viseiras que acendem nos avisos de
   golpe. O modo HD acrescenta materiais de tecido, couro e aço.
@@ -474,7 +476,7 @@ pugna/
   `catedral`). Faixa diferente na área nova troca com crossfade; igual continua.
 - **mudar os tempos do crossfade ao atravessar portais:** `CONFIG.audio`
   (`crossfadeAmbiente` e `crossfadeTrilha`, em segundos).
-- **mudar a distância, a altura do giro ou a abertura da câmera em terceira pessoa, ou o
+- **mudar a distância, a altura do giro, a abertura ou o peso (atraso) da câmera em terceira pessoa, ou o
   alcance da mira:** blocos `camera` e `mira` em `src/config.js`. A abertura da primeira
   pessoa e do menu inicial é `render.campoDeVisao`. O plano da câmera estilo Souls está na
   [spec 10](docs/specs/10-camera-souls.md)

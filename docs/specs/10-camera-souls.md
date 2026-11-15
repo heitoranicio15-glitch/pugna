@@ -57,14 +57,35 @@ porque a câmera olha um pouco de cima).
   fotos (vila com cavaleiro a 4 m, nave da catedral, estrada, Guardião com mira travada), para comparar
   antes e depois nas próximas fases.
 
-### CAM2 — câmera com peso
+### CAM2 — câmera com peso (feita)
 
-- O ponto de giro segue o caçador com atraso suave, mais lento na vertical (pulo, degraus e esquiva não
-  sacodem a tela).
-- Depois de encostar numa parede, a distância volta devagar, sem zoom brusco. Encurtar continua imediato
-  (a câmera nunca atravessa a parede).
-- Rever aqui: o boneco sumir de uma vez (trocar por transparência gradual) e a câmera muito perto ao olhar
-  para o céu.
+Antes a câmera andava grudada no caçador: cada rolamento, quickstep, pulo, degrau e pisada sacudia a imagem.
+No Dark Souls a câmera persegue o personagem a uma taxa de 0,1 por quadro a 30 quadros por segundo (ela o
+alcança em alguns décimos de segundo), e é isso que dá peso.
+
+- **Ponto de giro com atraso.** A câmera gira em volta de um ponto (`jogador.pivo`) que persegue o caçador
+  com atraso exponencial, em vez de ficar em cima dele. A regra é a função pura `seguirPonto` em
+  `src/nucleo/enquadramento.js`. Ela usa a posição do caçador no quadro anterior para fazer a conta exata,
+  então o resultado é o mesmo a 30 ou a 144 quadros por segundo.
+- **Números** (`CONFIG.camera`): `seguirPlano` 6 e `seguirVertical` 3 (rapidez, por segundo; a vertical é
+  mais lenta), `atrasoMaxPlano` 0,6 m e `atrasoMaxVertical` 0,4 m (o ponto nunca fica mais para trás que
+  isso, nem no rolamento a 9,5 m/s). Andando (2,9 m/s) o atraso é de uns 0,5 m; correndo e rolando ele
+  fica no limite de 0,6 m.
+- **Rotação imediata.** O mouse gira a câmera na hora; só a posição tem atraso.
+- **Teletransporte não suaviza.** `Jogador.reiniciar` (começar a partida, renascer na lanterna, Osso de
+  Retorno) encaixa o ponto no caçador, e `atualizarCamera(0, 0)` com dt 0 também (atravessar portal).
+  Voltar da primeira para a terceira pessoa também começa sem atraso.
+- **Parede.** A câmera continua encurtando no mesmo quadro. A volta à distância normal ficou mais lenta
+  (`voltaDistancia` 3, antes 6). Se houver parede entre o caçador e o ponto atrasado, o ponto é puxado
+  para o lado do caçador; o raio da câmera sai do ponto de giro, não mais do caçador.
+- **Chão.** O limite de "não entrar no chão olhando para cima" usa o chão dos pés do caçador, não o do
+  ponto atrasado (senão, logo depois de subir um degrau, a câmera afundaria no piso de cima).
+- **Boneco que some:** passou a usar a distância real da câmera ao peito do caçador (`jogador.distBoneco`),
+  porque com o atraso ela difere um pouco de `distCamera` (andando de costas contra uma parede o caçador
+  fica mais perto da câmera que o ponto de giro).
+- Tremor de tela e "afundar" funcionam como antes. A primeira pessoa não mudou.
+- **Ficou de fora (IA):** o boneco sumir de uma vez (trocar por transparência gradual) e a câmera muito perto
+  ao olhar para o céu. Não estavam no pedido da CAM2; seguem como pendência.
 
 ### CAM3 — mira travada estilo Souls
 
@@ -102,8 +123,10 @@ CAM1:
 
 CAM2:
 
-- [ ] Andando, pulando e esquivando, o caçador se desloca um pouco no quadro e a câmera o alcança suave.
-- [ ] Sair de perto de uma parede não dá zoom brusco.
+- [x] Andando, pulando e esquivando, o caçador se desloca um pouco no quadro e a câmera o alcança suave.
+- [x] Sair de perto de uma parede não dá zoom brusco.
+- [x] O atraso nunca passa de 0,6 m no plano e 0,4 m na vertical, e é igual a 30 e a 144 quadros por segundo.
+- [x] Começar a partida, renascer, Osso de Retorno e portal posicionam a câmera na hora.
 
 CAM3:
 
@@ -122,3 +145,9 @@ CAM4:
 - CAM1: o celular deitado (congelado) usa a abertura nova da terceira pessoa; o celular em pé continua em 88°.
 - CAM1: a lua e o céu parecem maiores na tela durante a partida (a abertura menor "aproxima" tudo). No menu
   inicial nada muda.
+- CAM2: `seguirPlano` 6, `seguirVertical` 3, `atrasoMaxPlano` 0,6 m, `atrasoMaxVertical` 0,4 m e
+  `voltaDistancia` 3 são as sugestões do Heitor, mantidas. O Dark Souls usa uns 3 no plano (mais "mole");
+  6 é mais contido.
+- CAM2: quando há parede entre o caçador e o ponto de giro, o ponto é puxado até antes da parede (em vez de
+  pular para cima do caçador), para não dar tranco.
+- CAM2: o limite do chão usa os pés do caçador; o boneco some pela distância real ao caçador.
