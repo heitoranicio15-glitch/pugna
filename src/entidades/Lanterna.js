@@ -9,7 +9,7 @@ import { texturas } from '../render/texturas.js';
 import { retro } from '../render/retro.js';
 
 export class Lanterna {
-  constructor(mundo, { id, nome, x, y = 0, z, olhar = 0 }) {
+  constructor(mundo, { id, nome, x, y = 0, z, olhar = 0, ilumina = true }) {
     this.id = id; this.nome = nome; this.x = x; this.y = y; this.z = z; this.olhar = olhar;
     const m = materiais();
     const g = new THREE.Group();
@@ -24,9 +24,10 @@ export class Lanterna {
     }));
     this.halo.position.copy(this.vidro.position); this.halo.scale.setScalar(2.2);
     this.luz = new THREE.PointLight(0x9fd4ff, 8, 13, 1.7); this.luz.position.set(0.4, 1.4, 0);
-    g.add(poste, braco, this.vidro, tampa, this.halo, this.luz);
+    g.add(poste, braco, this.vidro, tampa, this.halo);
+    if (ilumina) g.add(this.luz);
     g.position.set(x, y, z);
-    mundo.grupo.add(g);
+    (mundo.grupoParaNivel?.(y) ?? mundo.grupo).add(g);
     mundo.colisores.adicionar(x, z, 0.3, 0.3, y + 1.5, y);
   }
 

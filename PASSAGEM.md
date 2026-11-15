@@ -51,6 +51,17 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Prompt 8 — 1C, clima e salas:** seis anotações novas, cela da sineira,
+  urnas, sala do bronze, vitrais e poeira em dois feixes. A nave tem eco, a
+  torre tem vento e a cripta tem gotas. Os três inimigos comuns mantêm seus
+  tipos e ataques, com um Penitente em cada nível baixo (térreo/cripta) e
+  o Caçador perto da ponte. A arena e o número de fichas não mudaram.
+  **Decidido pela IA:** recorte de setores distantes a 46 m; torre e cripta
+  escondem os pisos isolados. Luzes fixas locais na Catedral: 13 → 2 (lanternas
+  da nave e do coro); selos, outras lanternas e chamas brilham pelo material.
+  Perfis de som antigos e novos em `src/config.js`; contagens PS1/HD em
+  `docs/mapa.md`. Falta ouvir e jogar no PC de destino.
+
 - **Prompt 8 — 1B, Catedral vertical:** a nave leste sobe à galeria e à
   Sala do Bronze; o claustro desce à cripta, cujo ferrolho abre por dentro.
   Quatro cotas navegáveis, lanternas no coro e nos pisos novos, câmera e
@@ -337,7 +348,7 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 - [x] **Prompt 8 / 1A:** kit modular e planta maior do térreo.
 - [x] **Prompt 8 / 1B:** galeria, torre, cripta, escadas e atalhos.
-- [ ] **Prompt 8 / 1C:** história das salas, clima e visibilidade.
+- [x] **Prompt 8 / 1C:** história das salas, clima e visibilidade.
 - [ ] **Prompt 8 / 2–4:** névoa, floresta e progressão com itens.
 
 - [x] **1. Salvamento estilo Souls + Osso de Retorno** (ver "Decisões")

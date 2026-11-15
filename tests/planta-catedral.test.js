@@ -7,6 +7,8 @@ import { facesDoKit } from '../src/mundo/KitCatedral.js';
 import { Navegacao } from '../src/mundo/Navegacao.js';
 import { atualizarObjetos } from '../src/mundo/Interacoes.js';
 import { ANOTACOES, ATALHO_SACRISTIA, PORTA_SACRISTIA } from '../src/nucleo/Inventario.js';
+import { ANDARES, ATALHO_CRIPTA, ESCADAS } from '../src/mundo/NiveisCatedral.js';
+import { validarSom } from '../src/audio/regras.js';
 
 const ctx = new Proxy(function () {}, {
   get: (_, k) => k === 'createImageData' ? (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }) : ctx,
@@ -54,7 +56,7 @@ test('cada borda externa fecha a sala e os vãos de combate têm mais de 3 m', (
 
 test('chegada, lanterna, patrulhas e interações da Catedral ficam no piso e fora de bloqueios', () => {
   const points = [...Object.values(c.chegadas), ...c.portais, ...c.pontosDeDescanso,
-    ...c.objetos, ...c.inimigos.flatMap(i => i.rota.map(([x,z]) => ({ x,z })))];
+    ...c.objetos, ...c.inimigos.flatMap(i => i.rota.map(([x,z]) => ({ x,z,y:i.y ?? 0 })))];
   for (const p of points) {
     assert.ok([...c.planta.celulas.values()].some(a => Math.abs(a.x - p.x) <= 2 && Math.abs(a.z - p.z) <= 2), JSON.stringify(p));
     assert.ok(!c.colisores.bloqueiaTrecho(p,p,p.y ?? 0), JSON.stringify(p));
@@ -85,8 +87,6 @@ test('os IDs antigos do térreo e a abertura da sacristia sobrevivem ao progress
   atualizarObjetos(c, [PORTA_SACRISTIA, ATALHO_SACRISTIA]);
   assert.ok(!c.colisores.bloqueiaTrecho(a,b,1.6));
 });
-
-import { ANDARES, ATALHO_CRIPTA, ESCADAS } from '../src/mundo/NiveisCatedral.js';
 
 // Percorre os lances em ambas as direções usando o mesmo colisor do caçador.
 function caminhar(coords) {
@@ -147,4 +147,34 @@ test('câmera e navegação distinguem o teto dos dois lados da mesma passarela'
   const nav=new Navegacao(c.colisores,c.limites);
   assert.ok(nav.encontrar({x:8,z:-15,y:4},{x:-8,z:-15,y:4},0.4).some(p=>p.z<-21));
   assert.ok(!nav.livre({x:8,z:-15,y:4},{x:-8,z:-15,y:4},0.4));
+});
+
+test('as patrulhas conservam um caminho no andar de nascimento', () => {
+  const nav = new Navegacao(c.colisores,c.limites);
+  c.aplicarProgresso({ selos: ['ossario','relicario'] });
+  for (const {tipo,rota,y=0,limiteZ} of c.inimigos) {
+    for (const [i,[x,z]] of rota.entries()) {
+      const [X,Z] = rota[(i+1) % rota.length];
+      assert.equal(c.colisores.alturaDoChao(x,z,y,0.05),y,tipo);
+      assert.ok(nav.encontrar({x,y,z},{x:X,y,z:Z},CONFIG.inimigos[tipo].raio,limiteZ).length,tipo);
+    }
+  }
+  c.aplicarProgresso({ selos: [] });
+});
+
+test('o som muda com o nível e a torre e a cripta ocultam salas incomunicáveis', () => {
+  const posicoes = [[0,0,6],[8,4,-11],[20,8,13],[-16,-4,31]];
+  const sons = posicoes.map(([x,y,z]) => c.somLocal({x,y,z}));
+  assert.equal(new Set(sons).size,4);
+  for (const som of sons) assert.deepEqual(validarSom(som),[]);
+  c.atualizar(0,0,{x:20,y:8,z:13});
+  assert.equal(c.setores.get('nave').visible,false);
+  assert.equal(c.setores.get('torre').visible,true);
+  c.atualizar(0,0,{x:-16,y:-4,z:31});
+  assert.equal(c.setores.get('claustro').visible,true);
+  assert.equal(c.setores.get('cela').visible,true);
+  assert.equal(c.setores.get('santuario').visible,false);
+  c.atualizar(0,0,{x:8,y:4,z:-11});
+  assert.equal(c.setores.get('nave').visible,true);
+  assert.equal(c.setores.get('galeria-leste').visible,true);
 });

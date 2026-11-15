@@ -13,11 +13,14 @@ export class Som {
     this.ambiente = null;
     this.somDaArea = jogo?.mundo?.som ?? null;   // ambiente da área onde o jogo começa
     // Cada área traz o seu ambiente (`CONFIG.areas.<area>.som`): o antigo some e o novo entra.
-    eventos.em('area:entrou', (d) => {
-      this.somDaArea = d?.som ?? null;
-      this.mudarBase(d?.som?.base);
+    const mudarAmbiente = (som) => {
+      if (som === this.somDaArea) return;
+      this.somDaArea = som ?? null;
+      this.mudarBase(som?.base);
       this.ambiente?.entrar(this.somDaArea, CONFIG.audio.crossfadeAmbiente);
-    });
+    };
+    eventos.em('area:entrou', (d) => mudarAmbiente(d?.som));
+    eventos.em('area:ambiente', mudarAmbiente);
     // Liga cada aviso do jogo ao seu som.
     // Passos pesados (direção de arte): mais graves e um pouco mais longos.
     eventos.em('jogador:passo', (d) => this.passo(d?.correndo ? 0.5 : d?.agachado ? 0.14 : 0.32, 0.8, 0.14));

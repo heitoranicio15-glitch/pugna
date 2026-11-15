@@ -22,7 +22,8 @@ export const SALAS_TERREO = [
   ['escada-da-galeria', 6, 14, 11, 27, 9],
   ['torre', 14, 22, 11, 27, 13],
   ['escada-da-cripta', -22, -14, 11, 27, 5, -4],
-  ['cripta', -30, -10, 27, 35, 0, -4],
+  ['cripta', -26, -10, 27, 35, 0, -4],
+  ['cela', -30, -26, 27, 35, 0, -4],
 ];
 
 // Centro da aresta em metros; o eixo é a normal ao vão. Os caminhos que
@@ -43,6 +44,7 @@ const VAOS_TERREO = [
   [-16, 11, 'z', undefined, 0, 3.75],
   [-20, 27, 'z', undefined, -4, 3.75],
   [-16, 27, 'z', undefined, -4, 3.75],
+  [-26, 33, 'x', undefined, -4, 3.75],
 ].map(([x, z, eixo, trava, y = 0, altura = 4.5]) => ({ x, z, eixo, trava, y, largura: 3.5, altura }));
 
 const chave = (x, z, eixo = '') => [x, z, eixo].join(':');
