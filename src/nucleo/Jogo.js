@@ -714,6 +714,7 @@ export class Jogo {
   }
 
   desenharPartida(dt) {
+    this.mundo.prepararRender?.(this.camera);
     if (this.jogador.primeiraPessoa) {
       this.boneco.grupo.visible = false;
       this.arma.atualizar(dt, this.jogador, this.render.proporcao);

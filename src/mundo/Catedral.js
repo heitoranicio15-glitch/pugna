@@ -152,6 +152,9 @@ export class Catedral {
     this.posicionarEspolio = montarEspoliosCatedral(this);
     this.posicionarEspolio({});
     this.caixasDosSetores = new Map([...this.setores].map(([sala, g]) => [sala, new THREE.Box3().setFromObject(g)]));
+    this.frustumDasLuzes = new THREE.Frustum();
+    this.projecaoDasLuzes = new THREE.Matrix4();
+    this.alcanceDaLuz = new THREE.Sphere();
 
     this.saida = { x: 0, z: 8.45 };
     this.entrada = { x: 0, z: 6, yaw: 0 };
@@ -198,6 +201,25 @@ export class Catedral {
     if (this.bloqueio.ativa !== bloqueada) this.navegacao?.invalidar();
     this.bloqueio.ativa = bloqueada;
     this.grade.visible = bloqueada;
+  }
+
+  prepararRender(camera) {
+    if (!this.luzesLocais) {
+      // As lanternas de descanso são montadas depois do construtor da área.
+      this.luzesLocais = [];
+      this.grupo.traverse(luz => {
+        if (luz.isPointLight && luz.distance > 0 && !luz.castShadow) this.luzesLocais.push(luz);
+      });
+    }
+    camera.updateWorldMatrix(true, false);
+    this.projecaoDasLuzes.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    this.frustumDasLuzes.setFromProjectionMatrix(this.projecaoDasLuzes);
+    for (const luz of this.luzesLocais) {
+      luz.getWorldPosition(this.alcanceDaLuz.center);
+      // A margem conserva a luz perto da borda, inclusive com o tremor do modo PS1.
+      this.alcanceDaLuz.radius = luz.distance + 0.5;
+      luz.visible = this.frustumDasLuzes.intersectsSphere(this.alcanceDaLuz);
+    }
   }
 
   atualizar(dt, tempo, pos) {

@@ -84,6 +84,13 @@ export function montarAtalhoCripta(mundo, bronze) {
   const grade = gradeDeAtalho(g, { x: -20, y: -0.25, z: 15, largura: 3.5, altura: 3 }, m, bronze);
   const col = mundo.colisores.adicionar(-20, 15, 3.5, 0.42, 2.75, -0.25, false);
   const atualizarFerrolho = alavancaDeAtalho(g, -21.47, 0.92, 16.25, m, bronze);
+  const moldura = juntarPorMaterial();
+  moldura.caixa(-20, 2.83, 15.09, 3.71, 0.128, 0.16, m.quinaGaleria);
+  for (const x of [-21.74, -18.26]) {
+    moldura.caixa(x, 1.47, 15.09, 0.145, 2.60, 0.16, m.quinaGaleria);
+    moldura.caixa(x, 2.71, 15.12, 0.22, 0.135, 0.18, m.quinaGaleria);
+  }
+  moldura.montar(g, 'Moldura do ferrolho da Cripta');
   placa(g, 'Ferrolho do claustro', -20, 2.4, 15.29, 1.6);
   mundo.objetos.push({
     x: -21.4, y: 0.95, z: 16.25, acao: 'acionar', nome: 'ferrolho da cripta', evento: ATALHO_CRIPTA,

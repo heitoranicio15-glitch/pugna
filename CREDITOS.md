@@ -114,3 +114,5 @@ e do Arquivo foram modelados no código do PUGNA com materiais do projeto.
 As mesas, a louça, o candelabro, o livro e os castiçais do Refeitório
 e do Cabido foram modelados no código do PUGNA. Os mosaicos e os
 estandartes reutilizam texturas procedurais do projeto.
+
+A moldura do ferrolho da Cripta reutiliza a pedra procedural da galeria.

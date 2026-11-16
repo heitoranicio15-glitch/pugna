@@ -249,3 +249,43 @@ piso existente; as mesas e os registros preservam suas posições.
 Contagens de quadros isolados em PS1 e HD, no Chrome com renderização
 por software. Os detalhes menores da louça aparecem melhor perto
 da mesa. Falta medir o tempo de quadro ao percorrer a Catedral.
+
+Na décima etapa, a Catedral passa a enviar ao renderizador as luzes
+locais cujo alcance toca o campo da câmera. As luzes fora desse
+campo não entram no cálculo. A margem de 0,5 m conserva a influência
+perto das bordas, inclusive com o tremor do modo PS1. A moldura
+de pedra clara distingue o ferrolho da Cripta na subida.
+
+| Ambiente e modo | Mediana do intervalo antes → depois | P95 antes → depois |
+| --- | ---: | ---: |
+| Intel Iris Xe, PS1 a 480 × 270 | 16,7 → 16,7 ms | 17,1 → 16,9 ms |
+| Intel Iris Xe, HD a 800 × 450 | 16,7 → 16,7 ms | 16,9 → 16,9 ms |
+| SwiftShader, PS1 a 480 × 270 | 116,8 → 83,3 ms | 216,6 → 183,3 ms |
+| SwiftShader, HD a 800 × 450 | 416,6 → 216,7 ms | 833,3 → 599,9 ms |
+
+A medição usa nove trechos com o caçador em movimento e 162
+intervalos por modo. As câmeras e o avanço da simulação são iguais
+antes e depois. O P95 é o intervalo abaixo do qual ficaram pelo
+menos 95% das amostras. Os valores medem o intervalo entre quadros
+no Chrome em uma máquina, com janela de 800 × 450. A mediana na GPU
+integrada ficou próxima ao intervalo de 60 Hz. A escada da Torre
+ainda mostrou pausas acima de 1 s na primeira passagem. A causa
+dessas pausas e a fluidez em resoluções mais altas ficam em aberto.
+
+Mediana de luzes admitidas pela Catedral em cada trecho, além da
+luz que acompanha o jogador.
+
+| Trecho | Luzes antes → depois |
+| --- | ---: |
+| Entrada da nave | 17 → 11 |
+| Transepto e grade | 17 → 5 |
+| Galeria e ponte | 17 → 7 |
+| Escada da Torre | 16 → 13 |
+| Descida à Cripta | 16 → 2 |
+| Santuário e Abside | 13 → 1 |
+
+Para reproduzir, inicie o jogo e rode
+`node tests/medir-percurso-catedral.mjs http://127.0.0.1:5173/`.
+O modo padrão do script usa SwiftShader. No Windows, pode-se definir
+`PUGNA_ANGLE=d3d11` para tentar a GPU. A saída informa qual renderizador
+o Chrome usou.
