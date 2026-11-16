@@ -54,7 +54,7 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 A [auditoria](docs/auditoria-visual.md#acabamento-das-áreas-existentes) diz o que falta e a ordem.
 
 - [x] (a) Pausa na escada da Torre: luzes da Catedral em degraus de 4 + shaders pré-compilados ao entrar (`src/render/aquecimento.js`). Conferir jogando no PC do Heitor.
-- [ ] (b) Acabamento do Vilarejo e Portão Sul. Feito o portão e a rota até ele (`AcabamentoPortao.js`); falta a praça do poço.
+- [x] (b) Acabamento do Vilarejo e Portão Sul: portão e rota (`AcabamentoPortao.js`), praça do poço com anéis de lajes e rotas para os quatro lados (`AcabamentoPraca.js`).
 - [x] (c) Acabamento da Estrada e Taverna: fachada, porta, letreiro, lanternas sem luz nova e calçada até a pista (`AcabamentoTaverna.js`). Salão interno não mexido.
 - [ ] (d) Acabamento da Floresta Seca.
 - [ ] (e) Acabamento geral. Feito: passos pelo piso sob o jogador (pedra, madeira, terra; `superficie` nos colisores). Falta: avisos/acessibilidade/animação.
