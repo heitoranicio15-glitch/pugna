@@ -20,7 +20,7 @@ export function montarRefeitorioECabido(mundo, m, bronze, luzes) {
     kit.caixa(x, 0.38, Z_MESA, 2.15, 0.15, 0.16, m.madeiraEscura);
     compor(kit, x, m, bronze);
     kit.montar(grupo, 'Mobiliário do ' + sala);
-    mundo.colisores.adicionar(x, Z_MESA, LARGURA_MESA, PROFUNDIDADE_MESA, ALTURA_MESA);
+    mundo.colisores.adicionar(x, Z_MESA, LARGURA_MESA, PROFUNDIDADE_MESA, ALTURA_MESA).superficie = 'madeira';
 
     const { cor, intensidade, alcance, pos } = luzes[sala];
     const luz = new THREE.PointLight(cor, intensidade, alcance);

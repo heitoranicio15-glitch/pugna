@@ -53,7 +53,7 @@ export class Catedral {
     montarLuzesDaGaleria(this, m, metal, C.luzesDaGaleria);
     const movel = (sala, x, z, l, a, p, mat) => {
       bloco(grupoDa(sala), mat, x, a / 2, z, l, a, p);
-      this.colisores.adicionar(x, z, l, p, a);
+      this.colisores.adicionar(x, z, l, p, a).superficie = mat === m.madeira || mat === m.madeiraEscura ? 'madeira' : 'pedra';
     };
     const ler = (sala, nome, evento, x, y, z, giro = 0) => {
       placa(grupoDa(sala), nome, x, y, z, 1.45, giro);

@@ -39,13 +39,14 @@ export class Taverna {
     const m = materiais();
     const H = C.altura;
     const { minX, maxX, minZ, maxZ } = this.limites;
+    this.colisores.marcarSuperficie((minX + maxX) / 2, (minZ + maxZ) / 2, maxX - minX + 0.8, maxZ - minZ + 0.8, 'madeira');   // assoalho
     const preto = retro(new THREE.MeshBasicMaterial({ color: 0x140a06 }));
     const noite = retro(new THREE.MeshBasicMaterial({ color: 0x314e62 }));
     const colocar = (o, x, y, z) => { o.position.set(x, y, z); this.grupo.add(o); return o; };
     // Caixa decorativa e, se `topo` for dado, com colisão.
     const bloco = (x, y, z, l, a, p, mat, topo = null, ladrilho = 1.6) => {
       const malha = colocar(caixa(l, a, p, mat, ladrilho), x, y, z);
-      if (topo !== null) this.colisores.adicionar(x, z, l, p, topo);
+      if (topo !== null) this.colisores.adicionar(x, z, l, p, topo).superficie = 'madeira';
       return malha;
     };
 
@@ -98,7 +99,7 @@ export class Taverna {
     // ---------- barris ao lado do balcão ----------
     for (const [x, z, r] of [[3.2, -3.85, 0.45], [4.2, -3.95, 0.42], [3.55, -2.95, 0.38]]) {
       colocar(barril(r, 0.95), x, 0.475, z);
-      this.colisores.adicionar(x, z, r * 2, r * 2, 0.95);
+      this.colisores.adicionar(x, z, r * 2, r * 2, 0.95).superficie = 'madeira';
     }
 
     // ---------- escada decorativa na parede oeste (sem andar de cima) ----------
@@ -116,7 +117,7 @@ export class Taverna {
       const inicio = this.grupo.children.length;
       bloco(x, 0.88, z, 1.6, 0.1, 1.1, m.madeira, null, 1);
       for (const [dx, dz] of [[-0.7, -0.45], [0.7, -0.45], [-0.7, 0.45], [0.7, 0.45]]) bloco(x + dx, 0.42, z + dz, 0.12, 0.84, 0.12, m.madeiraEscura);
-      this.colisores.adicionar(x, z, 1.6, 1.1, 0.93);
+      this.colisores.adicionar(x, z, 1.6, 1.1, 0.93).superficie = 'madeira';
       modeloPronto(this.grupo, 'table_medium', {
         pos: [x, 0, z], tamanho: [1.6, 0.93, 1.1], reserva: this.grupo.children.slice(inicio),
       });

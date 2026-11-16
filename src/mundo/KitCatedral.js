@@ -170,7 +170,8 @@ export function montarKit(mundo, volumes, vaos) {
   for (const v of volumes) {
     const [x, y, z] = v.min, [X, Y, Z] = v.max;
     const piso = ['piso','patamar','degrau'].includes(v.tipo);
-    mundo.colisores.adicionar((x + X) / 2, (z + Z) / 2, X - x, Z - z, Y, y, piso);
+    const caixaPiso = mundo.colisores.adicionar((x + X) / 2, (z + Z) / 2, X - x, Z - z, Y, y, piso);
+    if (piso) caixaPiso.superficie = 'pedra';   // lajes, patamares e degraus da Catedral
   }
   const arco = arcoOgival(3.12, 1.1, 0.18, 0.46, m.pedraEscura);
   for (const { x, y, z, eixo, sala } of vaos) {

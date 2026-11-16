@@ -3,6 +3,8 @@
 //  Aqui ficam os nomes conhecidos, os eventos esparsos e a curva do crossfade.
 // =============================================================================
 
+import { CONFIG } from '../config.js';
+
 /** Faixas da trilha: nome usado no jogo -> arquivo em public/assets/trilha/. */
 export const FAIXAS = {
   vilarejo: 'vilarejo.mp3',
@@ -121,4 +123,15 @@ export function nivelDoFade(fade, t) {
   if (!fade) return 1;
   const g = ganhosCrossfade((t - fade.t0) / fade.duracao);
   return fade.nivel * (fade.entrando ? g.entra : g.saida);
+}
+
+/** Superfície de reserva (piso sem marca) de cada tipo de som de área. */
+const SUPERFICIE_DO_TIPO = { vila: 'terra', pedra: 'pedra', taverna: 'madeira', estrada: 'terra', floresta: 'terra' };
+export const SUPERFICIES = ['pedra', 'madeira', 'terra'];
+
+export function superficieDoTipo(tipo) { return SUPERFICIE_DO_TIPO[tipo] ?? 'terra'; }
+
+/** Perfil sonoro do passo para a superfície (desconhecida = terra). */
+export function perfilDePasso(superficie) {
+  return CONFIG.audio.passos[superficie] ?? CONFIG.audio.passos.terra;
 }

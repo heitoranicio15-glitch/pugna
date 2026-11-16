@@ -5,7 +5,17 @@
 //  caixotes) e pular em cima delas.
 // =============================================================================
 export class Colisores {
-  constructor(chaoPadrao = 0) { this.caixas = []; this.chaoPadrao = chaoPadrao; }
+  constructor(chaoPadrao = 0) {
+    this.caixas = []; this.chaoPadrao = chaoPadrao;
+    this.zonas = [];              // retângulos de chão sem colisão, só com a superfície (ruas, trilhas)
+    this.superficiePadrao = null; // reserva: vem do tipo da área (areas.js)
+    this.superficie = null;       // superfície achada pela última alturaDoChao
+  }
+
+  /** Marca a superfície do chão num retângulo (sem colisão). Vale a última marca que cobrir o ponto. */
+  marcarSuperficie(x, z, largura, profundidade, superficie) {
+    this.zonas.push({ minX: x - largura / 2, maxX: x + largura / 2, minZ: z - profundidade / 2, maxZ: z + profundidade / 2, superficie });
+  }
 
   /** Adiciona uma caixa pelo centro e tamanho. topo = altura até onde ela bloqueia. */
   adicionar(x, z, largura, profundidade, topo = Infinity, base = -Infinity, piso = true) {
@@ -58,11 +68,15 @@ export class Colisores {
 
   /** Altura do chão num ponto, considerando caixas baixas em que dá para pisar. */
   alturaDoChao(x, z, peY, degrau = 0.4, folga = 0.2) {
-    let h = this.chaoPadrao;
+    let h = this.chaoPadrao, sup = null;
     for (const c of this.caixas) {
       if (!c.ativa || !c.piso || c.topo > peY + degrau || c.topo <= h) continue;
-      if (x > c.minX - folga && x < c.maxX + folga && z > c.minZ - folga && z < c.maxZ + folga) h = c.topo;
+      if (x > c.minX - folga && x < c.maxX + folga && z > c.minZ - folga && z < c.maxZ + folga) { h = c.topo; sup = c.superficie ?? null; }
     }
+    // Mesma consulta: caixa marcada > zona marcada (só no chão padrão) > tipo da área.
+    // Caixa sem marca (mesa, caixote) não herda a zona de baixo e não varre as zonas.
+    if (!sup && h === this.chaoPadrao) for (const z0 of this.zonas) if (x >= z0.minX && x <= z0.maxX && z >= z0.minZ && z <= z0.maxZ) sup = z0.superficie;
+    this.superficie = sup ?? this.superficiePadrao;
     return h;
   }
 

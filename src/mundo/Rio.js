@@ -62,7 +62,7 @@ export function montarRio(estrada, { z, riacho }, meioX, larguraDaPonte) {
     tinta: 0x847569, rotacao: 1.26,
   });
   // A barreira original do rio preserva a travessia pela ponte.
-  colisores.adicionar(xCais, z - 3.75, 2.25, 0.3, 0.38);
+  colisores.adicionar(xCais, z - 3.75, 2.25, 0.3, 0.38).superficie = 'madeira';
   colisores.adicionar(11.2, z + 4.9, 0.65, 0.65);
   colisores.adicionar(-14.5, z - 5.2, 0.65, 0.65);
 

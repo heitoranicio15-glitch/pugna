@@ -57,7 +57,7 @@ A [auditoria](docs/auditoria-visual.md#acabamento-das-áreas-existentes) diz o q
 - [ ] (b) Acabamento do Vilarejo e Portão Sul. Feito o portão e a rota até ele (`AcabamentoPortao.js`); falta a praça do poço.
 - [ ] (c) Acabamento da Estrada e Taverna.
 - [ ] (d) Acabamento da Floresta Seca.
-- [ ] (e) Acabamento geral: passos por superfície, avisos, acessibilidade, animação.
+- [ ] (e) Acabamento geral. Feito: passos pelo piso sob o jogador (pedra, madeira, terra; `superficie` nos colisores). Falta: avisos/acessibilidade/animação.
 - [ ] **E. Ajuste fino com os amigos** (falta o ajuste jogando).
 - [ ] **S8: Supabase** (spec 06; precisa do Heitor criar o projeto).
 - [ ] **Gráficos:** medir o custo do HD com GPU no PC do Heitor; piloto de Blender.

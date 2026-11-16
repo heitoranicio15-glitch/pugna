@@ -1,5 +1,6 @@
 import { CONFIG } from '../config.js';
 import { Ambiente } from './Ambiente.js';
+import { perfilDePasso } from './regras.js';
 // =============================================================================
 //  SONS
 //  Efeitos sintetizados em tempo real (ruído, filtros e osciladores).
@@ -28,9 +29,9 @@ export class Som {
     });
     // Liga cada aviso do jogo ao seu som.
     // Passos pesados (direção de arte): mais graves e um pouco mais longos.
-    eventos.em('jogador:passo', (d) => this.passo(d?.correndo ? 0.5 : d?.agachado ? 0.14 : 0.32, 0.8, 0.14));
-    eventos.em('jogador:pouso', () => this.passo(0.7, 0.7));
-    eventos.em('jogador:pulo', () => this.passo(0.25, 1.3));
+    eventos.em('jogador:passo', (d) => this.passo(d?.correndo ? 0.5 : d?.agachado ? 0.14 : 0.32, 0.8, 0.14, d?.superficie));
+    eventos.em('jogador:pouso', () => this.passo(0.7, 0.7, 0.11, this.jogo.jogador?.superficie));
+    eventos.em('jogador:pulo', () => this.passo(0.25, 1.3, 0.11, this.jogo.jogador?.superficie));
     eventos.em('jogador:golpe', (d) => this.zunido(d.forte ? 0.5 : 0.35, d.forte ? 0.32 : 0.2, d.forte ? 500 : 900));
     // O quickstep tem um zunido mais curto (dura o mesmo que o passo).
     eventos.em('jogador:esquiva', (d) => this.zunido(0.25, d?.quickstep ? CONFIG.combate.quickstep.duracao : 0.25, 350));
@@ -193,10 +194,18 @@ export class Som {
     o.connect(g).connect(this.saida); o.start(t); o.stop(t + duracao + 0.05);
   }
 
-  passo(volume = 0.3, tomRel = 1, duracao = 0.11) {
+  /** Passo; sem superfície (ex.: queda de inimigo) mantém o chiado de sempre. */
+  passo(volume = 0.3, tomRel = 1, duracao = 0.11, superficie) {
     const f = (500 + Math.random() * 250) * tomRel;
-    this.ruido({ volume, duracao, tipo: 'lowpass', de: f * 2.2, ate: f * 0.5 });
-    this.tom({ volume: volume * 0.5, duracao: 0.07, de: 90 * tomRel, ate: 45 });
+    if (!superficie) {
+      this.ruido({ volume, duracao, tipo: 'lowpass', de: f * 2.2, ate: f * 0.5 });
+      this.tom({ volume: volume * 0.5, duracao: 0.07, de: 90 * tomRel, ate: 45 });
+      return;
+    }
+    const p = perfilDePasso(superficie);
+    this.ruido({ volume, duracao: duracao * p.duracao, tipo: p.tipo, q: p.q, de: f * p.de, ate: f * p.ate });
+    if (p.grave > 0) this.tom({ volume: volume * p.grave, duracao: 0.07 * p.duracao, de: 90 * tomRel * p.tom, ate: 45 * p.tom, forma: superficie === 'madeira' ? 'triangle' : 'sine' });
+    if (p.clique > 0) this.tom({ volume: volume * p.clique, duracao: 0.025, de: p.cliqueHz * (0.9 + Math.random() * 0.2), forma: 'square' });
   }
   zunido(volume, duracao, freq) { this.ruido({ volume, duracao, de: freq * 0.5, ate: freq * 2.4, q: 2.2, ataque: duracao * 0.4 }); }
   impacto(volume = 0.6) {

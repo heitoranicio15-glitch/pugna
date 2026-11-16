@@ -94,7 +94,7 @@ export class Estrada {
     // ---------- ponte de pedra sobre o riacho ----------
     const dp = C.ponte.comprimento, lp = C.larguraDaPista + 0.5;
     const tabuleiro = caixa(lp, 0.3, dp, m.pedra, 1.6); tabuleiro.position.set(0, 0.15, zPonte); this.grupo.add(tabuleiro);
-    this.colisores.adicionar(0, zPonte, lp, dp, 0.3);
+    this.colisores.adicionar(0, zPonte, lp, dp, 0.3).superficie = 'pedra';
     const sombrasPonte = [];
     for (const lado of [-1, 1]) {
       const x = lado * (lp / 2 - 0.25);
@@ -110,7 +110,7 @@ export class Estrada {
       const degrau = caixa(lp - 0.9, 0.15, 0.9, m.pedra, 1.6);
       const z = zPonte + pz * (dp / 2 + 0.45);
       degrau.position.set(0, 0.075, z); this.grupo.add(degrau);
-      this.colisores.adicionar(0, z, lp - 0.9, 0.9, 0.15);
+      this.colisores.adicionar(0, z, lp - 0.9, 0.9, 0.15).superficie = 'pedra';
     }
     // As margens do riacho fora da ponte são intransponíveis.
     const bordaL = maxX - (lp / 2), bordaO = (lp / 2) - minX;
