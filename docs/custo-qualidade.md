@@ -81,3 +81,13 @@ Custo por aceito, contando todo o retrabalho da escada: T1 US$ 4,22; T2 US$ 3,78
 A preencher no link publicado, 2 minutos por vencedor: 1 consigo me orientar? 2 vejo algo quebrado, esticado ou sobreposto? 3 parece da mesma família da nave da Catedral? 4 roda sem engasgar no meu PC? Se reprovar um vencedor, registre o porquê aqui e ajuste a rubrica em `.claude/agents/revisor.md`.
 
 O experimento só se repete quando mudarem os modelos ou os preços.
+
+## Parte 3 com a política nova (2026-11-16)
+
+| Item | Célula | Rodadas de correção | Nota final | PR |
+| --- | --- | :---: | :---: | --- |
+| (b) praça do poço | Sonnet médio | 1 | 4 | #62 |
+| (c) Estrada e Taverna | Sonnet médio | 0 (4/5 de primeira; ajustes finos) | 4 | #61 |
+| (d) Floresta Seca | Sonnet médio | 0 (4/5 de primeira; ajustes finos) | 4 | #63 |
+
+Com a lista de erros comuns no prompt, 2 de 3 tarefas de cenário passaram de primeira (no experimento, 0 de 10). Custo total da sessão: subagentes ≈ US$ 15,1; orquestrador (Opus) ≈ US$ 12,4.

@@ -69,7 +69,9 @@ Feitos (detalhes no histórico): polimentos 1–10 da Catedral; Prompt 8 (1A–4
 
 ## Dúvidas para o Heitor ou o Gabriel
 
-- (nenhuma pendente)
+- **(e) Acessibilidade — para o Gabriel/Heitor decidirem:** quais opções entram em Configurações (tamanho do texto da interface, contraste alto da barra de vida/avisos, reduzir tremor de tela e piscadas, legenda dos sons de aviso de golpe) e quais ficam ligadas por padrão?
+- **(e) Animação:** melhorar transições/apoio dos pés exige escolher entre ajustar as animações dos GLBs atuais ou trocar modelos. Qual caminho?
+- **Medir no PC do Heitor:** pausa da escada da Torre sumiu? Quadros no Vilarejo (praça + portão), Taverna e Floresta em PS1 e HD.
 
 ## Banco de ideias (não fazer agora)
 
