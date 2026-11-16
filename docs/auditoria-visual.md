@@ -216,3 +216,19 @@ por software. A abertura com a chave e o acionamento dos atalhos foram
 conferidos nos dois modos, com os eventos gravados no save. A grade
 da Cripta continua na penumbra, com o indicador da alavanca como
 referência.
+
+Na oitava etapa, a Capela recebeu um memorial de cantaria com arco
+ogival e uma mesa de pedra. No Arquivo, estantes rasas com livros
+acompanham a mesa de madeira. Os mosaicos conduzem aos registros
+existentes e cada sala usa uma luz junto às velas.
+
+| Vista | Chamadas antes → depois | Triângulos antes → depois |
+| --- | ---: | ---: |
+| Capela do Último Nome | 62 → 68 | 43.447 → 44.311 |
+| Arquivo das Vigílias | 63 → 71 | 43.233 → 45.145 |
+| Mesa e estantes de perto | 14 → 22 | 1.020 → 2.932 |
+
+Contagens de quadros isolados em PS1 e HD, no Chrome com renderização
+por software. Os dois registros abriram e foram salvos em ambos os
+modos. A mesa recebe a luz principal no Arquivo, e as prateleiras
+superiores ficam na penumbra.

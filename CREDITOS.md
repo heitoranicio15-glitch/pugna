@@ -107,3 +107,6 @@ do altar são texturas procedurais do projeto.
 As ferragens da porta e dos atalhos da Sacristia e da Cripta,
 as alavancas e as arandelas foram modeladas no código do PUGNA.
 As faixas de piso reutilizam a textura procedural das alas.
+
+O memorial, as estantes, os livros, as mesas e os castiçais da Capela
+e do Arquivo foram modelados no código do PUGNA com materiais do projeto.
