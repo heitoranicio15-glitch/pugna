@@ -19,6 +19,7 @@ import { montarBairrosVilarejo } from './BairrosVilarejo.js';
 import { decorarVilarejo } from './Decoracao.js';
 import { montarQuadras } from './QuadrasVilarejo.js';
 import { modeloPronto } from '../render/modelos.js';
+import { acabarPracaDoPoco } from './AcabamentoPraca.js';
 import { montarPortaoSul, moradorDoPortao, PORTAL_SUL } from './PortaoSul.js';
 
 const C = CONFIG.areas.vilarejo;
@@ -125,7 +126,8 @@ export class Vilarejo {
       const haste = caixa(0.16, 2.6, 0.16, m.madeira, 1); haste.position.set(lado * 1.2, 1.3, 0); poçoOriginal.add(haste);
     }
     const cobertura = piramide(3.2, 1.2, m.telhado); cobertura.position.y = 3.1; poçoOriginal.add(cobertura);
-    modeloPronto(this.grupo, 'Well', { tamanho: [2.72, 3.55, 2.72], reserva: [poçoOriginal] });
+    const pecasDoPoco = acabarPracaDoPoco(this);
+    modeloPronto(this.grupo, 'Well', { tamanho: [2.72, 3.55, 2.72], reserva: [poçoOriginal, pecasDoPoco] });
     this.colisores.adicionar(0, 0, 2.5, 2.5, 0.9);
 
     // ---------- tochas (as luzes laranja) ----------
