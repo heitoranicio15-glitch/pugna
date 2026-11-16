@@ -9,7 +9,7 @@ import { CONFIG } from '../config.js';
 
 // Mancha de luz no chão, aditiva e sem gravar profundidade (parece a luz da chama).
 let matLuz = null;
-function manchaDeLuz(raio) {
+export function manchaDeLuz(raio) {
   matLuz ??= new THREE.MeshBasicMaterial({
     map: texturas().brilho, color: CONFIG.paleta.fogo, blending: THREE.AdditiveBlending,
     depthWrite: false, transparent: true, opacity: 0.38,

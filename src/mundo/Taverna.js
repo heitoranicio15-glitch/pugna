@@ -19,6 +19,7 @@ import { montarAtmosfera } from './Atmosfera.js';
 import { modeloPronto } from '../render/modelos.js';
 import { caixa as cx, corpoFacetado, materialDePersonagem, parte } from '../entidades/formas.js';
 import { decorar } from './Decoracao.js';
+import { acabarPortaInterna } from './AcabamentoTaverna.js';
 
 const C = CONFIG.areas.taverna;
 
@@ -72,6 +73,7 @@ export class Taverna {
     bloco(0, (2.6 + alturaParede) / 2, maxZ + 0.2, 1.8, alturaParede - 2.6, 0.4, m.madeiraEscura);
     bloco(0, 1.3, maxZ + 0.02, 1.8, 2.6, 0.18, m.madeira, null, 1.2);   // a porta
     this.colisores.adicionar(0, maxZ + 0.2, 1.8, 0.4);
+    acabarPortaInterna(this, maxZ);
     for (const lado of [-1, 1]) bloco(lado * 0.98, 1.3, maxZ - 0.02, 0.2, 2.6, 0.24, m.madeiraEscura);
     // Janelas escuras, de luar frio, contra o laranja da lareira.
     for (const [x, z] of [[maxX - 0.02, 3], [minX + 0.02, -3.6]]) {
