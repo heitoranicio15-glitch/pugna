@@ -30,7 +30,7 @@ export function montarCenasCatedral(mundo, feixes) {
     p.caixa(x,y+0.285,z,0.035,0.085,0.035,brasas);
   };
   for (const [sala,x,y,z] of [
-    ['capela',-34,1,-13], ['arquivo',34,1,-13], ['refeitorio',-26,0.86,-26.8],
+    ['refeitorio',-26,0.86,-26.8],
     ['cabido',26,0.86,-26.8],
     ['cela',-28,-3.48,31],
   ]) {

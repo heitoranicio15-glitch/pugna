@@ -51,6 +51,11 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Polimento da Catedral, oitava etapa.** A Capela do Último Nome
+  ganhou um memorial ogival de cantaria, mesa de pedra e luz âmbar.
+  O Arquivo das Vigílias tem estantes de madeira, livros encadernados
+  e luz mais clara. Faixas de mosaico conduzem aos dois registros.
+
 - **Polimento da Catedral, sétima etapa.** O Claustro ganhou uma
   faixa de mosaico rumo à Cripta. A porta da Sacristia tem tábuas,
   travessas, rebites e puxador de ferro. As duas grades de atalho
@@ -436,7 +441,8 @@ registra o que falta e a ordem sugerida.
 - [x] **Polimento 5:** detalhar a Sala do Bronze e a Cripta das Urnas.
 - [x] **Polimento 6:** refinar o Coro e a Abside, incluindo o entorno do altar.
 - [x] **Polimento 7:** detalhar o Claustro e a Sacristia, incluindo os atalhos existentes.
-- [ ] **Polimento 8:** detalhar a Capela do Último Nome e o Arquivo das Vigílias.
+- [x] **Polimento 8:** detalhar a Capela do Último Nome e o Arquivo das Vigílias.
+- [ ] **Polimento 9:** detalhar as mesas, os registros e a iluminação do Refeitório e do Cabido.
 - [ ] Aplicar o padrão visual aos demais ambientes já jogáveis.
 
 - [x] **Prompt 8 / 1A:** kit modular e planta maior do térreo.

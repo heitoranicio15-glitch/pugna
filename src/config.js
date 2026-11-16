@@ -126,6 +126,10 @@ export const CONFIG = {
         porta: { cor: 0xffc59d, intensidade: 10, alcance: 6.2 },
         claustro: { cor: 0xe5c38e, intensidade: 16, alcance: 9.3 },
       },
+      luzesDaCapelaEArquivo: {
+        capela: { cor: 0xffbb8c, intensidade: 23, alcance: 10.6 },
+        arquivo: { cor: 0xe6d9ad, intensidade: 23, alcance: 10.6 },
+      },
       feixes: [
         { origem: [18, 4.85, -16.61], destino: [13, 0.08, -11.8], largura: 1.25, cor: 0xa2bfff, opacidade: 0.125 },
         { origem: [0, 6.55, -64.61], destino: [-6.8, 0.08, -58.3], largura: 2.5, cor: 0xb391ee, opacidade: 0.08 },

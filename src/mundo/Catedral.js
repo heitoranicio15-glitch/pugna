@@ -15,6 +15,7 @@ import { criarVitraisDoVeu, modeloBancoDaNave, montarLuzesDaNave } from './Acaba
 import { montarAlasDosSelos } from './AlasDosSelos.js';
 import { montarBronzeECripta } from './BronzeECripta.js';
 import { montarCoroEAbside } from './CoroEAbside.js';
+import { montarCapelaEArquivo } from './CapelaEArquivo.js';
 
 const C = CONFIG.areas.catedral;
 
@@ -123,12 +124,12 @@ export class Catedral {
       return { id, x, z, nome: ['Selo do Ossário', 'Selo do Relicário'][i], material, malha };
     });
     for (const [sala, x, z, a, largura] of [
-      ['claustro', -19, 9.6, 0.85, 2.65], ['capela', -34, -13, 1, 3],
-      ['arquivo', 34, -13, 1, 3], ['refeitorio', -26, -26.8, 0.86, 3.2],
+      ['claustro', -19, 9.6, 0.85, 2.65], ['refeitorio', -26, -26.8, 0.86, 3.2],
       ['cabido', 26, -26.8, 0.86, 3.2],
     ]) movel(sala, x, z, largura, a, 1.25, m.pedraEscura);
     for (const x of [-19, 19]) this.colisores.adicionar(x, -15, 3.4, 1.25, 0.84);
     montarAlasDosSelos(this, m, metal, C.luzesDasAlas);
+    montarCapelaEArquivo(this, m, metal, C.luzesDaCapelaEArquivo);
     ler('ossario', 'Registro do Ossário', 'registro-ossario', -19, 1.1, -14.27);
     ler('relicario', 'Registro do Relicário', 'registro-relicario', 19, 1.1, -14.27);
     ler('claustro', 'Lista das devoluções', 'lista-das-devolucoes', -12.1, 1.63, 10.66, Math.PI);
