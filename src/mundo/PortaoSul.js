@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { bloco, chave, placa } from './Aderecos.js';
 import { juntarPorMaterial, materiais } from './pecas.js';
 import { retro } from '../render/retro.js';
+import { acabarPortaoSul } from './AcabamentoPortao.js';
 import { CHAVE_PORTAO, PORTAO_SUL_ABERTO } from '../nucleo/Progressao.js';
 
 export const PORTAL_SUL = {
@@ -82,6 +83,7 @@ export function montarPortaoSul(vila,z) {
     corda.rotation.x=solta*Math.PI/2;
     corda.visible=f<0.92; ferrolho.visible=f<0.42; selo.visible=f<0.42;
   };
+  acabarPortaoSul(vila,z,{folhas,selo,vigilia,bronze});
   quadro(0);
   return {
     get aberto() {return aberto;},
