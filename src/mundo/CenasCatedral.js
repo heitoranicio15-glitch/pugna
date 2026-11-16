@@ -22,24 +22,13 @@ export function montarCenasCatedral(mundo, feixes) {
     mundo.objetos.push({ x,y,z, acao:'ler', evento });
   }
   const brasas = retro(new THREE.MeshBasicMaterial({ color: 0xffaa63 }));
-  const velas = new Map();
-  const porVela = (sala,x,y,z) => {
-    if (!velas.has(sala)) velas.set(sala,juntarPorMaterial());
-    const p = velas.get(sala);
-    p.caixa(x,y+0.12,z,0.095,0.24,0.095,m.pedraMusgo);
-    p.caixa(x,y+0.285,z,0.035,0.085,0.035,brasas);
-  };
-  for (const [sala,x,y,z] of [
-    ['refeitorio',-26,0.86,-26.8],
-    ['cabido',26,0.86,-26.8],
-    ['cela',-28,-3.48,31],
-  ]) {
-    porVela(sala,x,y,z);
-    porVela(sala,x+0.21,y,z-0.13);
-  }
-  for (const [sala,p] of velas) p.montar(mundo.setores.get(sala),'velas de vigília');
-
   const cela = mundo.setores.get('cela');
+  const velas = juntarPorMaterial();
+  for (const [x,z] of [[-28,31], [-27.79,30.87]]) {
+    velas.caixa(x,-3.48+0.12,z,0.095,0.24,0.095,m.pedraMusgo);
+    velas.caixa(x,-3.48+0.285,z,0.035,0.085,0.035,brasas);
+  }
+  velas.montar(cela,'velas de vigília');
   bloco(cela,m.madeiraEscura,-28, -3.74, 31, 1.05,0.52,2.1);
   mundo.colisores.adicionar(-28,31,1.05,2.1,-3.48,-4);
 

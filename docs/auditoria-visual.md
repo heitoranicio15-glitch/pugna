@@ -232,3 +232,20 @@ Contagens de quadros isolados em PS1 e HD, no Chrome com renderização
 por software. Os dois registros abriram e foram salvos em ambos os
 modos. A mesa recebe a luz principal no Arquivo, e as prateleiras
 superiores ficam na penumbra.
+
+Na nona etapa, o Refeitório ganhou luz âmbar de candelabro, uma
+prateleira de louça e cinco pratos sobre a mesa. O lugar vazio vem
+da Conta da mesa. No Cabido, a luz mais fria destaca a mesa com
+gavetas, o livro aberto e os estandartes. Os mosaicos ocupam o
+piso existente; as mesas e os registros preservam suas posições.
+
+| Vista | Chamadas antes → depois | Triângulos antes → depois |
+| --- | ---: | ---: |
+| Refeitório | 41 → 47 | 4.831 → 6.805 |
+| Mesa da ceia | 11 → 17 | 700 → 2.674 |
+| Cabido | 45 → 51 | 5.069 → 5.385 |
+| Mesa da ata | 9 → 15 | 304 → 620 |
+
+Contagens de quadros isolados em PS1 e HD, no Chrome com renderização
+por software. Os detalhes menores da louça aparecem melhor perto
+da mesa. Falta medir o tempo de quadro ao percorrer a Catedral.

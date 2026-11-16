@@ -51,6 +51,12 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Polimento da Catedral, nona etapa.** A mesa do Refeitório tem
+  cinco pratos e um lugar vazio, conforme a Conta da mesa. Um
+  candelabro ilumina a cerâmica e a madeira. No Cabido, a mesa com
+  gavetas, o livro aberto e os estandartes recebem luz mais fria.
+  Cada sala tem seu mosaico. Os registros ficam nos pontos anteriores.
+
 - **Polimento da Catedral, oitava etapa.** A Capela do Último Nome
   ganhou um memorial ogival de cantaria, mesa de pedra e luz âmbar.
   O Arquivo das Vigílias tem estantes de madeira, livros encadernados
@@ -442,7 +448,8 @@ registra o que falta e a ordem sugerida.
 - [x] **Polimento 6:** refinar o Coro e a Abside, incluindo o entorno do altar.
 - [x] **Polimento 7:** detalhar o Claustro e a Sacristia, incluindo os atalhos existentes.
 - [x] **Polimento 8:** detalhar a Capela do Último Nome e o Arquivo das Vigílias.
-- [ ] **Polimento 9:** detalhar as mesas, os registros e a iluminação do Refeitório e do Cabido.
+- [x] **Polimento 9:** detalhar as mesas, os registros e a iluminação do Refeitório e do Cabido.
+- [ ] **Polimento 10:** revisar a leitura e o desempenho do percurso completo da Catedral.
 - [ ] Aplicar o padrão visual aos demais ambientes já jogáveis.
 
 - [x] **Prompt 8 / 1A:** kit modular e planta maior do térreo.

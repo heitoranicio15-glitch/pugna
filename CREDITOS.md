@@ -110,3 +110,7 @@ As faixas de piso reutilizam a textura procedural das alas.
 
 O memorial, as estantes, os livros, as mesas e os castiçais da Capela
 e do Arquivo foram modelados no código do PUGNA com materiais do projeto.
+
+As mesas, a louça, o candelabro, o livro e os castiçais do Refeitório
+e do Cabido foram modelados no código do PUGNA. Os mosaicos e os
+estandartes reutilizam texturas procedurais do projeto.
