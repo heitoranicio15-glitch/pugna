@@ -1,0 +1,10 @@
+{
+  "fonte": "Tabela de modelos da skill claude-api (cache de 2026-11-03), US$ por milhão de tokens. Escrita de cache = 1,25 × entrada (TTL 5 min), derivada; leitura de cache como publicada (Haiku: 0,1 × entrada, derivada).",
+  "data": "2026-11-16",
+  "modelos": {
+    "claude-haiku-5-5": { "entrada": 0.10, "saida": 0.50, "cacheEscrita": 0.125, "cacheLeitura": 0.01 },
+    "claude-sonnet-5-5": { "entrada": 2.00, "saida": 10.00, "cacheEscrita": 2.50, "cacheLeitura": 0.10 },
+    "claude-opus-5-5": { "entrada": 4.00, "saida": 20.00, "cacheEscrita": 5.00, "cacheLeitura": 0.20 },
+    "claude-fable-5-2": { "entrada": 8.00, "saida": 40.00, "cacheEscrita": 10.00, "cacheLeitura": 0.20 }
+  }
+}
