@@ -1,0 +1,77 @@
+{
+  "vilarejo": {
+    "triangulos": 68777,
+    "objetos": 960,
+    "modelos": 138,
+    "texturas": {
+      "terra": 0.1095,
+      "calcamento": 0.25,
+      "pedra": 0.4981,
+      "telhado": 0.4551,
+      "vitral": 0.5839,
+      "metal": 0.7973,
+      "janelaApagada": 1.478,
+      "assoalho": 0.7303,
+      "lajes": 0.25,
+      "janelaAcesa": 1.5691
+    }
+  },
+  "catedral": {
+    "triangulos": 34356,
+    "objetos": 339,
+    "modelos": 6,
+    "texturas": {
+      "lajes": 0.25,
+      "cantariaVeu": 0.5016,
+      "quinaGaleria": 0.5741,
+      "lajesNave": 0.25,
+      "corredorVeu": 0.3571,
+      "pedra": 0.5045,
+      "metal": 1.2058,
+      "assoalho": 0.7317,
+      "vitralVeuAmbar": 0.3233,
+      "mosaicoAltar": 0.3333,
+      "vitralVeuAzul": 0.3233,
+      "mosaicoAlas": 0.3165,
+      "estandarteVeu": 0.7424,
+      "bronzeSino": 0.573
+    }
+  },
+  "estrada": {
+    "triangulos": 12634,
+    "objetos": 498,
+    "modelos": 138,
+    "texturas": {
+      "terra": 0.0845,
+      "pedra": 0.5,
+      "janelaApagada": 0.6667,
+      "assoalho": 0.7909,
+      "telhado": 0.5,
+      "metal": 1.2951,
+      "janelaAcesa": 1.5691,
+      "riacho": 0.1667
+    }
+  },
+  "taverna": {
+    "triangulos": 1998,
+    "objetos": 103,
+    "modelos": 38,
+    "texturas": {
+      "assoalho": 0.7041,
+      "tapete": 0.2665,
+      "pedra": 0.5023
+    }
+  },
+  "floresta": {
+    "triangulos": 117500,
+    "objetos": 253,
+    "modelos": 1,
+    "texturas": {
+      "terra": 0.1432,
+      "assoalho": 0.7146,
+      "pedra": 0.4843,
+      "telhado": 0.5,
+      "metal": 0.7624
+    }
+  }
+}
