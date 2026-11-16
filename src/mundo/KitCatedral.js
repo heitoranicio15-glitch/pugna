@@ -65,11 +65,14 @@ const MOSAICOS = {
   mosaicoSacristia: [3, 14.7, 9.25, 17.3],
   mosaicoCapela: [-12.25, -35.4, -2, -32.6],
   mosaicoArquivo: [-12.25, 32.6, -2, 35.4],
+  mosaicoRefeitorio: [-26.1, -27.6, -18, -24.4],
+  mosaicoCabido: [-26.1, 24.4, -18, 27.6],
 };
 const MOSAICO_POR_SETOR = {
   ossario: 'mosaicoOssario', relicario: 'mosaicoRelicario', abside: 'mosaicoAltar',
   claustro: 'mosaicoClaustro', sacristia: 'mosaicoSacristia',
   capela: 'mosaicoCapela', arquivo: 'mosaicoArquivo',
+  refeitorio: 'mosaicoRefeitorio', cabido: 'mosaicoCabido',
 };
 const SETORES_DO_CORREDOR = ['nave', 'transepto', 'coro'];
 
