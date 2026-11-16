@@ -55,7 +55,7 @@ A [auditoria](docs/auditoria-visual.md#acabamento-das-áreas-existentes) diz o q
 
 - [x] (a) Pausa na escada da Torre: luzes da Catedral em degraus de 4 + shaders pré-compilados ao entrar (`src/render/aquecimento.js`). Conferir jogando no PC do Heitor.
 - [ ] (b) Acabamento do Vilarejo e Portão Sul. Feito o portão e a rota até ele (`AcabamentoPortao.js`); falta a praça do poço.
-- [ ] (c) Acabamento da Estrada e Taverna.
+- [x] (c) Acabamento da Estrada e Taverna: fachada, porta, letreiro, lanternas sem luz nova e calçada até a pista (`AcabamentoTaverna.js`). Salão interno não mexido.
 - [ ] (d) Acabamento da Floresta Seca.
 - [ ] (e) Acabamento geral. Feito: passos pelo piso sob o jogador (pedra, madeira, terra; `superficie` nos colisores). Falta: avisos/acessibilidade/animação.
 - [ ] **E. Ajuste fino com os amigos** (falta o ajuste jogando).

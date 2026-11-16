@@ -20,6 +20,7 @@ import { montarAtmosfera } from './Atmosfera.js';
 import { decorar } from './Decoracao.js';
 import { montarRio } from './Rio.js';
 import { faixaDeTrilha, paisagemExterior } from './PaisagemExterior.js';
+import { acabarFachadaTaverna } from './AcabamentoTaverna.js';
 
 const C = CONFIG.areas.estrada;
 
@@ -288,6 +289,7 @@ export class Estrada {
     ]);
     this.colisores.adicionar(parede + 0.58, T.z + 1.98, 0.92, 0.88, 0.94);
     sombrasDeContato(this.grupo, [[parede + 0.96, T.z + 3.25, 2.4, 3.2], [parede + 0.75, T.z - 6.8, 2.3, 2.9]]);
+    acabarFachadaTaverna(this, fachada, T);
     this.fachada = fachada;
     // A porta fica em (T.x + frente, T.z). O portal fica 1 m à frente dela.
     this.portaDaTaverna = { x: T.x + frente + 1, z: T.z };

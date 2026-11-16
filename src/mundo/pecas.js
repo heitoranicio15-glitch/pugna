@@ -248,8 +248,8 @@ export function juntarPorMaterial() {
   };
   return {
     /** Caixa de l × a × p com o centro em (x, y, z) e giro `ry` no eixo vertical. */
-    caixa(x, y, z, l, a, p, material, ry = 0) {
-      const { geometry } = caixa(l, a, p, material);
+    caixa(x, y, z, l, a, p, material, ry = 0, ladrilho) {
+      const { geometry } = caixa(l, a, p, material, ladrilho);
       if (ry) geometry.rotateY(ry);
       geometry.translate(x, y, z);
       guardar(material, geometry);
