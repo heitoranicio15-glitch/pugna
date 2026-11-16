@@ -44,6 +44,7 @@ import { Toque } from '../interface/Toque.js';
 import { ANOTACOES, ARMAS, CURA_FRASCO, FRASCOS, MUNICOES, armaDisponivel, contarFrascos, contarMunicao } from './Inventario.js';
 import { avisoPortal, RELIQUIA } from './Progressao.js';
 import { alvoProximo, atualizarObjetos } from '../mundo/Interacoes.js';
+import { aquecerArea } from '../render/aquecimento.js';
 
 export class Jogo {
   constructor(container) {
@@ -222,6 +223,13 @@ export class Jogo {
     // Celular congelado: o jogo abre, mas as mecânicas novas não têm botão de toque.
     if (this.entrada.toque) this.hud.avisar('O celular não é suportado por enquanto. Jogue no computador.', 7);
     this.iniciando = false;
+  }
+
+  /** Compila a Catedral ao entrar nela (névoa e luzes já valem): sem pausa na primeira subida da torre. */
+  aquecerCatedral() {
+    if (this.mundo !== this.catedral || this.estiloAquecido === this.render.estilo) return;
+    this.estiloAquecido = this.render.estilo;
+    aquecerArea(this.render.renderer, this.cena, this.camera, this.catedral, this.render.alvo).catch(() => {});
   }
 
   localizarCheckpoint(progresso) {
@@ -434,6 +442,7 @@ export class Jogo {
     salvarPreferencias(this.preferencias);
     this.render.aplicarPreferencias(this.preferencias);
     this.materiaisHd.definirEstilo(this.render.estilo);
+    this.aquecerCatedral();   // outro estilo gráfico usa outros materiais
     if (this.estado === 'pausado') this.jogador.atualizarCamera(0);
     this.atualizarAudio();
   }
@@ -476,6 +485,7 @@ export class Jogo {
     for (const mundo of this.areas) mundo.grupo.visible = mundo === area;
     this.atmosfera.mudarArea(area, transicao);
     this.eventos.emitir('area:entrou', { id: area.id, som: area.som, trilha: area.trilha, transicao });
+    this.aquecerCatedral();
   }
 
   reporInimigos() {

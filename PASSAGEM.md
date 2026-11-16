@@ -53,7 +53,7 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 A [auditoria](docs/auditoria-visual.md#acabamento-das-áreas-existentes) diz o que falta e a ordem.
 
-- [ ] (a) Pausa na escada da Torre.
+- [x] (a) Pausa na escada da Torre: luzes da Catedral em degraus de 4 + shaders pré-compilados ao entrar (`src/render/aquecimento.js`). Conferir jogando no PC do Heitor.
 - [ ] (b) Acabamento do Vilarejo e Portão Sul, no padrão da nave da Catedral.
 - [ ] (c) Acabamento da Estrada e Taverna.
 - [ ] (d) Acabamento da Floresta Seca.
