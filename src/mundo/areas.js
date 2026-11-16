@@ -9,6 +9,8 @@ import { Catedral } from './Catedral.js';
 import { Estrada } from './Estrada.js';
 import { Taverna } from './Taverna.js';
 import { Floresta } from './Floresta.js';
+import { CONFIG } from '../config.js';
+import { superficieDoTipo } from '../audio/regras.js';
 import { validarNpc } from '../entidades/Npc.js';
 
 export const REGISTRO = [
@@ -112,5 +114,8 @@ export function montarAreas(lista) {
 }
 
 export function criarAreas(cena, ceu) {
-  return montarAreas(REGISTRO.map((r) => r.criar(cena, ceu)));
+  const areas = REGISTRO.map((r) => r.criar(cena, ceu));
+  // Reserva dos passos: o piso sem marca soa conforme o tipo da área.
+  for (const a of areas) a.colisores.superficiePadrao ??= superficieDoTipo(CONFIG.areas[a.id]?.som?.tipo);
+  return montarAreas(areas);
 }

@@ -55,6 +55,7 @@ export class Vilarejo {
     let ordemRua = -5;
     const rua = (x, z, l, pf, opcoes = {}) => {
       this.ruas.push({ x, z, l, p: pf, classe: 'principal', casas: true, ...opcoes });
+      this.colisores.marcarSuperficie(x, z, l, pf, 'pedra');   // calçada: passo de pedra
       const geo = new THREE.PlaneGeometry(l, pf);
       const uv = geo.attributes.uv;
       const lad = ladrilhoDe(m.calcamentoChao, 4);
@@ -164,7 +165,7 @@ export class Vilarejo {
     // ---------- caixotes e barris (dá para pular em cima) ----------
     for (const [x, z, t] of [[4.6, 30, 1], [5.2, 31.2, 0.8], [-12.6, 8, 1], [11.5, -3.5, 0.9], [-21, -3.8, 1], [21.6, 8.4, 1.1], [-5, -36, 1]]) {
       const cx = caixa(t, t, t, m.madeira, 1); cx.position.set(x, t / 2, z); cx.rotation.y = sorteio() * 0.2;
-      this.grupo.add(cx); this.colisores.adicionar(x, z, t, t, t);
+      this.grupo.add(cx); this.colisores.adicionar(x, z, t, t, t).superficie = 'madeira';
       modeloPronto(this.grupo, 'Crate', { pos: [x, 0, z], tamanho: [t, t, t], reserva: [cx] });
     }
 

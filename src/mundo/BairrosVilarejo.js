@@ -19,6 +19,7 @@ export function montarBairrosVilarejo(mundo) {
   // Pátios e becos (sem fileira de casas) e ruas dos bairros (com fileira), em mundo.ruas.
   const pavimento = (x, z, l, p, opcoes = { classe: 'patio', casas: false }) => {
     mundo.ruas.push({ x, z, l, p, ...opcoes });
+    colisores.marcarSuperficie(x, z, l, p, 'pedra');   // calçada: passo de pedra
     return planoDeChao(mundo, { x, z, l, p, ladrilho: 4.2, material: m.calcamentoChao, ordem: -3.8, y: 0.024 });
   };
   const S = CONFIG.vila.ruas.secundaria;

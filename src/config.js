@@ -275,6 +275,14 @@ export const CONFIG = {
   audio: {
     crossfadeAmbiente: 0.6,   // s: o ambiente antigo some e o novo entra (o mesmo tempo da névoa)
     crossfadeTrilha: 1.5,     // s: uma faixa da trilha sai e outra entra
+    // Passos por superfície (filtro, tom e duração; o volume vem de cada situação).
+    //   tipo/q    filtro do chiado   de/ate  frequência inicial/final (× tom base)
+    //   duracao   × duração do passo grave  × grave do baque  clique: estalo agudo (volume, Hz)
+    passos: {
+      pedra:   { tipo: 'bandpass', q: 1.4, de: 2.6, ate: 1.1, duracao: 0.75, tom: 1.25, grave: 0.45, clique: 0.22, cliqueHz: 2400 },
+      madeira: { tipo: 'bandpass', q: 3.2, de: 1.5, ate: 0.8, duracao: 0.9,  tom: 1.7,  grave: 1.0,  clique: 0,    cliqueHz: 0 },
+      terra:   { tipo: 'lowpass',  q: 0.7, de: 1.6, ate: 0.35, duracao: 1.5, tom: 0.8,  grave: 0.35, clique: 0,    cliqueHz: 0 },
+    },
   },
 
   // ---- Jogador ----

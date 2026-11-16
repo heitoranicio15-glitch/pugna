@@ -255,6 +255,7 @@ export class Jogador {
     // Olha a partir da altura anterior na descida, para não perder o piso
     // quando a gravidade já levou os pés para dentro dele neste quadro.
     const chao = col.alturaDoChao(this.pos.x, this.pos.z, Math.max(this.pos.y, antesY), this.noChao ? 0.4 : 0.05);
+    this.superficie = col.superficie;   // piso sob os pés: o som do passo muda
     this.tPisada += dt;
     if (this.pos.y <= chao || (this.noChao && this.pos.y - chao < 0.45 && this.vel.y <= 0)) {
       if (!this.noChao && this.vel.y < -5) { this.afundar = Math.min(0.25, -this.vel.y * 0.022); this.jogo.eventos.emitir('jogador:pouso'); }
@@ -278,7 +279,7 @@ export class Jogador {
     if (this.noChao && rapidez > 0.6 && this.tEsquiva <= 0) {
       const antes = Math.floor(this.fasePasso / Math.PI);
       this.fasePasso += rapidez * dt * 1.85;
-      if (Math.floor(this.fasePasso / Math.PI) !== antes) this.jogo.eventos.emitir('jogador:passo', { correndo, agachado: this.agachado });
+      if (Math.floor(this.fasePasso / Math.PI) !== antes) this.jogo.eventos.emitir('jogador:passo', { correndo, agachado: this.agachado, superficie: this.superficie });
     }
     this.atualizarCamera(dt, rapidez);
   }
