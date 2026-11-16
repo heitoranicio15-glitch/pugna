@@ -4,7 +4,9 @@ Este guia vale para colaboradores e assistentes de IA. Consulte o [LEIAME](LEIAM
 
 ## Antes de editar
 
-Antes de qualquer tarefa, leia [PASSAGEM.md](PASSAGEM.md), [LEIAME.md](LEIAME.md) e AGENTS.md. Ao terminar, atualize o Estado atual e o Plano do PASSAGEM.md.
+Antes de qualquer tarefa, leia só o [PASSAGEM.md](PASSAGEM.md) e a spec da tarefa. Abra o [LEIAME.md](LEIAME.md) e o [mapa do código](docs/mapa-do-codigo.md) só quando precisar achar algo; não leia arquivos grandes inteiros (use `grep -n` e leia o trecho). Ao terminar, atualize o Estado atual (curto) e o Plano do PASSAGEM.md; o detalhe vai para `docs/historico/`.
+
+Escolha do modelo e do esforço por tarefa: siga o [roteamento](docs/roteamento.md) e os subagentes de `.claude/agents/` (leitor, executor-testes, implementador, revisor, depurador). Falhou duas vezes do mesmo jeito, sobe um degrau.
 
 1. Confira `git status --short --branch`, atualize as referências com `git fetch origin` e verifique os PRs abertos no GitHub. Confira se alguém já está mexendo no mesmo sistema.
 2. Comece da `origin/main` em uma branch com nome descritivo. Use a branch existente ao continuar um PR. Se houver trabalho local de outra pessoa, preserve-o e use uma cópia de trabalho separada.
@@ -19,7 +21,7 @@ Antes de qualquer tarefa, leia [PASSAGEM.md](PASSAGEM.md), [LEIAME.md](LEIAME.md
 
 ## Testes, PR e publicação
 
-1. Rode `npm ci`, `npm test`, `npm run build` e `git diff --check`. Para mudanças que afetam a partida, rode `npm run test:browser` e jogue o trecho afetado. O LEIAME explica como instalar ou selecionar o navegador. Mudanças só de documentação pedem conferência dos links e comandos alterados.
+1. Rode `npm ci` e `npm run verificar` (testes, build e `git diff --check` com saída curta). Para mudanças que afetam a partida, rode `npm run test:browser` e jogue o trecho afetado. O LEIAME explica como instalar ou selecionar o navegador. Mudanças só de documentação pedem conferência dos links e comandos alterados.
 2. Registre no PR o que mudou, como reproduzir o fluxo, os testes que realmente rodaram, os pontos ainda pendentes e qualquer impacto em saves ou assets. Antes de integrar, confira se a `main` avançou. Se houver alterações sobrepostas, resolva na branch do PR e repita os testes afetados.
 3. Envie a branch e integre pelo pull request quando houver autorização para publicar. A seção [Integração automática](#integração-automática) diz quando a IA já tem essa autorização. A integração na `main` dispara o GitHub Pages. Acompanhe a execução **Publicar o jogo** e abra o endereço público para conferir a versão e o fluxo afetado.
 4. Se uma atualização causar regressão em produção, identifique o commit integrado e prepare um PR de reversão com `git revert`. Valide e acompanhe a nova publicação. Registre o motivo da reversão e o que ficou pendente para a próxima tentativa.
@@ -29,7 +31,7 @@ Antes de qualquer tarefa, leia [PASSAGEM.md](PASSAGEM.md), [LEIAME.md](LEIAME.md
 A IA pode enviar a branch, abrir o pull request e integrá-lo na `main` com **Squash and merge** sem pedir autorização, desde que todas as condições abaixo valham:
 
 - `npm test` e `npm run build` passam no commit que será integrado.
-- Se a mudança mexe na partida, `npm run test:browser` também passa.
+- Se a mudança mexe na partida, `npm run test:browser` também passa. Nas sessões do Gabriel ele está dispensado: o Gabriel confere jogando o link publicado.
 - O pull request não tem conflito com a `main`.
 
 Se houver conflito ou algum teste falhando, a IA para e explica o problema antes de integrar. Depois de integrar, ela confere se a execução **Publicar o jogo** terminou com sucesso no GitHub Pages e informa o link do jogo.
