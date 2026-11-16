@@ -11,6 +11,7 @@ import { CONFIG } from '../src/config.js';
 // --celular (npm run test:celular) e não faz parte dos testes obrigatórios.
 const argumentos = process.argv.slice(2);
 const testarCelular = argumentos.includes('--celular');
+const angle = process.env.PUGNA_ANGLE || 'swiftshader';
 const enderecoPedido = argumentos.find((a) => !a.startsWith('--'));
 const url = enderecoPedido || 'http://127.0.0.1:5186/';
 const servidor = enderecoPedido ? null : spawn(process.execPath, [
@@ -28,7 +29,7 @@ async function iniciarNavegador() {
   }
   browser = await chromium.launch({
     executablePath: process.env.PUGNA_CHROME,
-    args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+    args: [`--use-angle=${angle}`, ...(angle === 'swiftshader' ? ['--enable-unsafe-swiftshader'] : [])],
   });
   return browser.newPage({ viewport: { width: 1100, height: 650 } });
 }
@@ -123,7 +124,7 @@ async function validarEstradaETaverna() {
   await passos();
   assert.match((await estado()).aviso, /girar a Chave/);
   await tecla('e');
-  await passos(29);
+  await passos(61); // aguarda a abertura e o fim do aviso temporário de 3 s
   assert.match((await estado()).aviso, /sair pelo Portão Sul/);
   await tecla('e');
   assert.equal((await estado()).area, 'estrada');
@@ -293,7 +294,7 @@ async function validarExploracao() {
   assert.ok(depois.tempo > aoVivo.tempo + 0.5, 'o tempo do jogo segue com a bolsa aberta');
   assert.ok(Math.hypot(depois.x - aoVivo.x, depois.z - aoVivo.z) < 0.05, 'com a bolsa aberta o caçador não anda');
   await page.getByRole('button', { name: 'Registro da oficina' }).click();
-  assert.match(await page.locator('#texto-leitura').textContent(), /grade da nave/);
+  assert.match(await page.locator('#texto-leitura').textContent(), /sacristia, ao sul do Relicário.*grade abre por dentro/);
   await page.locator('#fechar-leitura').click();
   await page.locator('#fechar-bolsa').click();
   assert.equal(await page.evaluate(() => jogo.estado), 'jogando');
@@ -347,7 +348,8 @@ async function validarExploracao() {
   await andar('w', 26);
   assert.ok((await estado()).pos[2] > 3.6);
 
-  await posicionar(18.64, 8.1, Math.PI);
+  // Pelo lado oeste da mesa, o frasco maior fica fora do alcance do alvo.
+  await posicionar(16.55, 9.34, -2.14);
   await mirar(18.64, 1.67, 10.67);
   assert.match((await estado()).aviso, /Vigília do Guardião/);
   await tecla('e');
@@ -435,14 +437,22 @@ try {
     inimigo.reiniciar();
     inimigo.pontoAtual = 1;
     jogador.morto = true; // isola a patrulha do combate
-    for (let i = 0; i < 520; i++) inimigo.atualizar(0.025);
-    const pos = inimigo.pos.toArray();
+    let chegou = false;
+    // Observa a chegada mesmo se a patrulha já tiver iniciado o retorno no fim.
+    for (let i = 0; i < 720; i++) {
+      inimigo.atualizar(0.025);
+      if (inimigo.pos.distanceTo(jogador.pos) <= 0.85) {
+        chegou = true;
+        break;
+      }
+    }
+    const resultado = { chegou, pos: inimigo.pos.toArray() };
     inimigo.rota = rotaOriginal;
     inimigo.reiniciar();
     jogador.morto = false;
-    return pos;
+    return resultado;
   });
-  assert.ok(patrulha[0] > -5 && patrulha[2] > -1, `Patrulha ficou em ${patrulha}`);
+  assert.ok(patrulha.chegou, `Patrulha ficou em ${patrulha.pos}`);
   const busca = await page.evaluate(() => {
     const inimigo = jogo.catedral.entidades[0];
     inimigo.pos.set(-11.5, 0, -3);
@@ -467,6 +477,7 @@ try {
   assert.match(fechado.aviso, /0\/2/);
 
   await posicionar(-17.6, -8, Math.PI / 2);
+  await mirar(-19, 1.65, -8);
   const oeste = await estado();
   assert.match(oeste.aviso, /recolher Selo do Ossário/);
   await tecla('e');
@@ -475,6 +486,7 @@ try {
   await tecla('e');
   assert.deepEqual((await estado()).progresso.selos, ['ossario']);
   await posicionar(17.6, -8, -Math.PI / 2);
+  await mirar(19, 1.65, -8);
   const leste = await estado();
   assert.match(leste.aviso, /recolher Selo do Relicário/);
   await tecla('e');

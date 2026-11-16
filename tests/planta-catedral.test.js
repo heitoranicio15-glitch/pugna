@@ -63,6 +63,18 @@ test('chegada, lanterna, patrulhas e interações da Catedral ficam no piso e fo
   }
 });
 
+test('uma luz fora do quadro volta a iluminar quando a câmera se vira', () => {
+  const camera = new THREE.PerspectiveCamera(58, 16 / 9, 0.1, 200);
+  const luz = c.setores.get('nave').children.find(objeto => objeto.isPointLight);
+  camera.position.set(0, 2, 20);
+  camera.lookAt(0, 2, 21);
+  c.prepararRender(camera);
+  assert.equal(luz.visible, false);
+  camera.lookAt(0, 2, 0);
+  c.prepararRender(camera);
+  assert.equal(luz.visible, true);
+});
+
 test('as duas alas são acessíveis antes dos selos e a grade controla a rota até o Guardião', () => {
   const nav = new Navegacao(c.colisores, c.limites), raio = CONFIG.jogador.raio;
   const [x,z] = c.inimigos.find(i => i.tipo === 'guardiao').rota[0];

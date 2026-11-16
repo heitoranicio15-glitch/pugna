@@ -51,6 +51,12 @@ O parry com a pistola (PR B1), o visceral e a execução (PR B2) e o quickstep (
 
 ## Estado atual
 
+- **Polimento da Catedral, décima etapa.** As luzes locais de alcance
+  finito saem do render quando estão inteiramente fora da câmera.
+  Uma moldura de pedra clara destaca o ferrolho da Cripta. O percurso
+  foi medido em movimento, em PS1 e HD, com GPU integrada e por
+  software. A escada da Torre ainda apresentou uma pausa pontual.
+
 - **Polimento da Catedral, nona etapa.** A mesa do Refeitório tem
   cinco pratos e um lugar vazio, conforme a Conta da mesa. Um
   candelabro ilumina a cerâmica e a madeira. No Cabido, a mesa com
@@ -449,7 +455,8 @@ registra o que falta e a ordem sugerida.
 - [x] **Polimento 7:** detalhar o Claustro e a Sacristia, incluindo os atalhos existentes.
 - [x] **Polimento 8:** detalhar a Capela do Último Nome e o Arquivo das Vigílias.
 - [x] **Polimento 9:** detalhar as mesas, os registros e a iluminação do Refeitório e do Cabido.
-- [ ] **Polimento 10:** revisar a leitura e o desempenho do percurso completo da Catedral.
+- [x] **Polimento 10:** revisar a leitura e o desempenho do percurso da Catedral.
+- [ ] Investigar a pausa observada na escada da Torre.
 - [ ] Aplicar o padrão visual aos demais ambientes já jogáveis.
 
 - [x] **Prompt 8 / 1A:** kit modular e planta maior do térreo.
