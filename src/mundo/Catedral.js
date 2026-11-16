@@ -3,6 +3,7 @@ import { CONFIG } from '../config.js';
 import { Colisores } from './Colisores.js';
 import { animarTochas, arcoOgival, colunaFacetada, juntarPorMaterial, materiais, tocha } from './pecas.js';
 import { retro } from '../render/retro.js';
+import { PASSO_DE_LUZES, degrauDeLuzes, degrausDeLuzes, luzAtiva } from '../render/aquecimento.js';
 import { bloco, placa } from './Aderecos.js';
 import { montarSacristia } from './Sacristia.js';
 import { montarAtmosfera } from './Atmosfera.js';
@@ -155,6 +156,13 @@ export class Catedral {
     this.frustumDasLuzes = new THREE.Frustum();
     this.projecaoDasLuzes = new THREE.Matrix4();
     this.alcanceDaLuz = new THREE.Sphere();
+    // Luzes de intensidade 0 que completam a contagem em degraus (ver render/aquecimento.js).
+    this.luzesDeCompensacao = Array.from({ length: PASSO_DE_LUZES - 1 }, () => {
+      const luz = new THREE.PointLight(0x000000, 0, 1);
+      luz.visible = false;
+      this.grupo.add(luz);
+      return luz;
+    });
 
     this.saida = { x: 0, z: 8.45 };
     this.entrada = { x: 0, z: 6, yaw: 0 };
@@ -203,23 +211,42 @@ export class Catedral {
     this.grade.visible = bloqueada;
   }
 
+  /** As lanternas de descanso são montadas depois do construtor da área. */
+  coletarLuzesLocais() {
+    if (this.luzesLocais) return this.luzesLocais;
+    this.luzesLocais = [];
+    this.grupo.traverse(luz => {
+      if (luz.isPointLight && luz.distance > 0 && !luz.castShadow && !this.luzesDeCompensacao.includes(luz)) this.luzesLocais.push(luz);
+    });
+    return this.luzesLocais;
+  }
+
+  /** Contagens de luzes de ponto que o render pode mostrar (para o pré-aquecimento). */
+  get degrausDeLuz() { return degrausDeLuzes(this.coletarLuzesLocais().length); }
+
+  /** Mostra exatamente `total` luzes de ponto: as reais primeiro, depois as de compensação. */
+  fixarContagemDeLuzes(total) {
+    const locais = this.coletarLuzesLocais();
+    locais.forEach((luz, i) => { luz.visible = i < total; });
+    this.luzesDeCompensacao.forEach((luz, i) => { luz.visible = i < total - locais.length; });
+  }
+
   prepararRender(camera) {
-    if (!this.luzesLocais) {
-      // As lanternas de descanso são montadas depois do construtor da área.
-      this.luzesLocais = [];
-      this.grupo.traverse(luz => {
-        if (luz.isPointLight && luz.distance > 0 && !luz.castShadow) this.luzesLocais.push(luz);
-      });
-    }
+    const locais = this.coletarLuzesLocais();
     camera.updateWorldMatrix(true, false);
     this.projecaoDasLuzes.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
     this.frustumDasLuzes.setFromProjectionMatrix(this.projecaoDasLuzes);
-    for (const luz of this.luzesLocais) {
+    let ativas = 0;
+    for (const luz of locais) {
       luz.getWorldPosition(this.alcanceDaLuz.center);
       // A margem conserva a luz perto da borda, inclusive com o tremor do modo PS1.
       this.alcanceDaLuz.radius = luz.distance + 0.5;
       luz.visible = this.frustumDasLuzes.intersectsSphere(this.alcanceDaLuz);
+      if (luz.visible && luzAtiva(luz)) ativas++;
     }
+    // A contagem sobe em degraus: cada número novo de luzes recompilaria os materiais no meio do jogo.
+    const falta = degrauDeLuzes(ativas) - ativas;
+    this.luzesDeCompensacao.forEach((luz, i) => { luz.visible = i < falta; });
   }
 
   atualizar(dt, tempo, pos) {
