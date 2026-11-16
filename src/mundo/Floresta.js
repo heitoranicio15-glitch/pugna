@@ -10,6 +10,7 @@ import { faixaDeTrilha, paisagemExterior, xEmZ } from './PaisagemExterior.js';
 import { plantarBosque, recortarBosque } from './Bosque.js';
 import { ANOTACOES } from '../nucleo/Inventario.js';
 import { montarEspoliosFloresta } from './Espolios.js';
+import { acabarFloresta } from './AcabamentoFloresta.js';
 
 const C = CONFIG.areas.floresta;
 export const xDaTrilha = z => xEmZ(C.caminho,z);
@@ -153,6 +154,7 @@ export class Floresta {
     poste('Trilha interrompida',2.5,zS-2.55,Math.PI);
     this.objetos.push({x:0,y:1.55,z:zS-1.47,acao:'informar',mensagem:this.portalFuturo.textoTrancado});
     montarEspoliosFloresta(this);
+    acabarFloresta(this);
 
     const reservas=[
       [0,-39,7],[-4.4,-33.5,5.2],[-31,17,6.5],[-32.6,25,5],
